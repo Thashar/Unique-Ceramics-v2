@@ -2,6 +2,8 @@ import { db } from "@/lib/db";
 import Link from "next/link";
 import Image from "next/image";
 import { ShoppingBag } from "lucide-react";
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +29,7 @@ export default async function ShopPage({
   const { kategoria } = await searchParams;
 
   let products: Awaited<ReturnType<typeof db.product.findMany>> = [];
+  let dbError: string | null = null;
   try {
     products = await db.product.findMany({
       where: {
@@ -36,11 +39,14 @@ export default async function ShopPage({
       orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
     });
   } catch (e) {
+    dbError = e instanceof Error ? e.message : String(e);
     console.error("DB error in /sklep:", e);
   }
 
   return (
-    <div className="min-h-screen bg-warm-white">
+    <>
+      <Header />
+      <div className="min-h-screen bg-warm-white pt-20">
       <div className="bg-cream pt-32 pb-16 px-6 text-center">
         <p className="text-xs tracking-[0.3em] uppercase text-clay mb-4">Kolekcja</p>
         <h1 className="font-serif text-5xl md:text-6xl text-espresso">Sklep</h1>
@@ -68,7 +74,13 @@ export default async function ShopPage({
       </div>
 
       <div className="max-w-7xl mx-auto px-6 lg:px-10 py-16">
-        {products.length === 0 ? (
+        {dbError ? (
+          <div className="text-center py-24">
+            <ShoppingBag size={48} strokeWidth={1} className="mx-auto text-sand mb-6" />
+            <p className="font-serif text-2xl text-espresso mb-2">Błąd połączenia z bazą</p>
+            <p className="text-charcoal/50 text-xs font-mono mt-2 max-w-lg mx-auto break-all">{dbError}</p>
+          </div>
+        ) : products.length === 0 ? (
           <div className="text-center py-24">
             <ShoppingBag size={48} strokeWidth={1} className="mx-auto text-sand mb-6" />
             <p className="font-serif text-2xl text-espresso mb-2">Brak produktów</p>
@@ -118,5 +130,7 @@ export default async function ShopPage({
         )}
       </div>
     </div>
+      <Footer />
+    </>
   );
 }
