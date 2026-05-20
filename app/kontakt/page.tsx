@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { Phone, Mail, Instagram, Clock, MapPin } from "lucide-react";
+import { Phone, Mail, Clock, MapPin } from "lucide-react";
+import InstagramIcon from "@/components/ui/InstagramIcon";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 
@@ -61,7 +62,7 @@ export default function ContactPage() {
                   className="flex items-start gap-4 text-charcoal/80 hover:text-clay transition-colors group"
                 >
                   <div className="w-10 h-10 bg-cream rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-terracotta/10 transition-colors">
-                    <Instagram size={18} strokeWidth={1.5} className="text-clay" />
+                    <InstagramIcon size={18} className="text-clay" />
                   </div>
                   <div>
                     <p className="text-xs tracking-widest uppercase text-clay mb-1">Instagram</p>

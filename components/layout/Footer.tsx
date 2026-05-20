@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Instagram, Mail, Phone } from "lucide-react";
+import { Mail, Phone } from "lucide-react";
+import InstagramIcon from "@/components/ui/InstagramIcon";
 
 export default function Footer() {
   return (
@@ -62,7 +63,7 @@ export default function Footer() {
               rel="noopener noreferrer"
               className="flex items-center gap-3 text-sm hover:text-cream transition-colors"
             >
-              <Instagram size={15} strokeWidth={1.5} />
+              <InstagramIcon size={15} />
               @unique.ceramics
             </a>
           </div>

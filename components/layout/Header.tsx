@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
-import { ShoppingBag, Menu, X } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { useSession, signOut } from "next-auth/react";
+import { ShoppingBag, Menu, X, User, Package, LogOut, ChevronDown } from "lucide-react";
 
 const navLinks = [
   { href: "/sklep", label: "Sklep" },
@@ -10,6 +11,86 @@ const navLinks = [
   { href: "/o-mnie", label: "O mnie" },
   { href: "/kontakt", label: "Kontakt" },
 ];
+
+function AccountDropdown() {
+  const { data: session } = useSession();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  if (!session) {
+    return (
+      <Link
+        href="/logowanie"
+        className="p-2 text-espresso hover:text-clay transition-colors"
+        aria-label="Zaloguj się"
+      >
+        <User size={22} strokeWidth={1.5} />
+      </Link>
+    );
+  }
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-1.5 p-2 text-espresso hover:text-clay transition-colors"
+        aria-label="Konto"
+      >
+        {session.user?.image ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={session.user.image} alt="" className="w-6 h-6 rounded-full object-cover" />
+        ) : (
+          <User size={22} strokeWidth={1.5} />
+        )}
+        <ChevronDown size={14} strokeWidth={1.5} className={`transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+
+      {open && (
+        <div className="absolute right-0 top-full mt-2 w-52 bg-warm-white shadow-lg border border-sand py-2 z-50">
+          <div className="px-4 py-2 border-b border-sand mb-1">
+            <p className="text-xs font-medium text-espresso truncate">
+              {session.user?.name ?? session.user?.email}
+            </p>
+            <p className="text-xs text-charcoal/40 truncate">{session.user?.email}</p>
+          </div>
+          <Link
+            href="/konto"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-3 px-4 py-2.5 text-sm text-charcoal/70 hover:text-espresso hover:bg-cream transition-colors"
+          >
+            <User size={15} strokeWidth={1.5} />
+            Moje konto
+          </Link>
+          <Link
+            href="/konto/zamowienia"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-3 px-4 py-2.5 text-sm text-charcoal/70 hover:text-espresso hover:bg-cream transition-colors"
+          >
+            <Package size={15} strokeWidth={1.5} />
+            Zamówienia
+          </Link>
+          <div className="border-t border-sand mt-1 pt-1">
+            <button
+              onClick={() => { setOpen(false); signOut({ callbackUrl: "/" }); }}
+              className="flex items-center gap-3 px-4 py-2.5 text-sm text-charcoal/70 hover:text-red-600 hover:bg-red-50 w-full text-left transition-colors"
+            >
+              <LogOut size={15} strokeWidth={1.5} />
+              Wyloguj się
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
@@ -51,8 +132,8 @@ export default function Header() {
           ))}
         </nav>
 
-        {/* Koszyk + hamburger */}
-        <div className="flex items-center gap-4">
+        {/* Koszyk + konto + hamburger */}
+        <div className="flex items-center gap-1">
           <Link
             href="/koszyk"
             className="relative p-2 text-espresso hover:text-clay transition-colors"
@@ -63,6 +144,8 @@ export default function Header() {
               0
             </span>
           </Link>
+
+          <AccountDropdown />
 
           <button
             className="md:hidden p-2 text-espresso hover:text-clay transition-colors"
@@ -88,6 +171,13 @@ export default function Header() {
                 {link.label}
               </Link>
             ))}
+            <Link
+              href="/konto"
+              onClick={() => setMenuOpen(false)}
+              className="text-base tracking-widest uppercase text-charcoal hover:text-clay transition-colors"
+            >
+              Moje konto
+            </Link>
           </nav>
         </div>
       )}

@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Instagram } from "lucide-react";
+import InstagramIcon from "@/components/ui/InstagramIcon";
 
 export default function InstagramCta() {
   return (
@@ -13,7 +13,7 @@ export default function InstagramCta() {
         transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
         className="max-w-xl mx-auto"
       >
-        <Instagram size={32} strokeWidth={1} className="mx-auto text-clay mb-6" />
+        <InstagramIcon size={32} className="mx-auto text-clay mb-6" />
         <h2 className="font-serif text-3xl md:text-4xl text-espresso mb-4">
           Śledź moją pracownię
         </h2>
@@ -27,7 +27,7 @@ export default function InstagramCta() {
           rel="noopener noreferrer"
           className="inline-flex items-center gap-3 bg-espresso hover:bg-charcoal text-cream text-sm tracking-widest uppercase px-8 py-4 transition-colors duration-300"
         >
-          <Instagram size={15} strokeWidth={1.5} />
+          <InstagramIcon size={15} />
           @unique.ceramics
         </a>
       </motion.div>

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Playfair_Display, Inter } from "next/font/google";
+import Providers from "@/components/layout/Providers";
 import "./globals.css";
 
 const playfair = Playfair_Display({
@@ -34,7 +35,9 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="pl" className={`${playfair.variable} ${inter.variable} h-full`}>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+          <Providers>{children}</Providers>
+        </body>
     </html>
   );
 }
