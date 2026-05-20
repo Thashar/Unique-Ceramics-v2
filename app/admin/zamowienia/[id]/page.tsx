@@ -1,4 +1,8 @@
 import { db } from "@/lib/db";
+}
+export const dynamic = "force-dynamic";
+
+import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import OrderStatusSelect from "@/components/admin/OrderStatusSelect";
 import Link from "next/link";

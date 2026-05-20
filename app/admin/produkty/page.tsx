@@ -1,4 +1,8 @@
 import { db } from "@/lib/db";
+}
+export const dynamic = "force-dynamic";
+
+import { db } from "@/lib/db";
 import Link from "next/link";
 import Image from "next/image";
 import { Plus, Pencil, ShoppingBag } from "lucide-react";

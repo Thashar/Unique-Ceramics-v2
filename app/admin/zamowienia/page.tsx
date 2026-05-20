@@ -1,4 +1,8 @@
 import { db } from "@/lib/db";
+}
+export const dynamic = "force-dynamic";
+
+import { db } from "@/lib/db";
 import Link from "next/link";
 
 const STATUS_COLORS: Record<string, string> = {

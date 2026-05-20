@@ -1,4 +1,8 @@
 import { db } from "@/lib/db";
+}
+export const dynamic = "force-dynamic";
+
+import { db } from "@/lib/db";
 import Link from "next/link";
 import { Package, ShoppingBag, Users, TrendingUp } from "lucide-react";
 

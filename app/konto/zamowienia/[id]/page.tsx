@@ -1,4 +1,8 @@
 import { notFound, redirect } from "next/navigation";
+}
+export const dynamic = "force-dynamic";
+
+import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft, Package, MapPin, CreditCard, Clock } from "lucide-react";
 import { auth } from "@/auth";

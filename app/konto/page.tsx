@@ -1,4 +1,8 @@
 import { auth } from "@/auth";
+}
+export const dynamic = "force-dynamic";
+
+import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import Link from "next/link";
 import { Package, ChevronRight, ShoppingBag, User } from "lucide-react";
