@@ -121,17 +121,26 @@ export default function Header() {
             alt="Unique Ceramics"
             width={40}
             height={40}
-            className={`h-10 w-auto transition-all duration-500 ${
+            className={`h-9 w-auto transition-all duration-500 ${
               scrolled ? "" : "brightness-0 invert"
             }`}
           />
-          <span
-            className={`hidden sm:block font-serif text-xl tracking-wide transition-colors duration-500 ${
-              scrolled ? "text-espresso group-hover:text-clay" : "text-cream group-hover:text-sand"
-            }`}
-          >
-            Unique Ceramics
-          </span>
+          <div className="flex flex-col leading-none">
+            <span
+              className={`font-serif text-base sm:text-lg tracking-wide transition-colors duration-500 ${
+                scrolled ? "text-espresso group-hover:text-clay" : "text-cream group-hover:text-sand"
+              }`}
+            >
+              Unique Ceramics
+            </span>
+            <span
+              className={`text-[9px] tracking-[0.18em] uppercase mt-0.5 transition-colors duration-500 ${
+                scrolled ? "text-charcoal/50" : "text-cream/60"
+              }`}
+            >
+              Ręcznie tworzone z sercem
+            </span>
+          </div>
         </Link>
 
         {/* Nav desktop */}
