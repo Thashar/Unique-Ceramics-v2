@@ -6,6 +6,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { ChevronLeft, ShoppingBag, Package, RefreshCw, Check } from "lucide-react";
 import { useCart } from "@/lib/cart";
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
 
 type Product = {
   id: string;
@@ -61,15 +63,20 @@ export default function ProductPage() {
 
   if (loading) {
     return (
-      <div className="min-h-[100svh] bg-warm-white pt-32 flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-clay border-t-transparent rounded-full animate-spin" />
-      </div>
+      <>
+        <Header />
+        <div className="min-h-[100svh] bg-warm-white pt-32 flex items-center justify-center">
+          <div className="w-8 h-8 border-2 border-clay border-t-transparent rounded-full animate-spin" />
+        </div>
+      </>
     );
   }
 
   if (!product) notFound();
 
   return (
+    <>
+    <Header />
     <div className="min-h-[100svh] bg-warm-white">
       <div className="max-w-7xl mx-auto px-6 lg:px-10 pt-28 pb-4">
         <Link
@@ -205,5 +212,7 @@ export default function ProductPage() {
         </div>
       )}
     </div>
+    <Footer />
+    </>
   );
 }

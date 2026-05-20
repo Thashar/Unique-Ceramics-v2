@@ -1,13 +1,25 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { featuredProducts } from "@/lib/data";
+import { db } from "@/lib/db";
 import ProductCard from "@/components/ui/ProductCard";
 
-export default function FeaturedProducts() {
+export default async function FeaturedProducts() {
+  let products: Awaited<ReturnType<typeof db.product.findMany>> = [];
+  try {
+    products = await db.product.findMany({
+      where: { featured: true, active: true },
+      orderBy: { createdAt: "desc" },
+      take: 4,
+    });
+  } catch {
+    // Baza niedostępna — sekcja nie wyświetla produktów
+  }
+
+  if (products.length === 0) return null;
+
   return (
     <section className="py-28 px-6 lg:px-10 bg-warm-white">
       <div className="max-w-7xl mx-auto">
-        {/* Nagłówek sekcji */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
           <div>
             <p className="text-xs tracking-[0.3em] uppercase text-clay mb-3">Kolekcja</p>
@@ -28,9 +40,8 @@ export default function FeaturedProducts() {
           </Link>
         </div>
 
-        {/* Siatka produktów */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          {featuredProducts.map((product) => (
+          {products.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>

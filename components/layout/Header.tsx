@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { ShoppingBag, Menu, X, User, Package, LogOut, ChevronDown } from "lucide-react";
 import { useCart } from "@/lib/cart";
@@ -28,7 +29,7 @@ function AccountDropdown({ scrolled }: { scrolled: boolean }) {
   }, []);
 
   const iconClass = `transition-colors duration-500 ${
-    scrolled ? "text-espresso hover:text-clay" : "text-cream hover:text-sand"
+    dark ? "text-espresso hover:text-clay" : "text-cream hover:text-sand"
   }`;
 
   if (!session) {
@@ -98,6 +99,11 @@ export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const { count } = useCart();
+  const pathname = usePathname();
+  const isHome = pathname === "/";
+
+  // Na stronach innych niż główna header zawsze ma ciemny styl
+  const dark = scrolled || !isHome;
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 40);
@@ -108,7 +114,7 @@ export default function Header() {
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        scrolled
+        dark
           ? "bg-warm-white/95 backdrop-blur-md shadow-sm"
           : "bg-transparent"
       }`}
@@ -122,20 +128,20 @@ export default function Header() {
             width={40}
             height={40}
             className={`h-9 w-auto transition-all duration-500 ${
-              scrolled ? "" : "brightness-0 invert"
+              dark ? "" : "brightness-0 invert"
             }`}
           />
           <div className="flex flex-col leading-none">
             <span
               className={`font-serif text-base sm:text-lg tracking-wide transition-colors duration-500 ${
-                scrolled ? "text-espresso group-hover:text-clay" : "text-cream group-hover:text-sand"
+                dark ? "text-espresso group-hover:text-clay" : "text-cream group-hover:text-sand"
               }`}
             >
               Unique Ceramics
             </span>
             <span
               className={`text-[9px] tracking-[0.18em] uppercase mt-0.5 transition-colors duration-500 ${
-                scrolled ? "text-charcoal/50" : "text-cream/60"
+                dark ? "text-charcoal/50" : "text-cream/60"
               }`}
             >
               Ręcznie tworzone z sercem
@@ -150,7 +156,7 @@ export default function Header() {
               key={link.href}
               href={link.href}
               className={`text-sm tracking-widest uppercase transition-colors duration-500 ${
-                scrolled ? "text-charcoal hover:text-clay" : "text-cream/80 hover:text-cream"
+                dark ? "text-charcoal hover:text-clay" : "text-cream/80 hover:text-cream"
               }`}
             >
               {link.label}
@@ -163,7 +169,7 @@ export default function Header() {
           <Link
             href="/koszyk"
             className={`relative p-2 transition-colors duration-500 ${
-              scrolled ? "text-espresso hover:text-clay" : "text-cream hover:text-sand"
+              dark ? "text-espresso hover:text-clay" : "text-cream hover:text-sand"
             }`}
             aria-label="Koszyk"
           >
@@ -175,11 +181,11 @@ export default function Header() {
             )}
           </Link>
 
-          <AccountDropdown scrolled={scrolled} />
+          <AccountDropdown scrolled={dark} />
 
           <button
             className={`md:hidden p-2 transition-colors duration-500 ${
-              scrolled ? "text-espresso hover:text-clay" : "text-cream hover:text-sand"
+              dark ? "text-espresso hover:text-clay" : "text-cream hover:text-sand"
             }`}
             onClick={() => setMenuOpen(!menuOpen)}
             aria-label="Menu"

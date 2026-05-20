@@ -3,9 +3,27 @@
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { type Product, formatPrice } from "@/lib/data";
+import { ShoppingBag } from "lucide-react";
 
-export default function ProductCard({ product }: { product: Product }) {
+type ProductCardProduct = {
+  id: string;
+  slug: string;
+  name: string;
+  category: string;
+  price: number;
+  images: string[];
+  stock: number;
+};
+
+function formatPrice(price: number) {
+  return new Intl.NumberFormat("pl-PL", {
+    style: "currency",
+    currency: "PLN",
+    minimumFractionDigits: 0,
+  }).format(price);
+}
+
+export default function ProductCard({ product }: { product: ProductCardProduct }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 24 }}
@@ -16,13 +34,19 @@ export default function ProductCard({ product }: { product: Product }) {
       <Link href={`/sklep/${product.slug}`} className="group block">
         {/* Zdjęcie */}
         <div className="relative aspect-[4/5] overflow-hidden bg-mist rounded-sm mb-5">
-          <Image
-            src={product.images[0]}
-            alt={product.name}
-            fill
-            className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          />
+          {product.images[0] ? (
+            <Image
+              src={product.images[0]}
+              alt={product.name}
+              fill
+              className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-cream">
+              <ShoppingBag size={40} strokeWidth={1} className="text-sand" />
+            </div>
+          )}
           {product.stock <= 2 && product.stock > 0 && (
             <span className="absolute top-3 left-3 bg-terracotta text-warm-white text-[11px] tracking-wider uppercase px-2.5 py-1 rounded-sm">
               Ostatnie sztuki
