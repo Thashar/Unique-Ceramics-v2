@@ -7,7 +7,7 @@ import { ArrowRight } from "lucide-react";
 
 export default function Hero() {
   return (
-    <section className="relative min-h-screen flex items-center overflow-hidden">
+    <section className="relative min-h-[100svh] flex items-center overflow-hidden">
       {/* Tło */}
       <div className="absolute inset-0">
         <Image
@@ -43,7 +43,7 @@ export default function Hero() {
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.9, delay: 0.55, ease: [0.22, 1, 0.36, 1] }}
-            className="font-serif text-5xl md:text-6xl lg:text-7xl text-cream leading-[1.1] mb-8"
+            className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-cream leading-[1.1] mb-8"
           >
             Ręcznie tworzone
             <br />

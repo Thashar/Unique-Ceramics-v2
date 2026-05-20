@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { ShoppingBag, Menu, X, User, Package, LogOut, ChevronDown } from "lucide-react";
@@ -13,7 +14,7 @@ const navLinks = [
   { href: "/kontakt", label: "Kontakt" },
 ];
 
-function AccountDropdown() {
+function AccountDropdown({ scrolled }: { scrolled: boolean }) {
   const { data: session } = useSession();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -26,13 +27,13 @@ function AccountDropdown() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
+  const iconClass = `transition-colors duration-500 ${
+    scrolled ? "text-espresso hover:text-clay" : "text-cream hover:text-sand"
+  }`;
+
   if (!session) {
     return (
-      <Link
-        href="/logowanie"
-        className="p-2 text-espresso hover:text-clay transition-colors"
-        aria-label="Zaloguj się"
-      >
+      <Link href="/logowanie" className={`p-2 ${iconClass}`} aria-label="Zaloguj się">
         <User size={22} strokeWidth={1.5} />
       </Link>
     );
@@ -42,7 +43,7 @@ function AccountDropdown() {
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-1.5 p-2 text-espresso hover:text-clay transition-colors"
+        className={`flex items-center gap-1.5 p-2 ${iconClass}`}
         aria-label="Konto"
       >
         {session.user?.image ? (
@@ -114,11 +115,23 @@ export default function Header() {
     >
       <div className="max-w-7xl mx-auto px-6 lg:px-10 h-20 flex items-center justify-between">
         {/* Logo */}
-        <Link
-          href="/"
-          className="font-serif text-xl tracking-wide text-espresso hover:text-clay transition-colors"
-        >
-          Unique Ceramics
+        <Link href="/" className="flex items-center gap-3 group">
+          <Image
+            src="/images/logo.png"
+            alt="Unique Ceramics"
+            width={40}
+            height={40}
+            className={`h-10 w-auto transition-all duration-500 ${
+              scrolled ? "" : "brightness-0 invert"
+            }`}
+          />
+          <span
+            className={`hidden sm:block font-serif text-xl tracking-wide transition-colors duration-500 ${
+              scrolled ? "text-espresso group-hover:text-clay" : "text-cream group-hover:text-sand"
+            }`}
+          >
+            Unique Ceramics
+          </span>
         </Link>
 
         {/* Nav desktop */}
@@ -127,7 +140,9 @@ export default function Header() {
             <Link
               key={link.href}
               href={link.href}
-              className="text-sm tracking-widest uppercase text-charcoal hover:text-clay transition-colors"
+              className={`text-sm tracking-widest uppercase transition-colors duration-500 ${
+                scrolled ? "text-charcoal hover:text-clay" : "text-cream/80 hover:text-cream"
+              }`}
             >
               {link.label}
             </Link>
@@ -138,7 +153,9 @@ export default function Header() {
         <div className="flex items-center gap-1">
           <Link
             href="/koszyk"
-            className="relative p-2 text-espresso hover:text-clay transition-colors"
+            className={`relative p-2 transition-colors duration-500 ${
+              scrolled ? "text-espresso hover:text-clay" : "text-cream hover:text-sand"
+            }`}
             aria-label="Koszyk"
           >
             <ShoppingBag size={22} strokeWidth={1.5} />
@@ -149,10 +166,12 @@ export default function Header() {
             )}
           </Link>
 
-          <AccountDropdown />
+          <AccountDropdown scrolled={scrolled} />
 
           <button
-            className="md:hidden p-2 text-espresso hover:text-clay transition-colors"
+            className={`md:hidden p-2 transition-colors duration-500 ${
+              scrolled ? "text-espresso hover:text-clay" : "text-cream hover:text-sand"
+            }`}
             onClick={() => setMenuOpen(!menuOpen)}
             aria-label="Menu"
           >
