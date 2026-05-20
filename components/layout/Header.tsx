@@ -29,7 +29,7 @@ function AccountDropdown({ scrolled }: { scrolled: boolean }) {
   }, []);
 
   const iconClass = `transition-colors duration-500 ${
-    dark ? "text-espresso hover:text-clay" : "text-cream hover:text-sand"
+    scrolled ? "text-espresso hover:text-clay" : "text-cream hover:text-sand"
   }`;
 
   if (!session) {
