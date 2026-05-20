@@ -11,7 +11,7 @@ export default function WorkshopsTeaser() {
       {/* Tło */}
       <div className="absolute inset-0">
         <Image
-          src="https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=1600&q=80"
+          src="/images/warsztaty-photo.jpg"
           alt="Warsztaty ceramiczne"
           fill
           className="object-cover"

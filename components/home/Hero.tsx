@@ -11,7 +11,7 @@ export default function Hero() {
       {/* Tło */}
       <div className="absolute inset-0">
         <Image
-          src="https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=1600&q=85"
+          src="/images/hero.jpg"
           alt="Ceramika ręcznie robiona"
           fill
           priority

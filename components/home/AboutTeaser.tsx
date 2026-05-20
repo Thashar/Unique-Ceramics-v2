@@ -18,7 +18,7 @@ export default function AboutTeaser() {
           className="relative aspect-[4/5] overflow-hidden rounded-sm"
         >
           <Image
-            src="https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?w=900&q=85"
+            src="/images/about-photo.jpg"
             alt="Pracownia ceramiczna"
             fill
             className="object-cover"

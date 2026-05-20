@@ -98,7 +98,7 @@ export default function WorkshopsPage() {
         {/* Hero */}
         <div className="relative h-[55vh] overflow-hidden">
           <Image
-            src="https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=1600&q=85"
+            src="/images/warsztaty-photo.jpg"
             alt="Warsztaty ceramiczne"
             fill
             priority

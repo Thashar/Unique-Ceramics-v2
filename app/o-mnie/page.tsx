@@ -18,7 +18,7 @@ export default function AboutPage() {
         {/* Hero */}
         <div className="relative h-[55vh] overflow-hidden">
           <Image
-            src="https://images.unsplash.com/photo-1607349913338-fca6f7fc42d0?w=1600&q=85"
+            src="/images/about-photo.jpg"
             alt="Pracownia ceramiczna"
             fill
             priority
@@ -86,7 +86,7 @@ export default function AboutPage() {
             <div className="lg:col-span-5">
               <div className="relative aspect-[3/4] overflow-hidden rounded-sm">
                 <Image
-                  src="https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?w=800&q=85"
+                  src="/images/about-photo.jpg"
                   alt="Przy pracy"
                   fill
                   className="object-cover"
