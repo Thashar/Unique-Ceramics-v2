@@ -26,13 +26,18 @@ export default async function ShopPage({
 }) {
   const { kategoria } = await searchParams;
 
-  const products = await db.product.findMany({
-    where: {
-      active: true,
-      ...(kategoria && kategoria !== "wszystkie" ? { category: kategoria } : {}),
-    },
-    orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
-  });
+  let products: Awaited<ReturnType<typeof db.product.findMany>> = [];
+  try {
+    products = await db.product.findMany({
+      where: {
+        active: true,
+        ...(kategoria && kategoria !== "wszystkie" ? { category: kategoria } : {}),
+      },
+      orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
+    });
+  } catch (e) {
+    console.error("DB error in /sklep:", e);
+  }
 
   return (
     <div className="min-h-screen bg-warm-white">
