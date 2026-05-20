@@ -6,7 +6,8 @@ export default auth((req) => {
 
   const isProtected =
     nextUrl.pathname.startsWith("/konto") ||
-    nextUrl.pathname.startsWith("/zamowienie");
+    nextUrl.pathname.startsWith("/zamowienie") ||
+    nextUrl.pathname.startsWith("/admin");
 
   if (isProtected && !session) {
     const loginUrl = new URL("/logowanie", nextUrl.origin);
@@ -18,5 +19,5 @@ export default auth((req) => {
 });
 
 export const config = {
-  matcher: ["/konto/:path*", "/zamowienie/:path*"],
+  matcher: ["/konto/:path*", "/zamowienie/:path*", "/admin/:path*"],
 };

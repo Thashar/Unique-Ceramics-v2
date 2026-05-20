@@ -1,62 +1,117 @@
-import type { Metadata } from "next";
-import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
-import ProductCard from "@/components/ui/ProductCard";
-import { products, categories } from "@/lib/data";
+import { db } from "@/lib/db";
+import Link from "next/link";
+import Image from "next/image";
+import { ShoppingBag } from "lucide-react";
 
-export const metadata: Metadata = {
-  title: "Sklep",
+export const revalidate = 60;
+
+export const metadata = {
+  title: "Sklep | Unique Ceramics",
   description: "Ręcznie robiona ceramika użytkowa i dekoracyjna. Miski, kubki, talerze, wazony.",
 };
 
-export default function ShopPage({
+const CATEGORIES = [
+  { value: "wszystkie", label: "Wszystkie" },
+  { value: "kubki", label: "Kubki" },
+  { value: "miski", label: "Miski" },
+  { value: "wazy", label: "Wazy" },
+  { value: "talerze", label: "Talerze" },
+  { value: "inne", label: "Inne" },
+];
+
+export default async function ShopPage({
   searchParams,
 }: {
   searchParams: Promise<{ kategoria?: string }>;
 }) {
+  const { kategoria } = await searchParams;
+
+  const products = await db.product.findMany({
+    where: {
+      active: true,
+      ...(kategoria && kategoria !== "wszystkie" ? { category: kategoria } : {}),
+    },
+    orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
+  });
+
   return (
-    <>
-      <Header />
-      <main className="flex-1 pt-20">
-        {/* Nagłówek */}
-        <div className="bg-cream px-6 lg:px-10 py-20">
-          <div className="max-w-7xl mx-auto">
-            <p className="text-xs tracking-[0.3em] uppercase text-clay mb-3">Kolekcja</p>
-            <h1 className="font-serif text-5xl md:text-6xl text-espresso">Sklep</h1>
-          </div>
-        </div>
+    <div className="min-h-screen bg-warm-white">
+      <div className="bg-cream pt-32 pb-16 px-6 text-center">
+        <p className="text-xs tracking-[0.3em] uppercase text-clay mb-4">Kolekcja</p>
+        <h1 className="font-serif text-5xl md:text-6xl text-espresso">Sklep</h1>
+        <p className="mt-4 text-charcoal/60 max-w-md mx-auto">
+          Każdy przedmiot jest unikalny — tworzony ręcznie z lokalnej gliny.
+        </p>
+      </div>
 
-        {/* Filtry */}
-        <div className="sticky top-20 z-40 bg-warm-white/95 backdrop-blur-md border-b border-sand">
-          <div className="max-w-7xl mx-auto px-6 lg:px-10 py-4 flex items-center gap-6 overflow-x-auto">
-            <a
-              href="/sklep"
-              className="text-xs tracking-widest uppercase whitespace-nowrap text-clay border-b border-clay pb-0.5"
+      <div className="border-b border-sand bg-warm-white sticky top-20 z-30">
+        <div className="max-w-7xl mx-auto px-6 lg:px-10 flex gap-2 overflow-x-auto py-4 no-scrollbar">
+          {CATEGORIES.map((cat) => (
+            <Link
+              key={cat.value}
+              href={cat.value === "wszystkie" ? "/sklep" : `/sklep?kategoria=${cat.value}`}
+              className={`shrink-0 px-5 py-2 text-xs tracking-widest uppercase transition-colors ${
+                (kategoria ?? "wszystkie") === cat.value
+                  ? "bg-espresso text-warm-white"
+                  : "bg-cream text-charcoal hover:bg-sand"
+              }`}
             >
-              Wszystkie
-            </a>
-            {categories.map((cat) => (
-              <a
-                key={cat.id}
-                href={`/sklep?kategoria=${cat.slug}`}
-                className="text-xs tracking-widest uppercase whitespace-nowrap text-charcoal/60 hover:text-clay transition-colors"
-              >
-                {cat.name}
-              </a>
-            ))}
-          </div>
+              {cat.label}
+            </Link>
+          ))}
         </div>
+      </div>
 
-        {/* Siatka produktów */}
-        <div className="max-w-7xl mx-auto px-6 lg:px-10 py-20">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
+      <div className="max-w-7xl mx-auto px-6 lg:px-10 py-16">
+        {products.length === 0 ? (
+          <div className="text-center py-24">
+            <ShoppingBag size={48} strokeWidth={1} className="mx-auto text-sand mb-6" />
+            <p className="font-serif text-2xl text-espresso mb-2">Brak produktów</p>
+            <p className="text-charcoal/50 text-sm">
+              {kategoria ? "Brak produktów w tej kategorii." : "Sklep jest w przygotowaniu."}
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
             {products.map((product) => (
-              <ProductCard key={product.id} product={product} />
+              <Link key={product.id} href={`/sklep/${product.slug}`} className="group">
+                <div className="aspect-square bg-cream overflow-hidden mb-4 relative">
+                  {product.images[0] ? (
+                    <Image
+                      src={product.images[0]}
+                      alt={product.name}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-500"
+                      sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <ShoppingBag size={40} strokeWidth={1} className="text-sand" />
+                    </div>
+                  )}
+                  {product.featured && (
+                    <span className="absolute top-3 left-3 bg-terracotta text-warm-white text-[10px] tracking-widest uppercase px-2 py-1">
+                      Wyróżniony
+                    </span>
+                  )}
+                  {product.stock === 0 && (
+                    <div className="absolute inset-0 bg-warm-white/70 flex items-center justify-center">
+                      <span className="text-xs tracking-widest uppercase text-charcoal/50">Niedostępny</span>
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs tracking-widest uppercase text-clay mb-1">{product.category}</p>
+                <h2 className="font-serif text-lg text-espresso group-hover:text-clay transition-colors mb-1">
+                  {product.name}
+                </h2>
+                <p className="text-sm text-charcoal/70">
+                  {product.price.toFixed(2).replace(".", ",")} zł
+                </p>
+              </Link>
             ))}
           </div>
-        </div>
-      </main>
-      <Footer />
-    </>
+        )}
+      </div>
+    </div>
   );
 }

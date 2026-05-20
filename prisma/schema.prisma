@@ -102,6 +102,21 @@ model OrderItem {
   order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
 }
 
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  price       Float
+  images      String[]
+  category    String   @default("inne")
+  stock       Int      @default(0)
+  featured    Boolean  @default(false)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
 enum Role {

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { ShoppingBag, Menu, X, User, Package, LogOut, ChevronDown } from "lucide-react";
+import { useCart } from "@/lib/cart";
 
 const navLinks = [
   { href: "/sklep", label: "Sklep" },
@@ -95,6 +96,7 @@ function AccountDropdown() {
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const { count } = useCart();
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 40);
@@ -140,9 +142,11 @@ export default function Header() {
             aria-label="Koszyk"
           >
             <ShoppingBag size={22} strokeWidth={1.5} />
-            <span className="absolute top-1 right-1 w-4 h-4 bg-terracotta text-warm-white text-[10px] rounded-full flex items-center justify-center font-medium leading-none">
-              0
-            </span>
+            {count > 0 && (
+              <span className="absolute top-1 right-1 w-4 h-4 bg-terracotta text-warm-white text-[10px] rounded-full flex items-center justify-center font-medium leading-none">
+                {count > 9 ? "9+" : count}
+              </span>
+            )}
           </Link>
 
           <AccountDropdown />
