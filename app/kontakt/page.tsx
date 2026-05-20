@@ -1,0 +1,177 @@
+import type { Metadata } from "next";
+import { Phone, Mail, Instagram, Clock, MapPin } from "lucide-react";
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
+
+export const metadata: Metadata = {
+  title: "Kontakt",
+  description: "Skontaktuj się z Unique Ceramics. Telefon, e-mail, Instagram.",
+};
+
+export default function ContactPage() {
+  return (
+    <>
+      <Header />
+      <main className="flex-1 pt-20">
+        {/* Nagłówek */}
+        <div className="bg-cream px-6 lg:px-10 py-20">
+          <div className="max-w-7xl mx-auto">
+            <p className="text-xs tracking-[0.3em] uppercase text-clay mb-3">Napisz do mnie</p>
+            <h1 className="font-serif text-5xl md:text-6xl text-espresso">Kontakt</h1>
+          </div>
+        </div>
+
+        {/* Siatka */}
+        <div className="bg-warm-white py-20 px-6 lg:px-10">
+          <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20">
+            {/* Dane kontaktowe */}
+            <div>
+              <h2 className="font-serif text-2xl text-espresso mb-8">Dane kontaktowe</h2>
+              <div className="space-y-6">
+                <a
+                  href="tel:+48668443706"
+                  className="flex items-start gap-4 text-charcoal/80 hover:text-clay transition-colors group"
+                >
+                  <div className="w-10 h-10 bg-cream rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-terracotta/10 transition-colors">
+                    <Phone size={18} strokeWidth={1.5} className="text-clay" />
+                  </div>
+                  <div>
+                    <p className="text-xs tracking-widest uppercase text-clay mb-1">Telefon</p>
+                    <p className="text-lg">+48 668 443 706</p>
+                  </div>
+                </a>
+
+                <a
+                  href="mailto:kontakt@uniqueceramics.pl"
+                  className="flex items-start gap-4 text-charcoal/80 hover:text-clay transition-colors group"
+                >
+                  <div className="w-10 h-10 bg-cream rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-terracotta/10 transition-colors">
+                    <Mail size={18} strokeWidth={1.5} className="text-clay" />
+                  </div>
+                  <div>
+                    <p className="text-xs tracking-widest uppercase text-clay mb-1">E-mail</p>
+                    <p className="text-lg">kontakt@uniqueceramics.pl</p>
+                  </div>
+                </a>
+
+                <a
+                  href="https://instagram.com/unique.ceramics"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-start gap-4 text-charcoal/80 hover:text-clay transition-colors group"
+                >
+                  <div className="w-10 h-10 bg-cream rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-terracotta/10 transition-colors">
+                    <Instagram size={18} strokeWidth={1.5} className="text-clay" />
+                  </div>
+                  <div>
+                    <p className="text-xs tracking-widest uppercase text-clay mb-1">Instagram</p>
+                    <p className="text-lg">@unique.ceramics</p>
+                  </div>
+                </a>
+
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 bg-cream rounded-full flex items-center justify-center flex-shrink-0">
+                    <Clock size={18} strokeWidth={1.5} className="text-clay" />
+                  </div>
+                  <div>
+                    <p className="text-xs tracking-widest uppercase text-clay mb-1">Czas odpowiedzi</p>
+                    <p className="text-charcoal/70 text-sm leading-relaxed">
+                      Odpowiadam na wiadomości w ciągu 1–2 dni roboczych.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-12 p-8 bg-cream">
+                <h3 className="font-serif text-xl text-espresso mb-4">Zamówienie indywidualne</h3>
+                <p className="text-charcoal/70 text-sm leading-relaxed mb-6">
+                  Tworzę ceramikę na zamówienie — zestawy ślubne, prezenty firmowe,
+                  naczynia z personalizacją. Czas realizacji: 4+ tygodnie.
+                </p>
+                <a
+                  href="/zamowienie-indywidualne"
+                  className="inline-block text-xs tracking-widest uppercase text-clay border-b border-clay pb-0.5 hover:text-espresso hover:border-espresso transition-colors"
+                >
+                  Wypełnij formularz
+                </a>
+              </div>
+            </div>
+
+            {/* Formularz */}
+            <div>
+              <h2 className="font-serif text-2xl text-espresso mb-8">Napisz wiadomość</h2>
+              <form className="space-y-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div>
+                    <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">
+                      Imię
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors"
+                      placeholder="Twoje imię"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">
+                      Telefon
+                    </label>
+                    <input
+                      type="tel"
+                      className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors"
+                      placeholder="+48"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">
+                    E-mail *
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors"
+                    placeholder="twoj@email.pl"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">
+                    Temat
+                  </label>
+                  <select className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors">
+                    <option value="">Wybierz temat</option>
+                    <option>Zamówienie ze sklepu</option>
+                    <option>Zamówienie indywidualne</option>
+                    <option>Warsztaty</option>
+                    <option>Inne</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">
+                    Wiadomość *
+                  </label>
+                  <textarea
+                    required
+                    rows={5}
+                    className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors resize-none"
+                    placeholder="Jak mogę pomóc?"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="w-full bg-terracotta hover:bg-clay text-warm-white text-xs tracking-widest uppercase py-4 transition-colors"
+                >
+                  Wyślij wiadomość
+                </button>
+                <p className="text-xs text-charcoal/40 text-center">
+                  Formularz jest tylko prezentacją — w wersji produkcyjnej będzie podłączony do API.
+                </p>
+              </form>
+            </div>
+          </div>
+        </div>
+      </main>
+      <Footer />
+    </>
+  );
+}
