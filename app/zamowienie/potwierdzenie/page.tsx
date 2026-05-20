@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { CheckCircle } from "lucide-react";
 
 export default async function ConfirmationPage({
@@ -9,7 +9,7 @@ export default async function ConfirmationPage({
   const { id } = await searchParams;
 
   return (
-    <div className="min-h-screen bg-warm-white flex items-center justify-center px-6">
+    <div className="min-h-[100svh] bg-warm-white flex items-center justify-center px-6">
       <div className="max-w-md w-full text-center">
         <CheckCircle size={64} strokeWidth={1} className="mx-auto text-green-500 mb-8" />
         <h1 className="font-serif text-4xl text-espresso mb-4">Dziękuję za zamówienie!</h1>

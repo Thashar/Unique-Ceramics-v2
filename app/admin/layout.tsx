@@ -1,4 +1,4 @@
-import { auth } from "@/auth";
+﻿import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { LayoutDashboard, Package, ShoppingBag, LogOut } from "lucide-react";
@@ -11,7 +11,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
 
   return (
-    <div className="min-h-screen bg-warm-white flex">
+    <div className="min-h-[100svh] bg-warm-white flex">
       {/* Sidebar */}
       <aside className="w-56 bg-espresso text-warm-white flex flex-col fixed inset-y-0 left-0 z-40">
         <div className="p-6 border-b border-white/10">

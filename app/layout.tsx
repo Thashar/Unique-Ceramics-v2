@@ -35,7 +35,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="pl" className={`${playfair.variable} ${inter.variable} h-full`}>
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-[100svh] flex flex-col">
           <Providers>{children}</Providers>
         </body>
     </html>

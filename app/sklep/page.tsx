@@ -1,4 +1,4 @@
-import { db } from "@/lib/db";
+﻿import { db } from "@/lib/db";
 import Link from "next/link";
 import Image from "next/image";
 import { ShoppingBag } from "lucide-react";
@@ -46,7 +46,7 @@ export default async function ShopPage({
   return (
     <>
       <Header />
-      <div className="min-h-screen bg-warm-white pt-20">
+      <div className="min-h-[100svh] bg-warm-white pt-20">
       <div className="bg-cream pt-32 pb-16 px-6 text-center">
         <p className="text-xs tracking-[0.3em] uppercase text-clay mb-4">Kolekcja</p>
         <h1 className="font-serif text-5xl md:text-6xl text-espresso">Sklep</h1>

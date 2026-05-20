@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import Image from "next/image";
@@ -13,7 +13,7 @@ export default function CartPage() {
 
   if (items.length === 0) {
     return (
-      <div className="min-h-screen bg-warm-white">
+      <div className="min-h-[100svh] bg-warm-white">
         <div className="bg-cream pt-32 pb-12 px-6 text-center">
           <h1 className="font-serif text-5xl text-espresso">Koszyk</h1>
         </div>
@@ -34,7 +34,7 @@ export default function CartPage() {
   }
 
   return (
-    <div className="min-h-screen bg-warm-white">
+    <div className="min-h-[100svh] bg-warm-white">
       <div className="bg-cream pt-32 pb-12 px-6 text-center">
         <h1 className="font-serif text-5xl text-espresso">Koszyk</h1>
         <p className="text-charcoal/50 mt-2 text-sm">{items.length} {items.length === 1 ? "produkt" : "produkty"}</p>

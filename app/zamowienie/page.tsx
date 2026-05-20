@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -34,7 +34,7 @@ export default function CheckoutPage() {
 
   if (items.length === 0) {
     return (
-      <div className="min-h-screen bg-warm-white flex items-center justify-center">
+      <div className="min-h-[100svh] bg-warm-white flex items-center justify-center">
         <div className="text-center">
           <p className="font-serif text-2xl text-espresso mb-4">Koszyk jest pusty</p>
           <Link href="/sklep" className="text-clay hover:text-espresso underline">Przejdź do sklepu</Link>
@@ -77,7 +77,7 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen bg-warm-white">
+    <div className="min-h-[100svh] bg-warm-white">
       <div className="bg-cream pt-32 pb-12 px-6 text-center">
         <h1 className="font-serif text-5xl text-espresso">Zamówienie</h1>
       </div>

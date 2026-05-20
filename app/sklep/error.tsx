@@ -1,8 +1,8 @@
-"use client";
+﻿"use client";
 
 export default function ShopError({ error, reset }: { error: Error; reset: () => void }) {
   return (
-    <div className="min-h-screen bg-warm-white flex items-center justify-center px-6">
+    <div className="min-h-[100svh] bg-warm-white flex items-center justify-center px-6">
       <div className="text-center max-w-md">
         <p className="text-xs tracking-[0.3em] uppercase text-clay mb-4">Błąd</p>
         <h1 className="font-serif text-3xl text-espresso mb-4">Nie można wczytać sklepu</h1>

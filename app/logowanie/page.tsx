@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { Suspense, useState } from "react";
 import Link from "next/link";
@@ -130,7 +130,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen bg-cream flex items-center justify-center px-6 py-20">
+    <div className="min-h-[100svh] bg-cream flex items-center justify-center px-6 py-20">
       <div className="w-full max-w-md">
         <div className="text-center mb-10">
           <Link href="/" className="font-serif text-2xl text-espresso hover:text-clay transition-colors">

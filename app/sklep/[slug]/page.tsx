@@ -61,7 +61,7 @@ export default function ProductPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-warm-white pt-32 flex items-center justify-center">
+      <div className="min-h-[100svh] bg-warm-white pt-32 flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-clay border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -70,7 +70,7 @@ export default function ProductPage() {
   if (!product) notFound();
 
   return (
-    <div className="min-h-screen bg-warm-white">
+    <div className="min-h-[100svh] bg-warm-white">
       <div className="max-w-7xl mx-auto px-6 lg:px-10 pt-28 pb-4">
         <Link
           href="/sklep"
