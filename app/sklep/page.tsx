@@ -3,7 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ShoppingBag } from "lucide-react";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Sklep | Unique Ceramics",
