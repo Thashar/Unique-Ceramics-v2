@@ -64,6 +64,22 @@ export default function Footer() {
         </div>
       </div>
 
+      {/* Mapa */}
+      <div className="border-t border-sand/10 px-6 lg:px-10 py-10">
+        <p className="text-xs tracking-widest uppercase text-terracotta mb-5">Gdzie nas znajdziesz</p>
+        <div className="w-full overflow-hidden rounded-sm" style={{ height: "300px" }}>
+          <iframe
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2545.9841035768472!2d18.518208176464153!3d50.348201871572854!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x47113ca727ad0a73%3A0x3d10e6bfdf3c14cc!2sFamilijna%2023%2C%2044-164%20Kleszcz%C3%B3w!5e0!3m2!1spl!2spl!4v1779345180945!5m2!1spl!2spl"
+            width="100%"
+            height="100%"
+            style={{ border: 0 }}
+            allowFullScreen
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+          />
+        </div>
+      </div>
+
       <div className="border-t border-sand/10 px-6 lg:px-10 py-5">
         <p className="text-center text-xs text-sand/30">
           © {new Date().getFullYear()} Unique Ceramics. Wszelkie prawa zastrzeżone.
