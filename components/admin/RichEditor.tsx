@@ -1,8 +1,6 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useRef } from "react";
-import type { Jodit } from "jodit/types";
 
 const JoditEditor = dynamic(() => import("jodit-react"), { ssr: false });
 
@@ -32,12 +30,9 @@ interface Props {
 }
 
 export default function RichEditor({ value, onChange }: Props) {
-  const editorRef = useRef<Jodit | null>(null);
-
   return (
     <div className="rich-editor-wrap">
       <JoditEditor
-        ref={editorRef}
         value={value}
         config={JODIT_CONFIG}
         onBlur={(newContent) => onChange(newContent)}
