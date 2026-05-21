@@ -31,6 +31,7 @@ export default function ProductPage() {
   const [loading, setLoading] = useState(true);
   const [activeImage, setActiveImage] = useState(0);
   const [added, setAdded] = useState(false);
+  const [shipping, setShipping] = useState<{ cost: string; freeEnabled: string; freeFrom: string } | null>(null);
 
   useEffect(() => {
     fetch(`/api/products/${slug}`)
@@ -47,6 +48,12 @@ export default function ProductPage() {
       .then((r) => r.json())
       .then((data) => setRelated(data.slice(0, 3)));
   }, [product]);
+
+  useEffect(() => {
+    fetch("/api/public/shipping")
+      .then((r) => r.json())
+      .then(setShipping);
+  }, []);
 
   function handleAddToCart() {
     if (!product) return;
@@ -169,7 +176,15 @@ export default function ProductPage() {
           <div className="mt-10 space-y-4 border-t border-sand pt-8">
             <div className="flex items-start gap-3 text-sm text-charcoal/70">
               <Package size={16} strokeWidth={1.5} className="text-clay mt-0.5 flex-shrink-0" />
-              <p>Wysyłka 18 zł. Darmowa od 300 zł. Czas realizacji 2–4 dni robocze.</p>
+              {shipping ? (
+                <p>
+                  Wysyłka {shipping.cost} zł.
+                  {shipping.freeEnabled === "true" && ` Darmowa od ${shipping.freeFrom} zł.`}
+                  {" "}Czas realizacji 2–4 dni robocze.
+                </p>
+              ) : (
+                <p>Wysyłka 18 zł. Darmowa od 300 zł. Czas realizacji 2–4 dni robocze.</p>
+              )}
             </div>
             <div className="flex items-start gap-3 text-sm text-charcoal/70">
               <RefreshCw size={16} strokeWidth={1.5} className="text-clay mt-0.5 flex-shrink-0" />
