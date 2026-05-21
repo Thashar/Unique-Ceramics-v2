@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
+
+const RichEditor = dynamic(() => import("@/components/admin/RichEditor"), { ssr: false });
 
 type Tab = "regulamin" | "polityka" | "kontakt" | "wysylka";
 
@@ -63,7 +66,7 @@ export default function SettingsForm({ initial }: Props) {
   ];
 
   return (
-    <div className="max-w-2xl">
+    <div className="w-full max-w-2xl">
       {/* Toast */}
       {toast && (
         <div className="fixed top-6 right-6 z-50 bg-espresso text-cream text-sm px-5 py-3 shadow-lg">
@@ -72,12 +75,12 @@ export default function SettingsForm({ initial }: Props) {
       )}
 
       {/* Tab bar */}
-      <div className="flex gap-2 mb-6">
+      <div className="flex flex-wrap gap-2 mb-6">
         {tabs.map((t) => (
           <button
             key={t.id}
             onClick={() => setActiveTab(t.id)}
-            className={`px-5 py-2 text-xs tracking-widest uppercase transition-colors ${
+            className={`px-4 py-2 text-xs tracking-widest uppercase transition-colors whitespace-nowrap ${
               activeTab === t.id
                 ? "bg-espresso text-cream"
                 : "bg-cream text-charcoal hover:bg-sand"
@@ -91,20 +94,7 @@ export default function SettingsForm({ initial }: Props) {
       {/* Tab: Regulamin */}
       {activeTab === "regulamin" && (
         <div className="bg-cream p-6">
-          <p className="text-xs text-charcoal/50 mb-4 leading-relaxed">
-            Możesz używać HTML:{" "}
-            <code className="bg-sand px-1">&lt;p&gt;</code>,{" "}
-            <code className="bg-sand px-1">&lt;h2&gt;</code>,{" "}
-            <code className="bg-sand px-1">&lt;ul&gt;</code>,{" "}
-            <code className="bg-sand px-1">&lt;li&gt;</code>,{" "}
-            <code className="bg-sand px-1">&lt;strong&gt;</code>
-          </p>
-          <textarea
-            rows={20}
-            value={regulamin}
-            onChange={(e) => setRegulamin(e.target.value)}
-            className="w-full bg-warm-white border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm font-mono transition-colors resize-y"
-          />
+          <RichEditor value={regulamin} onChange={setRegulamin} />
           <button
             onClick={() => save([{ key: "regulamin", value: regulamin }])}
             className="mt-4 bg-espresso hover:bg-clay text-cream text-xs tracking-widest uppercase px-6 py-3 transition-colors"
@@ -117,20 +107,7 @@ export default function SettingsForm({ initial }: Props) {
       {/* Tab: Polityka prywatności */}
       {activeTab === "polityka" && (
         <div className="bg-cream p-6">
-          <p className="text-xs text-charcoal/50 mb-4 leading-relaxed">
-            Możesz używać HTML:{" "}
-            <code className="bg-sand px-1">&lt;p&gt;</code>,{" "}
-            <code className="bg-sand px-1">&lt;h2&gt;</code>,{" "}
-            <code className="bg-sand px-1">&lt;ul&gt;</code>,{" "}
-            <code className="bg-sand px-1">&lt;li&gt;</code>,{" "}
-            <code className="bg-sand px-1">&lt;strong&gt;</code>
-          </p>
-          <textarea
-            rows={20}
-            value={polityka}
-            onChange={(e) => setPolityka(e.target.value)}
-            className="w-full bg-warm-white border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm font-mono transition-colors resize-y"
-          />
+          <RichEditor value={polityka} onChange={setPolityka} />
           <button
             onClick={() => save([{ key: "polityka_prywatnosci", value: polityka }])}
             className="mt-4 bg-espresso hover:bg-clay text-cream text-xs tracking-widest uppercase px-6 py-3 transition-colors"
