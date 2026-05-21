@@ -133,14 +133,14 @@ export default function Header() {
           />
           <div className="flex flex-col leading-none">
             <span
-              className={`font-serif text-[1.75rem] leading-none tracking-wide uppercase transition-colors duration-500 ${
+              className={`font-serif text-base sm:text-lg font-semibold tracking-wide uppercase transition-colors duration-500 ${
                 dark ? "text-espresso group-hover:text-clay" : "text-cream group-hover:text-sand"
               }`}
             >
               Unique Ceramics
             </span>
             <span
-              className={`text-[7.5px] tracking-[0.18em] uppercase mt-1 transition-colors duration-500 ${
+              className={`text-[6.5px] tracking-[0.18em] uppercase mt-0.5 transition-colors duration-500 ${
                 dark ? "text-charcoal/40" : "text-cream/55"
               }`}
             >
