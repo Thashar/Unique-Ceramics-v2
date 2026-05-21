@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 
-type Tab = "regulamin" | "kontakt" | "wysylka";
+type Tab = "regulamin" | "polityka" | "kontakt" | "wysylka";
 
 interface Props {
   initial: {
     regulamin: string;
+    polityka_prywatnosci: string;
     contact_phone: string;
     contact_email: string;
     contact_instagram: string;
@@ -23,6 +24,9 @@ export default function SettingsForm({ initial }: Props) {
 
   // Regulamin
   const [regulamin, setRegulamin] = useState(initial.regulamin);
+
+  // Polityka prywatności
+  const [polityka, setPolityka] = useState(initial.polityka_prywatnosci);
 
   // Kontakt
   const [phone, setPhone] = useState(initial.contact_phone);
@@ -53,6 +57,7 @@ export default function SettingsForm({ initial }: Props) {
 
   const tabs: { id: Tab; label: string }[] = [
     { id: "regulamin", label: "Regulamin" },
+    { id: "polityka", label: "Polityka prywatności" },
     { id: "kontakt", label: "Kontakt" },
     { id: "wysylka", label: "Wysyłka" },
   ];
@@ -105,6 +110,32 @@ export default function SettingsForm({ initial }: Props) {
             className="mt-4 bg-espresso hover:bg-clay text-cream text-xs tracking-widest uppercase px-6 py-3 transition-colors"
           >
             Zapisz regulamin
+          </button>
+        </div>
+      )}
+
+      {/* Tab: Polityka prywatności */}
+      {activeTab === "polityka" && (
+        <div className="bg-cream p-6">
+          <p className="text-xs text-charcoal/50 mb-4 leading-relaxed">
+            Możesz używać HTML:{" "}
+            <code className="bg-sand px-1">&lt;p&gt;</code>,{" "}
+            <code className="bg-sand px-1">&lt;h2&gt;</code>,{" "}
+            <code className="bg-sand px-1">&lt;ul&gt;</code>,{" "}
+            <code className="bg-sand px-1">&lt;li&gt;</code>,{" "}
+            <code className="bg-sand px-1">&lt;strong&gt;</code>
+          </p>
+          <textarea
+            rows={20}
+            value={polityka}
+            onChange={(e) => setPolityka(e.target.value)}
+            className="w-full bg-warm-white border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm font-mono transition-colors resize-y"
+          />
+          <button
+            onClick={() => save([{ key: "polityka_prywatnosci", value: polityka }])}
+            className="mt-4 bg-espresso hover:bg-clay text-cream text-xs tracking-widest uppercase px-6 py-3 transition-colors"
+          >
+            Zapisz politykę prywatności
           </button>
         </div>
       )}

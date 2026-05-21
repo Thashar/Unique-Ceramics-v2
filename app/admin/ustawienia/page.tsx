@@ -6,6 +6,7 @@ import SettingsForm from "@/components/admin/SettingsForm";
 export default async function AdminSettingsPage() {
   const settings = await getSettings([
     "regulamin",
+    "polityka_prywatnosci",
     "contact_phone",
     "contact_email",
     "contact_instagram",
@@ -21,6 +22,7 @@ export default async function AdminSettingsPage() {
       <SettingsForm
         initial={{
           regulamin: settings.regulamin,
+          polityka_prywatnosci: settings.polityka_prywatnosci,
           contact_phone: settings.contact_phone,
           contact_email: settings.contact_email,
           contact_instagram: settings.contact_instagram,

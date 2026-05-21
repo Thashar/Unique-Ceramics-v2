@@ -39,6 +39,7 @@ export default function Footer() {
               ["Zamówienie indywidualne", "/zamowienie-indywidualne"],
               ["Kontakt", "/kontakt"],
               ["Regulamin", "/regulamin"],
+              ["Polityka prywatności", "/polityka-prywatnosci"],
             ].map(([label, href]) => (
               <Link
                 key={href}
