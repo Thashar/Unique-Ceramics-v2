@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Mail, Phone } from "lucide-react";
 import InstagramIcon from "@/components/ui/InstagramIcon";
 
@@ -8,8 +9,19 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-6 lg:px-10 py-16 grid grid-cols-1 md:grid-cols-3 gap-12">
         {/* Marka */}
         <div>
-          <p className="font-serif text-2xl text-cream mb-4">Unique Ceramics</p>
-          <p className="text-xs tracking-widest uppercase text-terracotta mb-3">Ręcznie tworzone z sercem</p>
+          <div className="flex items-center gap-3 mb-4">
+            <Image
+              src="/images/logo.png"
+              alt="Unique Ceramics"
+              width={36}
+              height={36}
+              className="h-8 w-auto brightness-0 invert opacity-90"
+            />
+            <div className="flex flex-col leading-none">
+              <p className="font-serif text-xl text-cream">Unique Ceramics</p>
+              <p className="text-[8px] tracking-[0.16em] uppercase mt-0.5 text-terracotta">Ręcznie tworzone z sercem</p>
+            </div>
+          </div>
           <p className="text-sm leading-relaxed text-sand/70 max-w-xs">
             Unikalna ceramika użytkowa — każdy egzemplarz jest niepowtarzalny.
             Tworzę z pasją i dbałością o każdy detal.

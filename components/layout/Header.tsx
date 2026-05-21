@@ -140,7 +140,7 @@ export default function Header() {
               Unique Ceramics
             </span>
             <span
-              className={`text-[9px] tracking-[0.18em] uppercase mt-0.5 transition-colors duration-500 ${
+              className={`text-[8px] tracking-[0.16em] uppercase mt-0.5 transition-colors duration-500 ${
                 dark ? "text-charcoal/50" : "text-cream/60"
               }`}
             >
