@@ -133,7 +133,7 @@ export default function Header() {
           />
           <div className="flex flex-col leading-none pt-3">
             <span
-              className={`font-serif text-2xl font-semibold tracking-wide uppercase whitespace-nowrap transition-colors duration-500 ${
+              className={`font-serif text-base sm:text-lg font-semibold tracking-wide uppercase transition-colors duration-500 ${
                 dark ? "text-espresso group-hover:text-clay" : "text-cream group-hover:text-sand"
               }`}
             >
