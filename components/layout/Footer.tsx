@@ -26,7 +26,8 @@ export default function Footer() {
             </div>
           </div>
           <p className="text-sm leading-relaxed text-sand/70 max-w-xs">
-            Unikalna ceramika użytkowa — każdy egzemplarz jest niepowtarzalny.
+            Unikalna ceramika użytkowa.<br />
+            Każdy egzemplarz jest niepowtarzalny.<br />
             Tworzę z pasją i dbałością o każdy detal.
           </p>
         </div>
