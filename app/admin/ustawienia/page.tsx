@@ -5,6 +5,10 @@ import SettingsForm from "@/components/admin/SettingsForm";
 
 export default async function AdminSettingsPage() {
   const settings = await getSettings([
+    "about_hero_image",
+    "about_story",
+    "workshops_hero_image",
+    "workshops_intro",
     "regulamin",
     "polityka_prywatnosci",
     "contact_phone",
@@ -21,6 +25,10 @@ export default async function AdminSettingsPage() {
       <h1 className="font-serif text-3xl text-espresso mb-8">Ustawienia</h1>
       <SettingsForm
         initial={{
+          about_hero_image: settings.about_hero_image,
+          about_story: settings.about_story,
+          workshops_hero_image: settings.workshops_hero_image,
+          workshops_intro: settings.workshops_intro,
           regulamin: settings.regulamin,
           polityka_prywatnosci: settings.polityka_prywatnosci,
           contact_phone: settings.contact_phone,

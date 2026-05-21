@@ -122,9 +122,21 @@ const POLITYKA_DEFAULT = `<p>Niniejsza Polityka Prywatności określa zasady prz
 <h2>VIII. Zmiany Polityki Prywatności</h2>
 <p>Administrator zastrzega sobie prawo do zmiany niniejszej Polityki Prywatności. Wszelkie zmiany będą publikowane na tej stronie. Data ostatniej aktualizacji: <strong>1 maja 2025 r.</strong></p>`;
 
+const ABOUT_STORY_DEFAULT = `<p>Od 20 lat zajmuję się ceramiką w obszarze przemysłu, dlatego moje doświadczenie przeniosłam na ceramikę artystyczną, którą zajmuję się od około roku. Tworzenie unikatowych prac stało się dla mnie prawdziwą pasją i sposobem na wyrażanie kreatywności.</p>
+<p>W tym czasie stworzyłam własną, kameralną pracownię, w której powstają ręcznie wykonywane przedmioty użytkowe i dekoracyjne. Swoją inspirację czerpię przede wszystkim z prostych form oraz rzemiosła artystycznego.</p>
+<p>Każdą pracę wykonuję samodzielnie, dbając o detale, estetykę i niepowtarzalny charakter wyrobów. Ceramika daje mi ogromną satysfakcję oraz pozwala odnaleźć wewnętrzny spokój i chwilę wyciszenia w tym jakże zabieganym świecie.</p>
+<p>Daje mi to też motywację do ciągłego rozwijania swoich umiejętności oraz poszukiwania nowych pomysłów i technik.</p>`;
+
+const WORKSHOPS_INTRO_DEFAULT = `<p>Organizuję warsztaty ceramiczne dla grup i indywidualnych uczestników. Idealne na urodziny, wieczory panieńskie, imprezy firmowe czy po prostu wyjątkowy wieczór z przyjaciółmi. Nie potrzebujesz żadnego doświadczenia — wszystkiego nauczę Cię od podstaw.</p>
+<p>W trakcie warsztatów uformujecie własne wyroby z gliny, które po wypaleniu możecie odebrać lub wysłać pocztą. Każdy uczestnik wychodzi z wyjątkowym, własnoręcznie wykonanym dziełem.</p>`;
+
 const DEFAULTS: Record<string, string> = {
   regulamin: REGULAMIN_DEFAULT,
   polityka_prywatnosci: POLITYKA_DEFAULT,
+  about_hero_image: "/images/about-photo.jpg",
+  about_story: ABOUT_STORY_DEFAULT,
+  workshops_hero_image: "/images/warsztaty-photo.jpg",
+  workshops_intro: WORKSHOPS_INTRO_DEFAULT,
   contact_phone: "+48 668 443 706",
   contact_email: "kontakt@uniqueceramics.pl",
   contact_instagram: "@unique.ceramics",

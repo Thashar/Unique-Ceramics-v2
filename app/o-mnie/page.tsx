@@ -1,16 +1,23 @@
+export const dynamic = "force-dynamic";
+
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import { getSettings } from "@/lib/settings";
 
 export const metadata: Metadata = {
   title: "O mnie",
   description: "Poznaj historię Unique Ceramics — pracowni ceramicznej i pasji do gliny.",
 };
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const s = await getSettings(["about_hero_image", "about_story"]);
+  const heroImage = s.about_hero_image || "/images/about-photo.jpg";
+  const story = s.about_story;
+
   return (
     <>
       <Header />
@@ -18,7 +25,7 @@ export default function AboutPage() {
         {/* Hero */}
         <div className="relative h-[55vh] overflow-hidden">
           <Image
-            src="/images/about-photo.jpg"
+            src={heroImage}
             alt="Pracownia ceramiczna"
             fill
             priority
@@ -42,28 +49,10 @@ export default function AboutPage() {
               <h2 className="font-serif text-3xl text-espresso mb-8 leading-snug">
                 „Ręcznie tworzone z sercem"
               </h2>
-              <div className="space-y-5 text-charcoal/80 leading-relaxed">
-                <p>
-                  Od 20 lat zajmuję się ceramiką w obszarze przemysłu, dlatego moje
-                  doświadczenie przeniosłam na ceramikę artystyczną, którą zajmuję się
-                  od około roku. Tworzenie unikatowych prac stało się dla mnie prawdziwą
-                  pasją i sposobem na wyrażanie kreatywności.
-                </p>
-                <p>
-                  W tym czasie stworzyłam własną, kameralną pracownię, w której powstają
-                  ręcznie wykonywane przedmioty użytkowe i dekoracyjne. Swoją inspirację
-                  czerpię przede wszystkim z prostych form oraz rzemiosła artystycznego.
-                </p>
-                <p>
-                  Każdą pracę wykonuję samodzielnie, dbając o detale, estetykę i niepowtarzalny
-                  charakter wyrobów. Ceramika daje mi ogromną satysfakcję oraz pozwala
-                  odnaleźć wewnętrzny spokój i chwilę wyciszenia w tym jakże zabieganym świecie.
-                </p>
-                <p>
-                  Daje mi to też motywację do ciągłego rozwijania swoich umiejętności
-                  oraz poszukiwania nowych pomysłów i technik.
-                </p>
-              </div>
+              <div
+                className="space-y-5 text-charcoal/80 leading-relaxed [&_p]:mb-4 [&_h2]:font-serif [&_h2]:text-2xl [&_h2]:text-espresso [&_h2]:mb-4 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:mb-4 [&_strong]:text-espresso"
+                dangerouslySetInnerHTML={{ __html: story }}
+              />
 
               <div className="mt-12 flex flex-wrap gap-6">
                 <Link
@@ -86,7 +75,7 @@ export default function AboutPage() {
             <div className="lg:col-span-5">
               <div className="relative aspect-[3/4] overflow-hidden rounded-sm">
                 <Image
-                  src="/images/about-photo.jpg"
+                  src={heroImage}
                   alt="Przy pracy"
                   fill
                   className="object-cover"
@@ -103,18 +92,9 @@ export default function AboutPage() {
             <h2 className="font-serif text-3xl text-espresso mb-12 text-center">Jak pracuję</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
               {[
-                {
-                  title: "Ręcznie",
-                  text: "Każdy przedmiot tworzę osobiście. Nie korzystam z produkcji seryjnej ani odlewów.",
-                },
-                {
-                  title: "Z uwagą",
-                  text: "Dbam o każdy detal — od kształtu, przez glazurę, aż po opakowanie.",
-                },
-                {
-                  title: "Z pasją",
-                  text: "Ceramika to nie tylko zawód — to sposób, w jaki postrzegam i tworzę piękno.",
-                },
+                { title: "Ręcznie", text: "Każdy przedmiot tworzę osobiście. Nie korzystam z produkcji seryjnej ani odlewów." },
+                { title: "Z uwagą", text: "Dbam o każdy detal — od kształtu, przez glazurę, aż po opakowanie." },
+                { title: "Z pasją", text: "Ceramika to nie tylko zawód — to sposób, w jaki postrzegam i tworzę piękno." },
               ].map(({ title, text }) => (
                 <div key={title} className="text-center">
                   <h3 className="font-serif text-2xl text-espresso mb-4">{title}</h3>

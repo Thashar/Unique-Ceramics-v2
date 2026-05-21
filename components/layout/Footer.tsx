@@ -81,10 +81,6 @@ export default function Footer() {
             </a>
           </div>
 
-          <div className="mt-8 text-xs text-sand/50 leading-relaxed">
-            <p>Wysyłka: 18 zł</p>
-            <p>Darmowa od 300 zł</p>
-          </div>
         </div>
       </div>
 

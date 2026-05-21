@@ -47,7 +47,7 @@ export default async function ShopPage({
     <>
       <Header />
       <div className="min-h-[100svh] bg-warm-white pt-20">
-      <div className="bg-cream pt-32 pb-16 px-6 text-center">
+      <div className="bg-cream py-16 px-6 text-center">
         <p className="text-xs tracking-[0.3em] uppercase text-clay mb-4">Kolekcja</p>
         <h1 className="font-serif text-5xl md:text-6xl text-espresso">Sklep</h1>
         <p className="mt-4 text-charcoal/60 max-w-md mx-auto">
