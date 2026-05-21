@@ -131,9 +131,9 @@ export default function Header() {
               dark ? "" : "brightness-0 invert"
             }`}
           />
-          <div className="flex flex-col leading-none pt-3">
+          <div className="flex flex-col leading-none">
             <span
-              className={`font-serif text-base sm:text-lg font-semibold tracking-wide uppercase transition-colors duration-500 ${
+              className={`font-serif text-base sm:text-lg font-bold tracking-wide uppercase transition-colors duration-500 ${
                 dark ? "text-espresso group-hover:text-clay" : "text-cream group-hover:text-sand"
               }`}
             >
