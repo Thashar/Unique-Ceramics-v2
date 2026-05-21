@@ -2,8 +2,16 @@ import Link from "next/link";
 import Image from "next/image";
 import { Mail, Phone } from "lucide-react";
 import InstagramIcon from "@/components/ui/InstagramIcon";
+import { getSettings } from "@/lib/settings";
 
-export default function Footer() {
+export default async function Footer() {
+  const s = await getSettings(["contact_phone", "contact_email", "contact_instagram"]);
+  const phone = s.contact_phone;
+  const email = s.contact_email;
+  const instagram = s.contact_instagram;
+  const instagramHandle = instagram.startsWith("@") ? instagram.slice(1) : instagram;
+  const instagramHref = `https://instagram.com/${instagramHandle}`;
+  const phoneHref = `tel:${phone.replace(/\s/g, "")}`;
   return (
     <footer className="bg-espresso text-sand/80">
       <div className="max-w-7xl mx-auto px-6 lg:px-10 py-16 grid grid-cols-1 md:grid-cols-3 gap-12">
@@ -57,27 +65,27 @@ export default function Footer() {
           <p className="text-xs tracking-widest uppercase text-terracotta mb-5">Kontakt</p>
           <div className="flex flex-col gap-3">
             <a
-              href="tel:+48668443706"
+              href={phoneHref}
               className="flex items-center gap-3 text-sm hover:text-cream transition-colors"
             >
               <Phone size={15} strokeWidth={1.5} />
-              +48 668 443 706
+              {phone}
             </a>
             <a
-              href="mailto:kontakt@uniqueceramics.pl"
+              href={`mailto:${email}`}
               className="flex items-center gap-3 text-sm hover:text-cream transition-colors"
             >
               <Mail size={15} strokeWidth={1.5} />
-              kontakt@uniqueceramics.pl
+              {email}
             </a>
             <a
-              href="https://instagram.com/unique.ceramics"
+              href={instagramHref}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-3 text-sm hover:text-cream transition-colors"
             >
               <InstagramIcon size={15} />
-              @unique.ceramics
+              {instagram}
             </a>
           </div>
 

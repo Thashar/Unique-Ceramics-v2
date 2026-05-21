@@ -144,6 +144,27 @@ const DEFAULTS: Record<string, string> = {
   shipping_cost: "18",
   shipping_free_enabled: "true",
   shipping_free_from: "300",
+  // Płatności — przelew tradycyjny
+  payment_bank_account_name: "",
+  payment_bank_account_number: "",
+  payment_bank_name: "",
+  payment_bank_transfer_title: "Zamówienie",
+  // BLIK
+  payment_blik_enabled: "false",
+  payment_blik_phone: "",
+  // Przelewy24
+  payment_przelewy24_enabled: "false",
+  payment_przelewy24_merchant_id: "",
+  payment_przelewy24_pos_id: "",
+  payment_przelewy24_api_key: "",
+  payment_przelewy24_crc: "",
+  // PayU
+  payment_payu_enabled: "false",
+  payment_payu_pos_id: "",
+  payment_payu_md5: "",
+  payment_payu_oauth_client_id: "",
+  payment_payu_oauth_client_secret: "",
+  payment_payu_sandbox: "true",
 };
 
 export async function getSetting(key: string): Promise<string> {

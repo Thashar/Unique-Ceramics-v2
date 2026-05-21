@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { LayoutDashboard, Package, User, LogOut } from "lucide-react";
+import { LayoutDashboard, Package, User, MapPin, LogOut } from "lucide-react";
 
 const links = [
   { href: "/konto", label: "Przegląd", icon: LayoutDashboard, exact: true },
   { href: "/konto/zamowienia", label: "Moje zamówienia", icon: Package },
   { href: "/konto/profil", label: "Dane i hasło", icon: User },
+  { href: "/konto/adres", label: "Adres dostawy", icon: MapPin },
 ];
 
 export default function AccountNav() {

@@ -3,7 +3,10 @@
 import { motion } from "framer-motion";
 import InstagramIcon from "@/components/ui/InstagramIcon";
 
-export default function InstagramCta() {
+export default function InstagramCta({ instagram }: { instagram: string }) {
+  const handle = instagram.startsWith("@") ? instagram.slice(1) : instagram;
+  const href = `https://instagram.com/${handle}`;
+
   return (
     <section className="py-24 px-6 text-center bg-sand">
       <motion.div
@@ -22,13 +25,13 @@ export default function InstagramCta() {
           chwile z pracowni.
         </p>
         <a
-          href="https://instagram.com/unique.ceramics"
+          href={href}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-3 bg-espresso hover:bg-charcoal text-cream text-sm tracking-widest uppercase px-8 py-4 transition-colors duration-300"
         >
           <InstagramIcon size={15} />
-          @unique.ceramics
+          {instagram.startsWith("@") ? instagram : `@${instagram}`}
         </a>
       </motion.div>
     </section>

@@ -22,9 +22,10 @@ const workshops = [
 ];
 
 export default async function WorkshopsPage() {
-  const s = await getSettings(["workshops_hero_image", "workshops_intro"]);
+  const s = await getSettings(["workshops_hero_image", "workshops_intro", "contact_phone"]);
   const heroImage = s.workshops_hero_image || "/images/warsztaty-photo.jpg";
   const intro = s.workshops_intro;
+  const phone = s.contact_phone;
 
   return (
     <>
@@ -109,7 +110,7 @@ export default async function WorkshopsPage() {
                 ["Czy otrzymam swoje prace?", "Tak! Przedmioty po wysuszeniu i wypaleniu możesz odebrać osobiście lub wyślę je pocztą."],
                 ["Kiedy dostanę gotowe prace?", "Wypalanie trwa ok. 2–3 tygodni od warsztatów. Poinformuję Cię, gdy prace będą gotowe."],
                 ["Czy mogę kupić voucher na warsztaty?", "Tak, zapraszam do kontaktu — wystawiam vouchery podarunkowe od 80 zł."],
-                ["Jak zarezerwować miejsce?", "Napisz do mnie przez formularz kontaktowy lub zadzwoń pod numer +48 668 443 706."],
+                ["Jak zarezerwować miejsce?", `Napisz do mnie przez formularz kontaktowy lub zadzwoń pod numer ${phone}.`],
               ].map(([q, a]) => (
                 <div key={q} className="border-b border-sand pb-8 last:border-0 last:pb-0">
                   <h3 className="font-serif text-xl text-espresso mb-3">{q}</h3>

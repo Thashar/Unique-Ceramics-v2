@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
-import { Phone, Mail, Clock, MapPin } from "lucide-react";
+import { Phone, Mail, Clock } from "lucide-react";
 import InstagramIcon from "@/components/ui/InstagramIcon";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -17,13 +17,11 @@ export default async function ContactPage() {
     "contact_phone",
     "contact_email",
     "contact_instagram",
-    "contact_hours",
   ]);
 
   const phone = settings.contact_phone;
   const email = settings.contact_email;
   const instagram = settings.contact_instagram;
-  const hours = settings.contact_hours;
 
   // Derive href from instagram handle (strip leading @)
   const instagramHandle = instagram.startsWith("@")
@@ -93,18 +91,6 @@ export default async function ContactPage() {
                     <p className="text-lg">{instagram}</p>
                   </div>
                 </a>
-
-                {hours && (
-                  <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 bg-cream rounded-full flex items-center justify-center flex-shrink-0">
-                      <Clock size={18} strokeWidth={1.5} className="text-clay" />
-                    </div>
-                    <div>
-                      <p className="text-xs tracking-widest uppercase text-clay mb-1">Godziny pracy</p>
-                      <p className="text-charcoal/70 text-sm leading-relaxed">{hours}</p>
-                    </div>
-                  </div>
-                )}
 
                 <div className="flex items-start gap-4">
                   <div className="w-10 h-10 bg-cream rounded-full flex items-center justify-center flex-shrink-0">

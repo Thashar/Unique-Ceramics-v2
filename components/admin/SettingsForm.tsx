@@ -4,7 +4,7 @@ import { useState } from "react";
 import RichEditor from "@/components/admin/RichEditor";
 import ImageUploader from "@/components/admin/ImageUploader";
 
-type Tab = "omnie" | "warsztaty" | "regulamin" | "polityka" | "kontakt" | "wysylka";
+type Tab = "omnie" | "warsztaty" | "regulamin" | "polityka" | "kontakt" | "wysylka" | "platnosci";
 
 interface Props {
   initial: {
@@ -20,6 +20,24 @@ interface Props {
     shipping_cost: string;
     shipping_free_enabled: string;
     shipping_free_from: string;
+    // Płatności
+    payment_bank_account_name: string;
+    payment_bank_account_number: string;
+    payment_bank_name: string;
+    payment_bank_transfer_title: string;
+    payment_blik_enabled: string;
+    payment_blik_phone: string;
+    payment_przelewy24_enabled: string;
+    payment_przelewy24_merchant_id: string;
+    payment_przelewy24_pos_id: string;
+    payment_przelewy24_api_key: string;
+    payment_przelewy24_crc: string;
+    payment_payu_enabled: string;
+    payment_payu_pos_id: string;
+    payment_payu_md5: string;
+    payment_payu_oauth_client_id: string;
+    payment_payu_oauth_client_secret: string;
+    payment_payu_sandbox: string;
   };
 }
 
@@ -50,6 +68,28 @@ export default function SettingsForm({ initial }: Props) {
   const [freeEnabled, setFreeEnabled] = useState(initial.shipping_free_enabled === "true");
   const [freeFrom, setFreeFrom] = useState(initial.shipping_free_from);
 
+  // Płatności — przelew
+  const [bankName, setBankName] = useState(initial.payment_bank_account_name);
+  const [bankNumber, setBankNumber] = useState(initial.payment_bank_account_number);
+  const [bankBankName, setBankBankName] = useState(initial.payment_bank_name);
+  const [bankTitle, setBankTitle] = useState(initial.payment_bank_transfer_title);
+  // BLIK
+  const [blikEnabled, setBlikEnabled] = useState(initial.payment_blik_enabled === "true");
+  const [blikPhone, setBlikPhone] = useState(initial.payment_blik_phone);
+  // Przelewy24
+  const [p24Enabled, setP24Enabled] = useState(initial.payment_przelewy24_enabled === "true");
+  const [p24MerchantId, setP24MerchantId] = useState(initial.payment_przelewy24_merchant_id);
+  const [p24PosId, setP24PosId] = useState(initial.payment_przelewy24_pos_id);
+  const [p24ApiKey, setP24ApiKey] = useState(initial.payment_przelewy24_api_key);
+  const [p24Crc, setP24Crc] = useState(initial.payment_przelewy24_crc);
+  // PayU
+  const [payuEnabled, setPayuEnabled] = useState(initial.payment_payu_enabled === "true");
+  const [payuPosId, setPayuPosId] = useState(initial.payment_payu_pos_id);
+  const [payuMd5, setPayuMd5] = useState(initial.payment_payu_md5);
+  const [payuClientId, setPayuClientId] = useState(initial.payment_payu_oauth_client_id);
+  const [payuClientSecret, setPayuClientSecret] = useState(initial.payment_payu_oauth_client_secret);
+  const [payuSandbox, setPayuSandbox] = useState(initial.payment_payu_sandbox === "true");
+
   const showToast = (type: "ok" | "err") => {
     setToast(type);
     setTimeout(() => setToast(false), 3000);
@@ -76,6 +116,7 @@ export default function SettingsForm({ initial }: Props) {
     { id: "polityka", label: "Polityka prywatności" },
     { id: "kontakt", label: "Kontakt" },
     { id: "wysylka", label: "Wysyłka" },
+    { id: "platnosci", label: "Płatności" },
   ];
 
   return (
@@ -211,6 +252,165 @@ export default function SettingsForm({ initial }: Props) {
             className="bg-espresso hover:bg-clay text-cream text-xs tracking-widest uppercase px-6 py-3 transition-colors"
           >
             Zapisz kontakt
+          </button>
+        </div>
+      )}
+
+      {/* Tab: Płatności */}
+      {activeTab === "platnosci" && (
+        <div className="bg-cream p-6 space-y-8">
+
+          {/* Przelew tradycyjny */}
+          <div>
+            <p className="text-xs tracking-widest uppercase text-charcoal/60 mb-4 pb-2 border-b border-sand">
+              Przelew tradycyjny (zawsze dostępny)
+            </p>
+            <div className="space-y-4">
+              {[
+                { label: "Imię i nazwisko / Nazwa odbiorcy", value: bankName, setter: setBankName },
+                { label: "Numer konta (IBAN)", value: bankNumber, setter: setBankNumber },
+                { label: "Nazwa banku", value: bankBankName, setter: setBankBankName },
+                { label: "Prefiks tytułu przelewu", value: bankTitle, setter: setBankTitle },
+              ].map(({ label, value, setter }) => (
+                <div key={label}>
+                  <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">{label}</label>
+                  <input
+                    type="text"
+                    value={value}
+                    onChange={(e) => setter(e.target.value)}
+                    className="w-full bg-warm-white border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors"
+                  />
+                </div>
+              ))}
+              <p className="text-xs text-charcoal/40">
+                Tytuł przelewu wysyłany do kupującego: „[prefiks] #NR_ZAMÓWIENIA"
+              </p>
+            </div>
+          </div>
+
+          {/* BLIK */}
+          <div>
+            <div className="flex items-center justify-between pb-2 border-b border-sand mb-4">
+              <p className="text-xs tracking-widest uppercase text-charcoal/60">BLIK</p>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" className="sr-only" checked={blikEnabled} onChange={(e) => setBlikEnabled(e.target.checked)} />
+                <div className={`w-12 h-6 rounded-full transition-colors ${blikEnabled ? "bg-espresso" : "bg-sand"} relative`}>
+                  <div className={`absolute top-1 w-4 h-4 rounded-full bg-cream transition-all ${blikEnabled ? "left-7" : "left-1"}`} />
+                </div>
+              </label>
+            </div>
+            {blikEnabled && (
+              <div>
+                <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">Numer telefonu do BLIK</label>
+                <input
+                  type="tel"
+                  value={blikPhone}
+                  onChange={(e) => setBlikPhone(e.target.value)}
+                  placeholder="+48 600 000 000"
+                  className="w-full bg-warm-white border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm"
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Przelewy24 */}
+          <div>
+            <div className="flex items-center justify-between pb-2 border-b border-sand mb-4">
+              <p className="text-xs tracking-widest uppercase text-charcoal/60">Przelewy24</p>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" className="sr-only" checked={p24Enabled} onChange={(e) => setP24Enabled(e.target.checked)} />
+                <div className={`w-12 h-6 rounded-full transition-colors ${p24Enabled ? "bg-espresso" : "bg-sand"} relative`}>
+                  <div className={`absolute top-1 w-4 h-4 rounded-full bg-cream transition-all ${p24Enabled ? "left-7" : "left-1"}`} />
+                </div>
+              </label>
+            </div>
+            {p24Enabled && (
+              <div className="space-y-4">
+                {[
+                  { label: "Merchant ID", value: p24MerchantId, setter: setP24MerchantId },
+                  { label: "POS ID", value: p24PosId, setter: setP24PosId },
+                  { label: "API Key", value: p24ApiKey, setter: setP24ApiKey },
+                  { label: "CRC Key", value: p24Crc, setter: setP24Crc },
+                ].map(({ label, value, setter }) => (
+                  <div key={label}>
+                    <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">{label}</label>
+                    <input
+                      type="text"
+                      value={value}
+                      onChange={(e) => setter(e.target.value)}
+                      className="w-full bg-warm-white border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm font-mono"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* PayU */}
+          <div>
+            <div className="flex items-center justify-between pb-2 border-b border-sand mb-4">
+              <p className="text-xs tracking-widest uppercase text-charcoal/60">PayU</p>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" className="sr-only" checked={payuEnabled} onChange={(e) => setPayuEnabled(e.target.checked)} />
+                <div className={`w-12 h-6 rounded-full transition-colors ${payuEnabled ? "bg-espresso" : "bg-sand"} relative`}>
+                  <div className={`absolute top-1 w-4 h-4 rounded-full bg-cream transition-all ${payuEnabled ? "left-7" : "left-1"}`} />
+                </div>
+              </label>
+            </div>
+            {payuEnabled && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs tracking-widest uppercase text-charcoal/60">Tryb sandbox (testowy)</span>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" className="sr-only" checked={payuSandbox} onChange={(e) => setPayuSandbox(e.target.checked)} />
+                    <div className={`w-12 h-6 rounded-full transition-colors ${payuSandbox ? "bg-espresso" : "bg-sand"} relative`}>
+                      <div className={`absolute top-1 w-4 h-4 rounded-full bg-cream transition-all ${payuSandbox ? "left-7" : "left-1"}`} />
+                    </div>
+                  </label>
+                </div>
+                {[
+                  { label: "POS ID", value: payuPosId, setter: setPayuPosId },
+                  { label: "MD5 Key (drugi klucz)", value: payuMd5, setter: setPayuMd5 },
+                  { label: "OAuth — Client ID", value: payuClientId, setter: setPayuClientId },
+                  { label: "OAuth — Client Secret", value: payuClientSecret, setter: setPayuClientSecret },
+                ].map(({ label, value, setter }) => (
+                  <div key={label}>
+                    <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">{label}</label>
+                    <input
+                      type="text"
+                      value={value}
+                      onChange={(e) => setter(e.target.value)}
+                      className="w-full bg-warm-white border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm font-mono"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <button
+            onClick={() => save([
+              { key: "payment_bank_account_name", value: bankName },
+              { key: "payment_bank_account_number", value: bankNumber },
+              { key: "payment_bank_name", value: bankBankName },
+              { key: "payment_bank_transfer_title", value: bankTitle },
+              { key: "payment_blik_enabled", value: blikEnabled ? "true" : "false" },
+              { key: "payment_blik_phone", value: blikPhone },
+              { key: "payment_przelewy24_enabled", value: p24Enabled ? "true" : "false" },
+              { key: "payment_przelewy24_merchant_id", value: p24MerchantId },
+              { key: "payment_przelewy24_pos_id", value: p24PosId },
+              { key: "payment_przelewy24_api_key", value: p24ApiKey },
+              { key: "payment_przelewy24_crc", value: p24Crc },
+              { key: "payment_payu_enabled", value: payuEnabled ? "true" : "false" },
+              { key: "payment_payu_pos_id", value: payuPosId },
+              { key: "payment_payu_md5", value: payuMd5 },
+              { key: "payment_payu_oauth_client_id", value: payuClientId },
+              { key: "payment_payu_oauth_client_secret", value: payuClientSecret },
+              { key: "payment_payu_sandbox", value: payuSandbox ? "true" : "false" },
+            ])}
+            className="bg-espresso hover:bg-clay text-cream text-xs tracking-widest uppercase px-6 py-3 transition-colors"
+          >
+            Zapisz płatności
           </button>
         </div>
       )}

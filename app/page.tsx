@@ -7,8 +7,11 @@ import WorkshopsTeaser from "@/components/home/WorkshopsTeaser";
 import InstagramCta from "@/components/home/InstagramCta";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import { getSettings } from "@/lib/settings";
 
-export default function Home() {
+export default async function Home() {
+  const s = await getSettings(["contact_instagram"]);
+
   return (
     <>
       <Header />
@@ -17,7 +20,7 @@ export default function Home() {
         <FeaturedProducts />
         <AboutTeaser />
         <WorkshopsTeaser />
-        <InstagramCta />
+        <InstagramCta instagram={s.contact_instagram} />
       </main>
       <Footer />
     </>
