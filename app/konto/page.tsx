@@ -3,12 +3,13 @@ export const dynamic = "force-dynamic";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import Link from "next/link";
-import { Package, ChevronRight, ShoppingBag, User } from "lucide-react";
+import { Package, ChevronRight, ShoppingBag, User, LayoutDashboard } from "lucide-react";
 import OrderStatusBadge from "@/components/account/OrderStatusBadge";
 
 export default async function AccountDashboard() {
   const session = await auth();
   const userId = session!.user!.id;
+  const isAdmin = session!.user!.role === "ADMIN";
 
   const recentOrders = await db.order.findMany({
     where: { userId },
@@ -33,7 +34,7 @@ export default async function AccountDashboard() {
         </div>
         <div className="bg-cream p-6">
           <p className="text-xs tracking-widest uppercase text-clay mb-2">Typ konta</p>
-          <p className="font-serif text-lg text-espresso mt-2">Klient</p>
+          <p className="font-serif text-lg text-espresso mt-2">{isAdmin ? "Admin" : "Klient"}</p>
         </div>
       </div>
 
@@ -124,6 +125,19 @@ export default async function AccountDashboard() {
           </div>
           <ChevronRight size={16} className="ml-auto group-hover:translate-x-1 transition-transform" />
         </Link>
+        {isAdmin && (
+          <Link
+            href="/admin"
+            className="flex items-center gap-4 bg-terracotta hover:bg-clay text-warm-white p-6 transition-colors group sm:col-span-2"
+          >
+            <LayoutDashboard size={24} strokeWidth={1.5} />
+            <div>
+              <p className="font-medium text-sm">Panel admina</p>
+              <p className="text-xs text-warm-white/60">Zarządzaj sklepem</p>
+            </div>
+            <ChevronRight size={16} className="ml-auto group-hover:translate-x-1 transition-transform" />
+          </Link>
+        )}
       </div>
     </div>
   );
