@@ -18,7 +18,7 @@ export default function Footer() {
               className="h-8 w-auto brightness-0 invert opacity-90"
             />
             <div className="flex flex-col leading-none">
-              <p className="font-serif text-xl text-cream">Unique Ceramics</p>
+              <p className="font-serif text-xl text-cream uppercase">Unique Ceramics</p>
               <p className="text-[8px] tracking-[0.16em] uppercase mt-0.5 text-terracotta">Ręcznie tworzone z sercem</p>
             </div>
           </div>
