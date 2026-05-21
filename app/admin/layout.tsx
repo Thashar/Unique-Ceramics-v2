@@ -1,7 +1,7 @@
 ﻿import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { LayoutDashboard, Package, ShoppingBag, LogOut } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingBag, ClipboardList, Settings, LogOut } from "lucide-react";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -23,6 +23,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
             { href: "/admin/produkty", label: "Produkty", icon: Package },
             { href: "/admin/zamowienia", label: "Zamówienia", icon: ShoppingBag },
+            { href: "/admin/zamowienia-indywidualne", label: "Zam. indywidualne", icon: ClipboardList },
+            { href: "/admin/ustawienia", label: "Ustawienia", icon: Settings },
           ].map(({ href, label, icon: Icon }) => (
             <Link
               key={href}

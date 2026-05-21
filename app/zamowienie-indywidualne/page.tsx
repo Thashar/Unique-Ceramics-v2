@@ -1,13 +1,80 @@
-import type { Metadata } from "next";
+"use client";
+
+import { useState } from "react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 
-export const metadata: Metadata = {
-  title: "Zamówienie indywidualne",
-  description: "Zamów ceramikę na zamówienie — zestawy ślubne, prezenty, personalizacja.",
-};
+const ORDER_TYPES = [
+  "Zestaw ślubny",
+  "Prezent firmowy",
+  "Personalizacja (imię, data)",
+  "Indywidualny projekt",
+  "Inne",
+];
+
+const BUDGETS = [
+  "Do 200 zł",
+  "200–500 zł",
+  "500–1000 zł",
+  "Powyżej 1000 zł",
+  "Nie wiem jeszcze",
+];
 
 export default function CustomOrderPage() {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [orderType, setOrderType] = useState(ORDER_TYPES[0]);
+  const [description, setDescription] = useState("");
+  const [deadline, setDeadline] = useState("");
+  const [budget, setBudget] = useState(BUDGETS[0]);
+
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState("");
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    try {
+      const res = await fetch("/api/custom-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customerName: name,
+          customerEmail: email,
+          customerPhone: phone,
+          orderType,
+          description,
+          deadline,
+          budget,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        setError(data.error || "Wystąpił błąd. Spróbuj ponownie.");
+        return;
+      }
+
+      setSuccess(true);
+      setName("");
+      setEmail("");
+      setPhone("");
+      setOrderType(ORDER_TYPES[0]);
+      setDescription("");
+      setDeadline("");
+      setBudget(BUDGETS[0]);
+    } catch {
+      setError("Wystąpił błąd sieci. Spróbuj ponownie.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <>
       <Header />
@@ -26,67 +93,129 @@ export default function CustomOrderPage() {
 
         <div className="bg-warm-white py-20 px-6 lg:px-10">
           <div className="max-w-2xl mx-auto">
-            <form className="space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">Imię i nazwisko *</label>
-                  <input type="text" required className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm" />
+            {success ? (
+              <div className="bg-green-50 border border-green-200 p-8 text-center">
+                <p className="text-green-800 font-medium text-lg mb-2">Zapytanie zostało wysłane!</p>
+                <p className="text-green-700 text-sm">Odpiszę w ciągu 2 dni roboczych.</p>
+                <button
+                  onClick={() => setSuccess(false)}
+                  className="mt-6 text-xs tracking-widest uppercase text-clay hover:text-espresso transition-colors"
+                >
+                  Wyślij kolejne zapytanie
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {error && (
+                  <div className="bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+                    {error}
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">
+                      Imię i nazwisko *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">
+                      E-mail *
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm"
+                    />
+                  </div>
                 </div>
+
                 <div>
-                  <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">E-mail *</label>
-                  <input type="email" required className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm" />
+                  <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">
+                    Telefon
+                  </label>
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm"
+                  />
                 </div>
-              </div>
 
-              <div>
-                <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">Telefon</label>
-                <input type="tel" className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm" />
-              </div>
+                <div>
+                  <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">
+                    Rodzaj zamówienia
+                  </label>
+                  <select
+                    value={orderType}
+                    onChange={(e) => setOrderType(e.target.value)}
+                    className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm"
+                  >
+                    {ORDER_TYPES.map((t) => (
+                      <option key={t}>{t}</option>
+                    ))}
+                  </select>
+                </div>
 
-              <div>
-                <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">Rodzaj zamówienia</label>
-                <select className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm">
-                  <option>Zestaw ślubny</option>
-                  <option>Prezent firmowy</option>
-                  <option>Personalizacja (imię, data)</option>
-                  <option>Indywidualny projekt</option>
-                  <option>Inne</option>
-                </select>
-              </div>
+                <div>
+                  <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">
+                    Opis zamówienia *
+                  </label>
+                  <textarea
+                    required
+                    rows={6}
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Opisz co chcesz zamówić — rodzaj przedmiotów, ilość, preferowane kolory, rozmiary, styl..."
+                    className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm resize-none"
+                  />
+                </div>
 
-              <div>
-                <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">Opis zamówienia *</label>
-                <textarea
-                  required
-                  rows={6}
-                  placeholder="Opisz co chcesz zamówić — rodzaj przedmiotów, ilość, preferowane kolory, rozmiary, styl..."
-                  className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm resize-none"
-                />
-              </div>
+                <div>
+                  <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">
+                    Preferowany termin realizacji
+                  </label>
+                  <input
+                    type="date"
+                    value={deadline}
+                    onChange={(e) => setDeadline(e.target.value)}
+                    className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm"
+                  />
+                </div>
 
-              <div>
-                <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">Preferowany termin realizacji</label>
-                <input type="date" className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm" />
-              </div>
+                <div>
+                  <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">
+                    Budżet (orientacyjnie)
+                  </label>
+                  <select
+                    value={budget}
+                    onChange={(e) => setBudget(e.target.value)}
+                    className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm"
+                  >
+                    {BUDGETS.map((b) => (
+                      <option key={b}>{b}</option>
+                    ))}
+                  </select>
+                </div>
 
-              <div>
-                <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">Budżet (orientacyjnie)</label>
-                <select className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm">
-                  <option>Do 200 zł</option>
-                  <option>200–500 zł</option>
-                  <option>500–1000 zł</option>
-                  <option>Powyżej 1000 zł</option>
-                  <option>Nie wiem jeszcze</option>
-                </select>
-              </div>
-
-              <button
-                type="submit"
-                className="w-full bg-terracotta hover:bg-clay text-warm-white text-xs tracking-widest uppercase py-5 transition-colors"
-              >
-                Wyślij zapytanie
-              </button>
-            </form>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-terracotta hover:bg-clay text-warm-white text-xs tracking-widest uppercase py-5 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {loading ? "Wysyłanie..." : "Wyślij zapytanie"}
+                </button>
+              </form>
+            )}
 
             <div className="mt-12 p-8 bg-cream text-sm text-charcoal/70 leading-relaxed space-y-2">
               <p className="font-medium text-espresso text-base mb-4">Co dalej?</p>

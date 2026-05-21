@@ -132,3 +132,27 @@ enum OrderStatus {
   DELIVERED
   CANCELLED
 }
+
+// ─── Zamówienia indywidualne ──────────────────────────────────────────────────
+
+model CustomOrder {
+  id            String            @id @default(cuid())
+  customerName  String
+  customerEmail String
+  customerPhone String?
+  orderType     String
+  description   String
+  deadline      String?
+  budget        String?
+  status        CustomOrderStatus @default(NEW)
+  adminNotes    String?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+}
+
+enum CustomOrderStatus {
+  NEW
+  IN_REVIEW
+  DONE
+  CANCELLED
+}
