@@ -15,11 +15,11 @@ export default function Footer() {
               alt="Unique Ceramics"
               width={36}
               height={36}
-              className="h-8 w-auto brightness-0 invert opacity-90"
+              className="h-9 w-auto brightness-0 invert opacity-90"
             />
-            <div className="flex flex-col leading-none">
-              <p className="font-serif text-xl text-cream uppercase">Unique Ceramics</p>
-              <p className="text-[8px] tracking-[0.16em] uppercase mt-0.5 text-terracotta">Ręcznie tworzone z sercem</p>
+            <div className="flex flex-col leading-none pt-1">
+              <p className="font-serif text-base font-semibold tracking-wide uppercase text-cream">Unique Ceramics</p>
+              <p className="text-[6.5px] tracking-[0.18em] uppercase mt-0.5 text-cream/40">Ręcznie tworzone z sercem</p>
             </div>
           </div>
           <p className="text-sm leading-relaxed text-sand/70 max-w-xs">
