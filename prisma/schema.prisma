@@ -156,3 +156,11 @@ enum CustomOrderStatus {
   DONE
   CANCELLED
 }
+
+// ─── Ustawienia sklepu ────────────────────────────────────────────────────────
+
+model Setting {
+  key       String   @id
+  value     String   @db.Text
+  updatedAt DateTime @updatedAt
+}

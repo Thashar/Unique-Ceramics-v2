@@ -1,15 +1,39 @@
+export const dynamic = "force-dynamic";
+
 import type { Metadata } from "next";
 import { Phone, Mail, Clock, MapPin } from "lucide-react";
 import InstagramIcon from "@/components/ui/InstagramIcon";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import { getSettings } from "@/lib/settings";
 
 export const metadata: Metadata = {
   title: "Kontakt",
   description: "Skontaktuj się z Unique Ceramics. Telefon, e-mail, Instagram.",
 };
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  const settings = await getSettings([
+    "contact_phone",
+    "contact_email",
+    "contact_instagram",
+    "contact_hours",
+  ]);
+
+  const phone = settings.contact_phone;
+  const email = settings.contact_email;
+  const instagram = settings.contact_instagram;
+  const hours = settings.contact_hours;
+
+  // Derive href from instagram handle (strip leading @)
+  const instagramHandle = instagram.startsWith("@")
+    ? instagram.slice(1)
+    : instagram;
+  const instagramHref = `https://instagram.com/${instagramHandle}`;
+
+  // Derive tel href (strip spaces)
+  const phoneHref = `tel:${phone.replace(/\s/g, "")}`;
+
   return (
     <>
       <Header />
@@ -30,7 +54,7 @@ export default function ContactPage() {
               <h2 className="font-serif text-2xl text-espresso mb-8">Dane kontaktowe</h2>
               <div className="space-y-6">
                 <a
-                  href="tel:+48668443706"
+                  href={phoneHref}
                   className="flex items-start gap-4 text-charcoal/80 hover:text-clay transition-colors group"
                 >
                   <div className="w-10 h-10 bg-cream rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-terracotta/10 transition-colors">
@@ -38,12 +62,12 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <p className="text-xs tracking-widest uppercase text-clay mb-1">Telefon</p>
-                    <p className="text-lg">+48 668 443 706</p>
+                    <p className="text-lg">{phone}</p>
                   </div>
                 </a>
 
                 <a
-                  href="mailto:kontakt@uniqueceramics.pl"
+                  href={`mailto:${email}`}
                   className="flex items-start gap-4 text-charcoal/80 hover:text-clay transition-colors group"
                 >
                   <div className="w-10 h-10 bg-cream rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-terracotta/10 transition-colors">
@@ -51,12 +75,12 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <p className="text-xs tracking-widest uppercase text-clay mb-1">E-mail</p>
-                    <p className="text-lg">kontakt@uniqueceramics.pl</p>
+                    <p className="text-lg">{email}</p>
                   </div>
                 </a>
 
                 <a
-                  href="https://instagram.com/unique.ceramics"
+                  href={instagramHref}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-start gap-4 text-charcoal/80 hover:text-clay transition-colors group"
@@ -66,9 +90,21 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <p className="text-xs tracking-widest uppercase text-clay mb-1">Instagram</p>
-                    <p className="text-lg">@unique.ceramics</p>
+                    <p className="text-lg">{instagram}</p>
                   </div>
                 </a>
+
+                {hours && (
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 bg-cream rounded-full flex items-center justify-center flex-shrink-0">
+                      <Clock size={18} strokeWidth={1.5} className="text-clay" />
+                    </div>
+                    <div>
+                      <p className="text-xs tracking-widest uppercase text-clay mb-1">Godziny pracy</p>
+                      <p className="text-charcoal/70 text-sm leading-relaxed">{hours}</p>
+                    </div>
+                  </div>
+                )}
 
                 <div className="flex items-start gap-4">
                   <div className="w-10 h-10 bg-cream rounded-full flex items-center justify-center flex-shrink-0">
