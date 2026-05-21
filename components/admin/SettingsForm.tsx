@@ -26,7 +26,7 @@ interface Props {
 
 export default function SettingsForm({ initial }: Props) {
   const [activeTab, setActiveTab] = useState<Tab>("omnie");
-  const [toast, setToast] = useState(false);
+  const [toast, setToast] = useState<"ok" | "err" | false>(false);
 
   // O mnie
   const [aboutImage, setAboutImage] = useState(initial.about_hero_image);
@@ -53,18 +53,23 @@ export default function SettingsForm({ initial }: Props) {
   const [freeEnabled, setFreeEnabled] = useState(initial.shipping_free_enabled === "true");
   const [freeFrom, setFreeFrom] = useState(initial.shipping_free_from);
 
-  const showToast = () => {
-    setToast(true);
-    setTimeout(() => setToast(false), 2000);
+  const showToast = (type: "ok" | "err") => {
+    setToast(type);
+    setTimeout(() => setToast(false), 3000);
   };
 
   const save = async (pairs: { key: string; value: string }[]) => {
-    await fetch("/api/admin/settings", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(pairs),
-    });
-    showToast();
+    try {
+      const res = await fetch("/api/admin/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(pairs),
+      });
+      const data = await res.json();
+      showToast(data.ok ? "ok" : "err");
+    } catch {
+      showToast("err");
+    }
   };
 
   const tabs: { id: Tab; label: string }[] = [
@@ -78,9 +83,14 @@ export default function SettingsForm({ initial }: Props) {
 
   return (
     <div className="w-full max-w-2xl">
-      {toast && (
+      {toast === "ok" && (
         <div className="fixed top-6 right-6 z-50 bg-espresso text-cream text-sm px-5 py-3 shadow-lg">
           Zapisano!
+        </div>
+      )}
+      {toast === "err" && (
+        <div className="fixed top-6 right-6 z-50 bg-red-700 text-white text-sm px-5 py-3 shadow-lg max-w-xs">
+          Błąd zapisu — tabela Setting nie istnieje w bazie. Uruchom SQL w Supabase.
         </div>
       )}
 

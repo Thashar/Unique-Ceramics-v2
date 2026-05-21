@@ -16,17 +16,21 @@ export async function PATCH(req: Request) {
 
   const body: { key: string; value: string }[] = await req.json();
 
-  await Promise.all(
-    body.map(({ key, value }) =>
-      db.setting.upsert({
-        where: { key },
-        update: { value },
-        create: { key, value },
-      })
-    )
-  );
-
-  return NextResponse.json({ ok: true });
+  try {
+    await Promise.all(
+      body.map(({ key, value }) =>
+        db.setting.upsert({
+          where: { key },
+          update: { value },
+          create: { key, value },
+        })
+      )
+    );
+    return NextResponse.json({ ok: true });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    return NextResponse.json({ ok: false, error: msg }, { status: 500 });
+  }
 }
 
 export async function POST(req: Request) {
