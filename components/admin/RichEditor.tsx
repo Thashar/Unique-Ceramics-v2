@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useRef } from "react";
-import type { IJodit } from "jodit/types";
+import type { Jodit } from "jodit/types";
 
 const JoditEditor = dynamic(() => import("jodit-react"), { ssr: false });
 
@@ -32,7 +32,7 @@ interface Props {
 }
 
 export default function RichEditor({ value, onChange }: Props) {
-  const editorRef = useRef<IJodit | null>(null);
+  const editorRef = useRef<Jodit | null>(null);
 
   return (
     <div className="rich-editor-wrap">
