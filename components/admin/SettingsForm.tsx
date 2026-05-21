@@ -1,9 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import dynamic from "next/dynamic";
-
-const RichEditor = dynamic(() => import("@/components/admin/RichEditor"), { ssr: false });
+import RichEditor from "@/components/admin/RichEditor";
 
 type Tab = "regulamin" | "polityka" | "kontakt" | "wysylka";
 
