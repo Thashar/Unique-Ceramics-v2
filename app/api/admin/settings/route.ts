@@ -17,13 +17,20 @@ export async function PATCH(req: Request) {
   const body: { key: string; value: string }[] = await req.json();
 
   try {
+    await db.$executeRaw`
+      CREATE TABLE IF NOT EXISTS "Setting" (
+        key TEXT NOT NULL PRIMARY KEY,
+        value TEXT NOT NULL DEFAULT '',
+        "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
     await Promise.all(
       body.map(({ key, value }) =>
-        db.setting.upsert({
-          where: { key },
-          update: { value },
-          create: { key, value },
-        })
+        db.$executeRaw`
+          INSERT INTO "Setting" (key, value, "updatedAt")
+          VALUES (${key}, ${value}, NOW())
+          ON CONFLICT (key) DO UPDATE SET value = ${value}, "updatedAt" = NOW()
+        `
       )
     );
     return NextResponse.json({ ok: true });

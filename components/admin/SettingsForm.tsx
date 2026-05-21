@@ -17,7 +17,6 @@ interface Props {
     contact_phone: string;
     contact_email: string;
     contact_instagram: string;
-    contact_hours: string;
     shipping_cost: string;
     shipping_free_enabled: string;
     shipping_free_from: string;
@@ -46,8 +45,6 @@ export default function SettingsForm({ initial }: Props) {
   const [phone, setPhone] = useState(initial.contact_phone);
   const [email, setEmail] = useState(initial.contact_email);
   const [instagram, setInstagram] = useState(initial.contact_instagram);
-  const [hours, setHours] = useState(initial.contact_hours);
-
   // Wysyłka
   const [shippingCost, setShippingCost] = useState(initial.shipping_cost);
   const [freeEnabled, setFreeEnabled] = useState(initial.shipping_free_enabled === "true");
@@ -194,7 +191,6 @@ export default function SettingsForm({ initial }: Props) {
             { label: "Telefon", value: phone, setter: setPhone, key: "contact_phone", type: "tel" },
             { label: "E-mail", value: email, setter: setEmail, key: "contact_email", type: "email" },
             { label: "Instagram", value: instagram, setter: setInstagram, key: "contact_instagram", type: "text" },
-            { label: "Godziny pracy", value: hours, setter: setHours, key: "contact_hours", type: "text" },
           ].map(({ label, value, setter, type }) => (
             <div key={label}>
               <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">{label}</label>
@@ -211,7 +207,6 @@ export default function SettingsForm({ initial }: Props) {
               { key: "contact_phone", value: phone },
               { key: "contact_email", value: email },
               { key: "contact_instagram", value: instagram },
-              { key: "contact_hours", value: hours },
             ])}
             className="bg-espresso hover:bg-clay text-cream text-xs tracking-widest uppercase px-6 py-3 transition-colors"
           >
