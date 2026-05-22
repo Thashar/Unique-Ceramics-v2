@@ -1,10 +1,53 @@
 "use client";
 
 import { useState } from "react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import RichEditor from "@/components/admin/RichEditor";
 import ImageUploader from "@/components/admin/ImageUploader";
 
-type Tab = "omnie" | "warsztaty" | "regulamin" | "polityka" | "kontakt" | "wysylka" | "platnosci";
+type Section =
+  | "omnie"
+  | "warsztaty"
+  | "regulamin"
+  | "polityka"
+  | "kontakt"
+  | "wysylka"
+  | "platnosci_przelew"
+  | "platnosci_blik"
+  | "platnosci_p24"
+  | "platnosci_payu";
+
+type CategoryId = "omnie" | "warsztaty" | "regulamin" | "polityka" | "kontakt" | "wysylka" | "platnosci";
+
+interface SidebarItem {
+  id: Section;
+  label: string;
+}
+
+interface SidebarCategory {
+  id: CategoryId;
+  label: string;
+  items: SidebarItem[];
+}
+
+const CATEGORIES: SidebarCategory[] = [
+  { id: "omnie", label: "O mnie", items: [{ id: "omnie", label: "Zdjęcie i treść" }] },
+  { id: "warsztaty", label: "Warsztaty", items: [{ id: "warsztaty", label: "Zdjęcie i tekst" }] },
+  { id: "regulamin", label: "Regulamin", items: [{ id: "regulamin", label: "Treść regulaminu" }] },
+  { id: "polityka", label: "Polityka prywatności", items: [{ id: "polityka", label: "Treść polityki" }] },
+  { id: "kontakt", label: "Kontakt", items: [{ id: "kontakt", label: "Dane kontaktowe" }] },
+  { id: "wysylka", label: "Wysyłka", items: [{ id: "wysylka", label: "Koszty i progi" }] },
+  {
+    id: "platnosci",
+    label: "Płatności",
+    items: [
+      { id: "platnosci_przelew", label: "Przelew tradycyjny" },
+      { id: "platnosci_blik", label: "BLIK" },
+      { id: "platnosci_p24", label: "Przelewy24" },
+      { id: "platnosci_payu", label: "PayU" },
+    ],
+  },
+];
 
 interface Props {
   initial: {
@@ -20,7 +63,6 @@ interface Props {
     shipping_cost: string;
     shipping_free_enabled: string;
     shipping_free_from: string;
-    // Płatności
     payment_bank_account_name: string;
     payment_bank_account_number: string;
     payment_bank_name: string;
@@ -41,8 +83,53 @@ interface Props {
   };
 }
 
+function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <label className="relative inline-flex items-center cursor-pointer">
+      <input type="checkbox" className="sr-only" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+      <div className={`w-12 h-6 rounded-full transition-colors ${checked ? "bg-espresso" : "bg-sand"} relative`}>
+        <div className={`absolute top-1 w-4 h-4 rounded-full bg-cream transition-all ${checked ? "left-7" : "left-1"}`} />
+      </div>
+    </label>
+  );
+}
+
+function Field({ label, value, setter, type = "text", placeholder, mono }: {
+  label: string;
+  value: string;
+  setter: (v: string) => void;
+  type?: string;
+  placeholder?: string;
+  mono?: boolean;
+}) {
+  return (
+    <div>
+      <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">{label}</label>
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => setter(e.target.value)}
+        placeholder={placeholder}
+        className={`w-full bg-warm-white border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors${mono ? " font-mono" : ""}`}
+      />
+    </div>
+  );
+}
+
+function SaveButton({ onClick, label }: { onClick: () => void; label: string }) {
+  return (
+    <button
+      onClick={onClick}
+      className="bg-espresso hover:bg-clay text-cream text-xs tracking-widest uppercase px-6 py-3 transition-colors"
+    >
+      {label}
+    </button>
+  );
+}
+
 export default function SettingsForm({ initial }: Props) {
-  const [activeTab, setActiveTab] = useState<Tab>("omnie");
+  const [activeSection, setActiveSection] = useState<Section>("omnie");
+  const [openCategories, setOpenCategories] = useState<Set<CategoryId>>(new Set(["omnie"]));
   const [toast, setToast] = useState<"ok" | "err" | false>(false);
 
   // O mnie
@@ -63,25 +150,29 @@ export default function SettingsForm({ initial }: Props) {
   const [phone, setPhone] = useState(initial.contact_phone);
   const [email, setEmail] = useState(initial.contact_email);
   const [instagram, setInstagram] = useState(initial.contact_instagram);
+
   // Wysyłka
   const [shippingCost, setShippingCost] = useState(initial.shipping_cost);
   const [freeEnabled, setFreeEnabled] = useState(initial.shipping_free_enabled === "true");
   const [freeFrom, setFreeFrom] = useState(initial.shipping_free_from);
 
-  // Płatności — przelew
+  // Przelew
   const [bankName, setBankName] = useState(initial.payment_bank_account_name);
   const [bankNumber, setBankNumber] = useState(initial.payment_bank_account_number);
   const [bankBankName, setBankBankName] = useState(initial.payment_bank_name);
   const [bankTitle, setBankTitle] = useState(initial.payment_bank_transfer_title);
+
   // BLIK
   const [blikEnabled, setBlikEnabled] = useState(initial.payment_blik_enabled === "true");
   const [blikPhone, setBlikPhone] = useState(initial.payment_blik_phone);
+
   // Przelewy24
   const [p24Enabled, setP24Enabled] = useState(initial.payment_przelewy24_enabled === "true");
   const [p24MerchantId, setP24MerchantId] = useState(initial.payment_przelewy24_merchant_id);
   const [p24PosId, setP24PosId] = useState(initial.payment_przelewy24_pos_id);
   const [p24ApiKey, setP24ApiKey] = useState(initial.payment_przelewy24_api_key);
   const [p24Crc, setP24Crc] = useState(initial.payment_przelewy24_crc);
+
   // PayU
   const [payuEnabled, setPayuEnabled] = useState(initial.payment_payu_enabled === "true");
   const [payuPosId, setPayuPosId] = useState(initial.payment_payu_pos_id);
@@ -109,18 +200,31 @@ export default function SettingsForm({ initial }: Props) {
     }
   };
 
-  const tabs: { id: Tab; label: string }[] = [
-    { id: "omnie", label: "O mnie" },
-    { id: "warsztaty", label: "Warsztaty" },
-    { id: "regulamin", label: "Regulamin" },
-    { id: "polityka", label: "Polityka prywatności" },
-    { id: "kontakt", label: "Kontakt" },
-    { id: "wysylka", label: "Wysyłka" },
-    { id: "platnosci", label: "Płatności" },
-  ];
+  const toggleCategory = (id: CategoryId, firstItem: Section) => {
+    setOpenCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+        setActiveSection(firstItem);
+      }
+      return next;
+    });
+    if (!openCategories.has(id)) {
+      setActiveSection(firstItem);
+    } else {
+      setActiveSection(firstItem);
+    }
+  };
+
+  const selectItem = (catId: CategoryId, sectionId: Section) => {
+    setOpenCategories((prev) => new Set([...prev, catId]));
+    setActiveSection(sectionId);
+  };
 
   return (
-    <div className="w-full max-w-2xl">
+    <div className="flex gap-0 border border-sand min-h-[640px]">
       {toast === "ok" && (
         <div className="fixed top-6 right-6 z-50 bg-espresso text-cream text-sm px-5 py-3 shadow-lg">
           Zapisano!
@@ -132,325 +236,288 @@ export default function SettingsForm({ initial }: Props) {
         </div>
       )}
 
-      {/* Tab bar */}
-      <div className="flex flex-wrap gap-2 mb-6">
-        {tabs.map((t) => (
-          <button
-            key={t.id}
-            onClick={() => setActiveTab(t.id)}
-            className={`px-4 py-2 text-xs tracking-widest uppercase transition-colors whitespace-nowrap ${
-              activeTab === t.id ? "bg-espresso text-cream" : "bg-cream text-charcoal hover:bg-sand"
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
+      {/* Sidebar */}
+      <nav className="w-60 flex-shrink-0 bg-warm-white border-r border-sand">
+        {CATEGORIES.map((cat) => {
+          const isOpen = openCategories.has(cat.id);
+          const hasMany = cat.items.length > 1;
 
-      {/* Tab: O mnie */}
-      {activeTab === "omnie" && (
-        <div className="bg-cream p-6 space-y-6">
-          <ImageUploader
-            currentUrl={aboutImage}
-            onUploaded={(url) => setAboutImage(url)}
-            label="Zdjęcie nagłówka (hero + sidebar)"
-          />
-          <div>
-            <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-3">
-              Treść — historia
-            </label>
-            <RichEditor value={aboutStory} onChange={setAboutStory} />
-          </div>
-          <button
-            onClick={() => save([
-              { key: "about_hero_image", value: aboutImage },
-              { key: "about_story", value: aboutStory },
-            ])}
-            className="bg-espresso hover:bg-clay text-cream text-xs tracking-widest uppercase px-6 py-3 transition-colors"
-          >
-            Zapisz stronę O mnie
-          </button>
-        </div>
-      )}
+          return (
+            <div key={cat.id}>
+              <button
+                onClick={() => toggleCategory(cat.id, cat.items[0].id)}
+                className="w-full flex items-center justify-between px-4 py-3 text-xs tracking-widest uppercase text-charcoal hover:bg-sand transition-colors border-b border-sand/50"
+              >
+                <span>{cat.label}</span>
+                {hasMany ? (
+                  isOpen ? (
+                    <ChevronDown size={14} className="text-charcoal/50" />
+                  ) : (
+                    <ChevronRight size={14} className="text-charcoal/50" />
+                  )
+                ) : null}
+              </button>
 
-      {/* Tab: Warsztaty */}
-      {activeTab === "warsztaty" && (
-        <div className="bg-cream p-6 space-y-6">
-          <ImageUploader
-            currentUrl={workshopsImage}
-            onUploaded={(url) => setWorkshopsImage(url)}
-            label="Zdjęcie nagłówka (hero)"
-          />
-          <div>
-            <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-3">
-              Tekst wprowadzający
-            </label>
-            <RichEditor value={workshopsIntro} onChange={setWorkshopsIntro} />
-          </div>
-          <button
-            onClick={() => save([
-              { key: "workshops_hero_image", value: workshopsImage },
-              { key: "workshops_intro", value: workshopsIntro },
-            ])}
-            className="bg-espresso hover:bg-clay text-cream text-xs tracking-widest uppercase px-6 py-3 transition-colors"
-          >
-            Zapisz stronę Warsztaty
-          </button>
-        </div>
-      )}
-
-      {/* Tab: Regulamin */}
-      {activeTab === "regulamin" && (
-        <div className="bg-cream p-6">
-          <RichEditor value={regulamin} onChange={setRegulamin} />
-          <button
-            onClick={() => save([{ key: "regulamin", value: regulamin }])}
-            className="mt-4 bg-espresso hover:bg-clay text-cream text-xs tracking-widest uppercase px-6 py-3 transition-colors"
-          >
-            Zapisz regulamin
-          </button>
-        </div>
-      )}
-
-      {/* Tab: Polityka prywatności */}
-      {activeTab === "polityka" && (
-        <div className="bg-cream p-6">
-          <RichEditor value={polityka} onChange={setPolityka} />
-          <button
-            onClick={() => save([{ key: "polityka_prywatnosci", value: polityka }])}
-            className="mt-4 bg-espresso hover:bg-clay text-cream text-xs tracking-widest uppercase px-6 py-3 transition-colors"
-          >
-            Zapisz politykę prywatności
-          </button>
-        </div>
-      )}
-
-      {/* Tab: Kontakt */}
-      {activeTab === "kontakt" && (
-        <div className="bg-cream p-6 space-y-5">
-          {[
-            { label: "Telefon", value: phone, setter: setPhone, key: "contact_phone", type: "tel" },
-            { label: "E-mail", value: email, setter: setEmail, key: "contact_email", type: "email" },
-            { label: "Instagram", value: instagram, setter: setInstagram, key: "contact_instagram", type: "text" },
-          ].map(({ label, value, setter, type }) => (
-            <div key={label}>
-              <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">{label}</label>
-              <input
-                type={type}
-                value={value}
-                onChange={(e) => setter(e.target.value)}
-                className="w-full bg-warm-white border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors"
-              />
-            </div>
-          ))}
-          <button
-            onClick={() => save([
-              { key: "contact_phone", value: phone },
-              { key: "contact_email", value: email },
-              { key: "contact_instagram", value: instagram },
-            ])}
-            className="bg-espresso hover:bg-clay text-cream text-xs tracking-widest uppercase px-6 py-3 transition-colors"
-          >
-            Zapisz kontakt
-          </button>
-        </div>
-      )}
-
-      {/* Tab: Płatności */}
-      {activeTab === "platnosci" && (
-        <div className="bg-cream p-6 space-y-8">
-
-          {/* Przelew tradycyjny */}
-          <div>
-            <p className="text-xs tracking-widest uppercase text-charcoal/60 mb-4 pb-2 border-b border-sand">
-              Przelew tradycyjny (zawsze dostępny)
-            </p>
-            <div className="space-y-4">
-              {[
-                { label: "Imię i nazwisko / Nazwa odbiorcy", value: bankName, setter: setBankName },
-                { label: "Numer konta (IBAN)", value: bankNumber, setter: setBankNumber },
-                { label: "Nazwa banku", value: bankBankName, setter: setBankBankName },
-                { label: "Prefiks tytułu przelewu", value: bankTitle, setter: setBankTitle },
-              ].map(({ label, value, setter }) => (
-                <div key={label}>
-                  <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">{label}</label>
-                  <input
-                    type="text"
-                    value={value}
-                    onChange={(e) => setter(e.target.value)}
-                    className="w-full bg-warm-white border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors"
-                  />
+              {isOpen && hasMany && (
+                <div className="border-b border-sand/50">
+                  {cat.items.map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => selectItem(cat.id, item.id)}
+                      className={`w-full text-left px-6 py-2.5 text-xs transition-colors ${
+                        activeSection === item.id
+                          ? "bg-espresso text-cream"
+                          : "text-charcoal/70 hover:bg-sand hover:text-charcoal"
+                      }`}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
                 </div>
-              ))}
-              <p className="text-xs text-charcoal/40">
-                Tytuł przelewu wysyłany do kupującego: „[prefiks] #NR_ZAMÓWIENIA"
-              </p>
-            </div>
-          </div>
+              )}
 
-          {/* BLIK */}
-          <div>
-            <div className="flex items-center justify-between pb-2 border-b border-sand mb-4">
-              <p className="text-xs tracking-widest uppercase text-charcoal/60">BLIK</p>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" className="sr-only" checked={blikEnabled} onChange={(e) => setBlikEnabled(e.target.checked)} />
-                <div className={`w-12 h-6 rounded-full transition-colors ${blikEnabled ? "bg-espresso" : "bg-sand"} relative`}>
-                  <div className={`absolute top-1 w-4 h-4 rounded-full bg-cream transition-all ${blikEnabled ? "left-7" : "left-1"}`} />
+              {isOpen && !hasMany && (
+                <div className="border-b border-sand/50">
+                  <button
+                    onClick={() => selectItem(cat.id, cat.items[0].id)}
+                    className={`w-full text-left px-6 py-2.5 text-xs transition-colors ${
+                      activeSection === cat.items[0].id
+                        ? "bg-espresso text-cream"
+                        : "text-charcoal/70 hover:bg-sand hover:text-charcoal"
+                    }`}
+                  >
+                    {cat.items[0].label}
+                  </button>
                 </div>
+              )}
+            </div>
+          );
+        })}
+      </nav>
+
+      {/* Panel treści */}
+      <div className="flex-1 p-8 bg-cream min-w-0">
+
+        {activeSection === "omnie" && (
+          <div className="max-w-2xl space-y-6">
+            <h2 className="font-serif text-xl text-espresso mb-2">O mnie</h2>
+            <ImageUploader
+              currentUrl={aboutImage}
+              onUploaded={(url) => setAboutImage(url)}
+              label="Zdjęcie nagłówka (hero + sidebar)"
+            />
+            <div>
+              <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-3">
+                Treść — historia
               </label>
+              <RichEditor value={aboutStory} onChange={setAboutStory} />
+            </div>
+            <SaveButton
+              onClick={() => save([
+                { key: "about_hero_image", value: aboutImage },
+                { key: "about_story", value: aboutStory },
+              ])}
+              label="Zapisz stronę O mnie"
+            />
+          </div>
+        )}
+
+        {activeSection === "warsztaty" && (
+          <div className="max-w-2xl space-y-6">
+            <h2 className="font-serif text-xl text-espresso mb-2">Warsztaty</h2>
+            <ImageUploader
+              currentUrl={workshopsImage}
+              onUploaded={(url) => setWorkshopsImage(url)}
+              label="Zdjęcie nagłówka (hero)"
+            />
+            <div>
+              <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-3">
+                Tekst wprowadzający
+              </label>
+              <RichEditor value={workshopsIntro} onChange={setWorkshopsIntro} />
+            </div>
+            <SaveButton
+              onClick={() => save([
+                { key: "workshops_hero_image", value: workshopsImage },
+                { key: "workshops_intro", value: workshopsIntro },
+              ])}
+              label="Zapisz stronę Warsztaty"
+            />
+          </div>
+        )}
+
+        {activeSection === "regulamin" && (
+          <div className="max-w-2xl space-y-4">
+            <h2 className="font-serif text-xl text-espresso mb-2">Regulamin</h2>
+            <RichEditor value={regulamin} onChange={setRegulamin} />
+            <SaveButton
+              onClick={() => save([{ key: "regulamin", value: regulamin }])}
+              label="Zapisz regulamin"
+            />
+          </div>
+        )}
+
+        {activeSection === "polityka" && (
+          <div className="max-w-2xl space-y-4">
+            <h2 className="font-serif text-xl text-espresso mb-2">Polityka prywatności</h2>
+            <RichEditor value={polityka} onChange={setPolityka} />
+            <SaveButton
+              onClick={() => save([{ key: "polityka_prywatnosci", value: polityka }])}
+              label="Zapisz politykę prywatności"
+            />
+          </div>
+        )}
+
+        {activeSection === "kontakt" && (
+          <div className="max-w-md space-y-5">
+            <h2 className="font-serif text-xl text-espresso mb-2">Dane kontaktowe</h2>
+            <Field label="Telefon" value={phone} setter={setPhone} type="tel" />
+            <Field label="E-mail" value={email} setter={setEmail} type="email" />
+            <Field label="Instagram" value={instagram} setter={setInstagram} />
+            <SaveButton
+              onClick={() => save([
+                { key: "contact_phone", value: phone },
+                { key: "contact_email", value: email },
+                { key: "contact_instagram", value: instagram },
+              ])}
+              label="Zapisz kontakt"
+            />
+          </div>
+        )}
+
+        {activeSection === "wysylka" && (
+          <div className="max-w-md space-y-6">
+            <h2 className="font-serif text-xl text-espresso mb-2">Wysyłka</h2>
+            <div className="flex items-center justify-between">
+              <span className="text-xs tracking-widest uppercase text-charcoal/60">Darmowa wysyłka</span>
+              <Toggle checked={freeEnabled} onChange={setFreeEnabled} />
+            </div>
+            <Field label="Koszt wysyłki (zł)" value={shippingCost} setter={setShippingCost} type="number" />
+            {freeEnabled && (
+              <Field label="Darmowa wysyłka od (zł)" value={freeFrom} setter={setFreeFrom} type="number" />
+            )}
+            <SaveButton
+              onClick={() => save([
+                { key: "shipping_cost", value: shippingCost },
+                { key: "shipping_free_enabled", value: freeEnabled ? "true" : "false" },
+                { key: "shipping_free_from", value: freeFrom },
+              ])}
+              label="Zapisz wysyłkę"
+            />
+          </div>
+        )}
+
+        {activeSection === "platnosci_przelew" && (
+          <div className="max-w-md space-y-5">
+            <h2 className="font-serif text-xl text-espresso mb-2">Przelew tradycyjny</h2>
+            <p className="text-xs text-charcoal/50">Zawsze dostępny jako metoda płatności.</p>
+            <Field label="Imię i nazwisko / Nazwa odbiorcy" value={bankName} setter={setBankName} />
+            <Field label="Numer konta (IBAN)" value={bankNumber} setter={setBankNumber} mono />
+            <Field label="Nazwa banku" value={bankBankName} setter={setBankBankName} />
+            <Field label="Prefiks tytułu przelewu" value={bankTitle} setter={setBankTitle} />
+            <p className="text-xs text-charcoal/40">
+              Tytuł wysyłany do kupującego: „[prefiks] #NR_ZAMÓWIENIA"
+            </p>
+            <SaveButton
+              onClick={() => save([
+                { key: "payment_bank_account_name", value: bankName },
+                { key: "payment_bank_account_number", value: bankNumber },
+                { key: "payment_bank_name", value: bankBankName },
+                { key: "payment_bank_transfer_title", value: bankTitle },
+              ])}
+              label="Zapisz przelew"
+            />
+          </div>
+        )}
+
+        {activeSection === "platnosci_blik" && (
+          <div className="max-w-md space-y-5">
+            <h2 className="font-serif text-xl text-espresso mb-2">BLIK</h2>
+            <div className="flex items-center justify-between">
+              <span className="text-xs tracking-widest uppercase text-charcoal/60">Włącz BLIK</span>
+              <Toggle checked={blikEnabled} onChange={setBlikEnabled} />
             </div>
             {blikEnabled && (
-              <div>
-                <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">Numer telefonu do BLIK</label>
-                <input
-                  type="tel"
-                  value={blikPhone}
-                  onChange={(e) => setBlikPhone(e.target.value)}
-                  placeholder="+48 600 000 000"
-                  className="w-full bg-warm-white border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm"
-                />
-              </div>
+              <Field
+                label="Numer telefonu do BLIK"
+                value={blikPhone}
+                setter={setBlikPhone}
+                type="tel"
+                placeholder="+48 600 000 000"
+              />
             )}
+            <SaveButton
+              onClick={() => save([
+                { key: "payment_blik_enabled", value: blikEnabled ? "true" : "false" },
+                { key: "payment_blik_phone", value: blikPhone },
+              ])}
+              label="Zapisz BLIK"
+            />
           </div>
+        )}
 
-          {/* Przelewy24 */}
-          <div>
-            <div className="flex items-center justify-between pb-2 border-b border-sand mb-4">
-              <p className="text-xs tracking-widest uppercase text-charcoal/60">Przelewy24</p>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" className="sr-only" checked={p24Enabled} onChange={(e) => setP24Enabled(e.target.checked)} />
-                <div className={`w-12 h-6 rounded-full transition-colors ${p24Enabled ? "bg-espresso" : "bg-sand"} relative`}>
-                  <div className={`absolute top-1 w-4 h-4 rounded-full bg-cream transition-all ${p24Enabled ? "left-7" : "left-1"}`} />
-                </div>
-              </label>
+        {activeSection === "platnosci_p24" && (
+          <div className="max-w-md space-y-5">
+            <h2 className="font-serif text-xl text-espresso mb-2">Przelewy24</h2>
+            <div className="flex items-center justify-between">
+              <span className="text-xs tracking-widest uppercase text-charcoal/60">Włącz Przelewy24</span>
+              <Toggle checked={p24Enabled} onChange={setP24Enabled} />
             </div>
             {p24Enabled && (
-              <div className="space-y-4">
-                {[
-                  { label: "Merchant ID", value: p24MerchantId, setter: setP24MerchantId },
-                  { label: "POS ID", value: p24PosId, setter: setP24PosId },
-                  { label: "API Key", value: p24ApiKey, setter: setP24ApiKey },
-                  { label: "CRC Key", value: p24Crc, setter: setP24Crc },
-                ].map(({ label, value, setter }) => (
-                  <div key={label}>
-                    <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">{label}</label>
-                    <input
-                      type="text"
-                      value={value}
-                      onChange={(e) => setter(e.target.value)}
-                      className="w-full bg-warm-white border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm font-mono"
-                    />
-                  </div>
-                ))}
-              </div>
+              <>
+                <Field label="Merchant ID" value={p24MerchantId} setter={setP24MerchantId} mono />
+                <Field label="POS ID" value={p24PosId} setter={setP24PosId} mono />
+                <Field label="API Key" value={p24ApiKey} setter={setP24ApiKey} mono />
+                <Field label="CRC Key" value={p24Crc} setter={setP24Crc} mono />
+              </>
             )}
+            <SaveButton
+              onClick={() => save([
+                { key: "payment_przelewy24_enabled", value: p24Enabled ? "true" : "false" },
+                { key: "payment_przelewy24_merchant_id", value: p24MerchantId },
+                { key: "payment_przelewy24_pos_id", value: p24PosId },
+                { key: "payment_przelewy24_api_key", value: p24ApiKey },
+                { key: "payment_przelewy24_crc", value: p24Crc },
+              ])}
+              label="Zapisz Przelewy24"
+            />
           </div>
+        )}
 
-          {/* PayU */}
-          <div>
-            <div className="flex items-center justify-between pb-2 border-b border-sand mb-4">
-              <p className="text-xs tracking-widest uppercase text-charcoal/60">PayU</p>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" className="sr-only" checked={payuEnabled} onChange={(e) => setPayuEnabled(e.target.checked)} />
-                <div className={`w-12 h-6 rounded-full transition-colors ${payuEnabled ? "bg-espresso" : "bg-sand"} relative`}>
-                  <div className={`absolute top-1 w-4 h-4 rounded-full bg-cream transition-all ${payuEnabled ? "left-7" : "left-1"}`} />
-                </div>
-              </label>
+        {activeSection === "platnosci_payu" && (
+          <div className="max-w-md space-y-5">
+            <h2 className="font-serif text-xl text-espresso mb-2">PayU</h2>
+            <div className="flex items-center justify-between">
+              <span className="text-xs tracking-widest uppercase text-charcoal/60">Włącz PayU</span>
+              <Toggle checked={payuEnabled} onChange={setPayuEnabled} />
             </div>
             {payuEnabled && (
-              <div className="space-y-4">
+              <>
                 <div className="flex items-center justify-between">
                   <span className="text-xs tracking-widest uppercase text-charcoal/60">Tryb sandbox (testowy)</span>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" className="sr-only" checked={payuSandbox} onChange={(e) => setPayuSandbox(e.target.checked)} />
-                    <div className={`w-12 h-6 rounded-full transition-colors ${payuSandbox ? "bg-espresso" : "bg-sand"} relative`}>
-                      <div className={`absolute top-1 w-4 h-4 rounded-full bg-cream transition-all ${payuSandbox ? "left-7" : "left-1"}`} />
-                    </div>
-                  </label>
+                  <Toggle checked={payuSandbox} onChange={setPayuSandbox} />
                 </div>
-                {[
-                  { label: "POS ID", value: payuPosId, setter: setPayuPosId },
-                  { label: "MD5 Key (drugi klucz)", value: payuMd5, setter: setPayuMd5 },
-                  { label: "OAuth — Client ID", value: payuClientId, setter: setPayuClientId },
-                  { label: "OAuth — Client Secret", value: payuClientSecret, setter: setPayuClientSecret },
-                ].map(({ label, value, setter }) => (
-                  <div key={label}>
-                    <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">{label}</label>
-                    <input
-                      type="text"
-                      value={value}
-                      onChange={(e) => setter(e.target.value)}
-                      className="w-full bg-warm-white border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm font-mono"
-                    />
-                  </div>
-                ))}
-              </div>
+                <Field label="POS ID" value={payuPosId} setter={setPayuPosId} mono />
+                <Field label="MD5 Key (drugi klucz)" value={payuMd5} setter={setPayuMd5} mono />
+                <Field label="OAuth — Client ID" value={payuClientId} setter={setPayuClientId} mono />
+                <Field label="OAuth — Client Secret" value={payuClientSecret} setter={setPayuClientSecret} mono />
+              </>
             )}
+            <SaveButton
+              onClick={() => save([
+                { key: "payment_payu_enabled", value: payuEnabled ? "true" : "false" },
+                { key: "payment_payu_pos_id", value: payuPosId },
+                { key: "payment_payu_md5", value: payuMd5 },
+                { key: "payment_payu_oauth_client_id", value: payuClientId },
+                { key: "payment_payu_oauth_client_secret", value: payuClientSecret },
+                { key: "payment_payu_sandbox", value: payuSandbox ? "true" : "false" },
+              ])}
+              label="Zapisz PayU"
+            />
           </div>
+        )}
 
-          <button
-            onClick={() => save([
-              { key: "payment_bank_account_name", value: bankName },
-              { key: "payment_bank_account_number", value: bankNumber },
-              { key: "payment_bank_name", value: bankBankName },
-              { key: "payment_bank_transfer_title", value: bankTitle },
-              { key: "payment_blik_enabled", value: blikEnabled ? "true" : "false" },
-              { key: "payment_blik_phone", value: blikPhone },
-              { key: "payment_przelewy24_enabled", value: p24Enabled ? "true" : "false" },
-              { key: "payment_przelewy24_merchant_id", value: p24MerchantId },
-              { key: "payment_przelewy24_pos_id", value: p24PosId },
-              { key: "payment_przelewy24_api_key", value: p24ApiKey },
-              { key: "payment_przelewy24_crc", value: p24Crc },
-              { key: "payment_payu_enabled", value: payuEnabled ? "true" : "false" },
-              { key: "payment_payu_pos_id", value: payuPosId },
-              { key: "payment_payu_md5", value: payuMd5 },
-              { key: "payment_payu_oauth_client_id", value: payuClientId },
-              { key: "payment_payu_oauth_client_secret", value: payuClientSecret },
-              { key: "payment_payu_sandbox", value: payuSandbox ? "true" : "false" },
-            ])}
-            className="bg-espresso hover:bg-clay text-cream text-xs tracking-widest uppercase px-6 py-3 transition-colors"
-          >
-            Zapisz płatności
-          </button>
-        </div>
-      )}
-
-      {/* Tab: Wysyłka */}
-      {activeTab === "wysylka" && (
-        <div className="bg-cream p-6 space-y-6">
-          <div className="flex items-center justify-between">
-            <span className="text-xs tracking-widest uppercase text-charcoal/60">Darmowa wysyłka</span>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" className="sr-only" checked={freeEnabled} onChange={(e) => setFreeEnabled(e.target.checked)} />
-              <div className={`w-12 h-6 rounded-full transition-colors ${freeEnabled ? "bg-espresso" : "bg-sand"} relative`}>
-                <div className={`absolute top-1 w-4 h-4 rounded-full bg-cream transition-all ${freeEnabled ? "left-7" : "left-1"}`} />
-              </div>
-            </label>
-          </div>
-          <div>
-            <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">Koszt wysyłki (zł)</label>
-            <input type="number" min="0" value={shippingCost} onChange={(e) => setShippingCost(e.target.value)}
-              className="w-full bg-warm-white border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors" />
-          </div>
-          {freeEnabled && (
-            <div>
-              <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">Darmowa wysyłka od (zł)</label>
-              <input type="number" min="0" value={freeFrom} onChange={(e) => setFreeFrom(e.target.value)}
-                className="w-full bg-warm-white border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors" />
-            </div>
-          )}
-          <button
-            onClick={() => save([
-              { key: "shipping_cost", value: shippingCost },
-              { key: "shipping_free_enabled", value: freeEnabled ? "true" : "false" },
-              { key: "shipping_free_from", value: freeFrom },
-            ])}
-            className="bg-espresso hover:bg-clay text-cream text-xs tracking-widest uppercase px-6 py-3 transition-colors"
-          >
-            Zapisz wysyłkę
-          </button>
-        </div>
-      )}
+      </div>
     </div>
   );
 }

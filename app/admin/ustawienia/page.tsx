@@ -37,7 +37,7 @@ export default async function AdminSettingsPage() {
   ]);
 
   return (
-    <div>
+    <div className="max-w-5xl">
       <h1 className="font-serif text-3xl text-espresso mb-8">Ustawienia</h1>
       {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
       <SettingsForm initial={settings as any} />
