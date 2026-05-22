@@ -1,55 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, ChevronRight } from "lucide-react";
 import RichEditor from "@/components/admin/RichEditor";
 import ImageUploader from "@/components/admin/ImageUploader";
 
-type Section =
-  | "omnie"
-  | "warsztaty"
-  | "regulamin"
-  | "polityka"
-  | "kontakt"
-  | "wysylka"
-  | "platnosci_przelew"
-  | "platnosci_blik"
-  | "platnosci_p24"
-  | "platnosci_payu";
-
-type CategoryId = "omnie" | "warsztaty" | "regulamin" | "polityka" | "kontakt" | "wysylka" | "platnosci";
-
-interface SidebarItem {
-  id: Section;
-  label: string;
-}
-
-interface SidebarCategory {
-  id: CategoryId;
-  label: string;
-  items: SidebarItem[];
-}
-
-const CATEGORIES: SidebarCategory[] = [
-  { id: "omnie", label: "O mnie", items: [{ id: "omnie", label: "Zdjęcie i treść" }] },
-  { id: "warsztaty", label: "Warsztaty", items: [{ id: "warsztaty", label: "Zdjęcie i tekst" }] },
-  { id: "regulamin", label: "Regulamin", items: [{ id: "regulamin", label: "Treść regulaminu" }] },
-  { id: "polityka", label: "Polityka prywatności", items: [{ id: "polityka", label: "Treść polityki" }] },
-  { id: "kontakt", label: "Kontakt", items: [{ id: "kontakt", label: "Dane kontaktowe" }] },
-  { id: "wysylka", label: "Wysyłka", items: [{ id: "wysylka", label: "Koszty i progi" }] },
-  {
-    id: "platnosci",
-    label: "Płatności",
-    items: [
-      { id: "platnosci_przelew", label: "Przelew tradycyjny" },
-      { id: "platnosci_blik", label: "BLIK" },
-      { id: "platnosci_p24", label: "Przelewy24" },
-      { id: "platnosci_payu", label: "PayU" },
-    ],
-  },
-];
-
 interface Props {
+  section: string;
   initial: {
     about_hero_image: string;
     about_story: string;
@@ -127,9 +83,7 @@ function SaveButton({ onClick, label }: { onClick: () => void; label: string }) 
   );
 }
 
-export default function SettingsForm({ initial }: Props) {
-  const [activeSection, setActiveSection] = useState<Section>("omnie");
-  const [openCategories, setOpenCategories] = useState<Set<CategoryId>>(new Set(["omnie"]));
+export default function SettingsForm({ section, initial }: Props) {
   const [toast, setToast] = useState<"ok" | "err" | false>(false);
 
   // O mnie
@@ -200,31 +154,8 @@ export default function SettingsForm({ initial }: Props) {
     }
   };
 
-  const toggleCategory = (id: CategoryId, firstItem: Section) => {
-    setOpenCategories((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-        setActiveSection(firstItem);
-      }
-      return next;
-    });
-    if (!openCategories.has(id)) {
-      setActiveSection(firstItem);
-    } else {
-      setActiveSection(firstItem);
-    }
-  };
-
-  const selectItem = (catId: CategoryId, sectionId: Section) => {
-    setOpenCategories((prev) => new Set([...prev, catId]));
-    setActiveSection(sectionId);
-  };
-
   return (
-    <div className="flex gap-0 border border-sand min-h-[640px]">
+    <div className="relative">
       {toast === "ok" && (
         <div className="fixed top-6 right-6 z-50 bg-espresso text-cream text-sm px-5 py-3 shadow-lg">
           Zapisano!
@@ -236,288 +167,212 @@ export default function SettingsForm({ initial }: Props) {
         </div>
       )}
 
-      {/* Sidebar */}
-      <nav className="w-60 flex-shrink-0 bg-warm-white border-r border-sand">
-        {CATEGORIES.map((cat) => {
-          const isOpen = openCategories.has(cat.id);
-          const hasMany = cat.items.length > 1;
-
-          return (
-            <div key={cat.id}>
-              <button
-                onClick={() => toggleCategory(cat.id, cat.items[0].id)}
-                className="w-full flex items-center justify-between px-4 py-3 text-xs tracking-widest uppercase text-charcoal hover:bg-sand transition-colors border-b border-sand/50"
-              >
-                <span>{cat.label}</span>
-                {hasMany ? (
-                  isOpen ? (
-                    <ChevronDown size={14} className="text-charcoal/50" />
-                  ) : (
-                    <ChevronRight size={14} className="text-charcoal/50" />
-                  )
-                ) : null}
-              </button>
-
-              {isOpen && hasMany && (
-                <div className="border-b border-sand/50">
-                  {cat.items.map((item) => (
-                    <button
-                      key={item.id}
-                      onClick={() => selectItem(cat.id, item.id)}
-                      className={`w-full text-left px-6 py-2.5 text-xs transition-colors ${
-                        activeSection === item.id
-                          ? "bg-espresso text-cream"
-                          : "text-charcoal/70 hover:bg-sand hover:text-charcoal"
-                      }`}
-                    >
-                      {item.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {isOpen && !hasMany && (
-                <div className="border-b border-sand/50">
-                  <button
-                    onClick={() => selectItem(cat.id, cat.items[0].id)}
-                    className={`w-full text-left px-6 py-2.5 text-xs transition-colors ${
-                      activeSection === cat.items[0].id
-                        ? "bg-espresso text-cream"
-                        : "text-charcoal/70 hover:bg-sand hover:text-charcoal"
-                    }`}
-                  >
-                    {cat.items[0].label}
-                  </button>
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </nav>
-
-      {/* Panel treści */}
-      <div className="flex-1 p-8 bg-cream min-w-0">
-
-        {activeSection === "omnie" && (
-          <div className="max-w-2xl space-y-6">
-            <h2 className="font-serif text-xl text-espresso mb-2">O mnie</h2>
-            <ImageUploader
-              currentUrl={aboutImage}
-              onUploaded={(url) => setAboutImage(url)}
-              label="Zdjęcie nagłówka (hero + sidebar)"
-            />
-            <div>
-              <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-3">
-                Treść — historia
-              </label>
-              <RichEditor value={aboutStory} onChange={setAboutStory} />
-            </div>
-            <SaveButton
-              onClick={() => save([
-                { key: "about_hero_image", value: aboutImage },
-                { key: "about_story", value: aboutStory },
-              ])}
-              label="Zapisz stronę O mnie"
-            />
+      {section === "omnie" && (
+        <div className="max-w-2xl space-y-6">
+          <h2 className="font-serif text-2xl text-espresso">O mnie</h2>
+          <ImageUploader
+            currentUrl={aboutImage}
+            onUploaded={(url) => setAboutImage(url)}
+            label="Zdjęcie nagłówka (hero + sidebar)"
+          />
+          <div>
+            <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-3">Treść — historia</label>
+            <RichEditor value={aboutStory} onChange={setAboutStory} />
           </div>
-        )}
+          <SaveButton
+            onClick={() => save([
+              { key: "about_hero_image", value: aboutImage },
+              { key: "about_story", value: aboutStory },
+            ])}
+            label="Zapisz stronę O mnie"
+          />
+        </div>
+      )}
 
-        {activeSection === "warsztaty" && (
-          <div className="max-w-2xl space-y-6">
-            <h2 className="font-serif text-xl text-espresso mb-2">Warsztaty</h2>
-            <ImageUploader
-              currentUrl={workshopsImage}
-              onUploaded={(url) => setWorkshopsImage(url)}
-              label="Zdjęcie nagłówka (hero)"
-            />
-            <div>
-              <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-3">
-                Tekst wprowadzający
-              </label>
-              <RichEditor value={workshopsIntro} onChange={setWorkshopsIntro} />
-            </div>
-            <SaveButton
-              onClick={() => save([
-                { key: "workshops_hero_image", value: workshopsImage },
-                { key: "workshops_intro", value: workshopsIntro },
-              ])}
-              label="Zapisz stronę Warsztaty"
-            />
+      {section === "warsztaty" && (
+        <div className="max-w-2xl space-y-6">
+          <h2 className="font-serif text-2xl text-espresso">Warsztaty</h2>
+          <ImageUploader
+            currentUrl={workshopsImage}
+            onUploaded={(url) => setWorkshopsImage(url)}
+            label="Zdjęcie nagłówka (hero)"
+          />
+          <div>
+            <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-3">Tekst wprowadzający</label>
+            <RichEditor value={workshopsIntro} onChange={setWorkshopsIntro} />
           </div>
-        )}
+          <SaveButton
+            onClick={() => save([
+              { key: "workshops_hero_image", value: workshopsImage },
+              { key: "workshops_intro", value: workshopsIntro },
+            ])}
+            label="Zapisz stronę Warsztaty"
+          />
+        </div>
+      )}
 
-        {activeSection === "regulamin" && (
-          <div className="max-w-2xl space-y-4">
-            <h2 className="font-serif text-xl text-espresso mb-2">Regulamin</h2>
-            <RichEditor value={regulamin} onChange={setRegulamin} />
-            <SaveButton
-              onClick={() => save([{ key: "regulamin", value: regulamin }])}
-              label="Zapisz regulamin"
-            />
+      {section === "regulamin" && (
+        <div className="max-w-2xl space-y-4">
+          <h2 className="font-serif text-2xl text-espresso">Regulamin</h2>
+          <RichEditor value={regulamin} onChange={setRegulamin} />
+          <SaveButton
+            onClick={() => save([{ key: "regulamin", value: regulamin }])}
+            label="Zapisz regulamin"
+          />
+        </div>
+      )}
+
+      {section === "polityka" && (
+        <div className="max-w-2xl space-y-4">
+          <h2 className="font-serif text-2xl text-espresso">Polityka prywatności</h2>
+          <RichEditor value={polityka} onChange={setPolityka} />
+          <SaveButton
+            onClick={() => save([{ key: "polityka_prywatnosci", value: polityka }])}
+            label="Zapisz politykę prywatności"
+          />
+        </div>
+      )}
+
+      {section === "kontakt" && (
+        <div className="max-w-md space-y-5">
+          <h2 className="font-serif text-2xl text-espresso">Dane kontaktowe</h2>
+          <Field label="Telefon" value={phone} setter={setPhone} type="tel" />
+          <Field label="E-mail" value={email} setter={setEmail} type="email" />
+          <Field label="Instagram" value={instagram} setter={setInstagram} />
+          <SaveButton
+            onClick={() => save([
+              { key: "contact_phone", value: phone },
+              { key: "contact_email", value: email },
+              { key: "contact_instagram", value: instagram },
+            ])}
+            label="Zapisz kontakt"
+          />
+        </div>
+      )}
+
+      {section === "wysylka" && (
+        <div className="max-w-md space-y-6">
+          <h2 className="font-serif text-2xl text-espresso">Wysyłka</h2>
+          <div className="flex items-center justify-between">
+            <span className="text-xs tracking-widest uppercase text-charcoal/60">Darmowa wysyłka</span>
+            <Toggle checked={freeEnabled} onChange={setFreeEnabled} />
           </div>
-        )}
+          <Field label="Koszt wysyłki (zł)" value={shippingCost} setter={setShippingCost} type="number" />
+          {freeEnabled && (
+            <Field label="Darmowa wysyłka od (zł)" value={freeFrom} setter={setFreeFrom} type="number" />
+          )}
+          <SaveButton
+            onClick={() => save([
+              { key: "shipping_cost", value: shippingCost },
+              { key: "shipping_free_enabled", value: freeEnabled ? "true" : "false" },
+              { key: "shipping_free_from", value: freeFrom },
+            ])}
+            label="Zapisz wysyłkę"
+          />
+        </div>
+      )}
 
-        {activeSection === "polityka" && (
-          <div className="max-w-2xl space-y-4">
-            <h2 className="font-serif text-xl text-espresso mb-2">Polityka prywatności</h2>
-            <RichEditor value={polityka} onChange={setPolityka} />
-            <SaveButton
-              onClick={() => save([{ key: "polityka_prywatnosci", value: polityka }])}
-              label="Zapisz politykę prywatności"
-            />
+      {section === "platnosci_przelew" && (
+        <div className="max-w-md space-y-5">
+          <h2 className="font-serif text-2xl text-espresso">Przelew tradycyjny</h2>
+          <p className="text-xs text-charcoal/50">Zawsze dostępny jako metoda płatności.</p>
+          <Field label="Imię i nazwisko / Nazwa odbiorcy" value={bankName} setter={setBankName} />
+          <Field label="Numer konta (IBAN)" value={bankNumber} setter={setBankNumber} mono />
+          <Field label="Nazwa banku" value={bankBankName} setter={setBankBankName} />
+          <Field label="Prefiks tytułu przelewu" value={bankTitle} setter={setBankTitle} />
+          <p className="text-xs text-charcoal/40">Tytuł wysyłany do kupującego: „[prefiks] #NR_ZAMÓWIENIA"</p>
+          <SaveButton
+            onClick={() => save([
+              { key: "payment_bank_account_name", value: bankName },
+              { key: "payment_bank_account_number", value: bankNumber },
+              { key: "payment_bank_name", value: bankBankName },
+              { key: "payment_bank_transfer_title", value: bankTitle },
+            ])}
+            label="Zapisz przelew"
+          />
+        </div>
+      )}
+
+      {section === "platnosci_blik" && (
+        <div className="max-w-md space-y-5">
+          <h2 className="font-serif text-2xl text-espresso">BLIK</h2>
+          <div className="flex items-center justify-between">
+            <span className="text-xs tracking-widest uppercase text-charcoal/60">Włącz BLIK</span>
+            <Toggle checked={blikEnabled} onChange={setBlikEnabled} />
           </div>
-        )}
+          {blikEnabled && (
+            <Field label="Numer telefonu do BLIK" value={blikPhone} setter={setBlikPhone} type="tel" placeholder="+48 600 000 000" />
+          )}
+          <SaveButton
+            onClick={() => save([
+              { key: "payment_blik_enabled", value: blikEnabled ? "true" : "false" },
+              { key: "payment_blik_phone", value: blikPhone },
+            ])}
+            label="Zapisz BLIK"
+          />
+        </div>
+      )}
 
-        {activeSection === "kontakt" && (
-          <div className="max-w-md space-y-5">
-            <h2 className="font-serif text-xl text-espresso mb-2">Dane kontaktowe</h2>
-            <Field label="Telefon" value={phone} setter={setPhone} type="tel" />
-            <Field label="E-mail" value={email} setter={setEmail} type="email" />
-            <Field label="Instagram" value={instagram} setter={setInstagram} />
-            <SaveButton
-              onClick={() => save([
-                { key: "contact_phone", value: phone },
-                { key: "contact_email", value: email },
-                { key: "contact_instagram", value: instagram },
-              ])}
-              label="Zapisz kontakt"
-            />
+      {section === "platnosci_p24" && (
+        <div className="max-w-md space-y-5">
+          <h2 className="font-serif text-2xl text-espresso">Przelewy24</h2>
+          <div className="flex items-center justify-between">
+            <span className="text-xs tracking-widest uppercase text-charcoal/60">Włącz Przelewy24</span>
+            <Toggle checked={p24Enabled} onChange={setP24Enabled} />
           </div>
-        )}
+          {p24Enabled && (
+            <>
+              <Field label="Merchant ID" value={p24MerchantId} setter={setP24MerchantId} mono />
+              <Field label="POS ID" value={p24PosId} setter={setP24PosId} mono />
+              <Field label="API Key" value={p24ApiKey} setter={setP24ApiKey} mono />
+              <Field label="CRC Key" value={p24Crc} setter={setP24Crc} mono />
+            </>
+          )}
+          <SaveButton
+            onClick={() => save([
+              { key: "payment_przelewy24_enabled", value: p24Enabled ? "true" : "false" },
+              { key: "payment_przelewy24_merchant_id", value: p24MerchantId },
+              { key: "payment_przelewy24_pos_id", value: p24PosId },
+              { key: "payment_przelewy24_api_key", value: p24ApiKey },
+              { key: "payment_przelewy24_crc", value: p24Crc },
+            ])}
+            label="Zapisz Przelewy24"
+          />
+        </div>
+      )}
 
-        {activeSection === "wysylka" && (
-          <div className="max-w-md space-y-6">
-            <h2 className="font-serif text-xl text-espresso mb-2">Wysyłka</h2>
-            <div className="flex items-center justify-between">
-              <span className="text-xs tracking-widest uppercase text-charcoal/60">Darmowa wysyłka</span>
-              <Toggle checked={freeEnabled} onChange={setFreeEnabled} />
-            </div>
-            <Field label="Koszt wysyłki (zł)" value={shippingCost} setter={setShippingCost} type="number" />
-            {freeEnabled && (
-              <Field label="Darmowa wysyłka od (zł)" value={freeFrom} setter={setFreeFrom} type="number" />
-            )}
-            <SaveButton
-              onClick={() => save([
-                { key: "shipping_cost", value: shippingCost },
-                { key: "shipping_free_enabled", value: freeEnabled ? "true" : "false" },
-                { key: "shipping_free_from", value: freeFrom },
-              ])}
-              label="Zapisz wysyłkę"
-            />
+      {section === "platnosci_payu" && (
+        <div className="max-w-md space-y-5">
+          <h2 className="font-serif text-2xl text-espresso">PayU</h2>
+          <div className="flex items-center justify-between">
+            <span className="text-xs tracking-widest uppercase text-charcoal/60">Włącz PayU</span>
+            <Toggle checked={payuEnabled} onChange={setPayuEnabled} />
           </div>
-        )}
-
-        {activeSection === "platnosci_przelew" && (
-          <div className="max-w-md space-y-5">
-            <h2 className="font-serif text-xl text-espresso mb-2">Przelew tradycyjny</h2>
-            <p className="text-xs text-charcoal/50">Zawsze dostępny jako metoda płatności.</p>
-            <Field label="Imię i nazwisko / Nazwa odbiorcy" value={bankName} setter={setBankName} />
-            <Field label="Numer konta (IBAN)" value={bankNumber} setter={setBankNumber} mono />
-            <Field label="Nazwa banku" value={bankBankName} setter={setBankBankName} />
-            <Field label="Prefiks tytułu przelewu" value={bankTitle} setter={setBankTitle} />
-            <p className="text-xs text-charcoal/40">
-              Tytuł wysyłany do kupującego: „[prefiks] #NR_ZAMÓWIENIA"
-            </p>
-            <SaveButton
-              onClick={() => save([
-                { key: "payment_bank_account_name", value: bankName },
-                { key: "payment_bank_account_number", value: bankNumber },
-                { key: "payment_bank_name", value: bankBankName },
-                { key: "payment_bank_transfer_title", value: bankTitle },
-              ])}
-              label="Zapisz przelew"
-            />
-          </div>
-        )}
-
-        {activeSection === "platnosci_blik" && (
-          <div className="max-w-md space-y-5">
-            <h2 className="font-serif text-xl text-espresso mb-2">BLIK</h2>
-            <div className="flex items-center justify-between">
-              <span className="text-xs tracking-widest uppercase text-charcoal/60">Włącz BLIK</span>
-              <Toggle checked={blikEnabled} onChange={setBlikEnabled} />
-            </div>
-            {blikEnabled && (
-              <Field
-                label="Numer telefonu do BLIK"
-                value={blikPhone}
-                setter={setBlikPhone}
-                type="tel"
-                placeholder="+48 600 000 000"
-              />
-            )}
-            <SaveButton
-              onClick={() => save([
-                { key: "payment_blik_enabled", value: blikEnabled ? "true" : "false" },
-                { key: "payment_blik_phone", value: blikPhone },
-              ])}
-              label="Zapisz BLIK"
-            />
-          </div>
-        )}
-
-        {activeSection === "platnosci_p24" && (
-          <div className="max-w-md space-y-5">
-            <h2 className="font-serif text-xl text-espresso mb-2">Przelewy24</h2>
-            <div className="flex items-center justify-between">
-              <span className="text-xs tracking-widest uppercase text-charcoal/60">Włącz Przelewy24</span>
-              <Toggle checked={p24Enabled} onChange={setP24Enabled} />
-            </div>
-            {p24Enabled && (
-              <>
-                <Field label="Merchant ID" value={p24MerchantId} setter={setP24MerchantId} mono />
-                <Field label="POS ID" value={p24PosId} setter={setP24PosId} mono />
-                <Field label="API Key" value={p24ApiKey} setter={setP24ApiKey} mono />
-                <Field label="CRC Key" value={p24Crc} setter={setP24Crc} mono />
-              </>
-            )}
-            <SaveButton
-              onClick={() => save([
-                { key: "payment_przelewy24_enabled", value: p24Enabled ? "true" : "false" },
-                { key: "payment_przelewy24_merchant_id", value: p24MerchantId },
-                { key: "payment_przelewy24_pos_id", value: p24PosId },
-                { key: "payment_przelewy24_api_key", value: p24ApiKey },
-                { key: "payment_przelewy24_crc", value: p24Crc },
-              ])}
-              label="Zapisz Przelewy24"
-            />
-          </div>
-        )}
-
-        {activeSection === "platnosci_payu" && (
-          <div className="max-w-md space-y-5">
-            <h2 className="font-serif text-xl text-espresso mb-2">PayU</h2>
-            <div className="flex items-center justify-between">
-              <span className="text-xs tracking-widest uppercase text-charcoal/60">Włącz PayU</span>
-              <Toggle checked={payuEnabled} onChange={setPayuEnabled} />
-            </div>
-            {payuEnabled && (
-              <>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs tracking-widest uppercase text-charcoal/60">Tryb sandbox (testowy)</span>
-                  <Toggle checked={payuSandbox} onChange={setPayuSandbox} />
-                </div>
-                <Field label="POS ID" value={payuPosId} setter={setPayuPosId} mono />
-                <Field label="MD5 Key (drugi klucz)" value={payuMd5} setter={setPayuMd5} mono />
-                <Field label="OAuth — Client ID" value={payuClientId} setter={setPayuClientId} mono />
-                <Field label="OAuth — Client Secret" value={payuClientSecret} setter={setPayuClientSecret} mono />
-              </>
-            )}
-            <SaveButton
-              onClick={() => save([
-                { key: "payment_payu_enabled", value: payuEnabled ? "true" : "false" },
-                { key: "payment_payu_pos_id", value: payuPosId },
-                { key: "payment_payu_md5", value: payuMd5 },
-                { key: "payment_payu_oauth_client_id", value: payuClientId },
-                { key: "payment_payu_oauth_client_secret", value: payuClientSecret },
-                { key: "payment_payu_sandbox", value: payuSandbox ? "true" : "false" },
-              ])}
-              label="Zapisz PayU"
-            />
-          </div>
-        )}
-
-      </div>
+          {payuEnabled && (
+            <>
+              <div className="flex items-center justify-between">
+                <span className="text-xs tracking-widest uppercase text-charcoal/60">Tryb sandbox (testowy)</span>
+                <Toggle checked={payuSandbox} onChange={setPayuSandbox} />
+              </div>
+              <Field label="POS ID" value={payuPosId} setter={setPayuPosId} mono />
+              <Field label="MD5 Key (drugi klucz)" value={payuMd5} setter={setPayuMd5} mono />
+              <Field label="OAuth — Client ID" value={payuClientId} setter={setPayuClientId} mono />
+              <Field label="OAuth — Client Secret" value={payuClientSecret} setter={setPayuClientSecret} mono />
+            </>
+          )}
+          <SaveButton
+            onClick={() => save([
+              { key: "payment_payu_enabled", value: payuEnabled ? "true" : "false" },
+              { key: "payment_payu_pos_id", value: payuPosId },
+              { key: "payment_payu_md5", value: payuMd5 },
+              { key: "payment_payu_oauth_client_id", value: payuClientId },
+              { key: "payment_payu_oauth_client_secret", value: payuClientSecret },
+              { key: "payment_payu_sandbox", value: payuSandbox ? "true" : "false" },
+            ])}
+            label="Zapisz PayU"
+          />
+        </div>
+      )}
     </div>
   );
 }
