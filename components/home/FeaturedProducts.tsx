@@ -53,7 +53,7 @@ export default async function FeaturedProducts() {
             {products.map((product) => (
               <div
                 key={product.id}
-                className="snap-start flex-none w-[78vw]"
+                className="snap-start flex-none w-[40vw]"
               >
                 <ProductCard product={product} />
               </div>
