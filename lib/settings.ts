@@ -133,6 +133,8 @@ const WORKSHOPS_INTRO_DEFAULT = `<p>Organizuję warsztaty ceramiczne dla grup i 
 const DEFAULTS: Record<string, string> = {
   regulamin: REGULAMIN_DEFAULT,
   polityka_prywatnosci: POLITYKA_DEFAULT,
+  home_hero_image: "/images/hero.jpg",
+  home_about_image: "/images/about-photo.jpg",
   about_hero_image: "/images/about-photo.jpg",
   about_story: ABOUT_STORY_DEFAULT,
   workshops_hero_image: "/images/warsztaty-photo.jpg",

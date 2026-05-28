@@ -10,8 +10,8 @@ import { useCart } from "@/lib/cart";
 
 const navLinks = [
   { href: "/sklep",     label: "Sklep" },
-  { href: "/warsztaty", label: "Warsztaty" },
   { href: "/o-mnie",    label: "O mnie" },
+  { href: "/warsztaty", label: "Warsztaty" },
   { href: "/kontakt",   label: "Kontakt" },
 ];
 

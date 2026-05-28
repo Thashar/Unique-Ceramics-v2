@@ -12,6 +12,8 @@ export default async function AdminSettingsPage({
   const section = s ?? "omnie";
 
   const settings = await getSettings([
+    "home_hero_image",
+    "home_about_image",
     "about_hero_image",
     "about_story",
     "workshops_hero_image",

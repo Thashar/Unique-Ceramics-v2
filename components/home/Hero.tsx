@@ -5,13 +5,13 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 
-export default function Hero() {
+export default function Hero({ heroImage = "/images/hero.jpg" }: { heroImage?: string }) {
   return (
     <section className="relative flex items-center overflow-hidden" style={{ height: "100svh" }} data-snap>
       {/* Tło */}
       <div className="absolute inset-0">
         <Image
-          src="/images/hero.jpg"
+          src={heroImage}
           alt="Ceramika ręcznie robiona"
           fill
           priority

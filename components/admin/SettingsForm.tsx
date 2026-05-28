@@ -7,6 +7,8 @@ import ImageUploader from "@/components/admin/ImageUploader";
 interface Props {
   section: string;
   initial: {
+    home_hero_image: string;
+    home_about_image: string;
     about_hero_image: string;
     about_story: string;
     workshops_hero_image: string;
@@ -86,6 +88,10 @@ function SaveButton({ onClick, label }: { onClick: () => void; label: string }) 
 export default function SettingsForm({ section, initial }: Props) {
   const [toast, setToast] = useState<"ok" | "err" | false>(false);
 
+  // Strona główna
+  const [homeHeroImage, setHomeHeroImage] = useState(initial.home_hero_image);
+  const [homeAboutImage, setHomeAboutImage] = useState(initial.home_about_image);
+
   // O mnie
   const [aboutImage, setAboutImage] = useState(initial.about_hero_image);
   const [aboutStory, setAboutStory] = useState(initial.about_story);
@@ -164,6 +170,37 @@ export default function SettingsForm({ section, initial }: Props) {
       {toast === "err" && (
         <div className="fixed top-6 right-6 z-50 bg-red-700 text-white text-sm px-5 py-3 shadow-lg max-w-xs">
           Błąd zapisu — tabela Setting nie istnieje w bazie. Uruchom SQL w Supabase.
+        </div>
+      )}
+
+      {section === "strona_glowna" && (
+        <div className="max-w-2xl space-y-8">
+          <h2 className="font-serif text-2xl text-espresso">Strona główna — zdjęcia</h2>
+          <div className="space-y-3">
+            <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/70">Zdjęcie nagłówka (sekcja hero)</h3>
+            <p className="text-xs text-charcoal/40">Pierwsze zdjęcie widoczne po wejściu na stronę — duże, pełnoekranowe tło.</p>
+            <ImageUploader
+              currentUrl={homeHeroImage}
+              onUploaded={(url) => setHomeHeroImage(url)}
+              label="Zdjęcie hero"
+            />
+          </div>
+          <div className="border-t border-sand pt-6 space-y-3">
+            <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/70">Zdjęcie sekcji „O mnie"</h3>
+            <p className="text-xs text-charcoal/40">Tło sekcji z historią — widoczne za tekstem na stronie głównej.</p>
+            <ImageUploader
+              currentUrl={homeAboutImage}
+              onUploaded={(url) => setHomeAboutImage(url)}
+              label="Zdjęcie sekcji O mnie"
+            />
+          </div>
+          <SaveButton
+            onClick={() => save([
+              { key: "home_hero_image", value: homeHeroImage },
+              { key: "home_about_image", value: homeAboutImage },
+            ])}
+            label="Zapisz zdjęcia strony głównej"
+          />
         </div>
       )}
 
