@@ -35,7 +35,8 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({ ok: true });
-  } catch {
+  } catch (err) {
+    console.error("[contact] Resend error:", err);
     return NextResponse.json({ error: "Błąd wysyłki" }, { status: 500 });
   }
 }
