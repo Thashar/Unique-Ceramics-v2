@@ -31,8 +31,8 @@ export default async function Home() {
         <div data-snap style={{ height: "100svh" }}>
           <InstagramCta instagram={s.contact_instagram} />
         </div>
-        {/* Stopka — pełna, naturalnej wysokości; scroll wewnątrz obsługuje HomeScrollSnap */}
-        <div data-snap>
+        {/* Stopka — pt-20 kompensuje header (h-20 fixed) */}
+        <div data-snap className="pt-20">
           <Footer />
         </div>
       </main>
