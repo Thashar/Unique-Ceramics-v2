@@ -81,8 +81,34 @@ export default function ProductPage() {
 
   if (!product) notFound();
 
+  const productSchema = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name,
+    description: product.description ?? undefined,
+    image: product.images.map((img) =>
+      img.startsWith("http") ? img : `https://uniqueceramics.pl${img}`
+    ),
+    brand: { "@type": "Brand", name: "Unique Ceramics" },
+    offers: {
+      "@type": "Offer",
+      url: `https://uniqueceramics.pl/sklep/${product.slug}`,
+      priceCurrency: "PLN",
+      price: product.price,
+      availability:
+        product.stock > 0
+          ? "https://schema.org/InStock"
+          : "https://schema.org/OutOfStock",
+      seller: { "@type": "Organization", name: "Unique Ceramics" },
+    },
+  };
+
   return (
     <>
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
+    />
     <Header />
     <div className="min-h-[100svh] bg-warm-white">
       <div className="max-w-7xl mx-auto px-6 lg:px-10 pt-28 pb-4">
