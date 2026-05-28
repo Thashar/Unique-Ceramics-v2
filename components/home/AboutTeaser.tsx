@@ -7,8 +7,11 @@ import { ArrowRight } from "lucide-react";
 
 export default function AboutTeaser() {
   return (
-    <section className="py-28 px-6 lg:px-10 bg-cream">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+    <section
+      className="px-6 lg:px-10 bg-cream flex items-center py-16"
+      style={{ scrollSnapAlign: "start", minHeight: "100svh" }}
+    >
+      <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
         {/* Zdjęcie */}
         <motion.div
           initial={{ opacity: 0, x: -30 }}

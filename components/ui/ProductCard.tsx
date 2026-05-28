@@ -33,14 +33,14 @@ export default function ProductCard({ product }: { product: ProductCardProduct }
     >
       <Link href={`/sklep/${product.slug}`} className="group block">
         {/* Zdjęcie */}
-        <div className="relative aspect-[4/5] overflow-hidden bg-mist rounded-sm mb-5">
+        <div className="relative aspect-[4/5] overflow-hidden bg-mist mb-4">
           {product.images[0] ? (
             <Image
               src={product.images[0]}
               alt={product.name}
               fill
               className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-cream">
@@ -48,26 +48,26 @@ export default function ProductCard({ product }: { product: ProductCardProduct }
             </div>
           )}
           {product.stock <= 2 && product.stock > 0 && (
-            <span className="absolute top-3 left-3 bg-terracotta text-warm-white text-[11px] tracking-wider uppercase px-2.5 py-1 rounded-sm">
+            <span className="absolute top-3 left-3 bg-terracotta text-warm-white text-[11px] tracking-wider uppercase px-2.5 py-1">
               Ostatnie sztuki
             </span>
           )}
           {product.stock === 0 && (
-            <span className="absolute top-3 left-3 bg-charcoal text-warm-white text-[11px] tracking-wider uppercase px-2.5 py-1 rounded-sm">
+            <span className="absolute top-3 left-3 bg-charcoal/80 text-warm-white text-[11px] tracking-wider uppercase px-2.5 py-1">
               Niedostępny
             </span>
           )}
+          {/* Hover overlay */}
+          <div className="absolute inset-0 bg-espresso/0 group-hover:bg-espresso/8 transition-colors duration-500" />
         </div>
 
         {/* Info */}
-        <div className="flex items-start justify-between gap-2">
-          <div>
-            <p className="text-xs tracking-widest uppercase text-clay mb-1">{product.category}</p>
-            <h3 className="font-serif text-lg text-espresso group-hover:text-clay transition-colors leading-snug">
-              {product.name}
-            </h3>
-          </div>
-          <p className="font-serif text-lg text-espresso whitespace-nowrap mt-5">
+        <div>
+          <p className="text-[11px] tracking-widest uppercase text-clay mb-1.5">{product.category}</p>
+          <h3 className="font-serif text-lg text-espresso group-hover:text-clay transition-colors leading-snug mb-1">
+            {product.name}
+          </h3>
+          <p className="text-sm text-charcoal/60 font-medium tabular-nums">
             {formatPrice(product.price)}
           </p>
         </div>

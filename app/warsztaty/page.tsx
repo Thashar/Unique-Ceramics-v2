@@ -3,6 +3,11 @@ export const dynamic = "force-dynamic";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import {
+  type LucideIcon,
+  Cake, Gem, Building2, Leaf, Users, Gift,
+  Package, GraduationCap, Flame, Camera, Coffee, CheckCircle,
+} from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { getSettings } from "@/lib/settings";
@@ -12,13 +17,33 @@ export const metadata: Metadata = {
   description: "Warsztaty ceramiczne w małych grupach — dla początkujących i zaawansowanych.",
 };
 
-const workshops = [
-  { id: 1, icon: "🎂", title: "Warsztaty urodzinowe", description: "Wyjątkowe urodziny w towarzystwie gliny! Idealne dla grup od 4 osób. W trakcie warsztatu uformujecie własne wyroby z gliny, które po wypaleniu możecie odebrać lub wysłać pocztą.", duration: "3–4 godziny", maxPeople: "od 4 osób", priceLabel: "od 80 zł / os.", level: "Każdy poziom" },
-  { id: 2, icon: "💍", title: "Wieczory panieńskie", description: "Niezapomniane wieczory panieńskie z ceramiką. Możliwość degustacji wina. Każda uczestniczka wychodzi z własnoręcznie wykonanym, unikatowym dziełem.", duration: "3–4 godziny", maxPeople: "od 4 osób", priceLabel: "od 100 zł / os.", level: "Każdy poziom" },
-  { id: 3, icon: "🏢", title: "Team Building", description: "Integracja przez ceramikę dla firm i grup zawodowych. Doskonała alternatywa dla standardowych eventów — kreatywna, angażująca i pełna niespodzianek.", duration: "Do ustalenia", maxPeople: "wycena indywidualna", priceLabel: "wycena indywidualna", level: "Każdy poziom" },
-  { id: 4, icon: "🌿", title: "Warsztaty otwarte", description: "Regularne warsztaty dla osób indywidualnych. Poznasz podstawy pracy z gliną — toczenie na kole lub hand-building. Nie potrzebujesz żadnego doświadczenia.", duration: "3 godziny", maxPeople: "małe grupy", priceLabel: "od 90 zł / os.", level: "Każdy poziom" },
-  { id: 5, icon: "👨‍👩‍👧", title: "Dla dzieci i rodzin", description: "Warsztaty dla dzieci od 8 lat i całych rodzin. Bezpieczne materiały, przystępna forma, mnóstwo frajdy i niepowtarzalne wspomnienia.", duration: "2–3 godziny", maxPeople: "rodziny i grupy", priceLabel: "od 60 zł / os.", level: "Dzieci od 8 lat" },
-  { id: 6, icon: "🎁", title: "Vouchery prezentowe", description: "Podaruj komuś wyjątkowe doświadczenie! Vouchery na dowolny rodzaj warsztatów. Idealne na urodziny, imieniny, Dzień Matki lub po prostu z okazji.", duration: "według wybranego warsztatu", maxPeople: "dla 1 osoby lub pary", priceLabel: "od 80 zł", level: "Każdy poziom" },
+type Workshop = {
+  id: number;
+  icon: LucideIcon;
+  title: string;
+  description: string;
+  duration: string;
+  maxPeople: string;
+  priceLabel: string;
+  level: string;
+};
+
+const workshops: Workshop[] = [
+  { id: 1, icon: Cake,      title: "Warsztaty urodzinowe",  description: "Wyjątkowe urodziny w towarzystwie gliny! Idealne dla grup od 4 osób. W trakcie warsztatu uformujecie własne wyroby z gliny, które po wypaleniu możecie odebrać lub wysłać pocztą.", duration: "3–4 godziny", maxPeople: "od 4 osób",           priceLabel: "od 80 zł / os.",      level: "Każdy poziom" },
+  { id: 2, icon: Gem,       title: "Wieczory panieńskie",   description: "Niezapomniane wieczory panieńskie z ceramiką. Możliwość degustacji wina. Każda uczestniczka wychodzi z własnoręcznie wykonanym, unikatowym dziełem.",                                         duration: "3–4 godziny", maxPeople: "od 4 osób",           priceLabel: "od 100 zł / os.",     level: "Każdy poziom" },
+  { id: 3, icon: Building2, title: "Team Building",         description: "Integracja przez ceramikę dla firm i grup zawodowych. Doskonała alternatywa dla standardowych eventów — kreatywna, angażująca i pełna niespodzianek.",                                         duration: "Do ustalenia", maxPeople: "wycena indywidualna", priceLabel: "wycena indywidualna", level: "Każdy poziom" },
+  { id: 4, icon: Leaf,      title: "Warsztaty otwarte",     description: "Regularne warsztaty dla osób indywidualnych. Poznasz podstawy pracy z gliną — toczenie na kole lub hand-building. Nie potrzebujesz żadnego doświadczenia.",                                   duration: "3 godziny",    maxPeople: "małe grupy",          priceLabel: "od 90 zł / os.",      level: "Każdy poziom" },
+  { id: 5, icon: Users,     title: "Dla dzieci i rodzin",   description: "Warsztaty dla dzieci od 8 lat i całych rodzin. Bezpieczne materiały, przystępna forma, mnóstwo frajdy i niepowtarzalne wspomnienia.",                                                           duration: "2–3 godziny",  maxPeople: "rodziny i grupy",     priceLabel: "od 60 zł / os.",      level: "Dzieci od 8 lat" },
+  { id: 6, icon: Gift,      title: "Vouchery prezentowe",   description: "Podaruj komuś wyjątkowe doświadczenie! Vouchery na dowolny rodzaj warsztatów. Idealne na urodziny, imieniny, Dzień Matki lub po prostu z okazji.",                                             duration: "według wybranego warsztatu", maxPeople: "dla 1 osoby lub pary", priceLabel: "od 80 zł", level: "Każdy poziom" },
+];
+
+const includes: { icon: LucideIcon; label: string }[] = [
+  { icon: Package,       label: "Materiały (glina, narzędzia)" },
+  { icon: GraduationCap, label: "Prowadzenie przez ceramiczkę" },
+  { icon: Flame,         label: "Wypalanie Twoich prac" },
+  { icon: CheckCircle,   label: "Gotowe wyroby do odbioru" },
+  { icon: Camera,        label: "Pamiątkowe zdjęcia" },
+  { icon: Coffee,        label: "Napoje podczas warsztatów" },
 ];
 
 export default async function WorkshopsPage() {
@@ -57,8 +82,10 @@ export default async function WorkshopsPage() {
             {workshops.map((w) => (
               <div key={w.id} className="grid grid-cols-1 lg:grid-cols-3 gap-10 border-b border-sand pb-12 last:border-0 last:pb-0">
                 <div className="lg:col-span-2">
-                  <div className="flex items-center gap-3 mb-3">
-                    <span className="text-2xl">{w.icon}</span>
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-9 h-9 bg-cream rounded-full flex items-center justify-center shrink-0">
+                      <w.icon size={18} strokeWidth={1.5} className="text-clay" />
+                    </div>
                     <span className="text-xs tracking-widest uppercase text-clay">{w.level}</span>
                   </div>
                   <h2 className="font-serif text-3xl text-espresso mb-4">{w.title}</h2>
@@ -93,8 +120,13 @@ export default async function WorkshopsPage() {
           <div className="max-w-7xl mx-auto">
             <h2 className="font-serif text-3xl text-espresso mb-12 text-center">Co zawiera warsztat?</h2>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-3xl mx-auto">
-              {["🏺 Materiały (glina, narzędzia)", "👩‍🏫 Prowadzenie przez ceramiczkę", "🔥 Wypalanie Twoich prac", "📦 Gotowe wyroby do odbioru", "📸 Pamiątkowe zdjęcia", "☕ Napoje podczas warsztatów"].map((item) => (
-                <div key={item} className="bg-warm-white p-5 text-center text-sm text-charcoal/80 leading-relaxed">{item}</div>
+              {includes.map(({ icon: Icon, label }) => (
+                <div key={label} className="bg-warm-white p-6 text-center">
+                  <div className="w-10 h-10 bg-cream rounded-full flex items-center justify-center mx-auto mb-3">
+                    <Icon size={18} strokeWidth={1.5} className="text-clay" />
+                  </div>
+                  <p className="text-sm text-charcoal/75 leading-relaxed">{label}</p>
+                </div>
               ))}
             </div>
           </div>

@@ -7,7 +7,10 @@ import { ArrowRight } from "lucide-react";
 
 export default function WorkshopsTeaser() {
   return (
-    <section className="relative py-32 px-6 lg:px-10 overflow-hidden">
+    <section
+      className="relative px-6 lg:px-10 overflow-hidden flex items-center py-16"
+      style={{ scrollSnapAlign: "start", minHeight: "100svh" }}
+    >
       {/* Tło */}
       <div className="absolute inset-0">
         <Image

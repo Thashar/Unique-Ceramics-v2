@@ -18,9 +18,12 @@ export default async function FeaturedProducts() {
   if (products.length === 0) return null;
 
   return (
-    <section className="py-28 px-6 lg:px-10 bg-warm-white">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
+    <section
+      className="px-6 lg:px-10 bg-warm-white flex flex-col justify-center py-16"
+      style={{ scrollSnapAlign: "start", minHeight: "100svh" }}
+    >
+      <div className="max-w-7xl mx-auto w-full">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
           <div>
             <p className="text-xs tracking-[0.3em] uppercase text-clay mb-3">Kolekcja</p>
             <h2 className="font-serif text-4xl md:text-5xl text-espresso leading-tight">

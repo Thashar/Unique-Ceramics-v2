@@ -9,10 +9,10 @@ import { ShoppingBag, Menu, X, User, Package, LogOut, ChevronDown } from "lucide
 import { useCart } from "@/lib/cart";
 
 const navLinks = [
-  { href: "/sklep", label: "Sklep" },
+  { href: "/sklep",     label: "Sklep" },
   { href: "/warsztaty", label: "Warsztaty" },
-  { href: "/o-mnie", label: "O mnie" },
-  { href: "/kontakt", label: "Kontakt" },
+  { href: "/o-mnie",    label: "O mnie" },
+  { href: "/kontakt",   label: "Kontakt" },
 ];
 
 function AccountDropdown({ scrolled }: { scrolled: boolean }) {
@@ -102,7 +102,6 @@ export default function Header() {
   const pathname = usePathname();
   const isHome = pathname === "/";
 
-  // Na stronach innych niż główna header zawsze ma ciemny styl
   const dark = scrolled || !isHome;
 
   useEffect(() => {
@@ -151,17 +150,28 @@ export default function Header() {
 
         {/* Nav desktop */}
         <nav className="hidden md:flex items-center gap-10">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={`text-sm tracking-widest uppercase transition-colors duration-500 ${
-                dark ? "text-charcoal hover:text-clay" : "text-cream/80 hover:text-cream"
-              }`}
-            >
-              {link.label}
-            </Link>
-          ))}
+          {navLinks.map((link) => {
+            const isActive = pathname === link.href || pathname.startsWith(link.href + "/");
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`group relative pb-1 text-sm tracking-widest uppercase transition-colors duration-300 ${
+                  dark
+                    ? isActive ? "text-clay" : "text-charcoal hover:text-clay"
+                    : isActive ? "text-cream" : "text-cream/75 hover:text-cream"
+                }`}
+              >
+                {link.label}
+                {/* Animowany podkreślnik */}
+                <span
+                  className={`absolute bottom-0 left-0 right-0 h-px transition-transform duration-300 origin-left ${
+                    isActive ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"
+                  } ${dark ? "bg-clay" : "bg-cream/60"}`}
+                />
+              </Link>
+            );
+          })}
         </nav>
 
         {/* Koszyk + konto + hamburger */}
@@ -198,21 +208,26 @@ export default function Header() {
       {/* Mobile menu */}
       {menuOpen && (
         <div className="md:hidden bg-warm-white/98 backdrop-blur-md border-t border-sand px-6 pb-8 pt-4">
-          <nav className="flex flex-col gap-6 mt-2">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setMenuOpen(false)}
-                className="text-base tracking-widest uppercase text-charcoal hover:text-clay transition-colors"
-              >
-                {link.label}
-              </Link>
-            ))}
+          <nav className="flex flex-col gap-1 mt-2">
+            {navLinks.map((link) => {
+              const isActive = pathname === link.href || pathname.startsWith(link.href + "/");
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setMenuOpen(false)}
+                  className={`py-3 border-b border-sand/50 text-base tracking-widest uppercase transition-colors ${
+                    isActive ? "text-clay" : "text-charcoal hover:text-clay"
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
             <Link
               href="/konto"
               onClick={() => setMenuOpen(false)}
-              className="text-base tracking-widest uppercase text-charcoal hover:text-clay transition-colors"
+              className="py-3 text-base tracking-widest uppercase text-charcoal hover:text-clay transition-colors"
             >
               Moje konto
             </Link>

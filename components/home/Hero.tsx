@@ -7,7 +7,7 @@ import { ArrowRight } from "lucide-react";
 
 export default function Hero() {
   return (
-    <section className="relative min-h-[100svh] flex items-center overflow-hidden">
+    <section className="relative min-h-[100svh] flex items-center overflow-hidden" style={{ scrollSnapAlign: "start" }}>
       {/* Tło */}
       <div className="absolute inset-0">
         <Image
