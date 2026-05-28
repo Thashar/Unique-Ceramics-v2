@@ -3,13 +3,17 @@
 import { useState } from "react";
 import RichEditor from "@/components/admin/RichEditor";
 import ImageUploader from "@/components/admin/ImageUploader";
+import FocalPointPicker from "@/components/admin/FocalPointPicker";
 
 interface Props {
   section: string;
   initial: {
     home_hero_image: string;
+    home_hero_position: string;
     home_about_image: string;
+    home_about_position: string;
     home_workshops_image: string;
+    home_workshops_position: string;
     about_hero_image: string;
     about_story: string;
     workshops_hero_image: string;
@@ -91,8 +95,11 @@ export default function SettingsForm({ section, initial }: Props) {
 
   // Strona główna
   const [homeHeroImage, setHomeHeroImage] = useState(initial.home_hero_image);
+  const [homeHeroPos, setHomeHeroPos] = useState(initial.home_hero_position);
   const [homeAboutImage, setHomeAboutImage] = useState(initial.home_about_image);
+  const [homeAboutPos, setHomeAboutPos] = useState(initial.home_about_position);
   const [homeWorkshopsImage, setHomeWorkshopsImage] = useState(initial.home_workshops_image);
+  const [homeWorkshopsPos, setHomeWorkshopsPos] = useState(initial.home_workshops_position);
 
   // O mnie
   const [aboutImage, setAboutImage] = useState(initial.about_hero_image);
@@ -178,38 +185,60 @@ export default function SettingsForm({ section, initial }: Props) {
       {section === "strona_glowna" && (
         <div className="max-w-2xl space-y-8">
           <h2 className="font-serif text-2xl text-espresso">Strona główna — zdjęcia</h2>
-          <div className="space-y-3">
-            <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/70">Zdjęcie nagłówka (sekcja hero)</h3>
+
+          <div className="space-y-4">
+            <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/70">Sekcja hero (nagłówek)</h3>
             <p className="text-xs text-charcoal/40">Pierwsze zdjęcie widoczne po wejściu na stronę — duże, pełnoekranowe tło.</p>
             <ImageUploader
               currentUrl={homeHeroImage}
               onUploaded={(url) => setHomeHeroImage(url)}
               label="Zdjęcie hero"
             />
+            <FocalPointPicker
+              imageUrl={homeHeroImage}
+              value={homeHeroPos}
+              onChange={setHomeHeroPos}
+            />
           </div>
-          <div className="border-t border-sand pt-6 space-y-3">
-            <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/70">Zdjęcie sekcji „O mnie"</h3>
+
+          <div className="border-t border-sand pt-6 space-y-4">
+            <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/70">Sekcja „O mnie"</h3>
             <p className="text-xs text-charcoal/40">Tło sekcji z historią — widoczne za tekstem na stronie głównej.</p>
             <ImageUploader
               currentUrl={homeAboutImage}
               onUploaded={(url) => setHomeAboutImage(url)}
               label="Zdjęcie sekcji O mnie"
             />
+            <FocalPointPicker
+              imageUrl={homeAboutImage}
+              value={homeAboutPos}
+              onChange={setHomeAboutPos}
+            />
           </div>
-          <div className="border-t border-sand pt-6 space-y-3">
-            <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/70">Zdjęcie sekcji „Warsztaty"</h3>
+
+          <div className="border-t border-sand pt-6 space-y-4">
+            <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/70">Sekcja „Warsztaty"</h3>
             <p className="text-xs text-charcoal/40">Tło sekcji warsztatów — widoczne za tekstem na stronie głównej.</p>
             <ImageUploader
               currentUrl={homeWorkshopsImage}
               onUploaded={(url) => setHomeWorkshopsImage(url)}
               label="Zdjęcie sekcji Warsztaty"
             />
+            <FocalPointPicker
+              imageUrl={homeWorkshopsImage}
+              value={homeWorkshopsPos}
+              onChange={setHomeWorkshopsPos}
+            />
           </div>
+
           <SaveButton
             onClick={() => save([
-              { key: "home_hero_image", value: homeHeroImage },
-              { key: "home_about_image", value: homeAboutImage },
-              { key: "home_workshops_image", value: homeWorkshopsImage },
+              { key: "home_hero_image",        value: homeHeroImage },
+              { key: "home_hero_position",     value: homeHeroPos },
+              { key: "home_about_image",       value: homeAboutImage },
+              { key: "home_about_position",    value: homeAboutPos },
+              { key: "home_workshops_image",   value: homeWorkshopsImage },
+              { key: "home_workshops_position",value: homeWorkshopsPos },
             ])}
             label="Zapisz zdjęcia strony głównej"
           />

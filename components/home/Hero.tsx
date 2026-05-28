@@ -5,7 +5,13 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 
-export default function Hero({ heroImage = "/images/hero.jpg" }: { heroImage?: string }) {
+export default function Hero({
+  heroImage = "/images/hero.jpg",
+  heroPosition = "50% 50%",
+}: {
+  heroImage?: string;
+  heroPosition?: string;
+}) {
   return (
     <section className="relative flex items-center overflow-hidden" style={{ height: "100svh" }} data-snap>
       {/* Tło */}
@@ -16,6 +22,7 @@ export default function Hero({ heroImage = "/images/hero.jpg" }: { heroImage?: s
           fill
           priority
           className="object-cover"
+          style={{ objectPosition: heroPosition }}
           sizes="100vw"
         />
         <div className="absolute inset-0 bg-espresso/55" />

@@ -5,7 +5,13 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 
-export default function AboutTeaser({ aboutImage = "/images/about-photo.jpg" }: { aboutImage?: string }) {
+export default function AboutTeaser({
+  aboutImage = "/images/about-photo.jpg",
+  aboutPosition = "50% 50%",
+}: {
+  aboutImage?: string;
+  aboutPosition?: string;
+}) {
   return (
     <section
       className="relative overflow-hidden flex items-center"
@@ -19,6 +25,7 @@ export default function AboutTeaser({ aboutImage = "/images/about-photo.jpg" }: 
           alt="Pracownia ceramiczna"
           fill
           className="object-cover"
+          style={{ objectPosition: aboutPosition }}
           sizes="100vw"
         />
         <div className="absolute inset-0 bg-espresso/60" />

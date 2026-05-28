@@ -5,7 +5,13 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 
-export default function WorkshopsTeaser({ workshopsImage = "/images/warsztaty-photo.jpg" }: { workshopsImage?: string }) {
+export default function WorkshopsTeaser({
+  workshopsImage = "/images/warsztaty-photo.jpg",
+  workshopsPosition = "50% 50%",
+}: {
+  workshopsImage?: string;
+  workshopsPosition?: string;
+}) {
   return (
     <section
       className="relative overflow-hidden flex items-center"
@@ -19,6 +25,7 @@ export default function WorkshopsTeaser({ workshopsImage = "/images/warsztaty-ph
           alt="Warsztaty ceramiczne"
           fill
           className="object-cover"
+          style={{ objectPosition: workshopsPosition }}
           sizes="100vw"
         />
         <div className="absolute inset-0 bg-espresso/75" />
