@@ -2,17 +2,8 @@
 
 import Image from "next/image";
 
-const POINTS = [
-  { x: 0,   y: 0   },
-  { x: 50,  y: 0   },
-  { x: 100, y: 0   },
-  { x: 0,   y: 50  },
-  { x: 50,  y: 50  },
-  { x: 100, y: 50  },
-  { x: 0,   y: 100 },
-  { x: 50,  y: 100 },
-  { x: 100, y: 100 },
-];
+const STEPS = [0, 25, 50, 75, 100];
+const POINTS = STEPS.flatMap((y) => STEPS.map((x) => ({ x, y })));
 
 function toValue(x: number, y: number) { return `${x}% ${y}%`; }
 
@@ -38,18 +29,18 @@ export default function FocalPointPicker({
       <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">
         Punkt kadrowania
       </label>
-      <div className="relative w-56 overflow-hidden rounded-sm border border-sand bg-mist" style={{ aspectRatio: "16/9" }}>
+      <div className="relative w-64 overflow-hidden rounded-sm border border-sand bg-mist" style={{ aspectRatio: "16/9" }}>
         <Image
           src={imageUrl}
           alt=""
           fill
           className="object-cover"
           style={{ objectPosition: value }}
-          sizes="224px"
+          sizes="256px"
           unoptimized
         />
-        {/* Siatka 3×3 klikalnych punktów */}
-        <div className="absolute inset-0 grid grid-cols-3 grid-rows-3">
+        {/* Siatka 5×5 klikalnych punktów */}
+        <div className="absolute inset-0 grid grid-cols-5 grid-rows-5">
           {POINTS.map(({ x, y }) => {
             const active = cur.x === x && cur.y === y;
             return (
@@ -60,10 +51,10 @@ export default function FocalPointPicker({
                 className="flex items-center justify-center"
                 title={`Poziomo: ${x}%, pionowo: ${y}%`}
               >
-                <span className={`w-3 h-3 rounded-full border-2 transition-all duration-150 ${
+                <span className={`w-2 h-2 rounded-full border transition-all duration-150 ${
                   active
-                    ? "bg-terracotta border-white scale-125 shadow-md"
-                    : "bg-white/55 border-white/80 hover:bg-terracotta/60 hover:scale-110"
+                    ? "bg-terracotta border-white scale-150 shadow-md"
+                    : "bg-white/50 border-white/70 hover:bg-terracotta/60 hover:scale-125"
                 }`} />
               </button>
             );
