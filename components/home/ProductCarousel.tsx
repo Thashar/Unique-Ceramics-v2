@@ -11,22 +11,26 @@ type Product = {
   price: number; images: string[]; stock: number;
 };
 
-const CARD_VW = 0.40; // 40vw — 2 karty mieszczą się w ~80vw + odstęp
-const GAP = 16;       // odstęp między kartami
-const LEFT_PAD = 16;  // lewy margines — wyrównanie od lewej krawędzi
+// Dopasowane do sklep: px-6 (24px) padding, gap-6 (24px) odstęp
+const PAD = 24;
+const GAP = 24;
+
+function getCardWidth(): number {
+  return (window.innerWidth - 2 * PAD - GAP) / 2;
+}
+
+function targetOffset(index: number): number {
+  return PAD - index * (getCardWidth() + GAP);
+}
 
 export default function ProductCarousel({ products }: { products: Product[] }) {
+  const maxIndex = Math.max(0, products.length - 2);
   const [current, setCurrent] = useState(0);
   const innerRef = useRef<HTMLDivElement>(null);
   const isAnimating = useRef(false);
   const currentOffset = useRef(0);
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
-
-  function targetOffset(index: number): number {
-    const cardW = window.innerWidth * CARD_VW;
-    return -(index * (cardW + GAP)) + LEFT_PAD;
-  }
 
   function applyTranslate(x: number) {
     if (!innerRef.current) return;
@@ -36,15 +40,14 @@ export default function ProductCarousel({ products }: { products: Product[] }) {
 
   function animateTo(index: number) {
     if (isAnimating.current) return;
-    if (index < 0 || index >= products.length) return;
-
+    const clamped = Math.max(0, Math.min(maxIndex, index));
     const start = currentOffset.current;
-    const end = targetOffset(index);
+    const end = targetOffset(clamped);
     const dist = end - start;
-    if (Math.abs(dist) < 1) { setCurrent(index); return; }
+    if (Math.abs(dist) < 1) { setCurrent(clamped); return; }
 
     isAnimating.current = true;
-    setCurrent(index);
+    setCurrent(clamped);
     const t0 = performance.now();
 
     function step(now: number) {
@@ -56,7 +59,6 @@ export default function ProductCarousel({ products }: { products: Product[] }) {
     requestAnimationFrame(step);
   }
 
-  // Ustaw pozycję startową po mount (zależy od window.innerWidth)
   useEffect(() => {
     applyTranslate(targetOffset(0));
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -74,36 +76,36 @@ export default function ProductCarousel({ products }: { products: Product[] }) {
     animateTo(dx > 0 ? current + 1 : current - 1);
   }
 
+  const cardW = `calc((100vw - ${2 * PAD + GAP}px) / 2)`;
+
   return (
     <div
       className="overflow-hidden w-full"
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
     >
-      {/* Wewnętrzny pasek z kartami — przesuwany przez translateX */}
       <div
         ref={innerRef}
         className="flex will-change-transform"
         style={{ gap: `${GAP}px`, transform: "translateX(0)" }}
       >
         {products.map((product) => (
-          <div key={product.id} className="flex-none w-[40vw]">
+          <div key={product.id} style={{ flexShrink: 0, width: cardW }}>
             <ProductCard product={product} />
           </div>
         ))}
       </div>
 
-      {/* Wskaźnik kropkowy */}
-      {products.length > 1 && (
+      {products.length > 2 && (
         <div className="flex justify-center gap-1.5 mt-5">
-          {products.map((_, i) => (
+          {Array.from({ length: maxIndex + 1 }).map((_, i) => (
             <button
               key={i}
               onClick={() => animateTo(i)}
               className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
                 i === current ? "bg-clay scale-125" : "bg-sand"
               }`}
-              aria-label={`Produkt ${i + 1}`}
+              aria-label={`Produkty ${i + 1}`}
             />
           ))}
         </div>
