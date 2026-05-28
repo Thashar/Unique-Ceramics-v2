@@ -22,9 +22,9 @@ export default async function Home() {
         <FeaturedProducts />
         <AboutTeaser />
         <WorkshopsTeaser />
-        <InstagramCta instagram={s.contact_instagram} />
-        {/* Stopka jako ostatni snap-punkt */}
+        {/* Instagram i stopka połączone w jeden snap-punkt */}
         <div data-snap>
+          <InstagramCta instagram={s.contact_instagram} />
           <Footer />
         </div>
       </main>

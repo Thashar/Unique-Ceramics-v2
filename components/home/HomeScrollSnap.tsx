@@ -13,6 +13,7 @@ export default function HomeScrollSnap() {
 
     let isScrolling = false;
     let touchStartY = 0;
+    let touchStartScrollY = 0;
 
     function getSnapSections(): HTMLElement[] {
       return Array.from(document.querySelectorAll<HTMLElement>("[data-snap]"));
@@ -22,18 +23,18 @@ export default function HomeScrollSnap() {
       return section.getBoundingClientRect().top + window.scrollY;
     }
 
-    function getCurrentSectionIndex(sections: HTMLElement[]): number {
-      const scrollY = window.scrollY;
+    function getIndexByScrollY(sections: HTMLElement[], scrollY: number): number {
       let closest = 0;
       let minDist = Infinity;
-      sections.forEach((section, i) => {
-        const dist = Math.abs(scrollY - getSectionTop(section));
-        if (dist < minDist) {
-          minDist = dist;
-          closest = i;
-        }
+      sections.forEach((s, i) => {
+        const dist = Math.abs(scrollY - getSectionTop(s));
+        if (dist < minDist) { minDist = dist; closest = i; }
       });
       return closest;
+    }
+
+    function isTall(section: HTMLElement): boolean {
+      return section.offsetHeight > window.innerHeight + 20;
     }
 
     function animateTo(targetY: number) {
@@ -58,10 +59,32 @@ export default function HomeScrollSnap() {
     }
 
     function handleWheel(e: WheelEvent) {
+      const sections = getSnapSections();
+      const idx = getIndexByScrollY(sections, window.scrollY);
+      const section = sections[idx];
+      const sectionTop = getSectionTop(section);
+
+      // Sekcja wyższa niż viewport (np. Instagram+Stopka):
+      // pozwól na naturalne przewijanie i snapuj tylko na granicy
+      if (isTall(section)) {
+        const sectionBottom = sectionTop + section.offsetHeight;
+        const viewportBottom = window.scrollY + window.innerHeight;
+        const atBottom = e.deltaY > 0 && viewportBottom >= sectionBottom - 20;
+        const atTop = e.deltaY < 0 && window.scrollY <= sectionTop + 20;
+
+        if (atBottom || atTop) {
+          e.preventDefault();
+          if (isScrolling) return;
+          const dir = e.deltaY > 0 ? 1 : -1;
+          const next = Math.max(0, Math.min(sections.length - 1, idx + dir));
+          if (next !== idx) animateTo(getSectionTop(sections[next]));
+        }
+        return;
+      }
+
+      // Sekcja pełnoekranowa: zawsze przechwytuj i snapuj
       e.preventDefault();
       if (isScrolling) return;
-      const sections = getSnapSections();
-      const idx = getCurrentSectionIndex(sections);
       const dir = e.deltaY > 0 ? 1 : -1;
       const next = Math.max(0, Math.min(sections.length - 1, idx + dir));
       animateTo(getSectionTop(sections[next]));
@@ -72,7 +95,7 @@ export default function HomeScrollSnap() {
       e.preventDefault();
       if (isScrolling) return;
       const sections = getSnapSections();
-      const idx = getCurrentSectionIndex(sections);
+      const idx = getIndexByScrollY(sections, window.scrollY);
       const dir = e.key === "ArrowDown" ? 1 : -1;
       const next = Math.max(0, Math.min(sections.length - 1, idx + dir));
       animateTo(getSectionTop(sections[next]));
@@ -80,29 +103,58 @@ export default function HomeScrollSnap() {
 
     function handleTouchStart(e: TouchEvent) {
       touchStartY = e.touches[0].clientY;
+      touchStartScrollY = window.scrollY;
+
+      const sections = getSnapSections();
+      const idx = getIndexByScrollY(sections, touchStartScrollY);
+      // Dla sekcji pełnoekranowych blokuj natywne przewijanie
+      if (!isTall(sections[idx])) {
+        e.preventDefault();
+      }
     }
 
     function handleTouchEnd(e: TouchEvent) {
-      if (isScrolling) return;
       const diff = touchStartY - e.changedTouches[0].clientY;
       if (Math.abs(diff) < 40) return;
+
       const sections = getSnapSections();
-      const idx = getCurrentSectionIndex(sections);
+      // Identyfikuj sekcję na podstawie pozycji przy początku dotyku
+      const startIdx = getIndexByScrollY(sections, touchStartScrollY);
+      const section = sections[startIdx];
+      const sectionTop = getSectionTop(section);
+
+      if (isTall(section)) {
+        // Sekcja wysoka: snapuj tylko na granicy
+        const sectionBottom = sectionTop + section.offsetHeight;
+        const viewportBottom = window.scrollY + window.innerHeight;
+        const atBottom = diff > 0 && viewportBottom >= sectionBottom - 60;
+        const atTop = diff < 0 && window.scrollY <= sectionTop + 60;
+
+        if ((atBottom || atTop) && !isScrolling) {
+          const dir = diff > 0 ? 1 : -1;
+          const next = Math.max(0, Math.min(sections.length - 1, startIdx + dir));
+          if (next !== startIdx) animateTo(getSectionTop(sections[next]));
+        }
+        return;
+      }
+
+      // Sekcja pełnoekranowa: natychmiast snapuj do następnej
+      if (isScrolling) return;
       const dir = diff > 0 ? 1 : -1;
-      const next = Math.max(0, Math.min(sections.length - 1, idx + dir));
+      const next = Math.max(0, Math.min(sections.length - 1, startIdx + dir));
       animateTo(getSectionTop(sections[next]));
     }
 
     function handleResize() {
       if (isScrolling) return;
       const sections = getSnapSections();
-      const idx = getCurrentSectionIndex(sections);
+      const idx = getIndexByScrollY(sections, window.scrollY);
       window.scrollTo({ top: getSectionTop(sections[idx]), behavior: "instant" });
     }
 
     document.addEventListener("wheel", handleWheel, { passive: false });
     document.addEventListener("keydown", handleKeyDown);
-    document.addEventListener("touchstart", handleTouchStart, { passive: true });
+    document.addEventListener("touchstart", handleTouchStart, { passive: false });
     document.addEventListener("touchend", handleTouchEnd, { passive: true });
     window.addEventListener("resize", handleResize);
 

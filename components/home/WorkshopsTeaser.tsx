@@ -8,7 +8,7 @@ import { ArrowRight } from "lucide-react";
 export default function WorkshopsTeaser() {
   return (
     <section
-      className="relative px-6 lg:px-10 overflow-hidden flex items-center py-16"
+      className="relative overflow-hidden flex items-center"
       style={{ height: "100svh" }}
       data-snap
     >
@@ -24,7 +24,8 @@ export default function WorkshopsTeaser() {
         <div className="absolute inset-0 bg-espresso/75" />
       </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto">
+      {/* Treść — taka sama struktura jak Hero */}
+      <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-10 w-full pt-20">
         <div className="max-w-xl">
           <motion.p
             initial={{ opacity: 0, y: 12 }}
