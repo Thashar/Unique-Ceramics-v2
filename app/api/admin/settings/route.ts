@@ -10,45 +10,26 @@ async function checkAdmin() {
   return null;
 }
 
+async function saveSettings(body: { key: string; value: string }[]) {
+  await Promise.all(
+    body.map(({ key, value }) =>
+      db.setting.upsert({
+        where: { key },
+        update: { value },
+        create: { key, value },
+      })
+    )
+  );
+}
+
 export async function PATCH(req: Request) {
   const authError = await checkAdmin();
   if (authError) return authError;
 
   const body: { key: string; value: string }[] = await req.json();
 
-  // Najpierw próbujemy przez Prisma ORM (migracja już istnieje)
   try {
-    await Promise.all(
-      body.map(({ key, value }) =>
-        db.setting.upsert({
-          where: { key },
-          update: { value },
-          create: { key, value },
-        })
-      )
-    );
-    return NextResponse.json({ ok: true });
-  } catch {
-    // Fallback: tabela może nie istnieć — tworzymy ją i zapisujemy przez raw SQL
-  }
-
-  try {
-    await db.$executeRaw`
-      CREATE TABLE IF NOT EXISTS "Setting" (
-        key TEXT NOT NULL PRIMARY KEY,
-        value TEXT NOT NULL DEFAULT '',
-        "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
-      )
-    `;
-    await Promise.all(
-      body.map(({ key, value }) =>
-        db.$executeRaw`
-          INSERT INTO "Setting" (key, value, "updatedAt")
-          VALUES (${key}, ${value}, NOW())
-          ON CONFLICT (key) DO UPDATE SET value = ${value}, "updatedAt" = NOW()
-        `
-      )
-    );
+    await saveSettings(body);
     return NextResponse.json({ ok: true });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
@@ -62,15 +43,11 @@ export async function POST(req: Request) {
 
   const body: { key: string; value: string }[] = await req.json();
 
-  await Promise.all(
-    body.map(({ key, value }) =>
-      db.setting.upsert({
-        where: { key },
-        update: { value },
-        create: { key, value },
-      })
-    )
-  );
-
-  return NextResponse.json({ ok: true });
+  try {
+    await saveSettings(body);
+    return NextResponse.json({ ok: true });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    return NextResponse.json({ ok: false, error: msg }, { status: 500 });
+  }
 }
