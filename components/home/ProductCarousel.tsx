@@ -11,8 +11,9 @@ type Product = {
   price: number; images: string[]; stock: number;
 };
 
-const CARD_VW = 0.40; // 40vw
-const GAP = 20;       // gap-5
+const CARD_VW = 0.40; // 40vw — 2 karty mieszczą się w ~80vw + odstęp
+const GAP = 16;       // odstęp między kartami
+const LEFT_PAD = 16;  // lewy margines — wyrównanie od lewej krawędzi
 
 export default function ProductCarousel({ products }: { products: Product[] }) {
   const [current, setCurrent] = useState(0);
@@ -23,9 +24,8 @@ export default function ProductCarousel({ products }: { products: Product[] }) {
   const touchStartY = useRef(0);
 
   function targetOffset(index: number): number {
-    const vw = window.innerWidth;
-    const cardW = vw * CARD_VW;
-    return -(index * (cardW + GAP)) + (vw - cardW) / 2;
+    const cardW = window.innerWidth * CARD_VW;
+    return -(index * (cardW + GAP)) + LEFT_PAD;
   }
 
   function applyTranslate(x: number) {
