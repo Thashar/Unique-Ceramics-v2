@@ -24,7 +24,7 @@ export default async function Home() {
         <WorkshopsTeaser />
         <InstagramCta instagram={s.contact_instagram} />
         {/* Stopka jako ostatni snap-punkt */}
-        <div style={{ scrollSnapAlign: "start" }}>
+        <div data-snap>
           <Footer />
         </div>
       </main>

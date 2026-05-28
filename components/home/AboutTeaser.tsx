@@ -8,17 +8,18 @@ import { ArrowRight } from "lucide-react";
 export default function AboutTeaser() {
   return (
     <section
-      className="px-6 lg:px-10 bg-cream flex items-center py-16"
-      style={{ scrollSnapAlign: "start", minHeight: "100svh" }}
+      className="px-6 lg:px-10 bg-cream flex items-center py-8 lg:py-12 overflow-hidden"
+      style={{ height: "100svh" }}
+      data-snap
     >
-      <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+      <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-14 items-center">
         {/* Zdjęcie */}
         <motion.div
           initial={{ opacity: 0, x: -30 }}
           whileInView={{ opacity: 1, x: 0 }}
           viewport={{ once: true, margin: "-80px" }}
           transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-          className="relative aspect-[4/5] overflow-hidden rounded-sm"
+          className="relative overflow-hidden rounded-sm h-[42svh] lg:h-[calc(100svh-7rem)]"
         >
           <Image
             src="/images/about-photo.jpg"
@@ -37,18 +38,18 @@ export default function AboutTeaser() {
           transition={{ duration: 0.9, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
         >
           <p className="text-xs tracking-[0.3em] uppercase text-clay mb-4">O mnie</p>
-          <h2 className="font-serif text-4xl md:text-5xl text-espresso leading-tight mb-8">
+          <h2 className="font-serif text-4xl md:text-5xl text-espresso leading-tight mb-6 lg:mb-8">
             Ręcznie tworzone
             <br />
             z sercem
           </h2>
-          <p className="text-charcoal/80 leading-relaxed mb-5">
+          <p className="text-charcoal/80 leading-relaxed mb-4 lg:mb-5">
             Od 20 lat zajmuję się ceramiką w obszarze przemysłu, dlatego moje
             doświadczenie przeniosłam na ceramikę artystyczną, którą zajmuję się
             od około roku. Każdą pracę wykonuję samodzielnie, dbając o detale,
             estetykę i niepowtarzalny charakter wyrobów.
           </p>
-          <p className="text-charcoal/80 leading-relaxed mb-10">
+          <p className="text-charcoal/80 leading-relaxed mb-8 lg:mb-10">
             Ceramika daje mi ogromną satysfakcję oraz pozwala odnaleźć wewnętrzny
             spokój i chwilę wyciszenia. Daje mi to też motywację do ciągłego
             rozwijania swoich umiejętności.

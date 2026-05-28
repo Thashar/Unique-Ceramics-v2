@@ -19,11 +19,12 @@ export default async function FeaturedProducts() {
 
   return (
     <section
-      className="px-6 lg:px-10 bg-warm-white flex flex-col justify-center py-16"
-      style={{ scrollSnapAlign: "start", minHeight: "100svh" }}
+      className="px-6 lg:px-10 bg-warm-white flex flex-col justify-center py-10 lg:py-14 overflow-hidden"
+      style={{ height: "100svh" }}
+      data-snap
     >
       <div className="max-w-7xl mx-auto w-full">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8 lg:mb-12">
           <div>
             <p className="text-xs tracking-[0.3em] uppercase text-clay mb-3">Kolekcja</p>
             <h2 className="font-serif text-4xl md:text-5xl text-espresso leading-tight">
@@ -43,9 +44,12 @@ export default async function FeaturedProducts() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          {products.map((product) => (
-            <ProductCard key={product.id} product={product} />
+        {/* Na mobile pokazujemy tylko 2 karty (1 rząd), na desktop 4 */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+          {products.map((product, i) => (
+            <div key={product.id} className={i >= 2 ? "hidden lg:block" : ""}>
+              <ProductCard product={product} />
+            </div>
           ))}
         </div>
       </div>

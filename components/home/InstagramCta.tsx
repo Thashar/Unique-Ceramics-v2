@@ -12,7 +12,8 @@ export default function InstagramCta({ instagram }: { instagram: string }) {
   return (
     <section
       className="relative bg-espresso overflow-hidden px-6 flex flex-col justify-center py-16"
-      style={{ scrollSnapAlign: "start", minHeight: "100svh" }}
+      style={{ height: "100svh" }}
+      data-snap
     >
       {/* Dekoracyjne okręgi */}
       <div className="absolute -top-24 -right-24 w-72 h-72 bg-clay/10 rounded-full pointer-events-none" />
