@@ -1,7 +1,4 @@
 import { NextResponse } from "next/server";
-import { Resend } from "resend";
-
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(request: Request) {
   const { name, phone, email, subject, message } = await request.json();
@@ -10,13 +7,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Brak wymaganych pól" }, { status: 400 });
   }
 
-  const to = process.env.RESEND_FROM_EMAIL
-    ? process.env.RESEND_FROM_EMAIL.match(/<(.+)>/)?.[1] ?? "kontakt@uniqueceramics.pl"
-    : "kontakt@uniqueceramics.pl";
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    return NextResponse.json({ error: "Brak konfiguracji email" }, { status: 500 });
+  }
+
+  const fromEmail = process.env.RESEND_FROM_EMAIL ?? "onboarding@resend.dev";
+  const to = fromEmail.match(/<(.+)>/)?.[1] ?? "kontakt@uniqueceramics.pl";
 
   try {
+    const { Resend } = await import("resend");
+    const resend = new Resend(apiKey);
+
     await resend.emails.send({
-      from: process.env.RESEND_FROM_EMAIL ?? "onboarding@resend.dev",
+      from: fromEmail,
       to,
       replyTo: email,
       subject: `Kontakt: ${subject || "Wiadomość ze strony"}`,
