@@ -135,6 +135,7 @@ const DEFAULTS: Record<string, string> = {
   polityka_prywatnosci: POLITYKA_DEFAULT,
   home_hero_image: "/images/hero.jpg",
   home_about_image: "/images/about-photo.jpg",
+  home_workshops_image: "/images/warsztaty-photo.jpg",
   about_hero_image: "/images/about-photo.jpg",
   about_story: ABOUT_STORY_DEFAULT,
   workshops_hero_image: "/images/warsztaty-photo.jpg",

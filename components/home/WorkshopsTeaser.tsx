@@ -5,7 +5,7 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 
-export default function WorkshopsTeaser() {
+export default function WorkshopsTeaser({ workshopsImage = "/images/warsztaty-photo.jpg" }: { workshopsImage?: string }) {
   return (
     <section
       className="relative overflow-hidden flex items-center"
@@ -15,7 +15,7 @@ export default function WorkshopsTeaser() {
       {/* Tło */}
       <div className="absolute inset-0">
         <Image
-          src="/images/warsztaty-photo.jpg"
+          src={workshopsImage}
           alt="Warsztaty ceramiczne"
           fill
           className="object-cover"

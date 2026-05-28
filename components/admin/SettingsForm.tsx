@@ -9,6 +9,7 @@ interface Props {
   initial: {
     home_hero_image: string;
     home_about_image: string;
+    home_workshops_image: string;
     about_hero_image: string;
     about_story: string;
     workshops_hero_image: string;
@@ -91,6 +92,7 @@ export default function SettingsForm({ section, initial }: Props) {
   // Strona główna
   const [homeHeroImage, setHomeHeroImage] = useState(initial.home_hero_image);
   const [homeAboutImage, setHomeAboutImage] = useState(initial.home_about_image);
+  const [homeWorkshopsImage, setHomeWorkshopsImage] = useState(initial.home_workshops_image);
 
   // O mnie
   const [aboutImage, setAboutImage] = useState(initial.about_hero_image);
@@ -194,10 +196,20 @@ export default function SettingsForm({ section, initial }: Props) {
               label="Zdjęcie sekcji O mnie"
             />
           </div>
+          <div className="border-t border-sand pt-6 space-y-3">
+            <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/70">Zdjęcie sekcji „Warsztaty"</h3>
+            <p className="text-xs text-charcoal/40">Tło sekcji warsztatów — widoczne za tekstem na stronie głównej.</p>
+            <ImageUploader
+              currentUrl={homeWorkshopsImage}
+              onUploaded={(url) => setHomeWorkshopsImage(url)}
+              label="Zdjęcie sekcji Warsztaty"
+            />
+          </div>
           <SaveButton
             onClick={() => save([
               { key: "home_hero_image", value: homeHeroImage },
               { key: "home_about_image", value: homeAboutImage },
+              { key: "home_workshops_image", value: homeWorkshopsImage },
             ])}
             label="Zapisz zdjęcia strony głównej"
           />

@@ -11,7 +11,7 @@ import Footer from "@/components/layout/Footer";
 import { getSettings } from "@/lib/settings";
 
 export default async function Home() {
-  const s = await getSettings(["contact_instagram", "home_hero_image", "home_about_image"]);
+  const s = await getSettings(["contact_instagram", "home_hero_image", "home_about_image", "home_workshops_image"]);
 
   return (
     <>
@@ -21,7 +21,7 @@ export default async function Home() {
         <Hero heroImage={s.home_hero_image} />
         <FeaturedProducts />
         <AboutTeaser aboutImage={s.home_about_image} />
-        <WorkshopsTeaser />
+        <WorkshopsTeaser workshopsImage={s.home_workshops_image} />
         {/* Instagram — osobna sekcja pełnoekranowa */}
         <div data-snap style={{ height: "100svh" }}>
           <InstagramCta instagram={s.contact_instagram} />
