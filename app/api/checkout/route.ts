@@ -4,6 +4,78 @@ import { getSettings } from "@/lib/settings";
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
+const PAYMENT_LABEL: Record<string, string> = {
+  transfer: "Przelew bankowy",
+  blik:     "BLIK",
+  stripe:   "Karta (Stripe)",
+};
+
+async function sendAdminNotification(params: {
+  orderNumber: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string | null;
+  street: string;
+  city: string;
+  postcode: string;
+  note: string | null;
+  paymentMethod: string;
+  items: { name: string; price: number; quantity: number }[];
+  shippingCost: number;
+  total: number;
+  orderId: string;
+}) {
+  const resendApiKey = process.env.RESEND_API_KEY;
+  if (!resendApiKey) return;
+
+  const {
+    orderNumber, firstName, lastName, email, phone,
+    street, city, postcode, note, paymentMethod,
+    items, shippingCost, total, orderId,
+  } = params;
+
+  const rows = items
+    .map((i) => `${i.name} ×${i.quantity} — ${(i.price * i.quantity).toFixed(2)} zł`)
+    .join("\n");
+
+  const adminEmail = process.env.RESEND_FROM_EMAIL?.match(/<(.+)>/)?.[1]
+    ?? "kontakt@uniqueceramics.pl";
+
+  const baseUrl = process.env.AUTH_URL ?? "https://uniqueceramics.pl";
+
+  try {
+    const { Resend } = await import("resend");
+    const resend = new Resend(resendApiKey);
+    await resend.emails.send({
+      from: process.env.RESEND_FROM_EMAIL ?? "Unique Ceramics <onboarding@resend.dev>",
+      to: adminEmail,
+      subject: `🛒 Nowe zamówienie #${orderNumber} — ${firstName} ${lastName} — ${total.toFixed(2)} zł`,
+      text: [
+        `Nowe zamówienie #${orderNumber}`,
+        ``,
+        `Klient: ${firstName} ${lastName}`,
+        `E-mail: ${email}`,
+        `Telefon: ${phone || "—"}`,
+        `Adres: ${street}, ${postcode} ${city}`,
+        ``,
+        `Płatność: ${PAYMENT_LABEL[paymentMethod] ?? paymentMethod}`,
+        ``,
+        `Zamówione produkty:`,
+        rows,
+        ``,
+        `Wysyłka: ${shippingCost === 0 ? "Gratis" : `${shippingCost.toFixed(2)} zł`}`,
+        `Do zapłaty: ${total.toFixed(2)} zł`,
+        note ? `\nUwagi klienta: ${note}` : "",
+        ``,
+        `Panel admina: ${baseUrl}/admin/zamowienia/${orderId}`,
+      ].join("\n"),
+    });
+  } catch {
+    // Nie blokuj zamówienia jeśli email nie dotarł
+  }
+}
+
 function buildTransferEmail(params: {
   orderNumber: string;
   firstName: string;
@@ -154,6 +226,14 @@ export async function POST(req: Request) {
     },
   });
 
+  // Powiadomienie dla właściciela sklepu
+  const orderNumber = order.id.slice(-8).toUpperCase();
+  void sendAdminNotification({
+    orderNumber, firstName, lastName, email, phone: phone || null,
+    street, city, postcode, note: note || null, paymentMethod,
+    items, shippingCost, total, orderId: order.id,
+  });
+
   // Stripe — create Checkout session and redirect
   if (paymentMethod === "stripe") {
     const stripeKey = process.env.STRIPE_SECRET_KEY;
@@ -209,7 +289,6 @@ export async function POST(req: Request) {
         const { Resend } = await import("resend");
         const resend = new Resend(resendApiKey);
 
-        const orderNumber = order.id.slice(-8).toUpperCase();
         await resend.emails.send({
           from:
             process.env.RESEND_FROM_EMAIL ??
