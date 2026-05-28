@@ -16,6 +16,22 @@ export async function PATCH(req: Request) {
 
   const body: { key: string; value: string }[] = await req.json();
 
+  // Najpierw próbujemy przez Prisma ORM (migracja już istnieje)
+  try {
+    await Promise.all(
+      body.map(({ key, value }) =>
+        db.setting.upsert({
+          where: { key },
+          update: { value },
+          create: { key, value },
+        })
+      )
+    );
+    return NextResponse.json({ ok: true });
+  } catch {
+    // Fallback: tabela może nie istnieć — tworzymy ją i zapisujemy przez raw SQL
+  }
+
   try {
     await db.$executeRaw`
       CREATE TABLE IF NOT EXISTS "Setting" (

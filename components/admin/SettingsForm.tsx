@@ -91,7 +91,8 @@ function SaveButton({ onClick, label }: { onClick: () => void; label: string }) 
 }
 
 export default function SettingsForm({ section, initial }: Props) {
-  const [toast, setToast] = useState<"ok" | "err" | false>(false);
+  const [toast, setToast] = useState<"ok" | false>(false);
+  const [errMsg, setErrMsg] = useState("");
 
   // Strona główna
   const [homeHeroImage, setHomeHeroImage] = useState(initial.home_hero_image);
@@ -150,12 +151,8 @@ export default function SettingsForm({ section, initial }: Props) {
   const [payuClientSecret, setPayuClientSecret] = useState(initial.payment_payu_oauth_client_secret);
   const [payuSandbox, setPayuSandbox] = useState(initial.payment_payu_sandbox === "true");
 
-  const showToast = (type: "ok" | "err") => {
-    setToast(type);
-    setTimeout(() => setToast(false), 3000);
-  };
-
   const save = async (pairs: { key: string; value: string }[]) => {
+    setErrMsg("");
     try {
       const res = await fetch("/api/admin/settings", {
         method: "PATCH",
@@ -163,9 +160,14 @@ export default function SettingsForm({ section, initial }: Props) {
         body: JSON.stringify(pairs),
       });
       const data = await res.json();
-      showToast(data.ok ? "ok" : "err");
-    } catch {
-      showToast("err");
+      if (data.ok) {
+        setToast("ok");
+        setTimeout(() => setToast(false), 3000);
+      } else {
+        setErrMsg(data.error ?? "Nieznany błąd serwera");
+      }
+    } catch (e) {
+      setErrMsg(e instanceof Error ? e.message : "Błąd połączenia z serwerem");
     }
   };
 
@@ -176,9 +178,16 @@ export default function SettingsForm({ section, initial }: Props) {
           Zapisano!
         </div>
       )}
-      {toast === "err" && (
-        <div className="fixed top-6 right-6 z-50 bg-red-700 text-white text-sm px-5 py-3 shadow-lg max-w-xs">
-          Błąd zapisu — tabela Setting nie istnieje w bazie. Uruchom SQL w Supabase.
+      {errMsg && (
+        <div className="fixed top-6 right-6 z-50 bg-red-700 text-white text-sm px-5 py-4 shadow-lg max-w-sm">
+          <p className="font-medium mb-1">Błąd zapisu</p>
+          <p className="text-xs opacity-90 break-words">{errMsg}</p>
+          <button
+            onClick={() => setErrMsg("")}
+            className="mt-2 text-xs underline opacity-70 hover:opacity-100"
+          >
+            Zamknij
+          </button>
         </div>
       )}
 
