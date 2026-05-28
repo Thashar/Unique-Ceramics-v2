@@ -6,6 +6,7 @@ import InstagramIcon from "@/components/ui/InstagramIcon";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { getSettings } from "@/lib/settings";
+import ContactForm from "@/components/contact/ContactForm";
 
 export const metadata: Metadata = {
   title: "Kontakt",
@@ -123,73 +124,7 @@ export default async function ContactPage() {
             {/* Formularz */}
             <div>
               <h2 className="font-serif text-2xl text-espresso mb-8">Napisz wiadomość</h2>
-              <form className="space-y-5">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <div>
-                    <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">
-                      Imię
-                    </label>
-                    <input
-                      type="text"
-                      className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors"
-                      placeholder="Twoje imię"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">
-                      Telefon
-                    </label>
-                    <input
-                      type="tel"
-                      className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors"
-                      placeholder="+48"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">
-                    E-mail *
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors"
-                    placeholder="twoj@email.pl"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">
-                    Temat
-                  </label>
-                  <select className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors">
-                    <option value="">Wybierz temat</option>
-                    <option>Zamówienie ze sklepu</option>
-                    <option>Zamówienie indywidualne</option>
-                    <option>Warsztaty</option>
-                    <option>Inne</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">
-                    Wiadomość *
-                  </label>
-                  <textarea
-                    required
-                    rows={5}
-                    className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors resize-none"
-                    placeholder="Jak mogę pomóc?"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="w-full bg-terracotta hover:bg-clay text-warm-white text-xs tracking-widest uppercase py-4 transition-colors"
-                >
-                  Wyślij wiadomość
-                </button>
-                <p className="text-xs text-charcoal/40 text-center">
-                  Formularz jest tylko prezentacją — w wersji produkcyjnej będzie podłączony do API.
-                </p>
-              </form>
+              <ContactForm />
             </div>
           </div>
         </div>
