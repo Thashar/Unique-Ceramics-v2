@@ -44,3 +44,6 @@ h1, h2, h3, h4 {
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: #F5F0E8; }
 ::-webkit-scrollbar-thumb { background: #C4A882; border-radius: 3px; }
+
+/* Ukryty scrollbar dla karuzeli */
+.snap-x::-webkit-scrollbar { display: none; }

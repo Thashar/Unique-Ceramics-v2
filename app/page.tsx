@@ -22,10 +22,13 @@ export default async function Home() {
         <FeaturedProducts />
         <AboutTeaser />
         <WorkshopsTeaser />
-        {/* Instagram i stopka połączone w jeden snap-punkt */}
-        <div data-snap>
+        {/* Instagram — osobna sekcja pełnoekranowa */}
+        <div data-snap style={{ height: "100svh" }}>
           <InstagramCta instagram={s.contact_instagram} />
-          <Footer />
+        </div>
+        {/* Stopka — osobna sekcja pełnoekranowa */}
+        <div data-snap className="bg-espresso overflow-hidden" style={{ height: "100svh" }}>
+          <Footer compact />
         </div>
       </main>
     </>

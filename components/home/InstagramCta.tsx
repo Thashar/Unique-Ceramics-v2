@@ -10,7 +10,7 @@ export default function InstagramCta({ instagram }: { instagram: string }) {
   const href = `https://instagram.com/${handle}`;
 
   return (
-    <section className="relative bg-espresso overflow-hidden px-6 flex flex-col justify-center pt-24 pb-20 lg:pt-28 lg:pb-24">
+    <section className="relative bg-espresso overflow-hidden px-6 h-full flex flex-col justify-center pt-24 pb-16 lg:pt-28 lg:pb-20">
       {/* Dekoracyjne okręgi */}
       <div className="absolute -top-24 -right-24 w-72 h-72 bg-clay/10 rounded-full pointer-events-none" />
       <div className="absolute -bottom-16 -left-16 w-48 h-48 bg-terracotta/8 rounded-full pointer-events-none" />
@@ -23,7 +23,6 @@ export default function InstagramCta({ instagram }: { instagram: string }) {
         transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
         className="relative max-w-xl mx-auto text-center"
       >
-        {/* Ikona */}
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-terracotta/15 border border-terracotta/30 mb-7">
           <InstagramIcon size={26} className="text-terracotta" />
         </div>

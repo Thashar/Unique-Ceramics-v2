@@ -23,9 +23,8 @@ export default async function FeaturedProducts() {
       style={{ height: "100svh" }}
       data-snap
     >
-      {/* Treść wyśrodkowana w obszarze poniżej headera */}
-      <div className="flex-1 flex flex-col justify-center px-6 lg:px-10 pb-10 lg:pb-14">
-        <div className="max-w-7xl mx-auto w-full">
+      <div className="flex-1 flex flex-col justify-center pb-10 lg:pb-14">
+        <div className="max-w-7xl mx-auto w-full px-6 lg:px-10">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8 lg:mb-12">
             <div>
               <p className="text-xs tracking-[0.3em] uppercase text-clay mb-3">Kolekcja</p>
@@ -45,13 +44,28 @@ export default async function FeaturedProducts() {
               />
             </Link>
           </div>
+        </div>
 
-          {/* Na mobile pokazujemy tylko 2 karty (1 rząd), na desktop 4 */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-            {products.map((product, i) => (
-              <div key={product.id} className={i >= 2 ? "hidden lg:block" : ""}>
+        {/* Mobile: poziomy karuzel — przewijanie po 1 sztuce */}
+        <div className="lg:hidden overflow-x-auto snap-x snap-mandatory px-6 pb-2"
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+          <div className="flex gap-5">
+            {products.map((product) => (
+              <div
+                key={product.id}
+                className="snap-start flex-none w-[78vw]"
+              >
                 <ProductCard product={product} />
               </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Desktop: standardowy grid 4 kolumny */}
+        <div className="hidden lg:block max-w-7xl mx-auto w-full px-10">
+          <div className="grid grid-cols-4 gap-8">
+            {products.map((product) => (
+              <ProductCard key={product.id} product={product} />
             ))}
           </div>
         </div>

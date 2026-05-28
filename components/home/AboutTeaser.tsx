@@ -8,63 +8,88 @@ import { ArrowRight } from "lucide-react";
 export default function AboutTeaser() {
   return (
     <section
-      className="bg-cream overflow-hidden flex flex-col pt-20"
+      className="relative overflow-hidden flex items-center"
       style={{ height: "100svh" }}
       data-snap
     >
-      {/* Treść wyśrodkowana w obszarze poniżej headera */}
-      <div className="flex-1 flex items-center px-6 lg:px-10 pb-8 lg:pb-12">
-        <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-14 items-center">
-          {/* Zdjęcie */}
-          <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, margin: "-80px" }}
-            transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-            className="relative overflow-hidden rounded-sm h-[40svh] lg:h-[calc(100svh-8rem)]"
-          >
-            <Image
-              src="/images/about-photo.jpg"
-              alt="Pracownia ceramiczna"
-              fill
-              className="object-cover"
-              sizes="(max-width: 1024px) 100vw, 50vw"
-            />
-          </motion.div>
+      {/* Tło — takie same jak Warsztaty */}
+      <div className="absolute inset-0">
+        <Image
+          src="/images/about-photo.jpg"
+          alt="Pracownia ceramiczna"
+          fill
+          className="object-cover"
+          sizes="100vw"
+        />
+        <div className="absolute inset-0 bg-espresso/60" />
+        <div className="absolute inset-0 bg-gradient-to-r from-espresso/75 via-espresso/35 to-transparent" />
+      </div>
 
-          {/* Tekst */}
-          <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, margin: "-80px" }}
-            transition={{ duration: 0.9, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
+      {/* Treść — identyczna struktura jak Hero i Warsztaty */}
+      <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-10 w-full pt-20">
+        <div className="max-w-xl">
+          <motion.p
+            initial={{ opacity: 0, y: 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7 }}
+            className="text-xs tracking-[0.3em] uppercase text-terracotta mb-4"
           >
-            <p className="text-xs tracking-[0.3em] uppercase text-clay mb-4">O mnie</p>
-            <h2 className="font-serif text-4xl md:text-5xl text-espresso leading-tight mb-6 lg:mb-8">
-              Ręcznie tworzone
-              <br />
-              z sercem
-            </h2>
-            <p className="text-charcoal/80 leading-relaxed mb-4 lg:mb-5">
-              Od 20 lat zajmuję się ceramiką w obszarze przemysłu, dlatego moje
-              doświadczenie przeniosłam na ceramikę artystyczną, którą zajmuję się
-              od około roku. Każdą pracę wykonuję samodzielnie, dbając o detale,
-              estetykę i niepowtarzalny charakter wyrobów.
-            </p>
-            <p className="text-charcoal/80 leading-relaxed mb-8 lg:mb-10">
-              Ceramika daje mi ogromną satysfakcję oraz pozwala odnaleźć wewnętrzny
-              spokój i chwilę wyciszenia. Daje mi to też motywację do ciągłego
-              rozwijania swoich umiejętności.
-            </p>
+            O mnie
+          </motion.p>
+
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+            className="font-serif text-4xl md:text-5xl text-cream leading-tight mb-6"
+          >
+            Ręcznie tworzone
+            <br />
+            z sercem
+          </motion.h2>
+
+          <motion.p
+            initial={{ opacity: 0, y: 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7, delay: 0.2 }}
+            className="text-sand/80 leading-relaxed mb-4"
+          >
+            Od 20 lat zajmuję się ceramiką w obszarze przemysłu, dlatego moje
+            doświadczenie przeniosłam na ceramikę artystyczną, którą zajmuję się
+            od około roku. Każdą pracę wykonuję samodzielnie, dbając o detale,
+            estetykę i niepowtarzalny charakter wyrobów.
+          </motion.p>
+
+          <motion.p
+            initial={{ opacity: 0, y: 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7, delay: 0.3 }}
+            className="text-sand/80 leading-relaxed mb-10"
+          >
+            Ceramika daje mi ogromną satysfakcję oraz pozwala odnaleźć wewnętrzny
+            spokój i chwilę wyciszenia. Daje mi to też motywację do ciągłego
+            rozwijania swoich umiejętności.
+          </motion.p>
+
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+          >
             <Link
               href="/o-mnie"
-              className="inline-flex items-center gap-2 text-sm tracking-widest uppercase text-clay hover:text-espresso transition-colors group"
+              className="inline-flex items-center gap-3 border border-cream/60 hover:border-cream text-cream text-sm tracking-widest uppercase px-8 py-4 transition-colors duration-300 group"
             >
               Poznaj moją historię
               <ArrowRight
-                size={15}
-                className="group-hover:translate-x-1 transition-transform"
+                size={16}
                 strokeWidth={1.5}
+                className="group-hover:translate-x-1 transition-transform"
               />
             </Link>
           </motion.div>

@@ -12,8 +12,10 @@ export default function HomeScrollSnap() {
     html.style.scrollBehavior = "auto";
 
     let isScrolling = false;
+    let touchStartX = 0;
     let touchStartY = 0;
     let touchStartScrollY = 0;
+    let touchIsVertical: boolean | null = null;
 
     function getSnapSections(): HTMLElement[] {
       return Array.from(document.querySelectorAll<HTMLElement>("[data-snap]"));
@@ -64,8 +66,6 @@ export default function HomeScrollSnap() {
       const section = sections[idx];
       const sectionTop = getSectionTop(section);
 
-      // Sekcja wyższa niż viewport (np. Instagram+Stopka):
-      // pozwól na naturalne przewijanie i snapuj tylko na granicy
       if (isTall(section)) {
         const sectionBottom = sectionTop + section.offsetHeight;
         const viewportBottom = window.scrollY + window.innerHeight;
@@ -82,7 +82,6 @@ export default function HomeScrollSnap() {
         return;
       }
 
-      // Sekcja pełnoekranowa: zawsze przechwytuj i snapuj
       e.preventDefault();
       if (isScrolling) return;
       const dir = e.deltaY > 0 ? 1 : -1;
@@ -102,45 +101,61 @@ export default function HomeScrollSnap() {
     }
 
     function handleTouchStart(e: TouchEvent) {
+      touchStartX = e.touches[0].clientX;
       touchStartY = e.touches[0].clientY;
       touchStartScrollY = window.scrollY;
+      touchIsVertical = null;
+    }
 
-      const sections = getSnapSections();
-      const idx = getIndexByScrollY(sections, touchStartScrollY);
-      // Dla sekcji pełnoekranowych blokuj natywne przewijanie
-      if (!isTall(sections[idx])) {
-        e.preventDefault();
+    function handleTouchMove(e: TouchEvent) {
+      // Wykryj kierunek dotyku przy pierwszym ruchu
+      if (touchIsVertical === null) {
+        const dx = Math.abs(e.touches[0].clientX - touchStartX);
+        const dy = Math.abs(e.touches[0].clientY - touchStartY);
+        if (dx > 5 || dy > 5) {
+          touchIsVertical = dy >= dx;
+        }
+      }
+
+      // Blokuj natywne pionowe przewijanie tylko na sekcjach pełnoekranowych
+      if (touchIsVertical === true) {
+        const sections = getSnapSections();
+        const idx = getIndexByScrollY(sections, touchStartScrollY);
+        if (!isTall(sections[idx])) {
+          e.preventDefault();
+        }
       }
     }
 
     function handleTouchEnd(e: TouchEvent) {
-      const diff = touchStartY - e.changedTouches[0].clientY;
-      if (Math.abs(diff) < 40) return;
+      const diffY = touchStartY - e.changedTouches[0].clientY;
+      const diffX = Math.abs(touchStartX - e.changedTouches[0].clientX);
+
+      // Ignoruj głównie poziome ruchy (karuzel)
+      if (diffX > Math.abs(diffY) * 1.5) return;
+      if (Math.abs(diffY) < 40) return;
 
       const sections = getSnapSections();
-      // Identyfikuj sekcję na podstawie pozycji przy początku dotyku
       const startIdx = getIndexByScrollY(sections, touchStartScrollY);
       const section = sections[startIdx];
       const sectionTop = getSectionTop(section);
 
       if (isTall(section)) {
-        // Sekcja wysoka: snapuj tylko na granicy
         const sectionBottom = sectionTop + section.offsetHeight;
         const viewportBottom = window.scrollY + window.innerHeight;
-        const atBottom = diff > 0 && viewportBottom >= sectionBottom - 60;
-        const atTop = diff < 0 && window.scrollY <= sectionTop + 60;
+        const atBottom = diffY > 0 && viewportBottom >= sectionBottom - 60;
+        const atTop = diffY < 0 && window.scrollY <= sectionTop + 60;
 
         if ((atBottom || atTop) && !isScrolling) {
-          const dir = diff > 0 ? 1 : -1;
+          const dir = diffY > 0 ? 1 : -1;
           const next = Math.max(0, Math.min(sections.length - 1, startIdx + dir));
           if (next !== startIdx) animateTo(getSectionTop(sections[next]));
         }
         return;
       }
 
-      // Sekcja pełnoekranowa: natychmiast snapuj do następnej
       if (isScrolling) return;
-      const dir = diff > 0 ? 1 : -1;
+      const dir = diffY > 0 ? 1 : -1;
       const next = Math.max(0, Math.min(sections.length - 1, startIdx + dir));
       animateTo(getSectionTop(sections[next]));
     }
@@ -154,7 +169,8 @@ export default function HomeScrollSnap() {
 
     document.addEventListener("wheel", handleWheel, { passive: false });
     document.addEventListener("keydown", handleKeyDown);
-    document.addEventListener("touchstart", handleTouchStart, { passive: false });
+    document.addEventListener("touchstart", handleTouchStart, { passive: true });
+    document.addEventListener("touchmove", handleTouchMove, { passive: false });
     document.addEventListener("touchend", handleTouchEnd, { passive: true });
     window.addEventListener("resize", handleResize);
 
@@ -162,6 +178,7 @@ export default function HomeScrollSnap() {
       document.removeEventListener("wheel", handleWheel);
       document.removeEventListener("keydown", handleKeyDown);
       document.removeEventListener("touchstart", handleTouchStart);
+      document.removeEventListener("touchmove", handleTouchMove);
       document.removeEventListener("touchend", handleTouchEnd);
       window.removeEventListener("resize", handleResize);
       html.style.scrollBehavior = "";
