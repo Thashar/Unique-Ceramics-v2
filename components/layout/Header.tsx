@@ -126,23 +126,13 @@ export default function Header() {
             alt="Unique Ceramics"
             width={40}
             height={40}
-            className={`h-9 w-auto transition-all duration-500 ${
-              dark ? "" : "brightness-0 invert"
-            }`}
+            className="h-9 w-auto"
           />
           <div className="flex flex-col leading-none pt-1.5">
-            <span
-              className={`font-serif text-base sm:text-lg font-semibold tracking-wide transition-colors duration-500 ${
-                dark ? "text-espresso group-hover:text-clay" : "text-cream group-hover:text-sand"
-              }`}
-            >
+            <span className="font-serif text-base sm:text-lg font-semibold tracking-wide text-espresso group-hover:text-clay transition-colors duration-300">
               Unique Ceramics
             </span>
-            <span
-              className={`text-[6.5px] tracking-[0.18em] uppercase mt-0.5 transition-colors duration-500 ${
-                dark ? "text-charcoal/40" : "text-cream/55"
-              }`}
-            >
+            <span className="text-[6.5px] tracking-[0.18em] uppercase mt-0.5 text-charcoal/40">
               Ręcznie tworzone z sercem
             </span>
           </div>
