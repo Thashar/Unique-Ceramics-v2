@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { db } from "@/lib/db";
 import ProductCard from "@/components/ui/ProductCard";
+import ProductCarousel from "@/components/home/ProductCarousel";
 
 export default async function FeaturedProducts() {
   let products: Awaited<ReturnType<typeof db.product.findMany>> = [];
@@ -46,19 +47,9 @@ export default async function FeaturedProducts() {
           </div>
         </div>
 
-        {/* Mobile: poziomy karuzel — przewijanie po 1 sztuce */}
-        <div className="lg:hidden overflow-x-auto snap-x snap-mandatory px-6 pb-2"
-          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
-          <div className="flex gap-5">
-            {products.map((product) => (
-              <div
-                key={product.id}
-                className="snap-start flex-none w-[40vw]"
-              >
-                <ProductCard product={product} />
-              </div>
-            ))}
-          </div>
+        {/* Mobile: karuzel z sinusoidalną animacją, wyśrodkowane karty */}
+        <div className="lg:hidden">
+          <ProductCarousel products={products} />
         </div>
 
         {/* Desktop: standardowy grid 4 kolumny */}
