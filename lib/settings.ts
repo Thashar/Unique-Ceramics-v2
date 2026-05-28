@@ -133,15 +133,15 @@ const WORKSHOPS_INTRO_DEFAULT = `<p>Organizuję warsztaty ceramiczne dla grup i 
 const DEFAULTS: Record<string, string> = {
   regulamin: REGULAMIN_DEFAULT,
   polityka_prywatnosci: POLITYKA_DEFAULT,
-  home_hero_image: "/images/hero.jpg",
+  home_hero_image: "",
   home_hero_position: "50% 50%",
-  home_about_image: "/images/about-photo.jpg",
+  home_about_image: "",
   home_about_position: "50% 50%",
-  home_workshops_image: "/images/warsztaty-photo.jpg",
+  home_workshops_image: "",
   home_workshops_position: "50% 50%",
-  about_hero_image: "/images/about-photo.jpg",
+  about_hero_image: "",
   about_story: ABOUT_STORY_DEFAULT,
-  workshops_hero_image: "/images/warsztaty-photo.jpg",
+  workshops_hero_image: "",
   workshops_intro: WORKSHOPS_INTRO_DEFAULT,
   contact_phone: "+48 668 443 706",
   contact_email: "kontakt@uniqueceramics.pl",
@@ -173,28 +173,38 @@ const DEFAULTS: Record<string, string> = {
   payment_payu_sandbox: "true",
 };
 
-export async function getSetting(key: string): Promise<string> {
-  try {
-    const row = await db.setting.findUnique({ where: { key } });
-    return row?.value ?? DEFAULTS[key] ?? "";
-  } catch {
-    return DEFAULTS[key] ?? "";
+async function querySettings(keys: string[]): Promise<Record<string, string>> {
+  const rows = await db.setting.findMany({ where: { key: { in: keys } } });
+  const map: Record<string, string> = {};
+  for (const key of keys) {
+    map[key] = rows.find((r) => r.key === key)?.value ?? DEFAULTS[key] ?? "";
   }
+  return map;
+}
+
+export async function getSetting(key: string): Promise<string> {
+  for (let i = 0; i < 2; i++) {
+    try {
+      const row = await db.setting.findUnique({ where: { key } });
+      return row?.value ?? DEFAULTS[key] ?? "";
+    } catch {
+      if (i === 0) await new Promise((r) => setTimeout(r, 300));
+    }
+  }
+  return DEFAULTS[key] ?? "";
 }
 
 export async function getSettings(
   keys: string[]
 ): Promise<Record<string, string>> {
-  try {
-    const rows = await db.setting.findMany({ where: { key: { in: keys } } });
-    const map: Record<string, string> = {};
-    for (const key of keys) {
-      map[key] = rows.find((r) => r.key === key)?.value ?? DEFAULTS[key] ?? "";
+  for (let i = 0; i < 2; i++) {
+    try {
+      return await querySettings(keys);
+    } catch {
+      if (i === 0) await new Promise((r) => setTimeout(r, 300));
     }
-    return map;
-  } catch {
-    const map: Record<string, string> = {};
-    for (const key of keys) map[key] = DEFAULTS[key] ?? "";
-    return map;
   }
+  const map: Record<string, string> = {};
+  for (const key of keys) map[key] = DEFAULTS[key] ?? "";
+  return map;
 }

@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 
 export default function Hero({
-  heroImage = "/images/hero.jpg",
+  heroImage = "",
   heroPosition = "50% 50%",
 }: {
   heroImage?: string;
@@ -15,16 +15,18 @@ export default function Hero({
   return (
     <section className="relative flex items-center overflow-hidden" style={{ height: "100svh" }} data-snap>
       {/* Tło */}
-      <div className="absolute inset-0">
-        <Image
-          src={heroImage}
-          alt="Ceramika ręcznie robiona"
-          fill
-          priority
-          className="object-cover"
-          style={{ objectPosition: heroPosition }}
-          sizes="100vw"
-        />
+      <div className="absolute inset-0 bg-espresso">
+        {heroImage && (
+          <Image
+            src={heroImage}
+            alt="Ceramika ręcznie robiona"
+            fill
+            priority
+            className="object-cover"
+            style={{ objectPosition: heroPosition }}
+            sizes="100vw"
+          />
+        )}
         <div className="absolute inset-0 bg-espresso/55" />
         <div className="absolute inset-0 bg-gradient-to-r from-espresso/70 via-espresso/30 to-transparent" />
       </div>

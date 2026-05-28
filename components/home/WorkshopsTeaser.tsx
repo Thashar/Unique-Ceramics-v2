@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 
 export default function WorkshopsTeaser({
-  workshopsImage = "/images/warsztaty-photo.jpg",
+  workshopsImage = "",
   workshopsPosition = "50% 50%",
 }: {
   workshopsImage?: string;
@@ -19,15 +19,17 @@ export default function WorkshopsTeaser({
       data-snap
     >
       {/* Tło */}
-      <div className="absolute inset-0">
-        <Image
-          src={workshopsImage}
-          alt="Warsztaty ceramiczne"
-          fill
-          className="object-cover"
-          style={{ objectPosition: workshopsPosition }}
-          sizes="100vw"
-        />
+      <div className="absolute inset-0 bg-espresso">
+        {workshopsImage && (
+          <Image
+            src={workshopsImage}
+            alt="Warsztaty ceramiczne"
+            fill
+            className="object-cover"
+            style={{ objectPosition: workshopsPosition }}
+            sizes="100vw"
+          />
+        )}
         <div className="absolute inset-0 bg-espresso/75" />
       </div>
 

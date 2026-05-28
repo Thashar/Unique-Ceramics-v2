@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 
 export default function AboutTeaser({
-  aboutImage = "/images/about-photo.jpg",
+  aboutImage = "",
   aboutPosition = "50% 50%",
 }: {
   aboutImage?: string;
@@ -19,15 +19,17 @@ export default function AboutTeaser({
       data-snap
     >
       {/* Tło — takie same jak Warsztaty */}
-      <div className="absolute inset-0">
-        <Image
-          src={aboutImage}
-          alt="Pracownia ceramiczna"
-          fill
-          className="object-cover"
-          style={{ objectPosition: aboutPosition }}
-          sizes="100vw"
-        />
+      <div className="absolute inset-0 bg-espresso">
+        {aboutImage && (
+          <Image
+            src={aboutImage}
+            alt="Pracownia ceramiczna"
+            fill
+            className="object-cover"
+            style={{ objectPosition: aboutPosition }}
+            sizes="100vw"
+          />
+        )}
         <div className="absolute inset-0 bg-espresso/60" />
         <div className="absolute inset-0 bg-gradient-to-r from-espresso/75 via-espresso/35 to-transparent" />
       </div>
