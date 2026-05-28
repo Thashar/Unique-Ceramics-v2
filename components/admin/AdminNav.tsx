@@ -26,10 +26,9 @@ const settingsItems = [
 ];
 
 const paymentItems = [
-  { id: "platnosci_przelew", label: "Przelew tradycyjny" },
-  { id: "platnosci_blik",    label: "BLIK" },
-  { id: "platnosci_p24",     label: "Przelewy24" },
-  { id: "platnosci_payu",    label: "PayU" },
+  { id: "platnosci_przelew",  label: "Przelew tradycyjny" },
+  { id: "platnosci_blik",     label: "BLIK" },
+  { id: "platnosci_stripe",   label: "Stripe (karta)" },
 ];
 
 function AdminNavInner({ onClose }: { onClose?: () => void }) {

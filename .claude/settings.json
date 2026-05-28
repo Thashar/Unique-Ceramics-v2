@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(python3 \"C:/Users/Thash/.claude/skills/ui-ux-pro-max/scripts/search.py\" \"admin dashboard e-commerce ceramics management\" --design-system -p \"Unique Ceramics Admin\" -f markdown)",
-      "Bash(python \"C:/Users/Thash/.claude/skills/ui-ux-pro-max/scripts/search.py\" \"admin dashboard e-commerce management\" --design-system -p \"Unique Ceramics Admin\" -f markdown)"
+      "Bash(python \"C:/Users/Thash/.claude/skills/ui-ux-pro-max/scripts/search.py\" \"admin dashboard e-commerce management\" --design-system -p \"Unique Ceramics Admin\" -f markdown)",
+      "Bash(findstr resend *)",
+      "Bash(node -e \"require\\('stripe'\\); console.log\\('ok'\\)\")"
     ]
   }
 }

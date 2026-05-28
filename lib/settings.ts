@@ -158,19 +158,8 @@ const DEFAULTS: Record<string, string> = {
   // BLIK
   payment_blik_enabled: "false",
   payment_blik_phone: "",
-  // Przelewy24
-  payment_przelewy24_enabled: "false",
-  payment_przelewy24_merchant_id: "",
-  payment_przelewy24_pos_id: "",
-  payment_przelewy24_api_key: "",
-  payment_przelewy24_crc: "",
-  // PayU
-  payment_payu_enabled: "false",
-  payment_payu_pos_id: "",
-  payment_payu_md5: "",
-  payment_payu_oauth_client_id: "",
-  payment_payu_oauth_client_secret: "",
-  payment_payu_sandbox: "true",
+  // Stripe
+  payment_stripe_enabled: "false",
 };
 
 async function querySettings(keys: string[]): Promise<Record<string, string>> {

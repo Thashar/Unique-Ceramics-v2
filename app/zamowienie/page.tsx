@@ -11,8 +11,7 @@ export default async function CheckoutPage() {
   const settings = await getSettings([
     "payment_blik_enabled",
     "payment_blik_phone",
-    "payment_przelewy24_enabled",
-    "payment_payu_enabled",
+    "payment_stripe_enabled",
     "shipping_cost",
     "shipping_free_enabled",
     "shipping_free_from",
@@ -48,21 +47,12 @@ export default async function CheckoutPage() {
           },
         ]
       : []),
-    ...(settings.payment_przelewy24_enabled === "true"
+    ...(settings.payment_stripe_enabled === "true" && process.env.STRIPE_SECRET_KEY
       ? [
           {
-            value: "przelewy24",
-            label: "Przelewy24",
-            desc: "Szybka płatność online przez Przelewy24.",
-          },
-        ]
-      : []),
-    ...(settings.payment_payu_enabled === "true"
-      ? [
-          {
-            value: "payu",
-            label: "PayU",
-            desc: "Szybka płatność online przez PayU.",
+            value: "stripe",
+            label: "Karta płatnicza (Stripe)",
+            desc: "Bezpieczna płatność kartą — Visa, Mastercard. Obsługiwane przez Stripe.",
           },
         ]
       : []),

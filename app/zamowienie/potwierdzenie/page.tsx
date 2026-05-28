@@ -118,15 +118,14 @@ export default async function ConfirmationPage({
           </div>
         )}
 
-        {/* Online payment placeholder */}
-        {(order?.paymentMethod === "przelewy24" ||
-          order?.paymentMethod === "payu") && (
+        {/* Stripe — payment processed */}
+        {order?.paymentMethod === "stripe" && (
           <div className="bg-cream border-l-4 border-terracotta p-6 mb-8">
             <p className="text-xs tracking-widest uppercase text-clay mb-3">
-              Płatność online
+              Płatność kartą
             </p>
             <p className="text-sm text-charcoal/70 leading-relaxed">
-              Skontaktuję się z Tobą w celu dokończenia płatności online.
+              Płatność kartą została zrealizowana. Potwierdzenie otrzymasz na podany adres e-mail.
             </p>
           </div>
         )}

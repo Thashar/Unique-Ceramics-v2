@@ -7,10 +7,9 @@ import Link from "next/link";
 import { ChevronLeft, User, MapPin, Package, CreditCard, MessageSquare } from "lucide-react";
 
 const PAYMENT_LABELS: Record<string, string> = {
-  bank:       "Przelew bankowy",
-  blik:       "BLIK",
-  przelewy24: "Przelewy24",
-  payu:       "PayU",
+  transfer: "Przelew bankowy",
+  blik:     "BLIK",
+  stripe:   "Karta (Stripe)",
 };
 
 const PAYMENT_STATUS_COLORS: Record<string, string> = {
@@ -132,7 +131,8 @@ export default async function AdminOrderDetailPage({
             PAYMENT_STATUS_COLORS[order.paymentStatus] ?? "bg-sand text-charcoal"
           }`}>
             {order.paymentStatus === "PENDING" ? "Oczekuje" :
-             order.paymentStatus === "PAID" ? "Opłacone" : order.paymentStatus}
+             order.paymentStatus === "PAID" ? "Opłacone" :
+             order.paymentStatus === "FAILED" ? "Nieudana" : order.paymentStatus}
           </span>
         </div>
 

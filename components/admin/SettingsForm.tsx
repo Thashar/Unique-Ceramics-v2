@@ -32,17 +32,7 @@ interface Props {
     payment_bank_transfer_title: string;
     payment_blik_enabled: string;
     payment_blik_phone: string;
-    payment_przelewy24_enabled: string;
-    payment_przelewy24_merchant_id: string;
-    payment_przelewy24_pos_id: string;
-    payment_przelewy24_api_key: string;
-    payment_przelewy24_crc: string;
-    payment_payu_enabled: string;
-    payment_payu_pos_id: string;
-    payment_payu_md5: string;
-    payment_payu_oauth_client_id: string;
-    payment_payu_oauth_client_secret: string;
-    payment_payu_sandbox: string;
+    payment_stripe_enabled: string;
   };
 }
 
@@ -136,20 +126,8 @@ export default function SettingsForm({ section, initial }: Props) {
   const [blikEnabled, setBlikEnabled] = useState(initial.payment_blik_enabled === "true");
   const [blikPhone, setBlikPhone] = useState(initial.payment_blik_phone);
 
-  // Przelewy24
-  const [p24Enabled, setP24Enabled] = useState(initial.payment_przelewy24_enabled === "true");
-  const [p24MerchantId, setP24MerchantId] = useState(initial.payment_przelewy24_merchant_id);
-  const [p24PosId, setP24PosId] = useState(initial.payment_przelewy24_pos_id);
-  const [p24ApiKey, setP24ApiKey] = useState(initial.payment_przelewy24_api_key);
-  const [p24Crc, setP24Crc] = useState(initial.payment_przelewy24_crc);
-
-  // PayU
-  const [payuEnabled, setPayuEnabled] = useState(initial.payment_payu_enabled === "true");
-  const [payuPosId, setPayuPosId] = useState(initial.payment_payu_pos_id);
-  const [payuMd5, setPayuMd5] = useState(initial.payment_payu_md5);
-  const [payuClientId, setPayuClientId] = useState(initial.payment_payu_oauth_client_id);
-  const [payuClientSecret, setPayuClientSecret] = useState(initial.payment_payu_oauth_client_secret);
-  const [payuSandbox, setPayuSandbox] = useState(initial.payment_payu_sandbox === "true");
+  // Stripe
+  const [stripeEnabled, setStripeEnabled] = useState(initial.payment_stripe_enabled === "true");
 
   const save = async (pairs: { key: string; value: string }[]) => {
     setErrMsg("");
@@ -400,63 +378,25 @@ export default function SettingsForm({ section, initial }: Props) {
         </div>
       )}
 
-      {section === "platnosci_p24" && (
+      {section === "platnosci_stripe" && (
         <div className="max-w-md space-y-5">
-          <h2 className="font-serif text-2xl text-espresso">Przelewy24</h2>
+          <h2 className="font-serif text-2xl text-espresso">Stripe (karta płatnicza)</h2>
           <div className="flex items-center justify-between">
-            <span className="text-xs tracking-widest uppercase text-charcoal/60">Włącz Przelewy24</span>
-            <Toggle checked={p24Enabled} onChange={setP24Enabled} />
+            <span className="text-xs tracking-widest uppercase text-charcoal/60">Włącz płatność kartą</span>
+            <Toggle checked={stripeEnabled} onChange={setStripeEnabled} />
           </div>
-          {p24Enabled && (
-            <>
-              <Field label="Merchant ID" value={p24MerchantId} setter={setP24MerchantId} mono />
-              <Field label="POS ID" value={p24PosId} setter={setP24PosId} mono />
-              <Field label="API Key" value={p24ApiKey} setter={setP24ApiKey} mono />
-              <Field label="CRC Key" value={p24Crc} setter={setP24Crc} mono />
-            </>
-          )}
+          <div className="p-4 bg-cream border border-sand text-xs text-charcoal/60 leading-relaxed space-y-2">
+            <p className="font-medium text-charcoal/80">Konfiguracja kluczy API</p>
+            <p>Klucze Stripe ustawiasz w pliku <span className="font-mono">.env.local</span> — nie są przechowywane w bazie danych:</p>
+            <pre className="font-mono text-[11px] bg-warm-white border border-sand p-3 leading-5 overflow-x-auto">{`STRIPE_SECRET_KEY=sk_live_...
+STRIPE_WEBHOOK_SECRET=whsec_...`}</pre>
+            <p>Klucze znajdziesz w panelu Stripe → Developers → API keys. Webhook dodaj pod adresem <span className="font-mono">/api/stripe/webhook</span> z eventem <span className="font-mono">checkout.session.completed</span>.</p>
+          </div>
           <SaveButton
             onClick={() => save([
-              { key: "payment_przelewy24_enabled", value: p24Enabled ? "true" : "false" },
-              { key: "payment_przelewy24_merchant_id", value: p24MerchantId },
-              { key: "payment_przelewy24_pos_id", value: p24PosId },
-              { key: "payment_przelewy24_api_key", value: p24ApiKey },
-              { key: "payment_przelewy24_crc", value: p24Crc },
+              { key: "payment_stripe_enabled", value: stripeEnabled ? "true" : "false" },
             ])}
-            label="Zapisz Przelewy24"
-          />
-        </div>
-      )}
-
-      {section === "platnosci_payu" && (
-        <div className="max-w-md space-y-5">
-          <h2 className="font-serif text-2xl text-espresso">PayU</h2>
-          <div className="flex items-center justify-between">
-            <span className="text-xs tracking-widest uppercase text-charcoal/60">Włącz PayU</span>
-            <Toggle checked={payuEnabled} onChange={setPayuEnabled} />
-          </div>
-          {payuEnabled && (
-            <>
-              <div className="flex items-center justify-between">
-                <span className="text-xs tracking-widest uppercase text-charcoal/60">Tryb sandbox (testowy)</span>
-                <Toggle checked={payuSandbox} onChange={setPayuSandbox} />
-              </div>
-              <Field label="POS ID" value={payuPosId} setter={setPayuPosId} mono />
-              <Field label="MD5 Key (drugi klucz)" value={payuMd5} setter={setPayuMd5} mono />
-              <Field label="OAuth — Client ID" value={payuClientId} setter={setPayuClientId} mono />
-              <Field label="OAuth — Client Secret" value={payuClientSecret} setter={setPayuClientSecret} mono />
-            </>
-          )}
-          <SaveButton
-            onClick={() => save([
-              { key: "payment_payu_enabled", value: payuEnabled ? "true" : "false" },
-              { key: "payment_payu_pos_id", value: payuPosId },
-              { key: "payment_payu_md5", value: payuMd5 },
-              { key: "payment_payu_oauth_client_id", value: payuClientId },
-              { key: "payment_payu_oauth_client_secret", value: payuClientSecret },
-              { key: "payment_payu_sandbox", value: payuSandbox ? "true" : "false" },
-            ])}
-            label="Zapisz PayU"
+            label="Zapisz Stripe"
           />
         </div>
       )}

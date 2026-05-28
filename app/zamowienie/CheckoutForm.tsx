@@ -103,9 +103,13 @@ export default function CheckoutForm({
       return;
     }
 
-    const { orderId } = await res.json();
+    const data = await res.json();
     clearCart();
-    router.push(`/zamowienie/potwierdzenie?id=${orderId}`);
+    if (data.stripeUrl) {
+      window.location.href = data.stripeUrl;
+    } else {
+      router.push(`/zamowienie/potwierdzenie?id=${data.orderId}`);
+    }
   }
 
   return (
@@ -295,7 +299,11 @@ export default function CheckoutForm({
                 disabled={loading}
                 className="w-full mt-6 bg-terracotta hover:bg-clay disabled:bg-sand disabled:text-charcoal/40 text-warm-white text-xs tracking-widest uppercase py-4 transition-colors"
               >
-                {loading ? "Składam zamówienie..." : "Złóż zamówienie"}
+                {loading
+                  ? "Proszę czekać..."
+                  : form.paymentMethod === "stripe"
+                  ? "Przejdź do płatności"
+                  : "Złóż zamówienie"}
               </button>
             </div>
           </div>

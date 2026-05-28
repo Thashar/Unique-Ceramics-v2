@@ -36,17 +36,7 @@ export default async function AdminSettingsPage({
     "payment_bank_transfer_title",
     "payment_blik_enabled",
     "payment_blik_phone",
-    "payment_przelewy24_enabled",
-    "payment_przelewy24_merchant_id",
-    "payment_przelewy24_pos_id",
-    "payment_przelewy24_api_key",
-    "payment_przelewy24_crc",
-    "payment_payu_enabled",
-    "payment_payu_pos_id",
-    "payment_payu_md5",
-    "payment_payu_oauth_client_id",
-    "payment_payu_oauth_client_secret",
-    "payment_payu_sandbox",
+    "payment_stripe_enabled",
   ]);
 
   return (

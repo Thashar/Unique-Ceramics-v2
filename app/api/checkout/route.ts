@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import { getSettings } from "@/lib/settings";
 import { NextResponse } from "next/server";
+import Stripe from "stripe";
 
 function buildTransferEmail(params: {
   orderNumber: string;
@@ -152,6 +153,46 @@ export async function POST(req: Request) {
       },
     },
   });
+
+  // Stripe — create Checkout session and redirect
+  if (paymentMethod === "stripe") {
+    const stripeKey = process.env.STRIPE_SECRET_KEY;
+    if (!stripeKey) {
+      return NextResponse.json({ error: "Stripe nie jest skonfigurowany" }, { status: 500 });
+    }
+    const stripe = new Stripe(stripeKey);
+    const baseUrl = process.env.AUTH_URL ?? "http://localhost:3000";
+
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      mode: "payment",
+      line_items: [
+        ...items.map((item: { name: string; price: number; quantity: number }) => ({
+          price_data: {
+            currency: "pln",
+            product_data: { name: item.name },
+            unit_amount: Math.round(item.price * 100),
+          },
+          quantity: item.quantity,
+        })),
+        ...(shippingCost > 0
+          ? [{
+              price_data: {
+                currency: "pln",
+                product_data: { name: "Wysyłka" },
+                unit_amount: Math.round(shippingCost * 100),
+              },
+              quantity: 1,
+            }]
+          : []),
+      ],
+      metadata: { orderId: order.id },
+      success_url: `${baseUrl}/zamowienie/potwierdzenie?id=${order.id}`,
+      cancel_url: `${baseUrl}/zamowienie`,
+    });
+
+    return NextResponse.json({ orderId: order.id, stripeUrl: session.url });
+  }
 
   // Send confirmation email for bank transfer orders
   if (paymentMethod === "transfer") {
