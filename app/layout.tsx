@@ -82,6 +82,9 @@ export const metadata: Metadata = {
     follow: true,
     googleBot: { index: true, follow: true },
   },
+  verification: {
+    google: "c8ca4a44aca019e7",
+  },
 };
 
 const localBusinessSchema = {
@@ -99,7 +102,6 @@ const localBusinessSchema = {
   priceRange: "$$",
   currenciesAccepted: "PLN",
   paymentAccepted: "Bank Transfer, Credit Card, BLIK",
-  inLanguage: "pl-PL",
   areaServed: {
     "@type": "Country",
     name: "Polska",
