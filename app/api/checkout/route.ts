@@ -252,6 +252,8 @@ export async function POST(req: Request) {
   const shippingCost = freeEnabled && subtotal >= freeFrom ? 0 : shippingCostSetting;
   const total = subtotal + shippingCost;
 
+  const typedItems = items as { productId: string; quantity: number }[];
+
   const order = await db.order.create({
     data: {
       userId: session?.user?.id ?? null,
@@ -268,7 +270,7 @@ export async function POST(req: Request) {
       shippingCost,
       total,
       items: {
-        create: (items as { productId: string; quantity: number }[]).map((item) => {
+        create: typedItems.map((item) => {
           const product = productMap.get(item.productId)!;
           return {
             productId: item.productId,
@@ -281,9 +283,19 @@ export async function POST(req: Request) {
     },
   });
 
+  // Dekrementuj stan magazynu — warunek stock >= quantity zapobiega wartościom ujemnym
+  await Promise.all(
+    typedItems.map((item) =>
+      db.product.updateMany({
+        where: { id: item.productId, stock: { gte: item.quantity } },
+        data: { stock: { decrement: item.quantity } },
+      })
+    )
+  );
+
   // Powiadomienie dla właściciela sklepu — używamy zweryfikowanych danych z serwera
   const orderNumber = order.id.slice(-8).toUpperCase();
-  const verifiedItems = (items as { productId: string; quantity: number }[]).map((item) => {
+  const verifiedItems = typedItems.map((item) => {
     const product = productMap.get(item.productId)!;
     return { name: product.name, price: product.price, quantity: item.quantity };
   });
