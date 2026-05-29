@@ -7,6 +7,7 @@ import { ArrowRight } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { getSettings } from "@/lib/settings";
+import { sanitizeRichHtml } from "@/lib/sanitize-html";
 
 export const metadata: Metadata = {
   title: "O mnie",
@@ -51,7 +52,7 @@ export default async function AboutPage() {
               </h2>
               <div
                 className="space-y-5 text-charcoal/80 leading-relaxed [&_p]:mb-4 [&_h2]:font-serif [&_h2]:text-2xl [&_h2]:text-espresso [&_h2]:mb-4 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:mb-4 [&_strong]:text-espresso"
-                dangerouslySetInnerHTML={{ __html: story }}
+                dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(story) }}
               />
 
               <div className="mt-12 flex flex-wrap gap-6">

@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
 import { getSetting } from "@/lib/settings";
+import { sanitizeRichHtml } from "@/lib/sanitize-html";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 
@@ -31,7 +32,7 @@ export default async function PolitykaPrywatnosci() {
         <div className="bg-warm-white py-16 px-6 lg:px-10">
           <div
             className="max-w-3xl mx-auto text-charcoal/80 leading-relaxed [&_h2]:font-serif [&_h2]:text-2xl [&_h2]:text-espresso [&_h2]:mt-8 [&_h2]:mb-4 [&_p]:mb-4 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:mb-4 [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:mb-4 [&_li]:mb-1 [&_strong]:text-espresso [&_a]:text-clay [&_a]:underline"
-            dangerouslySetInnerHTML={{ __html: content }}
+            dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(content) }}
           />
         </div>
       </main>

@@ -11,6 +11,7 @@ import {
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { getSettings } from "@/lib/settings";
+import { sanitizeRichHtml } from "@/lib/sanitize-html";
 
 export const metadata: Metadata = {
   title: "Warsztaty",
@@ -72,7 +73,7 @@ export default async function WorkshopsPage() {
         <div className="bg-cream py-16 px-6 lg:px-10">
           <div
             className="max-w-3xl mx-auto text-center text-charcoal/80 text-lg leading-relaxed [&_p]:mb-4 [&_strong]:text-espresso"
-            dangerouslySetInnerHTML={{ __html: intro }}
+            dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(intro) }}
           />
         </div>
 
