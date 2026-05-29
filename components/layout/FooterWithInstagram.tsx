@@ -16,20 +16,20 @@ const NAV_LINKS = [
 
 export default function FooterWithInstagram({ instagram }: { instagram: string }) {
   return (
-    <footer className="bg-espresso text-sand/80">
+    <footer className="flex-1 flex flex-col bg-espresso text-sand/80">
       {/* Dekoracyjne elementy — clipped do sekcji */}
-      <div className="relative overflow-hidden">
+      <div className="relative overflow-hidden flex-1 flex flex-col justify-center">
         <div className="absolute -top-16 -left-16 w-56 h-56 bg-clay/8 rounded-full pointer-events-none" />
         <div className="absolute top-1/2 left-72 w-3 h-3 bg-terracotta/20 rounded-full pointer-events-none" />
 
-        <div className="max-w-7xl mx-auto px-6 lg:px-10 py-16 grid grid-cols-1 lg:grid-cols-4 gap-12 lg:gap-10">
-          {/* Panel Instagram — lewa kolumna z separatorem */}
-          <div className="relative lg:pr-10 lg:border-r lg:border-sand/12">
+        <div className="max-w-7xl mx-auto px-6 lg:px-10 py-16 grid grid-cols-1 lg:grid-cols-4 gap-12 lg:gap-0">
+          {/* Panel Instagram — lewa kolumna z separatorem, pr-16 = 4rem przed linią */}
+          <div className="relative lg:pr-16 lg:border-r lg:border-sand/12">
             <FooterInstagramPanel instagram={instagram} />
           </div>
 
-          {/* Nawigacja */}
-          <div>
+          {/* Nawigacja — pl-16 = 4rem po linii (symetria z pr-16) */}
+          <div className="lg:pl-16">
             <p className="text-xs tracking-widest uppercase text-terracotta mb-5">Nawigacja</p>
             <nav className="flex flex-col gap-3">
               {NAV_LINKS.map(([label, href]) => (
@@ -41,7 +41,7 @@ export default function FooterWithInstagram({ instagram }: { instagram: string }
           </div>
 
           {/* Kontakt */}
-          <div>
+          <div className="lg:pl-8">
             <p className="text-xs tracking-widest uppercase text-terracotta mb-5">Kontakt</p>
             <div className="flex flex-col gap-3">
               <FooterContactsClient />
@@ -49,7 +49,7 @@ export default function FooterWithInstagram({ instagram }: { instagram: string }
           </div>
 
           {/* Mapa */}
-          <div>
+          <div className="lg:pl-8">
             <p className="text-xs tracking-widest uppercase text-terracotta mb-5">Gdzie mnie znajdziesz</p>
             <div className="w-full aspect-square overflow-hidden rounded-sm">
               <FooterMap />
@@ -58,9 +58,9 @@ export default function FooterWithInstagram({ instagram }: { instagram: string }
         </div>
       </div>
 
-      {/* Belka praw autorskich z logo */}
+      {/* Belka praw autorskich — wycentrowana */}
       <div className="border-t border-sand/10 px-6 lg:px-10 py-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto flex items-center justify-center gap-6">
           <div className="flex items-center gap-2.5">
             <Image
               src="/images/logo.png"
@@ -71,6 +71,7 @@ export default function FooterWithInstagram({ instagram }: { instagram: string }
             />
             <span className="font-serif text-xs text-cream/50 tracking-wide">Unique Ceramics</span>
           </div>
+          <span className="text-sand/20 text-xs">·</span>
           <p className="text-xs text-sand/30">
             © {new Date().getFullYear()} Wszelkie prawa zastrzeżone.
           </p>
