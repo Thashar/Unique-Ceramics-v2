@@ -9,6 +9,7 @@ export type CartItem = {
   price: number;
   image: string;
   quantity: number;
+  stock: number;
 };
 
 type CartContextType = {
@@ -26,6 +27,23 @@ const CartContext = createContext<CartContextType | null>(null);
 export const SHIPPING = 18;
 export const FREE_SHIPPING_THRESHOLD = 300;
 
+function normalize(raw: unknown[]): CartItem[] {
+  return raw.map((i) => {
+    const item = i as Record<string, unknown>;
+    return {
+      id:       String(item.id ?? ""),
+      slug:     String(item.slug ?? ""),
+      name:     String(item.name ?? ""),
+      price:    Number(item.price ?? 0),
+      image:    String(item.image ?? ""),
+      quantity: Number(item.quantity ?? 1),
+      // Stare wpisy w localStorage nie mają stock — defaultujemy do dużej liczby
+      // żeby nie blokować działania istniejących koszyków
+      stock:    typeof item.stock === "number" ? item.stock : 9999,
+    };
+  });
+}
+
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [hydrated, setHydrated] = useState(false);
@@ -33,7 +51,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     try {
       const stored = localStorage.getItem("uc-cart");
-      if (stored) setItems(JSON.parse(stored));
+      if (stored) setItems(normalize(JSON.parse(stored)));
     } catch {}
     setHydrated(true);
   }, []);
@@ -46,10 +64,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setItems((prev) => {
       const existing = prev.find((i) => i.id === item.id);
       if (existing) {
+        const newQty = existing.quantity + 1;
+        // Nie przekraczaj stanu magazynowego
+        if (newQty > item.stock) return prev;
         return prev.map((i) =>
-          i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
+          i.id === item.id
+            ? { ...i, quantity: newQty, stock: item.stock }
+            : i
         );
       }
+      if (item.stock < 1) return prev;
       return [...prev, { ...item, quantity: 1 }];
     });
   }, []);
@@ -61,7 +85,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const updateQuantity = useCallback((id: string, qty: number) => {
     if (qty < 1) return;
     setItems((prev) =>
-      prev.map((i) => (i.id === id ? { ...i, quantity: qty } : i))
+      prev.map((i) => {
+        if (i.id !== id) return i;
+        return { ...i, quantity: Math.min(qty, i.stock) };
+      })
     );
   }, []);
 

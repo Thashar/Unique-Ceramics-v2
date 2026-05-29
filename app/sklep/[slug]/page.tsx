@@ -24,7 +24,7 @@ type Product = {
 export default function ProductPage() {
   const params = useParams();
   const slug = params?.slug as string;
-  const { addItem } = useCart();
+  const { addItem, items } = useCart();
 
   const [product, setProduct] = useState<Product | null>(null);
   const [related, setRelated] = useState<Product[]>([]);
@@ -32,6 +32,8 @@ export default function ProductPage() {
   const [activeImage, setActiveImage] = useState(0);
   const [added, setAdded] = useState(false);
   const [shipping, setShipping] = useState<{ cost: string; freeEnabled: string; freeFrom: string } | null>(null);
+
+  const cartItem = items.find((i) => i.id === product?.id);
 
   useEffect(() => {
     fetch(`/api/products/${slug}`)
@@ -63,10 +65,14 @@ export default function ProductPage() {
       name: product.name,
       price: product.price,
       image: product.images[0] ?? "",
+      stock: product.stock,
     });
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
   }
+
+  const inCartQty = cartItem?.quantity ?? 0;
+  const atStockLimit = product ? product.stock === 0 || inCartQty >= product.stock : false;
 
   if (loading) {
     return (
@@ -179,7 +185,7 @@ export default function ProductPage() {
 
           <button
             onClick={handleAddToCart}
-            disabled={product.stock === 0}
+            disabled={atStockLimit}
             className={`w-full flex items-center justify-center gap-3 text-sm tracking-widest uppercase py-5 transition-all duration-300 ${
               added
                 ? "bg-green-600 text-white"
@@ -194,10 +200,19 @@ export default function ProductPage() {
             ) : (
               <>
                 <ShoppingBag size={18} strokeWidth={1.5} />
-                {product.stock > 0 ? "Dodaj do koszyka" : "Wyprzedano"}
+                {product.stock === 0
+                  ? "Wyprzedano"
+                  : inCartQty >= product.stock
+                  ? "Maks. ilość w koszyku"
+                  : "Dodaj do koszyka"}
               </>
             )}
           </button>
+          {inCartQty > 0 && inCartQty < product.stock && (
+            <p className="text-xs text-charcoal/50 text-center mt-2">
+              W koszyku: {inCartQty} {inCartQty === 1 ? "szt." : "szt."}
+            </p>
+          )}
 
           <div className="mt-10 space-y-4 border-t border-sand pt-8">
             <div className="flex items-start gap-3 text-sm text-charcoal/70">

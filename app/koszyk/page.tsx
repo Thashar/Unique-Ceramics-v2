@@ -72,7 +72,8 @@ export default function CartPage() {
                     <span className="w-8 text-center text-sm">{item.quantity}</span>
                     <button
                       onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                      className="w-8 h-8 flex items-center justify-center text-charcoal hover:text-clay transition-colors"
+                      disabled={item.quantity >= item.stock}
+                      className="w-8 h-8 flex items-center justify-center text-charcoal hover:text-clay disabled:text-sand disabled:cursor-not-allowed transition-colors"
                     >
                       <Plus size={14} />
                     </button>
@@ -83,6 +84,9 @@ export default function CartPage() {
                   >
                     <Trash2 size={16} />
                   </button>
+                  {item.quantity >= item.stock && (
+                    <span className="text-xs text-clay">maks. dostępna ilość</span>
+                  )}
                 </div>
               </div>
               <div className="text-right flex-shrink-0">
