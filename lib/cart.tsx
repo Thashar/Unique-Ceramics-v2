@@ -14,7 +14,7 @@ export type CartItem = {
 
 type CartContextType = {
   items: CartItem[];
-  addItem: (item: Omit<CartItem, "quantity">) => void;
+  addItem: (item: Omit<CartItem, "quantity">, quantity?: number) => void;
   removeItem: (id: string) => void;
   updateQuantity: (id: string, qty: number) => void;
   clearCart: () => void;
@@ -60,13 +60,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     if (hydrated) localStorage.setItem("uc-cart", JSON.stringify(items));
   }, [items, hydrated]);
 
-  const addItem = useCallback((item: Omit<CartItem, "quantity">) => {
+  const addItem = useCallback((item: Omit<CartItem, "quantity">, quantity = 1) => {
+    const qty = Math.max(1, quantity);
     setItems((prev) => {
       const existing = prev.find((i) => i.id === item.id);
       if (existing) {
-        const newQty = existing.quantity + 1;
-        // Nie przekraczaj stanu magazynowego
-        if (newQty > item.stock) return prev;
+        const newQty = Math.min(existing.quantity + qty, item.stock);
+        if (newQty === existing.quantity) return prev;
         return prev.map((i) =>
           i.id === item.id
             ? { ...i, quantity: newQty, stock: item.stock }
@@ -74,7 +74,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         );
       }
       if (item.stock < 1) return prev;
-      return [...prev, { ...item, quantity: 1 }];
+      return [...prev, { ...item, quantity: Math.min(qty, item.stock) }];
     });
   }, []);
 

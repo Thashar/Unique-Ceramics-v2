@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams, notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronLeft, ShoppingBag, Package, RefreshCw, Check } from "lucide-react";
+import { ChevronLeft, ShoppingBag, Package, RefreshCw, Check, Plus, Minus } from "lucide-react";
 import { useCart } from "@/lib/cart";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -31,6 +31,7 @@ export default function ProductPage() {
   const [loading, setLoading] = useState(true);
   const [activeImage, setActiveImage] = useState(0);
   const [added, setAdded] = useState(false);
+  const [qty, setQty] = useState(1);
   const [shipping, setShipping] = useState<{ cost: string; freeEnabled: string; freeFrom: string } | null>(null);
 
   const cartItem = items.find((i) => i.id === product?.id);
@@ -66,13 +67,16 @@ export default function ProductPage() {
       price: product.price,
       image: product.images[0] ?? "",
       stock: product.stock,
-    });
+    }, qty);
     setAdded(true);
+    setQty(1);
     setTimeout(() => setAdded(false), 2000);
   }
 
   const inCartQty = cartItem?.quantity ?? 0;
-  const atStockLimit = product ? product.stock === 0 || inCartQty >= product.stock : false;
+  // Ile sztuk można jeszcze dodać (stan - już w koszyku)
+  const canAddMore = product ? Math.max(0, product.stock - inCartQty) : 0;
+  const atStockLimit = canAddMore === 0;
 
   if (loading) {
     return (
@@ -183,6 +187,34 @@ export default function ProductPage() {
               : "Wyprzedano"}
           </p>
 
+          {product.stock > 0 && !atStockLimit && (
+            <div className="flex items-center gap-4 mb-4">
+              <span className="text-xs tracking-widest uppercase text-charcoal/60">Ilość</span>
+              <div className="flex items-center border border-sand">
+                <button
+                  onClick={() => setQty((q) => Math.max(1, q - 1))}
+                  disabled={qty <= 1}
+                  className="w-10 h-10 flex items-center justify-center text-charcoal hover:text-clay disabled:text-sand transition-colors"
+                >
+                  <Minus size={14} strokeWidth={1.5} />
+                </button>
+                <span className="w-10 text-center text-sm font-medium text-espresso">{qty}</span>
+                <button
+                  onClick={() => setQty((q) => Math.min(q + 1, canAddMore))}
+                  disabled={qty >= canAddMore}
+                  className="w-10 h-10 flex items-center justify-center text-charcoal hover:text-clay disabled:text-sand transition-colors"
+                >
+                  <Plus size={14} strokeWidth={1.5} />
+                </button>
+              </div>
+              {inCartQty > 0 && (
+                <span className="text-xs text-charcoal/50">
+                  w koszyku: {inCartQty}
+                </span>
+              )}
+            </div>
+          )}
+
           <button
             onClick={handleAddToCart}
             disabled={atStockLimit}
@@ -202,17 +234,12 @@ export default function ProductPage() {
                 <ShoppingBag size={18} strokeWidth={1.5} />
                 {product.stock === 0
                   ? "Wyprzedano"
-                  : inCartQty >= product.stock
+                  : atStockLimit
                   ? "Maks. ilość w koszyku"
                   : "Dodaj do koszyka"}
               </>
             )}
           </button>
-          {inCartQty > 0 && inCartQty < product.stock && (
-            <p className="text-xs text-charcoal/50 text-center mt-2">
-              W koszyku: {inCartQty} {inCartQty === 1 ? "szt." : "szt."}
-            </p>
-          )}
 
           <div className="mt-10 space-y-4 border-t border-sand pt-8">
             <div className="flex items-start gap-3 text-sm text-charcoal/70">

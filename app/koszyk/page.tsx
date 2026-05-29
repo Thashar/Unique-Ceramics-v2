@@ -1,14 +1,38 @@
 ﻿"use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ShoppingBag, ArrowRight, Trash2, Plus, Minus } from "lucide-react";
-import { useCart, SHIPPING, FREE_SHIPPING_THRESHOLD } from "@/lib/cart";
+import { useCart } from "@/lib/cart";
+
+type ShippingSettings = {
+  cost: number;
+  freeEnabled: boolean;
+  freeFrom: number;
+};
+
+const SHIPPING_FALLBACK: ShippingSettings = { cost: 18, freeEnabled: true, freeFrom: 300 };
 
 export default function CartPage() {
   const { items, removeItem, updateQuantity, subtotal } = useCart();
+  const [shipping, setShipping] = useState<ShippingSettings>(SHIPPING_FALLBACK);
 
-  const shippingCost = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING;
+  useEffect(() => {
+    fetch("/api/public/shipping")
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (!data) return;
+        setShipping({
+          cost:        Number(data.cost)     || 18,
+          freeEnabled: data.freeEnabled      === "true",
+          freeFrom:    Number(data.freeFrom) || 300,
+        });
+      })
+      .catch(() => {});
+  }, []);
+
+  const shippingCost = shipping.freeEnabled && subtotal >= shipping.freeFrom ? 0 : shipping.cost;
   const total = subtotal + shippingCost;
 
   if (items.length === 0) {
@@ -117,9 +141,9 @@ export default function CartPage() {
                   )}
                 </span>
               </div>
-              {subtotal < FREE_SHIPPING_THRESHOLD && (
+              {shipping.freeEnabled && subtotal < shipping.freeFrom && (
                 <p className="text-xs text-clay">
-                  Dodaj jeszcze {(FREE_SHIPPING_THRESHOLD - subtotal).toFixed(2).replace(".", ",")} zł do darmowej wysyłki
+                  Dodaj jeszcze {(shipping.freeFrom - subtotal).toFixed(2).replace(".", ",")} zł do darmowej wysyłki
                 </p>
               )}
               <div className="border-t border-sand pt-3 flex justify-between font-serif text-xl text-espresso">
