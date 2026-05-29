@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import { getSettings } from "@/lib/settings";
+import { validateAddress } from "@/lib/address-validation";
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
@@ -206,6 +207,12 @@ export async function POST(req: Request) {
 
   if (!validateEmail(email)) {
     return NextResponse.json({ error: "Nieprawidłowy adres e-mail" }, { status: 400 });
+  }
+
+  const addrValidation = validateAddress({ firstName, lastName, phone, street, postcode, city });
+  if (!addrValidation.valid) {
+    const firstError = Object.values(addrValidation.errors)[0];
+    return NextResponse.json({ error: firstError }, { status: 400 });
   }
 
   if (!items?.length) {

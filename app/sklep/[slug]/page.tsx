@@ -174,7 +174,7 @@ export default function ProductPage() {
           <p className="text-sm text-charcoal/60 mb-6">
             {product.stock > 0
               ? `Dostępność: ${product.stock} ${product.stock === 1 ? "sztuka" : product.stock < 5 ? "sztuki" : "sztuk"}`
-              : "Chwilowo niedostępne"}
+              : "Wyprzedano"}
           </p>
 
           <button
@@ -194,7 +194,7 @@ export default function ProductPage() {
             ) : (
               <>
                 <ShoppingBag size={18} strokeWidth={1.5} />
-                {product.stock > 0 ? "Dodaj do koszyka" : "Niedostępne"}
+                {product.stock > 0 ? "Dodaj do koszyka" : "Wyprzedano"}
               </>
             )}
           </button>

@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
+import { validateAddress } from "@/lib/address-validation";
 import { NextResponse } from "next/server";
 
 export async function GET() {
@@ -27,6 +28,18 @@ export async function PUT(req: Request) {
   }
 
   const address = await req.json();
+
+  const validation = validateAddress({
+    firstName: address.firstName ?? "",
+    lastName:  address.lastName  ?? "",
+    phone:     address.phone,
+    street:    address.street    ?? "",
+    postcode:  address.postcode  ?? "",
+    city:      address.city      ?? "",
+  });
+  if (!validation.valid) {
+    return NextResponse.json({ ok: false, errors: validation.errors }, { status: 400 });
+  }
 
   try {
     const key = `user_address_${session.user.id}`;

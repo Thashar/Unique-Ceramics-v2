@@ -39,7 +39,7 @@ export default function ProductCard({ product }: { product: ProductCardProduct }
               src={product.images[0]}
               alt={product.name}
               fill
-              className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+              className={`object-cover transition-transform duration-700 ease-out group-hover:scale-105 ${product.stock === 0 ? "opacity-60" : ""}`}
               sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
             />
           ) : (
@@ -53,8 +53,8 @@ export default function ProductCard({ product }: { product: ProductCardProduct }
             </span>
           )}
           {product.stock === 0 && (
-            <span className="absolute top-3 left-3 bg-charcoal/80 text-warm-white text-[11px] tracking-wider uppercase px-2.5 py-1">
-              Niedostępny
+            <span className="absolute top-3 left-3 bg-charcoal text-warm-white text-[11px] tracking-wider uppercase px-2.5 py-1">
+              Wyprzedano
             </span>
           )}
           {/* Hover overlay */}

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useCart } from "@/lib/cart";
+import { validateAddress, ADDRESS_PATTERNS, ADDRESS_ERRORS } from "@/lib/address-validation";
 
 export interface PaymentMethod {
   value: string;
@@ -27,6 +28,11 @@ interface Props {
   shippingCost: number;
   shippingFreeEnabled: boolean;
   shippingFreeFrom: number;
+}
+
+function FieldError({ msg }: { msg?: string }) {
+  if (!msg) return null;
+  return <p className="mt-1 text-xs text-red-600">{msg}</p>;
 }
 
 export default function CheckoutForm({
@@ -55,11 +61,35 @@ export default function CheckoutForm({
     note: "",
     paymentMethod: paymentMethods[0]?.value ?? "transfer",
   });
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<string, string>>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   function set(field: string, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
+    // Czyść błąd pola przy edycji
+    if (fieldErrors[field]) {
+      setFieldErrors((prev) => { const n = { ...prev }; delete n[field]; return n; });
+    }
+  }
+
+  function validateForm(): boolean {
+    const result = validateAddress({
+      firstName: form.firstName,
+      lastName:  form.lastName,
+      phone:     form.phone,
+      street:    form.street,
+      postcode:  form.postcode,
+      city:      form.city,
+    });
+
+    // Walidacja e-mail
+    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim());
+    const errors: Record<string, string> = { ...result.errors };
+    if (!emailOk) errors.email = "Nieprawidłowy adres e-mail";
+
+    setFieldErrors(errors);
+    return result.valid && emailOk;
   }
 
   if (items.length === 0) {
@@ -77,6 +107,7 @@ export default function CheckoutForm({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!validateForm()) return;
     setLoading(true);
     setError("");
 
@@ -98,7 +129,8 @@ export default function CheckoutForm({
     });
 
     if (!res.ok) {
-      setError("Wystąpił błąd. Spróbuj ponownie.");
+      const data = await res.json().catch(() => ({}));
+      setError(data.error ?? "Wystąpił błąd. Spróbuj ponownie.");
       setLoading(false);
       return;
     }
@@ -112,9 +144,11 @@ export default function CheckoutForm({
     }
   }
 
+  const inputCls = (field: string) =>
+    `w-full bg-cream border ${fieldErrors[field] ? "border-red-400" : "border-sand"} focus:border-clay outline-none px-4 py-3 text-espresso text-sm`;
+
   return (
     <div className="min-h-[100svh] bg-warm-white">
-      {/* Nagłówek — spójny z resztą strony */}
       <div className="bg-cream pt-28 pb-10 px-6 lg:px-10">
         <div className="max-w-5xl mx-auto">
           <p className="text-xs tracking-[0.3em] uppercase text-clay mb-3">Sklep</p>
@@ -143,8 +177,10 @@ export default function CheckoutForm({
                     required
                     value={form.firstName}
                     onChange={(e) => set("firstName", e.target.value)}
-                    className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm"
+                    autoComplete="given-name"
+                    className={inputCls("firstName")}
                   />
+                  <FieldError msg={fieldErrors.firstName} />
                 </div>
                 <div>
                   <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">
@@ -154,8 +190,10 @@ export default function CheckoutForm({
                     required
                     value={form.lastName}
                     onChange={(e) => set("lastName", e.target.value)}
-                    className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm"
+                    autoComplete="family-name"
+                    className={inputCls("lastName")}
                   />
+                  <FieldError msg={fieldErrors.lastName} />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4 mt-4">
@@ -168,18 +206,24 @@ export default function CheckoutForm({
                     type="email"
                     value={form.email}
                     onChange={(e) => set("email", e.target.value)}
-                    className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm"
+                    autoComplete="email"
+                    className={inputCls("email")}
                   />
+                  <FieldError msg={fieldErrors.email} />
                 </div>
                 <div>
                   <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">
                     Telefon
                   </label>
                   <input
+                    type="tel"
                     value={form.phone}
                     onChange={(e) => set("phone", e.target.value)}
-                    className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm"
+                    autoComplete="tel"
+                    placeholder="668443706"
+                    className={inputCls("phone")}
                   />
+                  <FieldError msg={fieldErrors.phone} />
                 </div>
               </div>
               <div className="mt-4">
@@ -190,8 +234,11 @@ export default function CheckoutForm({
                   required
                   value={form.street}
                   onChange={(e) => set("street", e.target.value)}
-                  className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm"
+                  autoComplete="street-address"
+                  placeholder="np. Różana 1 lub Kwiatowa 2/3"
+                  className={inputCls("street")}
                 />
+                <FieldError msg={fieldErrors.street} />
               </div>
               <div className="grid grid-cols-2 gap-4 mt-4">
                 <div>
@@ -202,9 +249,11 @@ export default function CheckoutForm({
                     required
                     value={form.postcode}
                     onChange={(e) => set("postcode", e.target.value)}
-                    placeholder="00-000"
-                    className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm"
+                    autoComplete="postal-code"
+                    placeholder="44-111"
+                    className={inputCls("postcode")}
                   />
+                  <FieldError msg={fieldErrors.postcode} />
                 </div>
                 <div>
                   <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">
@@ -214,8 +263,10 @@ export default function CheckoutForm({
                     required
                     value={form.city}
                     onChange={(e) => set("city", e.target.value)}
-                    className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm"
+                    autoComplete="address-level2"
+                    className={inputCls("city")}
                   />
+                  <FieldError msg={fieldErrors.city} />
                 </div>
               </div>
             </div>
