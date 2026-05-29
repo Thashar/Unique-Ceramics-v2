@@ -5,7 +5,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/admin/", "/api/", "/konto/", "/logowanie", "/rejestracja"],
+      disallow: ["/admin/", "/api/", "/konto/", "/zamowienie/", "/logowanie", "/rejestracja"],
     },
     sitemap: "https://uniqueceramics.pl/sitemap.xml",
   };

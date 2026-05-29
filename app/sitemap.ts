@@ -10,6 +10,8 @@ const staticRoutes: MetadataRoute.Sitemap = [
   { url: `${BASE}/warsztaty`,                changeFrequency: "monthly", priority: 0.7 },
   { url: `${BASE}/zamowienie-indywidualne`,  changeFrequency: "monthly", priority: 0.6 },
   { url: `${BASE}/kontakt`,                  changeFrequency: "monthly", priority: 0.6 },
+  { url: `${BASE}/regulamin`,                changeFrequency: "yearly",  priority: 0.3 },
+  { url: `${BASE}/polityka-prywatnosci`,     changeFrequency: "yearly",  priority: 0.3 },
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
