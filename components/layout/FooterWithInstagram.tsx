@@ -60,8 +60,8 @@ export default function FooterWithInstagram({ instagram }: { instagram: string }
 
       {/* Belka praw autorskich — wycentrowana */}
       <div className="border-t border-sand/10 px-6 lg:px-10 py-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-center gap-6">
-          <div className="flex items-center gap-2.5">
+        <div className="max-w-7xl mx-auto flex items-center justify-center gap-4">
+          <div className="flex items-center gap-2.5 shrink-0">
             <Image
               src="/images/logo.png"
               alt="Unique Ceramics"
@@ -69,10 +69,9 @@ export default function FooterWithInstagram({ instagram }: { instagram: string }
               height={24}
               className="h-6 w-auto brightness-0 invert opacity-70"
             />
-            <span className="font-serif text-xs text-cream/50 tracking-wide">Unique Ceramics</span>
+            <span className="font-serif text-xs text-cream/50 tracking-wide whitespace-nowrap">Unique Ceramics</span>
           </div>
-          <span className="text-sand/20 text-xs">·</span>
-          <p className="text-xs text-sand/30">
+          <p className="text-xs text-sand/30 whitespace-nowrap">
             © {new Date().getFullYear()} Wszelkie prawa zastrzeżone.
           </p>
         </div>
