@@ -31,18 +31,23 @@ export default async function ShopPage({
   let products: Awaited<ReturnType<typeof db.product.findMany>> = [];
   let dbError: string | null = null;
   try {
-    const raw = await db.product.findMany({
-      where: {
-        active: true,
-        ...(kategoria && kategoria !== "wszystkie" ? { category: kategoria } : {}),
-      },
+    const filterByCategory = kategoria && kategoria !== "wszystkie"
+      ? { category: kategoria }
+      : {};
+
+    // Dostępne produkty — filtrowane wg kategorii
+    const inStock = await db.product.findMany({
+      where: { active: true, stock: { gt: 0 }, ...filterByCategory },
       orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
     });
-    // Wyprzedane produkty na końcu, zachowując istniejącą kolejność w każdej grupie
-    products = [
-      ...raw.filter((p) => p.stock > 0),
-      ...raw.filter((p) => p.stock === 0),
-    ];
+
+    // Wyprzedane — zawsze z całego sklepu, doklejone na końcu każdego widoku
+    const soldOut = await db.product.findMany({
+      where: { active: true, stock: { lte: 0 } },
+      orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
+    });
+
+    products = [...inStock, ...soldOut];
   } catch (e) {
     dbError = e instanceof Error ? e.message : String(e);
     console.error("DB error in /sklep:", e);
