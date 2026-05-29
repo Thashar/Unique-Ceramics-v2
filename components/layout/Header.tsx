@@ -106,6 +106,14 @@ export default function Header() {
 
   const dark = !isHome || !transparentVisible;
 
+  // Zamknij menu mobilne klawiszem Escape
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") setMenuOpen(false); };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [menuOpen]);
+
   useEffect(() => {
     if (!isHome) return;
     const sections = document.querySelectorAll('[data-header-theme="transparent"]');
@@ -131,6 +139,14 @@ export default function Header() {
   }, [isHome]);
 
   return (
+    <>
+    {/* Skip-to-content — widoczny tylko przy nawigacji klawiaturą (Tab) */}
+    <a
+      href="#main-content"
+      className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[999] focus:px-5 focus:py-2.5 focus:bg-espresso focus:text-cream focus:text-xs focus:tracking-widest focus:uppercase focus:outline-none focus:shadow-lg"
+    >
+      Przejdź do treści
+    </a>
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
         dark
@@ -218,7 +234,9 @@ export default function Header() {
               dark ? "text-espresso hover:text-clay" : "text-cream hover:text-sand"
             }`}
             onClick={() => setMenuOpen(!menuOpen)}
-            aria-label="Menu"
+            aria-label={menuOpen ? "Zamknij menu" : "Otwórz menu"}
+            aria-expanded={menuOpen}
+            aria-controls="mobile-nav"
           >
             {menuOpen ? <X size={22} strokeWidth={1.5} /> : <Menu size={22} strokeWidth={1.5} />}
           </button>
@@ -227,7 +245,12 @@ export default function Header() {
 
       {/* Mobile menu */}
       {menuOpen && (
-        <div className="md:hidden bg-warm-white/98 backdrop-blur-md border-t border-sand px-6 pb-8 pt-4">
+        <div
+          id="mobile-nav"
+          role="dialog"
+          aria-label="Menu nawigacyjne"
+          className="md:hidden bg-warm-white/98 backdrop-blur-md border-t border-sand px-6 pb-8 pt-4"
+        >
           <nav className="flex flex-col gap-1 mt-2">
             {navLinks.map((link) => {
               const isActive = pathname === link.href || pathname.startsWith(link.href + "/");
@@ -255,5 +278,6 @@ export default function Header() {
         </div>
       )}
     </header>
+    </>
   );
 }
