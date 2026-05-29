@@ -1,95 +1,94 @@
-"use client";
-
-import { useState, useEffect } from "react";
-import { useParams, notFound } from "next/navigation";
-import Image from "next/image";
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, ShoppingBag, Package, RefreshCw, Check, Plus, Minus } from "lucide-react";
-import { useCart } from "@/lib/cart";
+import Image from "next/image";
+import { ChevronLeft, ShoppingBag, Package, RefreshCw } from "lucide-react";
+import { db } from "@/lib/db";
+import { getSettings } from "@/lib/settings";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import ProductCard from "@/components/ui/ProductCard";
+import ProductGallery from "./ProductGallery";
+import AddToCartSection from "./AddToCartSection";
 
-type Product = {
-  id: string;
-  name: string;
-  slug: string;
-  description: string | null;
-  price: number;
-  images: string[];
-  category: string;
-  stock: number;
-  featured: boolean;
-};
+export const dynamic = "force-dynamic";
 
-export default function ProductPage() {
-  const params = useParams();
-  const slug = params?.slug as string;
-  const { addItem, items } = useCart();
+const BASE = "https://uniqueceramics.pl";
 
-  const [product, setProduct] = useState<Product | null>(null);
-  const [related, setRelated] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [activeImage, setActiveImage] = useState(0);
-  const [added, setAdded] = useState(false);
-  const [qty, setQty] = useState(1);
-  const [shipping, setShipping] = useState<{ cost: string; freeEnabled: string; freeFrom: string } | null>(null);
+// ─── Metadata dynamiczne per produkt ─────────────────────────────────────────
 
-  const cartItem = items.find((i) => i.id === product?.id);
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const product = await db.product.findUnique({
+    where: { slug },
+    select: { name: true, description: true, images: true, price: true, slug: true },
+  });
+  if (!product) return {};
 
-  useEffect(() => {
-    fetch(`/api/products/${slug}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        setProduct(data);
-        setLoading(false);
-      });
-  }, [slug]);
+  const image = product.images[0]
+    ? product.images[0].startsWith("http")
+      ? product.images[0]
+      : `${BASE}${product.images[0]}`
+    : `${BASE}/images/hero.jpg`;
 
-  useEffect(() => {
-    if (!product) return;
-    fetch(`/api/products?kategoria=${product.category}&exclude=${product.id}`)
-      .then((r) => r.json())
-      .then((data) => setRelated(data.slice(0, 3)));
-  }, [product]);
+  const description =
+    product.description ??
+    `Ręcznie robiona ceramika — ${product.name}. Sklep Unique Ceramics.`;
 
-  useEffect(() => {
-    fetch("/api/public/shipping")
-      .then((r) => r.json())
-      .then(setShipping);
-  }, []);
+  return {
+    title: product.name,
+    description,
+    alternates: { canonical: `${BASE}/sklep/${product.slug}` },
+    openGraph: {
+      title: `${product.name} | Unique Ceramics`,
+      description,
+      url: `${BASE}/sklep/${product.slug}`,
+      images: [{ url: image, width: 800, height: 1000, alt: product.name }],
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: product.name,
+      description,
+      images: [image],
+    },
+  };
+}
 
-  function handleAddToCart() {
-    if (!product) return;
-    addItem({
-      id: product.id,
-      slug: product.slug,
-      name: product.name,
-      price: product.price,
-      image: product.images[0] ?? "",
-      stock: product.stock,
-    }, qty);
-    setAdded(true);
-    setQty(1);
-    setTimeout(() => setAdded(false), 2000);
-  }
+// ─── Strona produktu ──────────────────────────────────────────────────────────
 
-  const inCartQty = cartItem?.quantity ?? 0;
-  // Ile sztuk można jeszcze dodać (stan - już w koszyku)
-  const canAddMore = product ? Math.max(0, product.stock - inCartQty) : 0;
-  const atStockLimit = canAddMore === 0;
+export default async function ProductPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
 
-  if (loading) {
-    return (
-      <>
-        <Header />
-        <div className="min-h-[100svh] bg-warm-white pt-32 flex items-center justify-center">
-          <div className="w-8 h-8 border-2 border-clay border-t-transparent rounded-full animate-spin" />
-        </div>
-      </>
-    );
-  }
+  const [product, shippingSettings] = await Promise.all([
+    db.product.findUnique({ where: { slug, active: true } }),
+    getSettings(["shipping_cost", "shipping_free_enabled", "shipping_free_from"]),
+  ]);
 
   if (!product) notFound();
+
+  const related = await db.product.findMany({
+    where: {
+      active: true,
+      stock: { gt: 0 },
+      category: product.category,
+      id: { not: product.id },
+    },
+    orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
+    take: 3,
+  });
+
+  const shippingCost = shippingSettings.shipping_cost || "18";
+  const freeEnabled = shippingSettings.shipping_free_enabled === "true";
+  const freeFrom = shippingSettings.shipping_free_from || "300";
 
   const productSchema = {
     "@context": "https://schema.org",
@@ -97,12 +96,12 @@ export default function ProductPage() {
     name: product.name,
     description: product.description ?? undefined,
     image: product.images.map((img) =>
-      img.startsWith("http") ? img : `https://uniqueceramics.pl${img}`
+      img.startsWith("http") ? img : `${BASE}${img}`
     ),
     brand: { "@type": "Brand", name: "Unique Ceramics" },
     offers: {
       "@type": "Offer",
-      url: `https://uniqueceramics.pl/sklep/${product.slug}`,
+      url: `${BASE}/sklep/${product.slug}`,
       priceCurrency: "PLN",
       price: product.price,
       availability:
@@ -115,187 +114,122 @@ export default function ProductPage() {
 
   return (
     <>
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
-    />
-    <Header />
-    <div className="min-h-[100svh] bg-warm-white">
-      <div className="max-w-7xl mx-auto px-6 lg:px-10 pt-28 pb-4">
-        <Link
-          href="/sklep"
-          className="inline-flex items-center gap-1.5 text-xs tracking-widest uppercase text-clay hover:text-espresso transition-colors"
-        >
-          <ChevronLeft size={14} strokeWidth={1.5} />
-          Sklep
-        </Link>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-6 lg:px-10 py-8 grid grid-cols-1 lg:grid-cols-2 gap-16">
-        {/* Galeria */}
-        <div className="flex flex-col gap-4">
-          <div className="relative aspect-[4/5] overflow-hidden bg-cream">
-            {product.images[activeImage] ? (
-              <Image
-                src={product.images[activeImage]}
-                alt={product.name}
-                fill
-                priority
-                className="object-cover"
-                sizes="(max-width: 1024px) 100vw, 50vw"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <ShoppingBag size={64} strokeWidth={1} className="text-sand" />
-              </div>
-            )}
-          </div>
-          {product.images.length > 1 && (
-            <div className="flex gap-3">
-              {product.images.map((img, i) => (
-                <button
-                  key={i}
-                  onClick={() => setActiveImage(i)}
-                  className={`relative aspect-square w-20 overflow-hidden bg-cream flex-shrink-0 border-2 transition-colors ${
-                    activeImage === i ? "border-clay" : "border-transparent"
-                  }`}
-                >
-                  <Image src={img} alt={`${product.name} ${i + 1}`} fill className="object-cover" sizes="80px" />
-                </button>
-              ))}
-            </div>
-          )}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
+      />
+      <Header />
+      <div className="min-h-[100svh] bg-warm-white">
+        <div className="max-w-7xl mx-auto px-6 lg:px-10 pt-28 pb-4">
+          <Link
+            href="/sklep"
+            className="inline-flex items-center gap-1.5 text-xs tracking-widest uppercase text-clay hover:text-espresso transition-colors"
+          >
+            <ChevronLeft size={14} strokeWidth={1.5} />
+            Sklep
+          </Link>
         </div>
 
-        {/* Info */}
-        <div className="lg:pt-8">
-          <p className="text-xs tracking-widest uppercase text-clay mb-3">{product.category}</p>
-          <h1 className="font-serif text-4xl md:text-5xl text-espresso leading-tight mb-6">
-            {product.name}
-          </h1>
-          <p className="font-serif text-3xl text-espresso mb-8">
-            {product.price.toFixed(2).replace(".", ",")} zł
-          </p>
+        <div className="max-w-7xl mx-auto px-6 lg:px-10 py-8 grid grid-cols-1 lg:grid-cols-2 gap-16">
+          {/* Galeria — komponent kliencki */}
+          <ProductGallery images={product.images} name={product.name} />
 
-          {product.description && (
-            <p className="text-charcoal/80 leading-relaxed mb-8">{product.description}</p>
-          )}
+          {/* Info */}
+          <div className="lg:pt-8">
+            <p className="text-xs tracking-widest uppercase text-clay mb-3">
+              {product.category}
+            </p>
+            <h1 className="font-serif text-4xl md:text-5xl text-espresso leading-tight mb-6">
+              {product.name}
+            </h1>
+            <p className="font-serif text-3xl text-espresso mb-8">
+              {product.price.toFixed(2).replace(".", ",")} zł
+            </p>
 
-          <p className="text-sm text-charcoal/60 mb-6">
-            {product.stock > 0
-              ? `Dostępność: ${product.stock} ${product.stock === 1 ? "sztuka" : product.stock < 5 ? "sztuki" : "sztuk"}`
-              : "Wyprzedano"}
-          </p>
-
-          {product.stock > 0 && !atStockLimit && (
-            <div className="flex items-center gap-4 mb-4">
-              <span className="text-xs tracking-widest uppercase text-charcoal/60">Ilość</span>
-              <div className="flex items-center border border-sand">
-                <button
-                  onClick={() => setQty((q) => Math.max(1, q - 1))}
-                  disabled={qty <= 1}
-                  className="w-10 h-10 flex items-center justify-center text-charcoal hover:text-clay disabled:text-sand transition-colors"
-                >
-                  <Minus size={14} strokeWidth={1.5} />
-                </button>
-                <span className="w-10 text-center text-sm font-medium text-espresso">{qty}</span>
-                <button
-                  onClick={() => setQty((q) => Math.min(q + 1, canAddMore))}
-                  disabled={qty >= canAddMore}
-                  className="w-10 h-10 flex items-center justify-center text-charcoal hover:text-clay disabled:text-sand transition-colors"
-                >
-                  <Plus size={14} strokeWidth={1.5} />
-                </button>
-              </div>
-              {inCartQty > 0 && (
-                <span className="text-xs text-charcoal/50">
-                  w koszyku: {inCartQty}
-                </span>
-              )}
-            </div>
-          )}
-
-          <button
-            onClick={handleAddToCart}
-            disabled={atStockLimit}
-            className={`w-full flex items-center justify-center gap-3 text-sm tracking-widest uppercase py-5 transition-all duration-300 ${
-              added
-                ? "bg-green-600 text-white"
-                : "bg-terracotta hover:bg-clay disabled:bg-sand disabled:text-charcoal/40 text-warm-white"
-            }`}
-          >
-            {added ? (
-              <>
-                <Check size={18} strokeWidth={2} />
-                Dodano do koszyka
-              </>
-            ) : (
-              <>
-                <ShoppingBag size={18} strokeWidth={1.5} />
-                {product.stock === 0
-                  ? "Wyprzedano"
-                  : atStockLimit
-                  ? "Maks. ilość w koszyku"
-                  : "Dodaj do koszyka"}
-              </>
+            {product.description && (
+              <p className="text-charcoal/80 leading-relaxed mb-8">
+                {product.description}
+              </p>
             )}
-          </button>
 
-          <div className="mt-10 space-y-4 border-t border-sand pt-8">
-            <div className="flex items-start gap-3 text-sm text-charcoal/70">
-              <Package size={16} strokeWidth={1.5} className="text-clay mt-0.5 flex-shrink-0" />
-              {shipping ? (
+            <p className="text-sm text-charcoal/60 mb-6">
+              {product.stock > 0
+                ? `Dostępność: ${product.stock} ${
+                    product.stock === 1
+                      ? "sztuka"
+                      : product.stock < 5
+                      ? "sztuki"
+                      : "sztuk"
+                  }`
+                : "Wyprzedano"}
+            </p>
+
+            {/* Dodaj do koszyka — komponent kliencki */}
+            <AddToCartSection product={{
+              id: product.id,
+              slug: product.slug,
+              name: product.name,
+              price: product.price,
+              images: product.images,
+              stock: product.stock,
+            }} />
+
+            <div className="mt-10 space-y-4 border-t border-sand pt-8">
+              <div className="flex items-start gap-3 text-sm text-charcoal/70">
+                <Package size={16} strokeWidth={1.5} className="text-clay mt-0.5 flex-shrink-0" />
                 <p>
-                  Wysyłka {shipping.cost} zł.
-                  {shipping.freeEnabled === "true" && ` Darmowa od ${shipping.freeFrom} zł.`}
+                  Wysyłka {shippingCost} zł.
+                  {freeEnabled && ` Darmowa od ${freeFrom} zł.`}
                   {" "}Czas realizacji 2–4 dni robocze.
                 </p>
-              ) : (
-                <p>Wysyłka 18 zł. Darmowa od 300 zł. Czas realizacji 2–4 dni robocze.</p>
-              )}
-            </div>
-            <div className="flex items-start gap-3 text-sm text-charcoal/70">
-              <RefreshCw size={16} strokeWidth={1.5} className="text-clay mt-0.5 flex-shrink-0" />
-              <p>Zwrot w ciągu 14 dni. Przedmioty uszkodzone przy wysyłce wymieniam bezpłatnie.</p>
+              </div>
+              <div className="flex items-start gap-3 text-sm text-charcoal/70">
+                <RefreshCw size={16} strokeWidth={1.5} className="text-clay mt-0.5 flex-shrink-0" />
+                <p>Zwrot w ciągu 14 dni. Przedmioty uszkodzone przy wysyłce wymieniam bezpłatnie.</p>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {related.length > 0 && (
-        <div className="bg-cream py-16 px-6 lg:px-10 mt-8">
-          <div className="max-w-7xl mx-auto">
-            <h2 className="font-serif text-3xl text-espresso mb-10">Z tej samej kategorii</h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-8">
-              {related.map((p) => (
-                <Link key={p.id} href={`/sklep/${p.slug}`} className="group">
-                  <div className="aspect-square bg-warm-white overflow-hidden mb-3 relative">
-                    {p.images[0] ? (
-                      <Image
-                        src={p.images[0]}
-                        alt={p.name}
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-500"
-                        sizes="(max-width: 768px) 50vw, 33vw"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <ShoppingBag size={32} strokeWidth={1} className="text-sand" />
-                      </div>
-                    )}
-                  </div>
-                  <p className="font-serif text-lg text-espresso group-hover:text-clay transition-colors">
-                    {p.name}
-                  </p>
-                  <p className="text-sm text-charcoal/60">{p.price.toFixed(2).replace(".", ",")} zł</p>
-                </Link>
-              ))}
+        {/* Produkty z tej samej kategorii */}
+        {related.length > 0 && (
+          <div className="bg-cream py-16 px-6 lg:px-10 mt-8">
+            <div className="max-w-7xl mx-auto">
+              <h2 className="font-serif text-3xl text-espresso mb-10">
+                Z tej samej kategorii
+              </h2>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-8">
+                {related.map((p) => (
+                  <Link key={p.id} href={`/sklep/${p.slug}`} className="group">
+                    <div className="aspect-square bg-warm-white overflow-hidden mb-3 relative">
+                      {p.images[0] ? (
+                        <Image
+                          src={p.images[0]}
+                          alt={p.name}
+                          fill
+                          className="object-cover group-hover:scale-105 transition-transform duration-500"
+                          sizes="(max-width: 768px) 50vw, 33vw"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <ShoppingBag size={32} strokeWidth={1} className="text-sand" />
+                        </div>
+                      )}
+                    </div>
+                    <p className="font-serif text-lg text-espresso group-hover:text-clay transition-colors">
+                      {p.name}
+                    </p>
+                    <p className="text-sm text-charcoal/60">
+                      {p.price.toFixed(2).replace(".", ",")} zł
+                    </p>
+                  </Link>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
-    <Footer />
+        )}
+      </div>
+      <Footer />
     </>
   );
 }
