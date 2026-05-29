@@ -9,7 +9,6 @@ export default async function CheckoutPage() {
   const session = await auth();
 
   const settings = await getSettings([
-    "payment_blik_enabled",
     "payment_blik_phone",
     "payment_stripe_enabled",
     "shipping_cost",
@@ -33,20 +32,11 @@ export default async function CheckoutPage() {
   const paymentMethods = [
     {
       value: "transfer",
-      label: "Przelew bankowy",
-      desc: "Dane do przelewu otrzymasz e-mailem po złożeniu zamówienia.",
+      label: "Przelew bankowy / BLIK",
+      desc: settings.payment_blik_phone
+        ? `Dane do przelewu bankowego oraz numer do przelewu BLIK otrzymasz e-mailem.`
+        : "Dane do przelewu bankowego otrzymasz e-mailem po złożeniu zamówienia.",
     },
-    ...(settings.payment_blik_enabled === "true"
-      ? [
-          {
-            value: "blik",
-            label: "BLIK",
-            desc: settings.payment_blik_phone
-              ? `Wyślemy Ci kod BLIK na numer ${settings.payment_blik_phone}.`
-              : "Numer BLIK zostanie podany po złożeniu zamówienia.",
-          },
-        ]
-      : []),
     ...(settings.payment_stripe_enabled === "true" && process.env.STRIPE_SECRET_KEY
       ? [
           {

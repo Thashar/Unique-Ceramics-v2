@@ -26,8 +26,7 @@ const settingsItems = [
 ];
 
 const paymentItems = [
-  { id: "platnosci_przelew",  label: "Przelew tradycyjny" },
-  { id: "platnosci_blik",     label: "BLIK" },
+  { id: "platnosci_przelew",  label: "Przelew / BLIK" },
   { id: "platnosci_stripe",   label: "Stripe (karta)" },
 ];
 

@@ -32,6 +32,7 @@ export default async function ConfirmationPage({
       "payment_bank_account_number",
       "payment_bank_name",
       "payment_bank_transfer_title",
+      "payment_blik_phone",
     ]);
   }
 
@@ -58,11 +59,11 @@ export default async function ConfirmationPage({
           )}
         </div>
 
-        {/* Bank transfer details */}
+        {/* Bank transfer + BLIK details */}
         {order?.paymentMethod === "transfer" && (
           <div className="bg-cream border-l-4 border-terracotta p-6 mb-8">
             <p className="text-xs tracking-widest uppercase text-clay mb-4">
-              Dane do przelewu
+              Dane do płatności
             </p>
             <div className="space-y-2 text-sm text-charcoal/80">
               {bankSettings.payment_bank_account_name && (
@@ -89,6 +90,14 @@ export default async function ConfirmationPage({
                   </span>
                 </div>
               )}
+              {bankSettings.payment_blik_phone && (
+                <div className="flex justify-between gap-4 border-t border-sand pt-2 mt-2">
+                  <span className="text-charcoal/50 shrink-0">BLIK na telefon</span>
+                  <span className="font-mono text-espresso text-right">
+                    {bankSettings.payment_blik_phone}
+                  </span>
+                </div>
+              )}
               {order && (
                 <div className="flex justify-between gap-4 border-t border-sand pt-2 mt-2">
                   <span className="text-charcoal/50 shrink-0">Kwota</span>
@@ -103,17 +112,7 @@ export default async function ConfirmationPage({
               </div>
             </div>
             <p className="text-xs text-charcoal/50 mt-4 leading-relaxed">
-              Przelew zrealizuj w ciągu 7 dni. Dane zostały też wysłane na Twój adres e-mail.
-            </p>
-          </div>
-        )}
-
-        {/* BLIK */}
-        {order?.paymentMethod === "blik" && (
-          <div className="bg-cream border-l-4 border-terracotta p-6 mb-8">
-            <p className="text-xs tracking-widest uppercase text-clay mb-3">BLIK</p>
-            <p className="text-sm text-charcoal/70 leading-relaxed">
-              Skontaktuję się z Tobą w celu dokończenia płatności BLIK.
+              Płatność zrealizuj w ciągu 7 dni. Dane zostały też wysłane na Twój adres e-mail.
             </p>
           </div>
         )}

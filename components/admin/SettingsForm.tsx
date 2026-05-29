@@ -122,8 +122,7 @@ export default function SettingsForm({ section, initial }: Props) {
   const [bankBankName, setBankBankName] = useState(initial.payment_bank_name);
   const [bankTitle, setBankTitle] = useState(initial.payment_bank_transfer_title);
 
-  // BLIK
-  const [blikEnabled, setBlikEnabled] = useState(initial.payment_blik_enabled === "true");
+  // BLIK phone (numer telefonu do przelewu BLIK — część sekcji przelewu)
   const [blikPhone, setBlikPhone] = useState(initial.payment_blik_phone);
 
   // Stripe
@@ -339,41 +338,31 @@ export default function SettingsForm({ section, initial }: Props) {
 
       {section === "platnosci_przelew" && (
         <div className="max-w-md space-y-5">
-          <h2 className="font-serif text-2xl text-espresso">Przelew tradycyjny</h2>
-          <p className="text-xs text-charcoal/50">Zawsze dostępny jako metoda płatności.</p>
+          <h2 className="font-serif text-2xl text-espresso">Przelew bankowy / BLIK</h2>
+          <p className="text-xs text-charcoal/50">
+            Zawsze dostępny jako metoda płatności. Dane zostaną wysłane klientowi e-mailem po złożeniu zamówienia.
+          </p>
           <Field label="Imię i nazwisko / Nazwa odbiorcy" value={bankName} setter={setBankName} />
           <Field label="Numer konta (IBAN)" value={bankNumber} setter={setBankNumber} mono />
           <Field label="Nazwa banku" value={bankBankName} setter={setBankBankName} />
           <Field label="Prefiks tytułu przelewu" value={bankTitle} setter={setBankTitle} />
           <p className="text-xs text-charcoal/40">Tytuł wysyłany do kupującego: „[prefiks] #NR_ZAMÓWIENIA"</p>
+          <div className="border-t border-sand pt-5">
+            <p className="text-xs tracking-widest uppercase text-charcoal/60 mb-3">Przelew BLIK na telefon</p>
+            <p className="text-xs text-charcoal/50 mb-3">
+              Opcjonalnie. Jeśli podasz numer, klient zobaczy go obok danych do przelewu bankowego.
+            </p>
+            <Field label="Numer telefonu do BLIK" value={blikPhone} setter={setBlikPhone} type="tel" placeholder="+48 600 000 000" />
+          </div>
           <SaveButton
             onClick={() => save([
               { key: "payment_bank_account_name", value: bankName },
               { key: "payment_bank_account_number", value: bankNumber },
               { key: "payment_bank_name", value: bankBankName },
               { key: "payment_bank_transfer_title", value: bankTitle },
-            ])}
-            label="Zapisz przelew"
-          />
-        </div>
-      )}
-
-      {section === "platnosci_blik" && (
-        <div className="max-w-md space-y-5">
-          <h2 className="font-serif text-2xl text-espresso">BLIK</h2>
-          <div className="flex items-center justify-between">
-            <span className="text-xs tracking-widest uppercase text-charcoal/60">Włącz BLIK</span>
-            <Toggle checked={blikEnabled} onChange={setBlikEnabled} />
-          </div>
-          {blikEnabled && (
-            <Field label="Numer telefonu do BLIK" value={blikPhone} setter={setBlikPhone} type="tel" placeholder="+48 600 000 000" />
-          )}
-          <SaveButton
-            onClick={() => save([
-              { key: "payment_blik_enabled", value: blikEnabled ? "true" : "false" },
               { key: "payment_blik_phone", value: blikPhone },
             ])}
-            label="Zapisz BLIK"
+            label="Zapisz"
           />
         </div>
       )}

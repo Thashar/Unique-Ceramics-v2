@@ -88,6 +88,7 @@ function buildTransferEmail(params: {
   bankAccountNumber: string;
   bankName: string;
   transferTitle: string;
+  blikPhone?: string;
 }): string {
   const {
     orderNumber,
@@ -99,6 +100,7 @@ function buildTransferEmail(params: {
     bankAccountNumber,
     bankName,
     transferTitle,
+    blikPhone,
   } = params;
 
   const itemsHtml = items
@@ -128,14 +130,21 @@ function buildTransferEmail(params: {
         Aby je zrealizować, prosimy o dokonanie przelewu na poniższe dane:
       </p>
 
-      <div style="background:#f5f0eb;border-left:3px solid #c87941;padding:20px 24px;margin:0 0 28px;">
-        <p style="margin:0 0 6px;font-family:Arial,sans-serif;font-size:11px;color:#9a7a6a;letter-spacing:0.15em;text-transform:uppercase;">Dane do przelewu</p>
+      <div style="background:#f5f0eb;border-left:3px solid #c87941;padding:20px 24px;margin:0 0 ${blikPhone ? "16px" : "28px"};">
+        <p style="margin:0 0 6px;font-family:Arial,sans-serif;font-size:11px;color:#9a7a6a;letter-spacing:0.15em;text-transform:uppercase;">Przelew bankowy</p>
         ${bankAccountName ? `<p style="margin:4px 0;font-size:14px;color:#3d2b1f;"><strong>Odbiorca:</strong> ${bankAccountName}</p>` : ""}
         ${bankAccountNumber ? `<p style="margin:4px 0;font-size:14px;color:#3d2b1f;"><strong>Numer konta:</strong> <span style="font-family:monospace;">${bankAccountNumber}</span></p>` : ""}
         ${bankName ? `<p style="margin:4px 0;font-size:14px;color:#3d2b1f;"><strong>Bank:</strong> ${bankName}</p>` : ""}
         <p style="margin:4px 0;font-size:14px;color:#3d2b1f;"><strong>Kwota:</strong> ${total.toFixed(2).replace(".", ",")} zł</p>
         <p style="margin:4px 0;font-size:14px;color:#3d2b1f;"><strong>Tytuł:</strong> ${transferTitle} #${orderNumber}</p>
       </div>
+      ${blikPhone ? `
+      <div style="background:#f5f0eb;border-left:3px solid #c87941;padding:20px 24px;margin:0 0 28px;">
+        <p style="margin:0 0 6px;font-family:Arial,sans-serif;font-size:11px;color:#9a7a6a;letter-spacing:0.15em;text-transform:uppercase;">Przelew BLIK na telefon</p>
+        <p style="margin:4px 0;font-size:14px;color:#3d2b1f;"><strong>Numer telefonu:</strong> <span style="font-family:monospace;">${blikPhone}</span></p>
+        <p style="margin:4px 0;font-size:14px;color:#3d2b1f;"><strong>Kwota:</strong> ${total.toFixed(2).replace(".", ",")} zł</p>
+        <p style="margin:8px 0 0;font-size:12px;color:#9a7a6a;">W tytule przelewu BLIK wpisz: ${transferTitle} #${orderNumber}</p>
+      </div>` : ""}
 
       <table style="width:100%;border-collapse:collapse;margin:0 0 8px;font-size:14px;color:#4a3728;">
         <thead>
@@ -362,6 +371,7 @@ export async function POST(req: Request) {
           "payment_bank_account_number",
           "payment_bank_name",
           "payment_bank_transfer_title",
+          "payment_blik_phone",
         ]);
 
         const { Resend } = await import("resend");
@@ -385,6 +395,7 @@ export async function POST(req: Request) {
             bankName: bankSettings.payment_bank_name,
             transferTitle:
               bankSettings.payment_bank_transfer_title || "Zamówienie",
+            blikPhone: bankSettings.payment_blik_phone || undefined,
           }),
         });
       } catch {
