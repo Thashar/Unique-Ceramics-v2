@@ -31,13 +31,18 @@ export default async function ShopPage({
   let products: Awaited<ReturnType<typeof db.product.findMany>> = [];
   let dbError: string | null = null;
   try {
-    products = await db.product.findMany({
+    const raw = await db.product.findMany({
       where: {
         active: true,
         ...(kategoria && kategoria !== "wszystkie" ? { category: kategoria } : {}),
       },
       orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
     });
+    // Wyprzedane produkty na końcu, zachowując istniejącą kolejność w każdej grupie
+    products = [
+      ...raw.filter((p) => p.stock > 0),
+      ...raw.filter((p) => p.stock === 0),
+    ];
   } catch (e) {
     dbError = e instanceof Error ? e.message : String(e);
     console.error("DB error in /sklep:", e);
