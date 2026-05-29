@@ -219,6 +219,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Brakuje wymaganych pól" }, { status: 400 });
   }
 
+  const ALLOWED_PAYMENT_METHODS = ["transfer", "stripe"];
+  if (!ALLOWED_PAYMENT_METHODS.includes(paymentMethod)) {
+    return NextResponse.json({ error: "Nieprawidłowa metoda płatności" }, { status: 400 });
+  }
+
   if (!validateEmail(email)) {
     return NextResponse.json({ error: "Nieprawidłowy adres e-mail" }, { status: 400 });
   }
