@@ -48,11 +48,6 @@ export const metadata: Metadata = {
   creator: "Unique Ceramics",
   publisher: "Unique Ceramics",
   alternates: { canonical: BASE },
-  icons: {
-    icon: [{ url: "/images/logo.png", type: "image/png" }],
-    apple: "/images/logo.png",
-    shortcut: "/images/logo.png",
-  },
   openGraph: {
     siteName: "Unique Ceramics",
     locale: "pl_PL",
