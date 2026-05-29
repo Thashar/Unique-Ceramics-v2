@@ -18,8 +18,6 @@ const inter = Inter({
 export const viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
 };
 
 const BASE = "https://uniqueceramics.pl";
