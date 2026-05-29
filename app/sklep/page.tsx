@@ -5,7 +5,8 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import ProductCard from "@/components/ui/ProductCard";
 
-export const dynamic = "force-dynamic";
+// Katalog produktów cachowany ISR — krótki czas dla świeżości stanu magazynowego
+export const revalidate = 60;
 
 export const metadata = {
   title: "Sklep | Unique Ceramics",

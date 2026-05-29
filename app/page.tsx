@@ -1,4 +1,5 @@
-export const dynamic = "force-dynamic";
+// Strona główna cachowana ISR — ustawienia zmieniają się rzadko
+export const revalidate = 3600;
 
 import Hero from "@/components/home/Hero";
 import FeaturedProducts from "@/components/home/FeaturedProducts";
