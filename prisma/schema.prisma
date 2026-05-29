@@ -89,6 +89,10 @@ model Order {
 
   user  User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
   items OrderItem[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt(sort: Desc)])
 }
 
 model OrderItem {
@@ -115,6 +119,10 @@ model Product {
   active      Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@index([active, featured])
+  @@index([active, category])
+  @@index([active, stock])
 }
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
