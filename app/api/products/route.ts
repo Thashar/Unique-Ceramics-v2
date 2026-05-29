@@ -9,6 +9,7 @@ export async function GET(req: Request) {
   const products = await db.product.findMany({
     where: {
       active: true,
+      stock: { gt: 0 },
       ...(kategoria ? { category: kategoria } : {}),
       ...(exclude ? { id: { not: exclude } } : {}),
     },
