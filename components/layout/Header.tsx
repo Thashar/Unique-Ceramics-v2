@@ -96,19 +96,28 @@ function AccountDropdown({ scrolled }: { scrolled: boolean }) {
 }
 
 export default function Header() {
-  const [scrolled, setScrolled] = useState(false);
+  const [lightSectionVisible, setLightSectionVisible] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const { count } = useCart();
   const pathname = usePathname();
   const isHome = pathname === "/";
 
-  const dark = scrolled || !isHome;
+  // Na stronie głównej header jest przezroczysty (białe logo i linki)
+  // z wyjątkiem sekcji FeaturedProducts (jasne tło) — wtedy przechodzi w tryb ciemny.
+  // Na wszystkich innych stronach jest zawsze ciemny.
+  const dark = !isHome || lightSectionVisible;
 
   useEffect(() => {
-    const handler = () => setScrolled(window.scrollY > 40);
-    window.addEventListener("scroll", handler, { passive: true });
-    return () => window.removeEventListener("scroll", handler);
-  }, []);
+    if (!isHome) return;
+    const sections = document.querySelectorAll('[data-header-theme="light"]');
+    if (!sections.length) return;
+    const observer = new IntersectionObserver(
+      (entries) => setLightSectionVisible(entries.some((e) => e.isIntersecting)),
+      { threshold: 0.3 }
+    );
+    sections.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [isHome]);
 
   return (
     <header

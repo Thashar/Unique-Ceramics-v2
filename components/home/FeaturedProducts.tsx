@@ -23,6 +23,7 @@ export default async function FeaturedProducts() {
       className="bg-warm-white overflow-hidden flex flex-col pt-20"
       style={{ height: "100svh" }}
       data-snap
+      data-header-theme="light"
     >
       <div className="flex-1 flex flex-col justify-center pb-10 lg:pb-14">
         <div className="max-w-7xl mx-auto w-full px-6 lg:px-10">
