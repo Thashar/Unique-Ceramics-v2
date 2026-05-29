@@ -24,7 +24,7 @@ export default function FooterWithInstagram({ instagram }: { instagram: string }
 
         <div className="max-w-7xl mx-auto px-6 lg:px-10 py-16 grid grid-cols-1 lg:grid-cols-4 gap-12 lg:gap-0">
           {/* Panel Instagram — lewa kolumna z separatorem, pr-16 = 4rem przed linią */}
-          <div className="relative lg:pr-16 lg:border-r lg:border-sand/12">
+          <div className="relative lg:pr-16 lg:border-r lg:border-sand/12 lg:flex lg:flex-col lg:justify-center">
             <FooterInstagramPanel instagram={instagram} />
           </div>
 
