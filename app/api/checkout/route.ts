@@ -170,6 +170,10 @@ function buildTransferEmail(params: {
 </html>`;
 }
 
+function validateEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
 export async function POST(req: Request) {
   const session = await auth();
   const body = await req.json();
@@ -185,53 +189,108 @@ export async function POST(req: Request) {
     note,
     paymentMethod,
     items,
-    shippingCost,
-    total,
   } = body;
+
+  // Walidacja wymaganych pól
+  if (
+    !firstName?.trim() ||
+    !lastName?.trim() ||
+    !email?.trim() ||
+    !street?.trim() ||
+    !city?.trim() ||
+    !postcode?.trim() ||
+    !paymentMethod
+  ) {
+    return NextResponse.json({ error: "Brakuje wymaganych pól" }, { status: 400 });
+  }
+
+  if (!validateEmail(email)) {
+    return NextResponse.json({ error: "Nieprawidłowy adres e-mail" }, { status: 400 });
+  }
 
   if (!items?.length) {
     return NextResponse.json({ error: "Pusty koszyk" }, { status: 400 });
   }
 
+  // Weryfikacja produktów i przeliczenie kwoty po stronie serwera
+  const productIds: string[] = items.map((i: { productId: string }) => i.productId);
+  const products = await db.product.findMany({
+    where: { id: { in: productIds }, active: true },
+  });
+  const productMap = new Map(products.map((p) => [p.id, p]));
+
+  for (const item of items as { productId: string; quantity: number }[]) {
+    if (!item.productId || typeof item.quantity !== "number" || item.quantity < 1) {
+      return NextResponse.json({ error: "Nieprawidłowe dane produktu" }, { status: 400 });
+    }
+    const product = productMap.get(item.productId);
+    if (!product) {
+      return NextResponse.json({ error: "Produkt nie istnieje lub jest niedostępny" }, { status: 400 });
+    }
+    if (product.stock < item.quantity) {
+      return NextResponse.json(
+        { error: `Niewystarczający stan magazynowy dla: ${product.name}` },
+        { status: 400 }
+      );
+    }
+  }
+
+  // Kwoty liczone po stronie serwera — nie ufamy wartościom z klienta
+  const shippingSettings = await getSettings([
+    "shipping_cost",
+    "shipping_free_enabled",
+    "shipping_free_from",
+  ]);
+  const shippingCostSetting = Number(shippingSettings.shipping_cost) || 18;
+  const freeEnabled = shippingSettings.shipping_free_enabled === "true";
+  const freeFrom = Number(shippingSettings.shipping_free_from) || 300;
+
+  const subtotal = (items as { productId: string; quantity: number }[]).reduce((sum, item) => {
+    return sum + productMap.get(item.productId)!.price * item.quantity;
+  }, 0);
+
+  const shippingCost = freeEnabled && subtotal >= freeFrom ? 0 : shippingCostSetting;
+  const total = subtotal + shippingCost;
+
   const order = await db.order.create({
     data: {
       userId: session?.user?.id ?? null,
-      firstName,
-      lastName,
-      email,
-      phone: phone || null,
-      street,
-      city,
-      postcode,
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      email: email.trim(),
+      phone: phone?.trim() || null,
+      street: street.trim(),
+      city: city.trim(),
+      postcode: postcode.trim(),
       country: "PL",
-      note: note || null,
+      note: note?.trim() || null,
       paymentMethod,
       shippingCost,
       total,
       items: {
-        create: items.map(
-          (item: {
-            productId: string;
-            name: string;
-            price: number;
-            quantity: number;
-          }) => ({
+        create: (items as { productId: string; quantity: number }[]).map((item) => {
+          const product = productMap.get(item.productId)!;
+          return {
             productId: item.productId,
-            name: item.name,
-            price: item.price,
+            name: product.name,
+            price: product.price,
             quantity: item.quantity,
-          })
-        ),
+          };
+        }),
       },
     },
   });
 
-  // Powiadomienie dla właściciela sklepu
+  // Powiadomienie dla właściciela sklepu — używamy zweryfikowanych danych z serwera
   const orderNumber = order.id.slice(-8).toUpperCase();
+  const verifiedItems = (items as { productId: string; quantity: number }[]).map((item) => {
+    const product = productMap.get(item.productId)!;
+    return { name: product.name, price: product.price, quantity: item.quantity };
+  });
   void sendAdminNotification({
-    orderNumber, firstName, lastName, email, phone: phone || null,
-    street, city, postcode, note: note || null, paymentMethod,
-    items, shippingCost, total, orderId: order.id,
+    orderNumber, firstName, lastName, email, phone: phone?.trim() || null,
+    street, city, postcode, note: note?.trim() || null, paymentMethod,
+    items: verifiedItems, shippingCost, total, orderId: order.id,
   });
 
   // Stripe — create Checkout session and redirect
@@ -247,7 +306,7 @@ export async function POST(req: Request) {
       payment_method_types: ["card"],
       mode: "payment",
       line_items: [
-        ...items.map((item: { name: string; price: number; quantity: number }) => ({
+        ...verifiedItems.map((item) => ({
           price_data: {
             currency: "pln",
             product_data: { name: item.name },
@@ -299,7 +358,7 @@ export async function POST(req: Request) {
             orderNumber,
             firstName,
             email,
-            items,
+            items: verifiedItems,
             shippingCost,
             total,
             bankAccountName: bankSettings.payment_bank_account_name,
