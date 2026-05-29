@@ -110,10 +110,19 @@ export default function Header() {
     if (!isHome) return;
     const sections = document.querySelectorAll('[data-header-theme="transparent"]');
     if (!sections.length) return;
+
+    // Set akumuluje stan wszystkich obserwowanych sekcji między callbackami.
+    // Bez tego: gdy O mnie odpala false w osobnym callbacku niż Warsztaty (true),
+    // entries.some() widzi tylko false i błędnie ustawia header na solid.
+    const visible = new Set<Element>();
+
     const observer = new IntersectionObserver(
       (entries) => {
-        // Header przezroczysty gdy KTÓRAKOLWIEK z ciemnych sekcji jest w viewport
-        setTransparentVisible(entries.some((e) => e.isIntersecting));
+        entries.forEach((e) => {
+          if (e.isIntersecting) visible.add(e.target);
+          else visible.delete(e.target);
+        });
+        setTransparentVisible(visible.size > 0);
       },
       { threshold: 0.3 }
     );
