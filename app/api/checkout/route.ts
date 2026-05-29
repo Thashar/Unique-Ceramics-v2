@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import { getSettings } from "@/lib/settings";
 import { validateAddress } from "@/lib/address-validation";
+import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
@@ -185,6 +186,10 @@ function validateEmail(email: string): boolean {
 }
 
 export async function POST(req: Request) {
+  if (isRateLimited(getClientIp(req), 5, 60_000)) {
+    return NextResponse.json({ error: "Zbyt wiele żądań. Spróbuj za chwilę." }, { status: 429 });
+  }
+
   const session = await auth();
   const body = await req.json();
 

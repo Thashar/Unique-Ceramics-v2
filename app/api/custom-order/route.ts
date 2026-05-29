@@ -1,7 +1,11 @@
 import { db } from "@/lib/db";
+import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
+  if (isRateLimited(getClientIp(req), 3, 60_000)) {
+    return NextResponse.json({ error: "Zbyt wiele żądań. Spróbuj za chwilę." }, { status: 429 });
+  }
   try {
     const {
       customerName,

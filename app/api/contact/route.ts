@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
+import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
+  if (isRateLimited(getClientIp(request), 5, 60_000)) {
+    return NextResponse.json({ error: "Zbyt wiele żądań. Spróbuj za chwilę." }, { status: 429 });
+  }
   const { name, phone, email, subject, message } = await request.json();
 
   if (!email || !message) {

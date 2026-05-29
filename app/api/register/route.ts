@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
+import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 
 export async function POST(req: Request) {
+  if (isRateLimited(getClientIp(req), 5, 60_000)) {
+    return NextResponse.json({ error: "Zbyt wiele żądań. Spróbuj za chwilę." }, { status: 429 });
+  }
   try {
     const { name, email, password } = await req.json();
 
