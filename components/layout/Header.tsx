@@ -140,13 +140,6 @@ export default function Header() {
 
   return (
     <>
-    {/* Skip-to-content — widoczny tylko przy nawigacji klawiaturą (Tab) */}
-    <a
-      href="#main-content"
-      className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[999] focus:px-5 focus:py-2.5 focus:bg-espresso focus:text-cream focus:text-xs focus:tracking-widest focus:uppercase focus:outline-none focus:shadow-lg"
-    >
-      Przejdź do treści
-    </a>
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
         dark

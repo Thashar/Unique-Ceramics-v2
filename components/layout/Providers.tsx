@@ -10,8 +10,6 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     <SessionProvider>
       <CookieConsentProvider>
         <CartProvider>
-          {/* Cel skip-to-content — focusowalny przez JS, niewidoczny wizualnie */}
-          <span id="main-content" tabIndex={-1} />
           {children}
           <CookieBanner />
         </CartProvider>
