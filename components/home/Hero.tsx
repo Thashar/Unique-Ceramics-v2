@@ -13,7 +13,7 @@ export default function Hero({
   heroPosition?: string;
 }) {
   return (
-    <section className="relative flex items-center overflow-hidden" style={{ height: "100svh" }} data-snap>
+    <section className="relative flex items-center overflow-hidden" style={{ height: "100svh" }} data-snap data-header-theme="transparent">
       {/* Tło */}
       <div className="absolute inset-0 bg-espresso">
         {heroImage && (

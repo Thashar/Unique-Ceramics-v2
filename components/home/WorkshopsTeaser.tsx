@@ -17,6 +17,7 @@ export default function WorkshopsTeaser({
       className="relative overflow-hidden flex items-center"
       style={{ height: "100svh" }}
       data-snap
+      data-header-theme="transparent"
     >
       {/* Tło */}
       <div className="absolute inset-0 bg-espresso">

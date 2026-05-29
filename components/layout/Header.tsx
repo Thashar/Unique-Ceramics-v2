@@ -96,23 +96,25 @@ function AccountDropdown({ scrolled }: { scrolled: boolean }) {
 }
 
 export default function Header() {
-  const [lightSectionVisible, setLightSectionVisible] = useState(false);
+  // Na homepage header jest przezroczysty gdy widoczna sekcja z ciemnym tłem
+  // (Hero, O mnie, Warsztaty). W pozostałych sekcjach i na innych stronach — solid.
+  const [transparentVisible, setTransparentVisible] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
   const { count } = useCart();
   const pathname = usePathname();
   const isHome = pathname === "/";
 
-  // Na stronie głównej header jest przezroczysty (białe logo i linki)
-  // z wyjątkiem sekcji FeaturedProducts (jasne tło) — wtedy przechodzi w tryb ciemny.
-  // Na wszystkich innych stronach jest zawsze ciemny.
-  const dark = !isHome || lightSectionVisible;
+  const dark = !isHome || !transparentVisible;
 
   useEffect(() => {
     if (!isHome) return;
-    const sections = document.querySelectorAll('[data-header-theme="light"]');
+    const sections = document.querySelectorAll('[data-header-theme="transparent"]');
     if (!sections.length) return;
     const observer = new IntersectionObserver(
-      (entries) => setLightSectionVisible(entries.some((e) => e.isIntersecting)),
+      (entries) => {
+        // Header przezroczysty gdy KTÓRAKOLWIEK z ciemnych sekcji jest w viewport
+        setTransparentVisible(entries.some((e) => e.isIntersecting));
+      },
       { threshold: 0.3 }
     );
     sections.forEach((el) => observer.observe(el));
