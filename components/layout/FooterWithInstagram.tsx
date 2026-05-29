@@ -18,13 +18,13 @@ export default function FooterWithInstagram({ instagram }: { instagram: string }
   return (
     <footer className="flex-1 flex flex-col bg-espresso text-sand/80">
       {/* Dekoracyjne elementy — clipped do sekcji */}
-      <div className="relative overflow-hidden flex-1 flex flex-col justify-center">
+      <div className="relative overflow-hidden flex-1 flex items-center">
         <div className="absolute -top-16 -left-16 w-56 h-56 bg-clay/8 rounded-full pointer-events-none" />
         <div className="absolute top-1/2 left-72 w-3 h-3 bg-terracotta/20 rounded-full pointer-events-none" />
 
-        <div className="max-w-7xl mx-auto px-6 lg:px-10 py-16 grid grid-cols-1 lg:grid-cols-4 gap-12 lg:gap-0">
+        <div className="w-full max-w-7xl mx-auto px-6 lg:px-10 py-16 grid grid-cols-1 lg:grid-cols-4 gap-12 lg:gap-0">
           {/* Panel Instagram — lewa kolumna z separatorem, pr-16 = 4rem przed linią */}
-          <div className="relative lg:pr-16 lg:border-r lg:border-sand/12 lg:flex lg:flex-col lg:justify-center">
+          <div className="relative lg:pr-16 lg:border-r lg:border-sand/12 flex flex-col justify-center">
             <FooterInstagramPanel instagram={instagram} />
           </div>
 
