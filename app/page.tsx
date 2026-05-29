@@ -5,10 +5,9 @@ import Hero from "@/components/home/Hero";
 import FeaturedProducts from "@/components/home/FeaturedProducts";
 import AboutTeaser from "@/components/home/AboutTeaser";
 import WorkshopsTeaser from "@/components/home/WorkshopsTeaser";
-import InstagramCta from "@/components/home/InstagramCta";
 import HomeScrollSnap from "@/components/home/HomeScrollSnap";
 import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
+import FooterWithInstagram from "@/components/layout/FooterWithInstagram";
 import { getSettings } from "@/lib/settings";
 
 export default async function Home() {
@@ -28,13 +27,9 @@ export default async function Home() {
         <FeaturedProducts />
         <AboutTeaser aboutImage={s.home_about_image} aboutPosition={s.home_about_position} />
         <WorkshopsTeaser workshopsImage={s.home_workshops_image} workshopsPosition={s.home_workshops_position} />
-        {/* Instagram — osobna sekcja pełnoekranowa */}
-        <div data-snap style={{ height: "100svh" }}>
-          <InstagramCta instagram={s.contact_instagram} />
-        </div>
-        {/* Stopka — pt-20 kompensuje header (h-20 fixed) */}
+        {/* Stopka z Instagramem — pt-20 kompensuje header (h-20 fixed) */}
         <div data-snap className="pt-20 bg-espresso">
-          <Footer />
+          <FooterWithInstagram instagram={s.contact_instagram} />
         </div>
       </main>
     </>

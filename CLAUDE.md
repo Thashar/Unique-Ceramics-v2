@@ -181,13 +181,15 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 
 ### `components/layout/`
 - **Header.tsx** — responsywna nawigacja, ikona koszyka, menu mobilne
-- **Footer.tsx** — synchroniczny (ważne!), importuje `FooterContactsClient`
+- **Footer.tsx** — synchroniczny (ważne!), importuje `FooterContactsClient`; używany na wszystkich stronach poza stroną główną
+- **FooterWithInstagram.tsx** — scalona stopka + Instagram CTA (strona główna); grid 4-kolumnowy: [IG panel | nawigacja | kontakt | mapa]
+- **FooterInstagramPanel.tsx** — `"use client"`, animowany panel Instagram (używany wewnątrz `FooterWithInstagram`)
 - **FooterContactsClient.tsx** — `"use client"`, pobiera kontakty z `/api/public/contacts` po mount; renderuje defaults przed hydratacją
 - **Providers.tsx** — opakowuje `SessionProvider` (NextAuth) + `CartProvider`
 
 ### `components/home/`
 - **Hero.tsx**, **FeaturedProducts.tsx**, **AboutTeaser.tsx**, **WorkshopsTeaser.tsx**
-- **InstagramCta.tsx** — przyjmuje prop `instagram` (string), generuje link do profilu
+- **InstagramCta.tsx** — przyjmuje prop `instagram` (string), generuje link do profilu (nieużywany na stronie głównej od scalenia ze stopką)
 
 ### `components/ui/`
 - **ProductCard.tsx** — karta produktu
