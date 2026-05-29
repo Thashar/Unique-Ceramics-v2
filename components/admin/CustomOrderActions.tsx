@@ -48,7 +48,7 @@ export default function CustomOrderActions({
       <h2 className="text-xs tracking-widest uppercase text-charcoal/50 mb-4">Status i notatki</h2>
 
       <div>
-        <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">Status</label>
+        <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">Status</label>
         <select
           value={status}
           onChange={(e) => handleStatusChange(e.target.value)}
@@ -61,7 +61,7 @@ export default function CustomOrderActions({
       </div>
 
       <div>
-        <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">Notatki admina</label>
+        <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">Notatki admina</label>
         <textarea
           rows={4}
           value={notes}

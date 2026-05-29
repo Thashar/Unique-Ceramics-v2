@@ -63,7 +63,7 @@ export default function ProfilePage() {
         </h3>
         <form onSubmit={handleSaveName} className="space-y-5">
           <div>
-            <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">Imię i nazwisko</label>
+            <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">Imię i nazwisko</label>
             <input
               type="text"
               value={name}
@@ -72,7 +72,7 @@ export default function ProfilePage() {
             />
           </div>
           <div>
-            <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">E-mail</label>
+            <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">E-mail</label>
             <input
               type="email"
               value={session?.user?.email ?? ""}
@@ -101,7 +101,7 @@ export default function ProfilePage() {
         {!session?.user?.image ? (
           <form onSubmit={handleChangePassword} className="space-y-5">
             <div>
-              <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">Aktualne hasło</label>
+              <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">Aktualne hasło</label>
               <input
                 type="password"
                 required
@@ -111,7 +111,7 @@ export default function ProfilePage() {
               />
             </div>
             <div>
-              <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">Nowe hasło <span className="normal-case text-charcoal/40">(min. 8 znaków)</span></label>
+              <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">Nowe hasło <span className="normal-case text-charcoal/40">(min. 8 znaków)</span></label>
               <input
                 type="password"
                 required
@@ -135,7 +135,7 @@ export default function ProfilePage() {
             </button>
           </form>
         ) : (
-          <p className="text-sm text-charcoal/60">
+          <p className="text-sm text-charcoal/80">
             Twoje konto jest połączone z Google. Zarządzaj hasłem w ustawieniach Google.
           </p>
         )}

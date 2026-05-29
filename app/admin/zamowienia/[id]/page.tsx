@@ -63,8 +63,8 @@ export default async function AdminOrderDetailPage({
             <h2 className="text-xs tracking-widest uppercase text-charcoal/50">Klient</h2>
           </div>
           <p className="text-sm font-medium text-espresso">{order.firstName} {order.lastName}</p>
-          <p className="text-sm text-charcoal/60 mt-1">{order.email}</p>
-          {order.phone && <p className="text-sm text-charcoal/60">{order.phone}</p>}
+          <p className="text-sm text-charcoal/80 mt-1">{order.email}</p>
+          {order.phone && <p className="text-sm text-charcoal/80">{order.phone}</p>}
           {order.user && (
             <p className="text-xs text-terracotta mt-2">Zarejestrowany klient</p>
           )}

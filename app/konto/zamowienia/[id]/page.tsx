@@ -107,11 +107,11 @@ export default async function OrderDetailPage({
               </div>
             ))}
             <div className="p-4 space-y-2">
-              <div className="flex justify-between text-sm text-charcoal/60">
+              <div className="flex justify-between text-sm text-charcoal/80">
                 <span>Suma produktów</span>
                 <span>{(order.total - order.shippingCost).toLocaleString("pl-PL", { style: "currency", currency: "PLN", minimumFractionDigits: 0 })}</span>
               </div>
-              <div className="flex justify-between text-sm text-charcoal/60">
+              <div className="flex justify-between text-sm text-charcoal/80">
                 <span>Wysyłka</span>
                 <span>{order.shippingCost === 0 ? "Gratis" : order.shippingCost.toLocaleString("pl-PL", { style: "currency", currency: "PLN", minimumFractionDigits: 0 })}</span>
               </div>

@@ -152,7 +152,7 @@ export default async function ProductPage({
               </p>
             )}
 
-            <p className="text-sm text-charcoal/60 mb-6">
+            <p className="text-sm text-charcoal/80 mb-6">
               {product.stock > 0
                 ? `Dostępność: ${product.stock} ${
                     product.stock === 1
@@ -219,7 +219,7 @@ export default async function ProductPage({
                     <p className="font-serif text-lg text-espresso group-hover:text-clay transition-colors">
                       {p.name}
                     </p>
-                    <p className="text-sm text-charcoal/60">
+                    <p className="text-sm text-charcoal/80">
                       {p.price.toFixed(2).replace(".", ",")} zł
                     </p>
                   </Link>

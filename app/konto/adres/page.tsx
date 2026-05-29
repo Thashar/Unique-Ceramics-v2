@@ -116,7 +116,7 @@ export default function AddressPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">
+              <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">
                 Imię
               </label>
               <input
@@ -129,7 +129,7 @@ export default function AddressPage() {
               <FieldError msg={fieldErrors.firstName} />
             </div>
             <div>
-              <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">
+              <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">
                 Nazwisko
               </label>
               <input
@@ -144,7 +144,7 @@ export default function AddressPage() {
           </div>
 
           <div>
-            <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">
+            <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">
               Telefon
             </label>
             <input
@@ -159,7 +159,7 @@ export default function AddressPage() {
           </div>
 
           <div>
-            <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">
+            <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">
               Ulica i numer
             </label>
             <input
@@ -175,7 +175,7 @@ export default function AddressPage() {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">
+              <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">
                 Kod pocztowy
               </label>
               <input
@@ -189,7 +189,7 @@ export default function AddressPage() {
               <FieldError msg={fieldErrors.postcode} />
             </div>
             <div>
-              <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">
+              <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">
                 Miasto
               </label>
               <input

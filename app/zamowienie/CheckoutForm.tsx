@@ -170,7 +170,7 @@ export default function CheckoutForm({
               <h2 className="font-serif text-2xl text-espresso mb-6">Dane dostawy</h2>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">
+                  <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">
                     Imię *
                   </label>
                   <input
@@ -183,7 +183,7 @@ export default function CheckoutForm({
                   <FieldError msg={fieldErrors.firstName} />
                 </div>
                 <div>
-                  <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">
+                  <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">
                     Nazwisko *
                   </label>
                   <input
@@ -198,7 +198,7 @@ export default function CheckoutForm({
               </div>
               <div className="grid grid-cols-2 gap-4 mt-4">
                 <div>
-                  <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">
+                  <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">
                     E-mail *
                   </label>
                   <input
@@ -212,7 +212,7 @@ export default function CheckoutForm({
                   <FieldError msg={fieldErrors.email} />
                 </div>
                 <div>
-                  <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">
+                  <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">
                     Telefon
                   </label>
                   <input
@@ -227,7 +227,7 @@ export default function CheckoutForm({
                 </div>
               </div>
               <div className="mt-4">
-                <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">
+                <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">
                   Ulica i numer *
                 </label>
                 <input
@@ -242,7 +242,7 @@ export default function CheckoutForm({
               </div>
               <div className="grid grid-cols-2 gap-4 mt-4">
                 <div>
-                  <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">
+                  <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">
                     Kod pocztowy *
                   </label>
                   <input
@@ -256,7 +256,7 @@ export default function CheckoutForm({
                   <FieldError msg={fieldErrors.postcode} />
                 </div>
                 <div>
-                  <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">
+                  <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">
                     Miasto *
                   </label>
                   <input
@@ -301,7 +301,7 @@ export default function CheckoutForm({
             </div>
 
             <div>
-              <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">
+              <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">
                 Uwagi do zamówienia
               </label>
               <textarea

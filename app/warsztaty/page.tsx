@@ -94,15 +94,15 @@ export default async function WorkshopsPage() {
                 <div className="bg-cream p-8 self-start">
                   <div className="space-y-3 mb-8">
                     <div className="flex justify-between text-sm">
-                      <span className="text-charcoal/60">Czas trwania</span>
+                      <span className="text-charcoal/80">Czas trwania</span>
                       <span className="text-espresso font-medium">{w.duration}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-charcoal/60">Liczba uczestników</span>
+                      <span className="text-charcoal/80">Liczba uczestników</span>
                       <span className="text-espresso font-medium">{w.maxPeople}</span>
                     </div>
                     <div className="flex justify-between text-sm border-t border-sand pt-3">
-                      <span className="text-charcoal/60">Cena</span>
+                      <span className="text-charcoal/80">Cena</span>
                       <span className="font-serif text-xl text-espresso">{w.priceLabel}</span>
                     </div>
                   </div>

@@ -15,7 +15,10 @@
       "Bash(python3 \"C:\\\\Users\\\\Thash\\\\.claude\\\\skills\\\\ui-ux-pro-max\\\\scripts\\\\search.py\" \"ceramics handcraft ecommerce artisan boutique shop\" --design-system -f markdown)",
       "Bash(Remove-Item \"c:\\\\Users\\\\Thash\\\\Desktop\\\\Bots\\\\Unique Ceramics v2\\\\app\\\\api\\\\debug-db\\\\route.ts\" -Force)",
       "Bash(xargs sed -i 's/bg-terracotta hover:bg-clay/bg-clay hover:bg-terracotta/g')",
-      "Bash(xargs sed -i 's/bg-espresso hover:bg-clay/bg-clay hover:bg-espresso/g')"
+      "Bash(xargs sed -i 's/bg-espresso hover:bg-clay/bg-clay hover:bg-espresso/g')",
+      "Bash(npx prisma *)",
+      "Bash(xargs grep -l \"label.*text-charcoal/60\\\\|text-charcoal/60.*mb-2\")",
+      "Bash(xargs sed -i 's/\\\\btext-charcoal\\\\/60\\\\b/text-charcoal\\\\/80/g')"
     ]
   }
 }

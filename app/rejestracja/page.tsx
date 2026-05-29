@@ -57,7 +57,7 @@ export default function RegisterPage() {
 
         <div className="bg-warm-white p-8 md:p-10">
           <h1 className="font-serif text-3xl text-espresso mb-2">Utwórz konto</h1>
-          <p className="text-sm text-charcoal/60 mb-8">
+          <p className="text-sm text-charcoal/80 mb-8">
             Masz już konto?{" "}
             <Link href="/logowanie" className="text-clay hover:text-espresso underline underline-offset-2 transition-colors">
               Zaloguj się
@@ -96,7 +96,7 @@ export default function RegisterPage() {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">
+              <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">
                 Imię i nazwisko *
               </label>
               <input
@@ -110,7 +110,7 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">
+              <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">
                 E-mail *
               </label>
               <input
@@ -124,7 +124,7 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">
+              <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">
                 Hasło * <span className="normal-case text-charcoal/40">(min. 8 znaków)</span>
               </label>
               <div className="relative">

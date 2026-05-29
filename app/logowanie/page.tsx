@@ -78,7 +78,7 @@ function LoginForm() {
 
       <form onSubmit={handleSubmit} className="space-y-5">
         <div>
-          <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">
+          <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">
             E-mail *
           </label>
           <input
@@ -93,7 +93,7 @@ function LoginForm() {
 
         <div>
           <div className="flex justify-between items-center mb-2">
-            <label className="text-xs tracking-widest uppercase text-charcoal/60">
+            <label className="text-xs tracking-widest uppercase text-charcoal/80">
               Hasło *
             </label>
           </div>
@@ -141,7 +141,7 @@ export default function LoginPage() {
 
         <div className="bg-warm-white p-8 md:p-10">
           <h1 className="font-serif text-3xl text-espresso mb-2">Zaloguj się</h1>
-          <p className="text-sm text-charcoal/60 mb-8">
+          <p className="text-sm text-charcoal/80 mb-8">
             Nie masz konta?{" "}
             <Link href="/rejestracja" className="text-clay hover:text-espresso underline underline-offset-2 transition-colors">
               Zarejestruj się

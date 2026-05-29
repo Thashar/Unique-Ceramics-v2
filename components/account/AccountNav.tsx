@@ -26,7 +26,7 @@ export default function AccountNav() {
             className={`flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
               active
                 ? "bg-cream text-espresso font-medium border-l-2 border-terracotta"
-                : "text-charcoal/60 hover:text-espresso hover:bg-mist"
+                : "text-charcoal/80 hover:text-espresso hover:bg-mist"
             }`}
           >
             <Icon size={16} strokeWidth={1.5} />
@@ -39,7 +39,7 @@ export default function AccountNav() {
 
       <button
         onClick={() => signOut({ callbackUrl: "/" })}
-        className="flex items-center gap-3 px-4 py-3 text-sm text-charcoal/60 hover:text-red-600 hover:bg-red-50 transition-colors text-left"
+        className="flex items-center gap-3 px-4 py-3 text-sm text-charcoal/80 hover:text-red-600 hover:bg-red-50 transition-colors text-left"
       >
         <LogOut size={16} strokeWidth={1.5} />
         Wyloguj się

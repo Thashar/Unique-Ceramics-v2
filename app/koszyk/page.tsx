@@ -44,7 +44,7 @@ export default function CartPage() {
         <div className="text-center py-24">
           <ShoppingBag size={56} strokeWidth={1} className="mx-auto text-sand mb-6" />
           <h2 className="font-serif text-2xl text-espresso mb-3">Koszyk jest pusty</h2>
-          <p className="text-charcoal/60 mb-10">Nie masz jeszcze nic w koszyku.</p>
+          <p className="text-charcoal/80 mb-10">Nie masz jeszcze nic w koszyku.</p>
           <Link
             href="/sklep"
             className="inline-flex items-center gap-3 bg-clay hover:bg-terracotta text-warm-white text-sm tracking-widest uppercase px-8 py-4 transition-colors"
@@ -82,7 +82,7 @@ export default function CartPage() {
                 <Link href={`/sklep/${item.slug}`} className="font-serif text-lg text-espresso hover:text-clay transition-colors block truncate">
                   {item.name}
                 </Link>
-                <p className="text-sm text-charcoal/60 mt-1">
+                <p className="text-sm text-charcoal/80 mt-1">
                   {item.price.toFixed(2).replace(".", ",")} zł / szt.
                 </p>
                 <div className="flex items-center gap-4 mt-3">

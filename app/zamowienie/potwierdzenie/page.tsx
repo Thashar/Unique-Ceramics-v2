@@ -54,7 +54,7 @@ export default async function ConfirmationPage({
           {orderNumber && (
             <p className="text-xs text-charcoal/40 mb-2">
               Nr zamówienia:{" "}
-              <span className="font-mono text-charcoal/60">{orderNumber}</span>
+              <span className="font-mono text-charcoal/80">{orderNumber}</span>
             </p>
           )}
         </div>

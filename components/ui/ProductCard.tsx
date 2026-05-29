@@ -67,7 +67,7 @@ export default function ProductCard({ product }: { product: ProductCardProduct }
           <h3 className="font-serif text-lg text-espresso group-hover:text-clay transition-colors leading-snug mb-1">
             {product.name}
           </h3>
-          <p className="text-sm text-charcoal/60 font-medium tabular-nums">
+          <p className="text-sm text-charcoal/80 font-medium tabular-nums">
             {formatPrice(product.price)}
           </p>
         </div>

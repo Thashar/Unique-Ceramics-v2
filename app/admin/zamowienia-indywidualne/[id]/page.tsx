@@ -57,9 +57,9 @@ export default async function AdminCustomOrderDetailPage({
         <div className="bg-cream p-6">
           <h2 className="text-xs tracking-widest uppercase text-charcoal/50 mb-4">Klient</h2>
           <p className="text-sm font-medium text-espresso">{order.customerName}</p>
-          <p className="text-sm text-charcoal/60 mt-1">{order.customerEmail}</p>
+          <p className="text-sm text-charcoal/80 mt-1">{order.customerEmail}</p>
           {order.customerPhone && (
-            <p className="text-sm text-charcoal/60 mt-0.5">{order.customerPhone}</p>
+            <p className="text-sm text-charcoal/80 mt-0.5">{order.customerPhone}</p>
           )}
           <a
             href={`mailto:${order.customerEmail}?subject=${mailSubject}`}

@@ -56,7 +56,7 @@ export default function AddToCartSection({ product }: { product: Product }) {
     <>
       {!atStockLimit && (
         <div className="flex items-center gap-4 mb-4">
-          <span className="text-xs tracking-widest uppercase text-charcoal/60">Ilość</span>
+          <span className="text-xs tracking-widest uppercase text-charcoal/80">Ilość</span>
           <div className="flex items-center border border-sand">
             <button
               onClick={() => setQty((q) => Math.max(1, q - 1))}

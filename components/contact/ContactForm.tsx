@@ -42,7 +42,7 @@ export default function ContactForm() {
     <form onSubmit={handleSubmit} className="space-y-5">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
         <div>
-          <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">
+          <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">
             Imię
           </label>
           <input
@@ -53,7 +53,7 @@ export default function ContactForm() {
           />
         </div>
         <div>
-          <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">
+          <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">
             Telefon
           </label>
           <input
@@ -66,7 +66,7 @@ export default function ContactForm() {
       </div>
 
       <div>
-        <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">
+        <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">
           E-mail *
         </label>
         <input
@@ -79,7 +79,7 @@ export default function ContactForm() {
       </div>
 
       <div>
-        <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">
+        <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">
           Temat
         </label>
         <select
@@ -95,7 +95,7 @@ export default function ContactForm() {
       </div>
 
       <div>
-        <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">
+        <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">
           Wiadomość *
         </label>
         <textarea

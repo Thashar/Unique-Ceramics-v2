@@ -23,7 +23,7 @@ export default async function OrdersPage() {
       {orders.length === 0 ? (
         <div className="bg-cream p-16 text-center">
           <ShoppingBag size={44} strokeWidth={1} className="mx-auto text-sand mb-5" />
-          <p className="text-charcoal/60 mb-6">Nie złożyłeś jeszcze żadnego zamówienia.</p>
+          <p className="text-charcoal/80 mb-6">Nie złożyłeś jeszcze żadnego zamówienia.</p>
           <Link
             href="/sklep"
             className="inline-flex items-center gap-2 bg-clay hover:bg-terracotta text-warm-white text-xs tracking-widest uppercase px-6 py-3 transition-colors"

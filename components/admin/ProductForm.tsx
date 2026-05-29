@@ -117,7 +117,7 @@ export default function ProductForm({ product }: { product?: Product }) {
 
       {/* Zdjęcia */}
       <div>
-        <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-3">Zdjęcia produktu</label>
+        <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-3">Zdjęcia produktu</label>
         <div className="flex flex-wrap gap-3 mb-3">
           {images.map((url, i) => (
             <div key={i} className="relative w-24 h-24 bg-cream overflow-hidden group">
@@ -142,7 +142,7 @@ export default function ProductForm({ product }: { product?: Product }) {
       {/* Podstawowe */}
       <div className="grid grid-cols-2 gap-6">
         <div className="col-span-2">
-          <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">Nazwa *</label>
+          <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">Nazwa *</label>
           <input required value={form.name}
             onChange={(e) => {
               set("name", e.target.value);
@@ -151,31 +151,31 @@ export default function ProductForm({ product }: { product?: Product }) {
             className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm" />
         </div>
         <div>
-          <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">Slug URL *</label>
+          <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">Slug URL *</label>
           <input required value={form.slug} onChange={(e) => set("slug", e.target.value)}
             className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm font-mono" />
         </div>
         <div>
-          <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">Kategoria *</label>
+          <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">Kategoria *</label>
           <select value={form.category} onChange={(e) => set("category", e.target.value)}
             className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm">
             {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
         </div>
         <div>
-          <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">Cena (zł) *</label>
+          <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">Cena (zł) *</label>
           <input required type="number" step="0.01" min="0" value={form.price}
             onChange={(e) => set("price", e.target.value)}
             className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm" />
         </div>
         <div>
-          <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">Stan magazynowy</label>
+          <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">Stan magazynowy</label>
           <input type="number" min="0" value={form.stock}
             onChange={(e) => set("stock", e.target.value)}
             className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm" />
         </div>
         <div className="col-span-2">
-          <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">Opis</label>
+          <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">Opis</label>
           <textarea value={form.description} onChange={(e) => set("description", e.target.value)}
             rows={4} className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm resize-none" />
         </div>

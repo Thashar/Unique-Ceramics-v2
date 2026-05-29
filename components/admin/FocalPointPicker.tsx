@@ -26,7 +26,7 @@ export default function FocalPointPicker({
 
   return (
     <div>
-      <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">
+      <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">
         Punkt kadrowania
       </label>
       <div className="relative w-64 overflow-hidden rounded-sm border border-sand bg-mist" style={{ aspectRatio: "16/9" }}>

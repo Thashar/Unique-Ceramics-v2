@@ -55,7 +55,7 @@ export default async function AdminCustomOrdersPage() {
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <p className="text-xs text-charcoal/60 truncate max-w-[60%]">{order.orderType}</p>
+                  <p className="text-xs text-charcoal/80 truncate max-w-[60%]">{order.orderType}</p>
                   <p className="text-xs text-charcoal/50">{new Date(order.createdAt).toLocaleDateString("pl-PL")}</p>
                 </div>
               </div>
@@ -66,8 +66,8 @@ export default async function AdminCustomOrdersPage() {
                   <p className="text-sm font-medium text-espresso">{order.customerName}</p>
                   <p className="text-xs text-charcoal/50">{order.customerEmail}</p>
                 </div>
-                <div className="w-36 pl-4 text-xs text-charcoal/60 truncate">{order.orderType}</div>
-                <div className="w-28 text-center text-xs text-charcoal/60">
+                <div className="w-36 pl-4 text-xs text-charcoal/80 truncate">{order.orderType}</div>
+                <div className="w-28 text-center text-xs text-charcoal/80">
                   {new Date(order.createdAt).toLocaleDateString("pl-PL")}
                 </div>
                 <div className="w-32 text-center">

@@ -55,7 +55,7 @@ export default async function AccountDashboard() {
         {recentOrders.length === 0 ? (
           <div className="bg-cream p-12 text-center">
             <ShoppingBag size={40} strokeWidth={1} className="mx-auto text-sand mb-4" />
-            <p className="text-charcoal/60 mb-6">Nie masz jeszcze żadnych zamówień.</p>
+            <p className="text-charcoal/80 mb-6">Nie masz jeszcze żadnych zamówień.</p>
             <Link
               href="/sklep"
               className="inline-flex items-center gap-2 bg-clay hover:bg-terracotta text-warm-white text-xs tracking-widest uppercase px-6 py-3 transition-colors"

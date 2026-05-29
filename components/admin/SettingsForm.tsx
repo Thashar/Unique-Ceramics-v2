@@ -57,7 +57,7 @@ function Field({ label, value, setter, type = "text", placeholder, mono }: {
 }) {
   return (
     <div>
-      <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-2">{label}</label>
+      <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">{label}</label>
       <input
         type={type}
         value={value}
@@ -240,7 +240,7 @@ export default function SettingsForm({ section, initial }: Props) {
             label="Zdjęcie nagłówka (hero + sidebar)"
           />
           <div>
-            <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-3">Treść — historia</label>
+            <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-3">Treść — historia</label>
             <RichEditor value={aboutStory} onChange={setAboutStory} />
           </div>
           <SaveButton
@@ -262,7 +262,7 @@ export default function SettingsForm({ section, initial }: Props) {
             label="Zdjęcie nagłówka (hero)"
           />
           <div>
-            <label className="block text-xs tracking-widest uppercase text-charcoal/60 mb-3">Tekst wprowadzający</label>
+            <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-3">Tekst wprowadzający</label>
             <RichEditor value={workshopsIntro} onChange={setWorkshopsIntro} />
           </div>
           <SaveButton
@@ -318,7 +318,7 @@ export default function SettingsForm({ section, initial }: Props) {
         <div className="max-w-md space-y-6">
           <h2 className="font-serif text-2xl text-espresso">Wysyłka</h2>
           <div className="flex items-center justify-between">
-            <span className="text-xs tracking-widest uppercase text-charcoal/60">Darmowa wysyłka</span>
+            <span className="text-xs tracking-widest uppercase text-charcoal/80">Darmowa wysyłka</span>
             <Toggle checked={freeEnabled} onChange={setFreeEnabled} />
           </div>
           <Field label="Koszt wysyłki (zł)" value={shippingCost} setter={setShippingCost} type="number" />
@@ -348,7 +348,7 @@ export default function SettingsForm({ section, initial }: Props) {
           <Field label="Prefiks tytułu przelewu" value={bankTitle} setter={setBankTitle} />
           <p className="text-xs text-charcoal/40">Tytuł wysyłany do kupującego: „[prefiks] #NR_ZAMÓWIENIA"</p>
           <div className="border-t border-sand pt-5">
-            <p className="text-xs tracking-widest uppercase text-charcoal/60 mb-3">Przelew BLIK na telefon</p>
+            <p className="text-xs tracking-widest uppercase text-charcoal/80 mb-3">Przelew BLIK na telefon</p>
             <p className="text-xs text-charcoal/50 mb-3">
               Opcjonalnie. Jeśli podasz numer, klient zobaczy go obok danych do przelewu bankowego.
             </p>
@@ -371,10 +371,10 @@ export default function SettingsForm({ section, initial }: Props) {
         <div className="max-w-md space-y-5">
           <h2 className="font-serif text-2xl text-espresso">Stripe (karta płatnicza)</h2>
           <div className="flex items-center justify-between">
-            <span className="text-xs tracking-widest uppercase text-charcoal/60">Włącz płatność kartą</span>
+            <span className="text-xs tracking-widest uppercase text-charcoal/80">Włącz płatność kartą</span>
             <Toggle checked={stripeEnabled} onChange={setStripeEnabled} />
           </div>
-          <div className="p-4 bg-cream border border-sand text-xs text-charcoal/60 leading-relaxed space-y-2">
+          <div className="p-4 bg-cream border border-sand text-xs text-charcoal/80 leading-relaxed space-y-2">
             <p className="font-medium text-charcoal/80">Konfiguracja kluczy API</p>
             <p>Klucze Stripe ustawiasz w pliku <span className="font-mono">.env.local</span> — nie są przechowywane w bazie danych:</p>
             <pre className="font-mono text-[11px] bg-warm-white border border-sand p-3 leading-5 overflow-x-auto">{`STRIPE_SECRET_KEY=sk_live_...
