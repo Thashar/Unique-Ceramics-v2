@@ -4,6 +4,7 @@ import Link from "next/link";
 import { CheckCircle } from "lucide-react";
 import { db } from "@/lib/db";
 import { getSettings } from "@/lib/settings";
+import { auth } from "@/auth";
 
 export default async function ConfirmationPage({
   searchParams,
@@ -11,16 +12,26 @@ export default async function ConfirmationPage({
   searchParams: Promise<{ id?: string }>;
 }) {
   const { id } = await searchParams;
+  const session = await auth();
 
   let order = null;
   let bankSettings: Record<string, string> = {};
 
   if (id) {
     try {
-      order = await db.order.findUnique({
+      const found = await db.order.findUnique({
         where: { id },
         include: { items: true },
       });
+      if (found) {
+        // Zamówienia zalogowanych użytkowników — weryfikuj własność
+        if (found.userId) {
+          if (session?.user?.id === found.userId) order = found;
+        } else {
+          // Zamówienie gościa — URL jest tokenem dostępu
+          order = found;
+        }
+      }
     } catch {
       // DB not available — show generic confirmation
     }
