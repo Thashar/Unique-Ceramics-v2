@@ -28,7 +28,7 @@ export default async function Home() {
         <AboutTeaser aboutImage={s.home_about_image} aboutPosition={s.home_about_position} />
         <WorkshopsTeaser workshopsImage={s.home_workshops_image} workshopsPosition={s.home_workshops_position} />
         {/* Stopka z Instagramem — pt-20 kompensuje header, min-h-svh wypełnia viewport */}
-        <div data-snap className="pt-20 bg-espresso min-h-svh flex flex-col">
+        <div data-snap className="bg-espresso h-svh flex flex-col">
           <FooterWithInstagram instagram={s.contact_instagram} />
         </div>
       </main>

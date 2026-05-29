@@ -16,7 +16,7 @@ const NAV_LINKS = [
 
 export default function FooterWithInstagram({ instagram }: { instagram: string }) {
   return (
-    <footer className="flex-1 flex flex-col bg-espresso text-sand/80">
+    <footer className="flex-1 flex flex-col pt-20 bg-espresso text-sand/80">
       {/* Dekoracyjne elementy — clipped do sekcji */}
       <div className="relative overflow-hidden flex-1 flex items-center">
         <div className="absolute -top-16 -left-16 w-56 h-56 bg-clay/8 rounded-full pointer-events-none" />
