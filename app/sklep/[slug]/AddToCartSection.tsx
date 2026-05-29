@@ -86,7 +86,7 @@ export default function AddToCartSection({ product }: { product: Product }) {
         className={`w-full flex items-center justify-center gap-3 text-sm tracking-widest uppercase py-5 transition-all duration-300 ${
           added
             ? "bg-green-600 text-white"
-            : "bg-terracotta hover:bg-clay disabled:bg-sand disabled:text-charcoal/40 text-warm-white"
+            : "bg-clay hover:bg-terracotta disabled:bg-sand disabled:text-charcoal/40 text-warm-white"
         }`}
       >
         {added ? (

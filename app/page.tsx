@@ -32,7 +32,7 @@ export default async function Home() {
           <InstagramCta instagram={s.contact_instagram} />
         </div>
         {/* Stopka — pt-20 kompensuje header (h-20 fixed) */}
-        <div data-snap className="pt-20 bg-espresso">
+        <div data-snap data-header-theme="light" className="pt-20 bg-espresso">
           <Footer />
         </div>
       </main>

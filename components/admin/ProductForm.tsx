@@ -198,7 +198,7 @@ export default function ProductForm({ product }: { product?: Product }) {
       {/* Przyciski */}
       <div className="flex items-center gap-4 pt-4 border-t border-sand">
         <button type="submit" disabled={saving}
-          className="bg-terracotta hover:bg-clay disabled:bg-sand disabled:text-charcoal/40 text-warm-white text-xs tracking-widest uppercase px-8 py-3.5 transition-colors">
+          className="bg-clay hover:bg-terracotta disabled:bg-sand disabled:text-charcoal/40 text-warm-white text-xs tracking-widest uppercase px-8 py-3.5 transition-colors">
           {saving ? "Zapisuję..." : product ? "Zapisz zmiany" : "Dodaj produkt"}
         </button>
         <button type="button" onClick={() => router.back()}

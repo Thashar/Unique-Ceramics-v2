@@ -110,7 +110,7 @@ export default function ContactForm() {
       <button
         type="submit"
         disabled={status === "sending"}
-        className="w-full bg-terracotta hover:bg-clay text-warm-white text-xs tracking-widest uppercase py-4 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+        className="w-full bg-clay hover:bg-terracotta text-warm-white text-xs tracking-widest uppercase py-4 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
       >
         {status === "sending" ? "Wysyłanie…" : "Wyślij wiadomość"}
       </button>

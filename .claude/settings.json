@@ -4,7 +4,18 @@
       "Bash(python3 \"C:/Users/Thash/.claude/skills/ui-ux-pro-max/scripts/search.py\" \"admin dashboard e-commerce ceramics management\" --design-system -p \"Unique Ceramics Admin\" -f markdown)",
       "Bash(python \"C:/Users/Thash/.claude/skills/ui-ux-pro-max/scripts/search.py\" \"admin dashboard e-commerce management\" --design-system -p \"Unique Ceramics Admin\" -f markdown)",
       "Bash(findstr resend *)",
-      "Bash(node -e \"require\\('stripe'\\); console.log\\('ok'\\)\")"
+      "Bash(node -e \"require\\('stripe'\\); console.log\\('ok'\\)\")",
+      "PowerShell(Add-Type -AssemblyName System.Drawing; $img = [System.Drawing.Image]::FromFile\\(\\(Resolve-Path \"c:\\\\Users\\\\Thash\\\\Desktop\\\\Bots\\\\Unique Ceramics v2\\\\public\\\\images\\\\logo.png\"\\)\\); Write-Host \"$\\($img.Width\\)x$\\($img.Height\\)\")",
+      "PowerShell(Copy-Item \"c:\\\\Users\\\\Thash\\\\Desktop\\\\Bots\\\\Unique Ceramics v2\\\\public\\\\images\\\\logo.png\" \"c:\\\\Users\\\\Thash\\\\Desktop\\\\Bots\\\\Unique Ceramics v2\\\\app\\\\icon.png\")",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\Thash\\\\Desktop\\\\Bots\\\\Unique Ceramics v2\" -Recurse -Depth 3)",
+      "Bash(Get-ChildItem -Path . -Attributes Directory)",
+      "Bash(Select-Object -ExpandProperty Name)",
+      "Bash(cd \"/c/Users/Thash/Desktop/Bots/Unique Ceramics v2\" && ls -la)",
+      "Read(//c/c/Users/Thash/Desktop/Bots/**)",
+      "Bash(python3 \"C:\\\\Users\\\\Thash\\\\.claude\\\\skills\\\\ui-ux-pro-max\\\\scripts\\\\search.py\" \"ceramics handcraft ecommerce artisan boutique shop\" --design-system -f markdown)",
+      "Bash(Remove-Item \"c:\\\\Users\\\\Thash\\\\Desktop\\\\Bots\\\\Unique Ceramics v2\\\\app\\\\api\\\\debug-db\\\\route.ts\" -Force)",
+      "Bash(xargs sed -i 's/bg-terracotta hover:bg-clay/bg-clay hover:bg-terracotta/g')",
+      "Bash(xargs sed -i 's/bg-espresso hover:bg-clay/bg-clay hover:bg-espresso/g')"
     ]
   }
 }

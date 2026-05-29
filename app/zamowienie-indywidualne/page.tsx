@@ -210,7 +210,7 @@ export default function CustomOrderPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-terracotta hover:bg-clay text-warm-white text-xs tracking-widest uppercase py-5 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="w-full bg-clay hover:bg-terracotta text-warm-white text-xs tracking-widest uppercase py-5 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {loading ? "Wysyłanie..." : "Wyślij zapytanie"}
                 </button>

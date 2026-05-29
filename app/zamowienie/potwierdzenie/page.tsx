@@ -165,7 +165,7 @@ export default async function ConfirmationPage({
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Link
             href="/sklep"
-            className="px-8 py-4 bg-terracotta hover:bg-clay text-warm-white text-xs tracking-widest uppercase transition-colors text-center"
+            className="px-8 py-4 bg-clay hover:bg-terracotta text-warm-white text-xs tracking-widest uppercase transition-colors text-center"
           >
             Wróć do sklepu
           </Link>

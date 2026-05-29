@@ -26,7 +26,7 @@ export default async function OrdersPage() {
           <p className="text-charcoal/60 mb-6">Nie złożyłeś jeszcze żadnego zamówienia.</p>
           <Link
             href="/sklep"
-            className="inline-flex items-center gap-2 bg-terracotta hover:bg-clay text-warm-white text-xs tracking-widest uppercase px-6 py-3 transition-colors"
+            className="inline-flex items-center gap-2 bg-clay hover:bg-terracotta text-warm-white text-xs tracking-widest uppercase px-6 py-3 transition-colors"
           >
             Przejdź do sklepu
           </Link>

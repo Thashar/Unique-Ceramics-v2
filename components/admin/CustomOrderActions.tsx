@@ -75,7 +75,7 @@ export default function CustomOrderActions({
         <button
           onClick={handleSave}
           disabled={saving}
-          className="bg-terracotta hover:bg-clay text-warm-white text-xs tracking-widest uppercase px-6 py-2.5 transition-colors disabled:opacity-60"
+          className="bg-clay hover:bg-terracotta text-warm-white text-xs tracking-widest uppercase px-6 py-2.5 transition-colors disabled:opacity-60"
         >
           {saving ? "Zapisuję..." : "Zapisz"}
         </button>

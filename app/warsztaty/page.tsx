@@ -106,7 +106,7 @@ export default async function WorkshopsPage() {
                       <span className="font-serif text-xl text-espresso">{w.priceLabel}</span>
                     </div>
                   </div>
-                  <Link href="/kontakt" className="block text-center bg-terracotta hover:bg-clay text-warm-white text-xs tracking-widest uppercase py-4 transition-colors">
+                  <Link href="/kontakt" className="block text-center bg-clay hover:bg-terracotta text-warm-white text-xs tracking-widest uppercase py-4 transition-colors">
                     Zarezerwuj
                   </Link>
                 </div>

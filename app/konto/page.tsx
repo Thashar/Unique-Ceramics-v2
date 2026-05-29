@@ -58,7 +58,7 @@ export default async function AccountDashboard() {
             <p className="text-charcoal/60 mb-6">Nie masz jeszcze żadnych zamówień.</p>
             <Link
               href="/sklep"
-              className="inline-flex items-center gap-2 bg-terracotta hover:bg-clay text-warm-white text-xs tracking-widest uppercase px-6 py-3 transition-colors"
+              className="inline-flex items-center gap-2 bg-clay hover:bg-terracotta text-warm-white text-xs tracking-widest uppercase px-6 py-3 transition-colors"
             >
               Przejdź do sklepu
             </Link>
@@ -128,7 +128,7 @@ export default async function AccountDashboard() {
         {isAdmin && (
           <Link
             href="/admin"
-            className="flex items-center gap-4 bg-terracotta hover:bg-clay text-warm-white p-6 transition-colors group sm:col-span-2"
+            className="flex items-center gap-4 bg-clay hover:bg-terracotta text-warm-white p-6 transition-colors group sm:col-span-2"
           >
             <LayoutDashboard size={24} strokeWidth={1.5} />
             <div>

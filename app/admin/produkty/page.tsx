@@ -34,7 +34,7 @@ export default async function AdminProductsPage({
         </div>
         <Link
           href="/admin/produkty/nowy"
-          className="flex items-center gap-2 bg-terracotta hover:bg-clay text-warm-white text-xs tracking-widest uppercase px-4 py-2.5 transition-colors"
+          className="flex items-center gap-2 bg-clay hover:bg-terracotta text-warm-white text-xs tracking-widest uppercase px-4 py-2.5 transition-colors"
         >
           <Plus size={15} />
           <span className="hidden sm:inline">Dodaj produkt</span>

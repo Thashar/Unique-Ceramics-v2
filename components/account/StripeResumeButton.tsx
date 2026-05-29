@@ -34,7 +34,7 @@ export default function StripeResumeButton({ orderId }: { orderId: string }) {
       <button
         onClick={handleClick}
         disabled={loading}
-        className="w-full flex items-center justify-center gap-2 bg-terracotta hover:bg-clay disabled:opacity-60 text-warm-white text-xs tracking-widest uppercase py-3 transition-colors"
+        className="w-full flex items-center justify-center gap-2 bg-clay hover:bg-terracotta disabled:opacity-60 text-warm-white text-xs tracking-widest uppercase py-3 transition-colors"
       >
         <CreditCard size={14} strokeWidth={1.5} />
         {loading ? "Przekierowanie..." : "Dokończ płatność"}

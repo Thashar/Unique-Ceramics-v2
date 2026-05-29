@@ -77,7 +77,7 @@ export default function Hero({
           >
             <Link
               href="/sklep"
-              className="inline-flex items-center gap-3 bg-terracotta hover:bg-clay text-warm-white text-sm tracking-widest uppercase px-8 py-4 transition-colors duration-300"
+              className="inline-flex items-center gap-3 bg-clay hover:bg-terracotta text-warm-white text-sm tracking-widest uppercase px-8 py-4 transition-colors duration-300"
             >
               Odkryj kolekcję
               <ArrowRight size={16} strokeWidth={1.5} />

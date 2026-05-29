@@ -12,7 +12,7 @@ export default function ShopError({ error, reset }: { error: Error; reset: () =>
         <p className="text-charcoal/40 text-xs mb-8 font-mono break-all">{error.message}</p>
         <button
           onClick={reset}
-          className="bg-terracotta hover:bg-clay text-warm-white text-xs tracking-widest uppercase px-8 py-4 transition-colors"
+          className="bg-clay hover:bg-terracotta text-warm-white text-xs tracking-widest uppercase px-8 py-4 transition-colors"
         >
           Spróbuj ponownie
         </button>

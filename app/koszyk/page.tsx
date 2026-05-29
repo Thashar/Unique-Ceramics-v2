@@ -47,7 +47,7 @@ export default function CartPage() {
           <p className="text-charcoal/60 mb-10">Nie masz jeszcze nic w koszyku.</p>
           <Link
             href="/sklep"
-            className="inline-flex items-center gap-3 bg-terracotta hover:bg-clay text-warm-white text-sm tracking-widest uppercase px-8 py-4 transition-colors"
+            className="inline-flex items-center gap-3 bg-clay hover:bg-terracotta text-warm-white text-sm tracking-widest uppercase px-8 py-4 transition-colors"
           >
             Przejdź do sklepu
             <ArrowRight size={15} strokeWidth={1.5} />
@@ -153,7 +153,7 @@ export default function CartPage() {
             </div>
             <Link
               href="/zamowienie"
-              className="w-full flex items-center justify-center gap-3 bg-terracotta hover:bg-clay text-warm-white text-sm tracking-widest uppercase py-4 transition-colors"
+              className="w-full flex items-center justify-center gap-3 bg-clay hover:bg-terracotta text-warm-white text-sm tracking-widest uppercase py-4 transition-colors"
             >
               Zamów
               <ArrowRight size={15} strokeWidth={1.5} />

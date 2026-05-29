@@ -35,7 +35,7 @@ export default function CookieBanner() {
           </button>
           <button
             onClick={acceptAll}
-            className="text-xs tracking-widest uppercase px-5 py-2.5 bg-terracotta hover:bg-clay text-warm-white transition-colors"
+            className="text-xs tracking-widest uppercase px-5 py-2.5 bg-clay hover:bg-terracotta text-warm-white transition-colors"
           >
             Akceptuję wszystkie
           </button>

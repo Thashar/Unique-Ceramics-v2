@@ -84,7 +84,7 @@ export default function ProfilePage() {
           <button
             type="submit"
             disabled={savingName}
-            className="inline-flex items-center gap-2 bg-terracotta hover:bg-clay disabled:bg-sand text-warm-white text-xs tracking-widest uppercase px-6 py-3 transition-colors"
+            className="inline-flex items-center gap-2 bg-clay hover:bg-terracotta disabled:bg-sand text-warm-white text-xs tracking-widest uppercase px-6 py-3 transition-colors"
           >
             {nameSaved ? <><CheckCircle size={14} /> Zapisano</> : savingName ? "Zapisywanie..." : "Zapisz zmiany"}
           </button>
