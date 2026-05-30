@@ -8,6 +8,13 @@ const easeInOutSine = (t: number) => -(Math.cos(Math.PI * t) - 1) / 2;
 
 export default function HomeScrollSnap() {
   useEffect(() => {
+    // Wyłącz automatyczne przywracanie pozycji scrolla przez przeglądarkę —
+    // bez tego odświeżenie strony może przywrócić scroll do miejsca między
+    // sekcjami zanim IntersectionObserver zdąży wykryć właściwą sekcję,
+    // co powoduje że header błędnie pokazuje tło warm-white.
+    history.scrollRestoration = "manual";
+    window.scrollTo({ top: 0, behavior: "instant" });
+
     const html = document.documentElement;
     html.style.scrollBehavior = "auto";
 
@@ -182,6 +189,7 @@ export default function HomeScrollSnap() {
       document.removeEventListener("touchend", handleTouchEnd);
       window.removeEventListener("resize", handleResize);
       html.style.scrollBehavior = "";
+      history.scrollRestoration = "auto";
     };
   }, []);
 
