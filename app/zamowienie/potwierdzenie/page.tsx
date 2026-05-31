@@ -1,6 +1,13 @@
 export const dynamic = "force-dynamic";
 
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Potwierdzenie zamówienia",
+  description: "Dziękujemy za złożenie zamówienia w Unique Ceramics.",
+  robots: { index: false, follow: false },
+};
 import { CheckCircle } from "lucide-react";
 import { db } from "@/lib/db";
 import { getSettings } from "@/lib/settings";

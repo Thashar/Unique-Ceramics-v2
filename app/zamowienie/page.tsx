@@ -1,6 +1,13 @@
 export const dynamic = "force-dynamic";
 
+import type { Metadata } from "next";
 import { auth } from "@/auth";
+
+export const metadata: Metadata = {
+  title: "Zamówienie",
+  description: "Sfinalizuj swoje zamówienie w Unique Ceramics.",
+  robots: { index: false, follow: false },
+};
 import { db } from "@/lib/db";
 import { getSettings } from "@/lib/settings";
 import CheckoutForm from "./CheckoutForm";

@@ -1,9 +1,16 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { auth } from "@/auth";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import AccountNav from "@/components/account/AccountNav";
+
+export const metadata: Metadata = {
+  title: "Moje konto",
+  description: "Panel klienta Unique Ceramics — zamówienia, profil, adres dostawy.",
+  robots: { index: false, follow: false },
+};
 
 export default async function AccountLayout({
   children,
