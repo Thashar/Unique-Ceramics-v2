@@ -31,6 +31,11 @@ export const metadata: Metadata = {
   description:
     "Ręcznie robiona ceramika użytkowa i dekoracyjna. Kubki, filiżanki, miski i naczynia tworzone z pasją — każdy egzemplarz jest niepowtarzalny.",
   keywords: [
+    "ceramika Gliwice",
+    "ceramika ręcznie robiona Gliwice",
+    "pracownia ceramiczna Gliwice",
+    "ceramika Śląsk",
+    "ceramika artystyczna Śląsk",
     "ceramika ręcznie robiona",
     "ceramika artystyczna",
     "kubki ceramiczne",
@@ -38,7 +43,7 @@ export const metadata: Metadata = {
     "naczynia ceramiczne",
     "ceramika unikatowa",
     "handmade pottery",
-    "warsztaty ceramiczne",
+    "warsztaty ceramiczne Gliwice",
     "zamówienie indywidualne ceramika",
     "unique ceramics",
   ],
@@ -117,10 +122,15 @@ const localBusinessSchema = {
       closes: "17:00",
     },
   ],
-  areaServed: {
-    "@type": "Country",
-    name: "Polska",
-  },
+  areaServed: [
+    { "@type": "City", name: "Gliwice" },
+    { "@type": "City", name: "Zabrze" },
+    { "@type": "City", name: "Bytom" },
+    { "@type": "City", name: "Ruda Śląska" },
+    { "@type": "City", name: "Tychy" },
+    { "@type": "City", name: "Katowice" },
+    { "@type": "Country", name: "Polska" },
+  ],
   sameAs: ["https://www.instagram.com/unique.ceramics"],
   hasOfferCatalog: {
     "@type": "OfferCatalog",

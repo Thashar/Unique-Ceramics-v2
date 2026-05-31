@@ -11,7 +11,9 @@ import { sanitizeRichHtml } from "@/lib/sanitize-html";
 
 export const metadata: Metadata = {
   title: "O mnie",
-  description: "Poznaj historię Unique Ceramics — pracowni ceramicznej i pasji do gliny.",
+  description:
+    "Poznaj historię Unique Ceramics — pracowni ceramicznej z okolic Gliwic. Ręcznie robiona ceramika tworzona z pasji do gliny na Śląsku.",
+  alternates: { canonical: "https://uniqueceramics.pl/o-mnie" },
 };
 
 export default async function AboutPage() {
