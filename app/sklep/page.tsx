@@ -9,8 +9,24 @@ import ProductCard from "@/components/ui/ProductCard";
 export const revalidate = 60;
 
 export const metadata = {
-  title: "Sklep | Unique Ceramics",
-  description: "Ręcznie robiona ceramika użytkowa i dekoracyjna. Miski, kubki, talerze, wazony.",
+  title: "Sklep",
+  description:
+    "Ręcznie robiona ceramika użytkowa i dekoracyjna. Miski, kubki, talerze, wazony — każdy przedmiot tworzony jest ręcznie z lokalnej gliny.",
+  alternates: { canonical: "https://uniqueceramics.pl/sklep" },
+  openGraph: {
+    title: "Sklep — Unique Ceramics",
+    description:
+      "Ręcznie robiona ceramika użytkowa i dekoracyjna. Każdy przedmiot jest unikalny.",
+    url: "https://uniqueceramics.pl/sklep",
+    images: [
+      {
+        url: "/images/hero.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Ceramika ręcznie robiona — sklep Unique Ceramics",
+      },
+    ],
+  },
 };
 
 const CATEGORIES = [

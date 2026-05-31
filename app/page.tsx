@@ -1,5 +1,27 @@
-// Strona główna cachowana ISR — ustawienia zmieniają się rzadko
+import type { Metadata } from "next";
+
 export const revalidate = 3600;
+
+export const metadata: Metadata = {
+  title: "Unique Ceramics — Ceramika ręcznie robiona",
+  description:
+    "Ręcznie robiona ceramika użytkowa i dekoracyjna. Kubki, filiżanki, miski i naczynia tworzone z pasją — każdy egzemplarz jest niepowtarzalny.",
+  alternates: { canonical: "https://uniqueceramics.pl" },
+  openGraph: {
+    title: "Unique Ceramics — Ceramika ręcznie robiona",
+    description:
+      "Ręcznie robiona ceramika użytkowa i dekoracyjna. Każdy egzemplarz jest niepowtarzalny.",
+    url: "https://uniqueceramics.pl",
+    images: [
+      {
+        url: "/images/hero.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Unique Ceramics — ręcznie robiona ceramika",
+      },
+    ],
+  },
+};
 
 import Hero from "@/components/home/Hero";
 import FeaturedProducts from "@/components/home/FeaturedProducts";
