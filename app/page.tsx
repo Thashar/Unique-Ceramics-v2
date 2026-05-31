@@ -5,12 +5,12 @@ export const revalidate = 3600;
 export const metadata: Metadata = {
   title: "Unique Ceramics — Ceramika ręcznie robiona",
   description:
-    "Ręcznie robiona ceramika użytkowa i dekoracyjna. Kubki, filiżanki, miski i naczynia tworzone z pasją — każdy egzemplarz jest niepowtarzalny.",
+    "Pracownia ceramiczna z okolic Gliwic. Ręcznie robiona ceramika użytkowa i dekoracyjna — kubki, filiżanki, miski, naczynia. Każdy egzemplarz jest niepowtarzalny.",
   alternates: { canonical: "https://uniqueceramics.pl" },
   openGraph: {
     title: "Unique Ceramics — Ceramika ręcznie robiona",
     description:
-      "Ręcznie robiona ceramika użytkowa i dekoracyjna. Każdy egzemplarz jest niepowtarzalny.",
+      "Pracownia ceramiczna z okolic Gliwic. Ręcznie robiona ceramika użytkowa i dekoracyjna — każdy egzemplarz jest niepowtarzalny.",
     url: "https://uniqueceramics.pl",
     images: [
       {

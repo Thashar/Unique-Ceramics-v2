@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
-import { Phone, Mail, Clock } from "lucide-react";
+import { Phone, Mail, Clock, MapPin } from "lucide-react";
 import InstagramIcon from "@/components/ui/InstagramIcon";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -10,7 +10,9 @@ import ContactForm from "@/components/contact/ContactForm";
 
 export const metadata: Metadata = {
   title: "Kontakt",
-  description: "Skontaktuj się z Unique Ceramics. Telefon, e-mail, Instagram.",
+  description:
+    "Skontaktuj się z pracownią ceramiczną Unique Ceramics — Kleszczów, okolice Gliwic. Telefon, e-mail, Instagram.",
+  alternates: { canonical: "https://uniqueceramics.pl/kontakt" },
 };
 
 export default async function ContactPage() {
@@ -92,6 +94,19 @@ export default async function ContactPage() {
                     <p className="text-lg">{instagram}</p>
                   </div>
                 </a>
+
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 bg-cream rounded-full flex items-center justify-center flex-shrink-0">
+                    <MapPin size={18} strokeWidth={1.5} className="text-clay" />
+                  </div>
+                  <div>
+                    <p className="text-xs tracking-widest uppercase text-clay mb-1">Lokalizacja</p>
+                    <address className="not-italic text-charcoal/80 leading-relaxed text-sm">
+                      Kleszczów, okolice Gliwic<br />
+                      woj. śląskie
+                    </address>
+                  </div>
+                </div>
 
                 <div className="flex items-start gap-4">
                   <div className="w-10 h-10 bg-cream rounded-full flex items-center justify-center flex-shrink-0">
