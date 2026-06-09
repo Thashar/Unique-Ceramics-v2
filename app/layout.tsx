@@ -47,6 +47,14 @@ export const metadata: Metadata = {
     "zamówienie indywidualne ceramika",
     "unique ceramics",
   ],
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/icon.png", type: "image/png" },
+    ],
+    shortcut: "/icon.png",
+    apple: "/icon.png",
+  },
   authors: [{ name: "Unique Ceramics", url: BASE }],
   creator: "Unique Ceramics",
   publisher: "Unique Ceramics",

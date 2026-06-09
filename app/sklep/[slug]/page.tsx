@@ -90,11 +90,17 @@ export default async function ProductPage({
   const freeEnabled = shippingSettings.shipping_free_enabled === "true";
   const freeFrom = shippingSettings.shipping_free_from || "300";
 
+  const effectiveShipping =
+    freeEnabled && product.price >= parseFloat(freeFrom)
+      ? 0
+      : parseFloat(shippingCost);
+
   const productSchema = {
     "@context": "https://schema.org",
     "@type": "Product",
     name: product.name,
     description: product.description ?? undefined,
+    sku: product.id,
     image: product.images.map((img) =>
       img.startsWith("http") ? img : `${BASE}${img}`
     ),
@@ -108,7 +114,44 @@ export default async function ProductPage({
         product.stock > 0
           ? "https://schema.org/InStock"
           : "https://schema.org/OutOfStock",
+      itemCondition: "https://schema.org/NewCondition",
       seller: { "@type": "Organization", name: "Unique Ceramics" },
+      shippingDetails: {
+        "@type": "OfferShippingDetails",
+        shippingRate: {
+          "@type": "MonetaryAmount",
+          value: effectiveShipping,
+          currency: "PLN",
+        },
+        shippingDestination: {
+          "@type": "DefinedRegion",
+          addressCountry: "PL",
+        },
+        deliveryTime: {
+          "@type": "ShippingDeliveryTime",
+          handlingTime: {
+            "@type": "QuantitativeValue",
+            minValue: 0,
+            maxValue: 1,
+            unitCode: "DAY",
+          },
+          transitTime: {
+            "@type": "QuantitativeValue",
+            minValue: 2,
+            maxValue: 4,
+            unitCode: "DAY",
+          },
+        },
+      },
+      hasMerchantReturnPolicy: {
+        "@type": "MerchantReturnPolicy",
+        applicableCountry: "PL",
+        returnPolicyCategory:
+          "https://schema.org/MerchantReturnFiniteReturnWindow",
+        merchantReturnDays: 14,
+        returnMethod: "https://schema.org/ReturnByMail",
+        returnFees: "https://schema.org/FreeReturn",
+      },
     },
   };
 
