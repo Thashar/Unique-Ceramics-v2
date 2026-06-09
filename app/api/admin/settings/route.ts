@@ -1,6 +1,16 @@
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
+import { sanitizeRichHtml } from "@/lib/sanitize-html";
 import { NextResponse } from "next/server";
+
+// Klucze przechowujące HTML — sanityzowane już przy zapisie (defense in depth,
+// strony i tak sanityzują przy renderze)
+const HTML_KEYS = new Set([
+  "regulamin",
+  "polityka_prywatnosci",
+  "about_story",
+  "workshops_intro",
+]);
 
 async function checkAdmin() {
   const session = await auth();
@@ -12,13 +22,14 @@ async function checkAdmin() {
 
 async function saveSettings(body: { key: string; value: string }[]) {
   await Promise.all(
-    body.map(({ key, value }) =>
-      db.setting.upsert({
+    body.map(({ key, value }) => {
+      const safeValue = HTML_KEYS.has(key) ? sanitizeRichHtml(value) : value;
+      return db.setting.upsert({
         where: { key },
-        update: { value },
-        create: { key, value },
-      })
-    )
+        update: { value: safeValue },
+        create: { key, value: safeValue },
+      });
+    })
   );
 }
 
@@ -32,8 +43,8 @@ export async function PATCH(req: Request) {
     await saveSettings(body);
     return NextResponse.json({ ok: true });
   } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
-    return NextResponse.json({ ok: false, error: msg }, { status: 500 });
+    console.error("[admin/settings] save error:", e);
+    return NextResponse.json({ ok: false, error: "Błąd zapisu ustawień" }, { status: 500 });
   }
 }
 
@@ -47,7 +58,7 @@ export async function POST(req: Request) {
     await saveSettings(body);
     return NextResponse.json({ ok: true });
   } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
-    return NextResponse.json({ ok: false, error: msg }, { status: 500 });
+    console.error("[admin/settings] save error:", e);
+    return NextResponse.json({ ok: false, error: "Błąd zapisu ustawień" }, { status: 500 });
   }
 }

@@ -27,16 +27,19 @@ export async function PUT(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const address = await req.json();
+  const body = await req.json();
 
-  const validation = validateAddress({
-    firstName: address.firstName ?? "",
-    lastName:  address.lastName  ?? "",
-    phone:     address.phone,
-    street:    address.street    ?? "",
-    postcode:  address.postcode  ?? "",
-    city:      address.city      ?? "",
-  });
+  // Whitelist pól — do bazy trafiają wyłącznie zwalidowane dane
+  const address = {
+    firstName: String(body.firstName ?? "").trim(),
+    lastName:  String(body.lastName  ?? "").trim(),
+    phone:     body.phone ? String(body.phone).trim() : "",
+    street:    String(body.street    ?? "").trim(),
+    postcode:  String(body.postcode  ?? "").trim(),
+    city:      String(body.city      ?? "").trim(),
+  };
+
+  const validation = validateAddress(address);
   if (!validation.valid) {
     return NextResponse.json({ ok: false, errors: validation.errors }, { status: 400 });
   }
@@ -51,7 +54,7 @@ export async function PUT(req: Request) {
     });
     return NextResponse.json({ ok: true });
   } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
-    return NextResponse.json({ ok: false, error: msg }, { status: 500 });
+    console.error("[account/address] save error:", e);
+    return NextResponse.json({ ok: false, error: "Błąd zapisu adresu" }, { status: 500 });
   }
 }

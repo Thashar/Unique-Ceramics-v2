@@ -21,15 +21,27 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Brak wymaganych pól" }, { status: 400 });
     }
 
+    if (
+      typeof customerEmail !== "string" ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail) ||
+      customerEmail.length > 254
+    ) {
+      return NextResponse.json({ error: "Nieprawidłowy adres e-mail" }, { status: 400 });
+    }
+
+    if (String(customerName).length > 100 || String(description).length > 5000) {
+      return NextResponse.json({ error: "Treść formularza jest za długa" }, { status: 400 });
+    }
+
     await db.customOrder.create({
       data: {
-        customerName,
-        customerEmail,
-        customerPhone: customerPhone || null,
-        orderType,
-        description,
-        deadline: deadline || null,
-        budget: budget || null,
+        customerName: String(customerName).trim().slice(0, 100),
+        customerEmail: customerEmail.trim(),
+        customerPhone: customerPhone ? String(customerPhone).trim().slice(0, 20) : null,
+        orderType: String(orderType).slice(0, 50),
+        description: String(description).trim().slice(0, 5000),
+        deadline: deadline ? String(deadline).slice(0, 100) : null,
+        budget: budget ? String(budget).slice(0, 100) : null,
       },
     });
 
