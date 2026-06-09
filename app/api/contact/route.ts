@@ -11,6 +11,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Brak wymaganych pól" }, { status: 400 });
   }
 
+  if (
+    typeof email !== "string" ||
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ||
+    email.length > 254
+  ) {
+    return NextResponse.json({ error: "Nieprawidłowy adres e-mail" }, { status: 400 });
+  }
+
+  if (String(message).length > 10_000 || String(subject ?? "").length > 200) {
+    return NextResponse.json({ error: "Wiadomość jest za długa" }, { status: 400 });
+  }
+
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
     return NextResponse.json({ error: "Brak konfiguracji email" }, { status: 500 });
