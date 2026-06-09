@@ -25,7 +25,7 @@ const BASE = "https://uniqueceramics.pl";
 export const metadata: Metadata = {
   metadataBase: new URL(BASE),
   title: {
-    default: "Unique Ceramics — Ceramika ręcznie robiona | Gliwice",
+    default: "Unique Ceramics — Ceramika Gliwice | ręcznie robiona",
     template: "%s | Unique Ceramics",
   },
   description:
@@ -56,7 +56,7 @@ export const metadata: Metadata = {
     locale: "pl_PL",
     type: "website",
     url: BASE,
-    title: "Unique Ceramics — Ceramika ręcznie robiona | Gliwice",
+    title: "Unique Ceramics — Ceramika Gliwice | ręcznie robiona",
     description:
       "Ceramika użytkowa ręcznie robiona w Gliwicach — kubki, filiżanki, miski i naczynia. Każdy egzemplarz jest niepowtarzalny. Zamów z dostawą w całej Polsce.",
     images: [
@@ -70,7 +70,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Unique Ceramics — Ceramika ręcznie robiona | Gliwice",
+    title: "Unique Ceramics — Ceramika Gliwice | ręcznie robiona",
     description:
       "Ceramika użytkowa ręcznie robiona w Gliwicach. Kubki, filiżanki, miski i naczynia — każdy egzemplarz niepowtarzalny.",
     images: ["/images/hero.jpg"],
