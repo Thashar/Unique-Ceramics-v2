@@ -1,19 +1,15 @@
 "use client";
 
 import { SessionProvider } from "next-auth/react";
-import { CartProvider } from "@/lib/cart";
-import { CookieConsentProvider } from "@/lib/cookie-consent";
 import CookieBanner from "@/components/layout/CookieBanner";
 
+// Koszyk i zgoda na cookies to store'y modułowe (useSyncExternalStore) —
+// nie potrzebują providerów
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>
-      <CookieConsentProvider>
-        <CartProvider>
-          {children}
-          <CookieBanner />
-        </CartProvider>
-      </CookieConsentProvider>
+      {children}
+      <CookieBanner />
     </SessionProvider>
   );
 }

@@ -2,13 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Eye, EyeOff } from "lucide-react";
 
 export default function RegisterPage() {
-  const router = useRouter();
-
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

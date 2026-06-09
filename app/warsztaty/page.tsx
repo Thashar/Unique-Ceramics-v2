@@ -1,4 +1,5 @@
-export const dynamic = "force-dynamic";
+// Treść zmienia się rzadko — ISR; zapis ustawień w adminie odświeża cache
+export const revalidate = 300;
 
 import type { Metadata } from "next";
 import Image from "next/image";

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { db } from "@/lib/db";
+import { revalidateProductPages } from "@/lib/products";
 
 export async function POST(req: Request) {
   const stripeKey = process.env.STRIPE_SECRET_KEY;
@@ -28,11 +29,37 @@ export async function POST(req: Request) {
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
     const orderId = session.metadata?.orderId;
-    if (orderId) {
+    // completed nie zawsze oznacza opłacone (asynchroniczne metody płatności)
+    if (orderId && session.payment_status === "paid") {
       await db.order.update({
         where: { id: orderId },
         data: { paymentStatus: "PAID" },
       });
+    }
+  }
+
+  // Porzucona płatność — sesja Stripe wygasa po 24h. Anuluj zamówienie
+  // i zwróć zarezerwowany stan magazynowy (raz — updateMany jest idempotentne).
+  if (event.type === "checkout.session.expired") {
+    const session = event.data.object as Stripe.Checkout.Session;
+    const orderId = session.metadata?.orderId;
+    if (orderId) {
+      const cancelled = await db.order.updateMany({
+        where: { id: orderId, paymentMethod: "stripe", paymentStatus: { not: "PAID" }, status: "PENDING" },
+        data: { status: "CANCELLED", paymentStatus: "expired" },
+      });
+      if (cancelled.count === 1) {
+        const items = await db.orderItem.findMany({ where: { orderId } });
+        for (const item of items) {
+          await db.product.update({
+            where: { id: item.productId },
+            data: { stock: { increment: item.quantity } },
+          }).catch(() => {
+            // Produkt mógł zostać usunięty — nie blokuj webhooka
+          });
+        }
+        revalidateProductPages();
+      }
     }
   }
 

@@ -191,7 +191,13 @@ export async function POST(req: Request) {
   }
 
   const session = await auth();
-  const body = await req.json();
+
+  let body;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Nieprawidłowe dane żądania" }, { status: 400 });
+  }
 
   const {
     firstName,
@@ -271,53 +277,75 @@ export async function POST(req: Request) {
   const freeEnabled = shippingSettings.shipping_free_enabled === "true";
   const freeFrom = Number(shippingSettings.shipping_free_from) || 300;
 
-  const subtotal = (items as { productId: string; quantity: number }[]).reduce((sum, item) => {
-    return sum + productMap.get(item.productId)!.price * item.quantity;
-  }, 0);
+  // Kwoty zaokrąglane do groszy — unikamy artefaktów arytmetyki float
+  const subtotal = Math.round(
+    (items as { productId: string; quantity: number }[]).reduce((sum, item) => {
+      return sum + productMap.get(item.productId)!.price * item.quantity;
+    }, 0) * 100
+  ) / 100;
 
   const shippingCost = freeEnabled && subtotal >= freeFrom ? 0 : shippingCostSetting;
-  const total = subtotal + shippingCost;
+  const total = Math.round((subtotal + shippingCost) * 100) / 100;
 
   const typedItems = items as { productId: string; quantity: number }[];
 
-  const order = await db.order.create({
-    data: {
-      userId: session?.user?.id ?? null,
-      firstName: firstName.trim(),
-      lastName: lastName.trim(),
-      email: email.trim(),
-      phone: phone?.trim() || null,
-      street: street.trim(),
-      city: city.trim(),
-      postcode: postcode.trim(),
-      country: "PL",
-      note: note?.trim() || null,
-      paymentMethod,
-      shippingCost,
-      total,
-      items: {
-        create: typedItems.map((item) => {
-          const product = productMap.get(item.productId)!;
-          return {
-            productId: item.productId,
-            name: product.name,
-            price: product.price,
-            quantity: item.quantity,
-          };
-        }),
-      },
-    },
-  });
+  // Atomowo: dekrementacja magazynu + utworzenie zamówienia.
+  // Warunek stock >= quantity wykrywa wyścig równoległych zakupów —
+  // przy braku stanu cała transakcja jest wycofywana.
+  const OUT_OF_STOCK = "OUT_OF_STOCK";
+  let order;
+  try {
+    order = await db.$transaction(async (tx) => {
+      for (const item of typedItems) {
+        const updated = await tx.product.updateMany({
+          where: { id: item.productId, stock: { gte: item.quantity } },
+          data: { stock: { decrement: item.quantity } },
+        });
+        if (updated.count === 0) {
+          throw new Error(`${OUT_OF_STOCK}:${productMap.get(item.productId)!.name}`);
+        }
+      }
 
-  // Dekrementuj stan magazynu — warunek stock >= quantity zapobiega wartościom ujemnym
-  await Promise.all(
-    typedItems.map((item) =>
-      db.product.updateMany({
-        where: { id: item.productId, stock: { gte: item.quantity } },
-        data: { stock: { decrement: item.quantity } },
-      })
-    )
-  );
+      return tx.order.create({
+        data: {
+          userId: session?.user?.id ?? null,
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+          email: email.trim(),
+          phone: phone?.trim() || null,
+          street: street.trim(),
+          city: city.trim(),
+          postcode: postcode.trim(),
+          country: "PL",
+          note: note?.trim() || null,
+          paymentMethod,
+          shippingCost,
+          total,
+          items: {
+            create: typedItems.map((item) => {
+              const product = productMap.get(item.productId)!;
+              return {
+                productId: item.productId,
+                name: product.name,
+                price: product.price,
+                quantity: item.quantity,
+              };
+            }),
+          },
+        },
+      });
+    });
+  } catch (e) {
+    if (e instanceof Error && e.message.startsWith(OUT_OF_STOCK)) {
+      const name = e.message.slice(OUT_OF_STOCK.length + 1);
+      return NextResponse.json(
+        { error: `Niewystarczający stan magazynowy dla: ${name}` },
+        { status: 409 }
+      );
+    }
+    console.error("[checkout] order create error:", e);
+    return NextResponse.json({ error: "Błąd tworzenia zamówienia" }, { status: 500 });
+  }
 
   // Powiadomienie dla właściciela sklepu — używamy zweryfikowanych danych z serwera
   const orderNumber = order.id.slice(-8).toUpperCase();

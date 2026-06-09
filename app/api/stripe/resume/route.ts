@@ -28,6 +28,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Zamówienie jest już opłacone" }, { status: 400 });
   }
 
+  // Zamówienie anulowane (np. wygasła sesja Stripe) — stan magazynowy został
+  // już zwrócony, wznowienie płatności mogłoby sprzedać niedostępny towar
+  if (order.status === "CANCELLED") {
+    return NextResponse.json(
+      { error: "Zamówienie zostało anulowane. Złóż je ponownie." },
+      { status: 400 }
+    );
+  }
+
   const stripeKey = process.env.STRIPE_SECRET_KEY;
   if (!stripeKey) {
     return NextResponse.json({ error: "Stripe nie jest skonfigurowany" }, { status: 500 });

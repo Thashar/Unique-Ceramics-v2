@@ -48,9 +48,11 @@ export default function ProductCarousel({ products }: { products: Product[] }) {
 
     isAnimating.current = true;
     setCurrent(clamped);
-    const t0 = performance.now();
+    // Czas startu z timestampu rAF — bez wywołań performance.now() w ciele komponentu
+    let t0: number | null = null;
 
     function step(now: number) {
+      if (t0 === null) t0 = now;
       const t = Math.min((now - t0) / DURATION, 1);
       applyTranslate(start + dist * easeInOutSine(t));
       if (t < 1) requestAnimationFrame(step);
@@ -61,7 +63,6 @@ export default function ProductCarousel({ products }: { products: Product[] }) {
 
   useEffect(() => {
     applyTranslate(targetOffset(0));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function onTouchStart(e: React.TouchEvent) {

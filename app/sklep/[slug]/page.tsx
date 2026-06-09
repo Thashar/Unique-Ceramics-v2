@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cache } from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -7,13 +8,25 @@ import { db } from "@/lib/db";
 import { getSettings } from "@/lib/settings";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
-import ProductCard from "@/components/ui/ProductCard";
 import ProductGallery from "./ProductGallery";
 import AddToCartSection from "./AddToCartSection";
 
-export const dynamic = "force-dynamic";
+// ISR: strona produktu cachowana 60 s (checkout i tak weryfikuje stan
+// magazynowy po stronie serwera); mutacje w adminie odświeżają cache.
+// Pusta lista paramów = strony generowane na żądanie przy pierwszym wejściu —
+// bez generateStaticParams trasa byłaby w pełni dynamiczna (bez cache)
+export const revalidate = 60;
+
+export async function generateStaticParams() {
+  return [];
+}
 
 const BASE = "https://uniqueceramics.pl";
+
+// React.cache() deduplikuje zapytanie między generateMetadata a stroną
+const getProduct = cache((slug: string) =>
+  db.product.findUnique({ where: { slug, active: true } })
+);
 
 // ─── Metadata dynamiczne per produkt ─────────────────────────────────────────
 
@@ -23,10 +36,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const product = await db.product.findUnique({
-    where: { slug },
-    select: { name: true, description: true, images: true, price: true, slug: true },
-  });
+  const product = await getProduct(slug);
   if (!product) return {};
 
   const image = product.images[0]
@@ -69,7 +79,7 @@ export default async function ProductPage({
   const { slug } = await params;
 
   const [product, shippingSettings] = await Promise.all([
-    db.product.findUnique({ where: { slug, active: true } }),
+    getProduct(slug),
     getSettings(["shipping_cost", "shipping_free_enabled", "shipping_free_from"]),
   ]);
 

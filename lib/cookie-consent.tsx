@@ -1,50 +1,62 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
 type ConsentLevel = "all" | "necessary" | null;
 
 const KEY = "uc-cookie-consent";
 
-const CookieConsentContext = createContext<{
-  consent: ConsentLevel;
-  hydrated: boolean;
-  acceptAll: () => void;
-  acceptNecessary: () => void;
-}>({
-  consent: null,
-  hydrated: false,
-  acceptAll: () => {},
-  acceptNecessary: () => {},
-});
+// Moduł działa jako zewnętrzny store (localStorage) — czytany przez
+// useSyncExternalStore, dzięki czemu nie potrzebujemy setState w efektach
+let cached: ConsentLevel | undefined;
+const listeners = new Set<() => void>();
 
-export function CookieConsentProvider({ children }: { children: React.ReactNode }) {
-  const [consent, setConsent] = useState<ConsentLevel>(null);
-  const [hydrated, setHydrated] = useState(false);
-
-  useEffect(() => {
+function readConsent(): ConsentLevel {
+  try {
     const stored = localStorage.getItem(KEY);
-    if (stored === "all" || stored === "necessary") setConsent(stored);
-    setHydrated(true);
-  }, []);
-
-  function acceptAll() {
-    localStorage.setItem(KEY, "all");
-    setConsent("all");
+    return stored === "all" || stored === "necessary" ? stored : null;
+  } catch {
+    return null;
   }
+}
 
-  function acceptNecessary() {
-    localStorage.setItem(KEY, "necessary");
-    setConsent("necessary");
-  }
+function getSnapshot(): ConsentLevel {
+  if (cached === undefined) cached = readConsent();
+  return cached;
+}
 
-  return (
-    <CookieConsentContext.Provider value={{ consent, hydrated, acceptAll, acceptNecessary }}>
-      {children}
-    </CookieConsentContext.Provider>
-  );
+function getServerSnapshot(): ConsentLevel {
+  return null;
+}
+
+function subscribe(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
+function setConsent(level: "all" | "necessary") {
+  try {
+    localStorage.setItem(KEY, level);
+  } catch {}
+  cached = level;
+  listeners.forEach((l) => l());
+}
+
+export function acceptAll() {
+  setConsent("all");
+}
+
+export function acceptNecessary() {
+  setConsent("necessary");
 }
 
 export function useCookieConsent() {
-  return useContext(CookieConsentContext);
+  const consent = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  // false podczas SSR/hydratacji, true po stronie klienta — bez setState w efekcie
+  const hydrated = useSyncExternalStore(
+    subscribe,
+    () => true,
+    () => false
+  );
+  return { consent, hydrated, acceptAll, acceptNecessary };
 }
