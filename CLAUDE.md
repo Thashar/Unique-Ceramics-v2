@@ -2,7 +2,7 @@
 
 > **Język pracy:** Zawsze odpowiadaj i pisz komentarze po polsku.
 
-> **Aktualizacja tego pliku:** Po każdej modyfikacji kodu (dodanie strony, API route, komponentu, ustawienia, modelu Prisma, zmiennej .env) zaktualizuj odpowiednią sekcję w tym pliku i zacommituj razem ze zmianami.
+> ⚠️ **OBOWIĄZKOWA aktualizacja tego pliku:** Po **każdej** modyfikacji kodu (dodanie/zmiana strony, API route, komponentu, ustawienia, modelu Prisma, zmiennej .env, zależności, konfiguracji) **musisz** zaktualizować odpowiednią sekcję tego pliku i zacommitować go razem ze zmianami. To nie jest opcjonalne — nieaktualny CLAUDE.md wprowadza w błąd przy kolejnych pracach.
 
 ---
 
@@ -10,10 +10,13 @@
 
 Po każdej modyfikacji plików:
 1. `git add` — stage zmienionych plików
-2. `git commit` — zwięzły opis po polsku
-3. `git push origin main`
+2. **Zaktualizuj CLAUDE.md**, jeśli zmiana czegokolwiek dotyczy (patrz wyżej)
+3. `git commit` — zwięzły opis po polsku
+4. `git push origin main`
 
 Repo: https://github.com/Thashar/Unique-Ceramics-v2
+
+CI (`.github/workflows/ci.yml`): TypeScript (`tsc --noEmit`) + ESLint + build produkcyjny przy każdym pushu i PR.
 
 ---
 
@@ -21,17 +24,19 @@ Repo: https://github.com/Thashar/Unique-Ceramics-v2
 
 | Warstwa | Technologia |
 |---------|-------------|
-| Framework | Next.js 15 (App Router, React 19) |
+| Framework | Next.js 16 (App Router, React 19) — **uwaga:** API różni się od Next 15; dokumentacja w `node_modules/next/dist/docs/` |
 | Język | TypeScript 5 |
 | Style | Tailwind CSS 4 (custom theme) |
 | Animacje | Framer Motion 12 |
 | Ikony | Lucide React |
-| Auth | NextAuth v5 (beta.31) + @auth/prisma-adapter |
+| Edytor HTML (admin) | Jodit 3 (paczka npm, import dynamiczny — NIE z CDN) |
+| Auth | NextAuth v5 (beta) + @auth/prisma-adapter |
 | ORM | Prisma 5 |
 | Baza danych | PostgreSQL — Supabase (Transaction Pooler) |
 | Storage | Supabase Storage (zdjęcia produktów) |
 | Email | Resend (`RESEND_API_KEY`) |
-| Hasła | bcryptjs |
+| Płatności online | Stripe (Checkout + webhook) |
+| Hasła | bcryptjs (koszt 12) |
 
 ---
 
@@ -46,11 +51,14 @@ AUTH_GOOGLE_ID="xxxx.apps.googleusercontent.com"
 AUTH_GOOGLE_SECRET="GOCSPX-xxxx"
 RESEND_API_KEY="re_xxxx"
 RESEND_FROM_EMAIL="Unique Ceramics <kontakt@uniqueceramics.pl>"
-NEXT_PUBLIC_SUPABASE_URL="https://xxxx.supabase.co"
-NEXT_PUBLIC_SUPABASE_ANON_KEY="xxxx"
+SUPABASE_URL="https://xxxx.supabase.co"
+SUPABASE_SERVICE_ROLE_KEY="xxxx"            # upload zdjęć (tylko serwer!)
+STRIPE_SECRET_KEY="sk_live_xxxx"            # płatności kartą
+STRIPE_WEBHOOK_SECRET="whsec_xxxx"          # weryfikacja webhooków Stripe
+CRON_SECRET="min-32-znaki"                  # autoryzacja /api/ping (cron Vercel)
 ```
 
-> `DATABASE_URL` używa pgbouncer (Transaction Pooler). `DIRECT_URL` wymagany przez Prisma do migracji.
+> `DATABASE_URL` używa pgbouncer (Transaction Pooler). `DIRECT_URL` wymagany przez Prisma do migracji. `SUPABASE_SERVICE_ROLE_KEY` nigdy nie może trafić do klienta.
 
 ---
 
@@ -62,26 +70,31 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY="xxxx"
 
 ### Sklep
 - **Product** — `id`, `slug` (unique), `name`, `description`, `price`, `images[]`, `category`, `stock`, `featured`, `active`
-- **Order** — `id`, `userId` (nullable), `status`, `total`, `shippingCost`, pola adresowe, `paymentMethod`, `paymentStatus`
+- **Order** — `id`, `userId` (nullable), `status`, `total`, `shippingCost`, pola adresowe, `paymentMethod` (`transfer`/`stripe`), `paymentStatus` (`pending`/`PAID`/`expired`)
 - **OrderItem** — referencja do Order, `productId`, `name`, `price`, `quantity`
 - **CustomOrder** — `id`, `customerName`, `customerEmail`, `customerPhone`, `orderType`, `description`, `deadline`, `budget`, `status`, `adminNotes`
-- **Setting** — `key` (unique), `value` — magazyn key-value dla dynamicznych ustawień
+- **Setting** — `key` (unique), `value` — magazyn key-value dla dynamicznych ustawień (także adresy użytkowników: `user_address_{userId}`)
 
 ### Enumy
 - `Role`: USER, ADMIN
 - `OrderStatus`: PENDING, CONFIRMED, IN_PROGRESS, SHIPPED, DELIVERED, CANCELLED
 - `CustomOrderStatus`: NEW, IN_REVIEW, DONE, CANCELLED
 
+> Kwoty (`price`, `total`, `shippingCost`) są typu `Float` — przy obliczeniach **zawsze zaokrąglaj do groszy** (`Math.round(x * 100) / 100`). Docelowo do migracji na `Decimal`.
+
 ---
 
 ## Ustawienia dynamiczne (`lib/settings.ts`)
 
-Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB lub DEFAULT.
+Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB lub DEFAULT (z retry; przy niedostępnej bazie zwracają defaulty — dzięki temu build działa bez DB).
 
 | Klucz | Opis |
 |-------|------|
 | `regulamin` | HTML treści regulaminu |
 | `polityka_prywatnosci` | HTML polityki prywatności |
+| `home_hero_image` / `home_hero_position` | Zdjęcie + pozycja hero na stronie głównej |
+| `home_about_image` / `home_about_position` | Zdjęcie + pozycja sekcji „O mnie" na stronie głównej |
+| `home_workshops_image` / `home_workshops_position` | Zdjęcie + pozycja sekcji warsztatów na stronie głównej |
 | `about_hero_image` | Ścieżka do zdjęcia hero na /o-mnie |
 | `about_story` | HTML treści strony o mnie |
 | `workshops_hero_image` | Ścieżka do zdjęcia hero na /warsztaty |
@@ -89,6 +102,7 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 | `contact_phone` | Numer telefonu (default: +48 668 443 706) |
 | `contact_email` | E-mail (default: kontakt@uniqueceramics.pl) |
 | `contact_instagram` | Handle Instagram (default: @unique.ceramics) |
+| `contact_hours` | Godziny otwarcia (default: Pon–Pt 9:00–17:00) |
 | `shipping_cost` | Koszt wysyłki w zł (default: 18) |
 | `shipping_free_enabled` | "true"/"false" — czy jest darmowa wysyłka |
 | `shipping_free_from` | Kwota progu darmowej wysyłki (default: 300) |
@@ -97,116 +111,124 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 | `payment_bank_name` | Nazwa banku |
 | `payment_bank_transfer_title` | Prefiks tytułu przelewu (default: Zamówienie) |
 | `payment_blik_enabled` | "true"/"false" |
-| `payment_blik_phone` | Numer do BLIK |
-| `payment_przelewy24_enabled` | "true"/"false" |
-| `payment_przelewy24_merchant_id` | Merchant ID |
-| `payment_przelewy24_pos_id` | POS ID |
-| `payment_przelewy24_api_key` | API Key |
-| `payment_przelewy24_crc` | CRC |
-| `payment_payu_enabled` | "true"/"false" |
-| `payment_payu_pos_id` | POS ID |
-| `payment_payu_md5` | MD5 key |
-| `payment_payu_oauth_client_id` | OAuth Client ID |
-| `payment_payu_oauth_client_secret` | OAuth Client Secret |
-| `payment_payu_sandbox` | "true"/"false" |
+| `payment_blik_phone` | Numer do przelewu BLIK na telefon |
+| `payment_stripe_enabled` | "true"/"false" — płatność kartą przez Stripe |
 
 ---
 
 ## Struktura `app/` — strony i API
 
 ### Strony publiczne
-| Route | Plik | Opis |
-|-------|------|------|
-| `/` | `app/page.tsx` | Strona główna |
-| `/sklep` | `app/sklep/page.tsx` | Katalog produktów |
-| `/sklep/[slug]` | `app/sklep/[slug]/page.tsx` | Szczegóły produktu (**"use client"**) |
-| `/koszyk` | `app/koszyk/page.tsx` | Koszyk |
-| `/zamowienie` | `app/zamowienie/page.tsx` | Formularz zamówienia (server) → `CheckoutForm` (client) |
-| `/zamowienie/potwierdzenie` | `app/zamowienie/potwierdzenie/page.tsx` | Potwierdzenie + dane do przelewu |
-| `/zamowienie-indywidualne` | `app/zamowienie-indywidualne/page.tsx` | Zamówienie na miarę |
-| `/logowanie` | `app/logowanie/page.tsx` | Strona logowania |
-| `/rejestracja` | `app/rejestracja/page.tsx` | Rejestracja |
-| `/o-mnie` | `app/o-mnie/page.tsx` | O twórczyni |
-| `/warsztaty` | `app/warsztaty/page.tsx` | Warsztaty ceramiczne |
-| `/kontakt` | `app/kontakt/page.tsx` | Kontakt |
-| `/regulamin` | `app/regulamin/page.tsx` | Regulamin |
-| `/polityka-prywatnosci` | `app/polityka-prywatnosci/page.tsx` | Polityka prywatności |
+| Route | Cache | Opis |
+|-------|-------|------|
+| `/` | ISR 3600 s | Strona główna (scroll-snap, hero, wybrane prace, stopka z IG) |
+| `/sklep` | dynamic + dane z cache 60 s | Katalog produktów (searchParams `kategoria`) |
+| `/sklep/[slug]` | ISR 60 s (on-demand) | Szczegóły produktu (**server component**, JSON-LD Product) |
+| `/koszyk` | static (client) | Koszyk |
+| `/zamowienie` | force-dynamic | Formularz zamówienia (server) → `CheckoutForm` (client) |
+| `/zamowienie/potwierdzenie` | force-dynamic | Potwierdzenie + dane do przelewu |
+| `/zamowienie-indywidualne` | static (client) | Zamówienie na miarę |
+| `/logowanie`, `/rejestracja` | static (client) | Auth |
+| `/o-mnie`, `/warsztaty`, `/kontakt`, `/regulamin`, `/polityka-prywatnosci` | ISR 300 s | Strony treściowe (treść z ustawień; zapis w adminie robi `revalidatePath`) |
 
-### Strony chronione — konto klienta (`/konto`)
+### Strony chronione — konto klienta (`/konto`) — wymaga sesji (middleware + layout)
 | Route | Opis |
 |-------|------|
 | `/konto` | Dashboard klienta |
 | `/konto/profil` | Edycja imienia i hasła |
 | `/konto/adres` | Adres dostawy (auto-uzupełnia checkout) |
 | `/konto/zamowienia` | Historia zamówień |
-| `/konto/zamowienia/[id]` | Szczegóły zamówienia |
+| `/konto/zamowienia/[id]` | Szczegóły zamówienia (weryfikacja własności) + wznowienie płatności Stripe |
 
-### Panel admina (`/admin`) — wymaga roli ADMIN
+### Panel admina (`/admin`) — rola ADMIN weryfikowana w DB (`lib/admin-auth.ts`)
 | Route | Opis |
 |-------|------|
 | `/admin` | Dashboard ze statystykami |
-| `/admin/produkty` | Lista produktów |
-| `/admin/produkty/nowy` | Dodaj produkt |
-| `/admin/produkty/[id]` | Edytuj produkt |
-| `/admin/zamowienia` | Lista zamówień |
-| `/admin/zamowienia/[id]` | Szczegóły zamówienia |
-| `/admin/zamowienia-indywidualne` | Lista zamówień indywidualnych |
-| `/admin/zamowienia-indywidualne/[id]` | Szczegóły zamówienia indywidualnego |
-| `/admin/ustawienia` | Ustawienia sklepu (kontakt, wysyłka, płatności, treści) |
+| `/admin/produkty`, `/admin/produkty/nowy`, `/admin/produkty/[id]` | Zarządzanie produktami |
+| `/admin/zamowienia`, `/admin/zamowienia/[id]` | Zamówienia sklepowe |
+| `/admin/zamowienia-indywidualne`, `/admin/zamowienia-indywidualne/[id]` | Zamówienia indywidualne |
+| `/admin/ustawienia` | Ustawienia sklepu (strona główna, o mnie, warsztaty, regulamin, polityka, kontakt, wysyłka, płatności) |
 
 ### API Routes
 | Metoda | Endpoint | Opis |
 |--------|----------|------|
 | GET | `/api/products` | Lista produktów (query: `kategoria`, `exclude`) |
-| GET | `/api/products/[slug]` | Szczegóły produktu |
+| GET | `/api/products/[slug]` | Szczegóły produktu (tylko `active: true`) |
 | GET | `/api/public/contacts` | Dane kontaktowe (phone, email, instagram) |
-| POST | `/api/register` | Rejestracja użytkownika |
-| POST | `/api/checkout` | Utwórz zamówienie + wyślij email (Resend) |
-| POST | `/api/custom-order` | Zamówienie indywidualne |
-| POST | `/api/account/update-name` | Zmiana imienia |
-| POST | `/api/account/change-password` | Zmiana hasła |
+| GET | `/api/public/shipping` | Ustawienia wysyłki (cost, freeEnabled, freeFrom) |
+| POST | `/api/register` | Rejestracja (rate limit, hasło 8–128 znaków) |
+| POST | `/api/checkout` | Zamówienie: walidacja, kwoty serwerowo, **transakcja stock+order**, e-mail / sesja Stripe |
+| POST | `/api/contact` | Formularz kontaktowy → e-mail Resend (rate limit) |
+| POST | `/api/custom-order` | Zamówienie indywidualne (rate limit) |
+| POST | `/api/stripe/resume` | Wznowienie nieopłaconej płatności Stripe (własność + blokada CANCELLED) |
+| POST | `/api/stripe/webhook` | Webhook Stripe: `completed`→PAID (gdy `payment_status=paid`), `expired`→anulacja + zwrot stocku |
+| POST | `/api/account/update-name` | Zmiana imienia (maks. 100 znaków) |
+| PATCH | `/api/account/change-password` | Zmiana hasła (rate limit 5/15 min, 8–128 znaków) |
 | GET/PUT | `/api/account/address` | Pobierz/zapisz adres dostawy (Setting: `user_address_{userId}`) |
-| GET/POST | `/api/admin/products` | Lista/dodaj produkty (ADMIN) |
-| PATCH/DELETE | `/api/admin/products/[id]` | Edytuj/usuń produkt (ADMIN) |
-| PATCH | `/api/admin/orders/[id]` | Zmień status zamówienia (ADMIN) |
-| POST | `/api/admin/upload` | Upload zdjęcia do Supabase Storage (ADMIN) |
-| PATCH/DELETE | `/api/admin/custom-orders/[id]` | Zarządzaj zamówieniem indywidualnym (ADMIN) |
-| GET/PATCH | `/api/admin/settings` | Ustawienia sklepu (ADMIN) |
-| GET/PATCH | `/api/admin/settings/[key]` | Pojedyncze ustawienie (ADMIN) |
-| GET | `/api/ping` | Health check |
+| GET/POST | `/api/admin/products` | Lista/dodaj produkty (ADMIN; mutacje → `revalidateProductPages()`) |
+| PUT/DELETE | `/api/admin/products/[id]` | Edytuj/usuń produkt (ADMIN; mutacje → rewalidacja) |
+| PATCH | `/api/admin/orders/[id]` | Zmień status zamówienia (ADMIN, walidacja enuma) |
+| PATCH | `/api/admin/custom-orders/[id]` | Status/notatki zamówienia indywidualnego (ADMIN, walidacja enuma) |
+| POST | `/api/admin/upload` | Upload zdjęcia do Supabase Storage (ADMIN, magic bytes, maks. 10 MB) |
+| PATCH/POST | `/api/admin/settings` | Zapis ustawień (ADMIN; sanityzacja HTML + `revalidatePath("/", "layout")`) |
+| GET | `/api/admin/settings/[key]` | Pojedyncze ustawienie (ADMIN) |
+| GET | `/api/ping` | Health check (wymaga `Authorization: Bearer CRON_SECRET`; cron Vercel 8:00) |
 
 ---
+
+## Biblioteki pomocnicze (`lib/`)
+
+- **db.ts** — singleton PrismaClient (`connection_limit=1` pod serverless)
+- **settings.ts** — `getSetting`/`getSettings` z defaultami i retry
+- **products.ts** — `getShopProducts()` (unstable_cache 60 s, tag `products`) + `revalidateProductPages()`
+- **admin-auth.ts** — `requireAdmin()`: sesja + **aktualna rola z DB** (nie z JWT — odebranie uprawnień działa natychmiast)
+- **rate-limit.ts** — in-memory limiter (`isRateLimited`, `getClientIp`); per-instancja na serverless
+- **sanitize-html.ts** — `sanitizeRichHtml()` z allowlistą tagów/atrybutów
+- **address-validation.ts** — wspólna walidacja adresu (klient + serwer)
+- **cart.tsx** — koszyk jako **store modułowy** (`useSyncExternalStore` + localStorage); hook `useCart()`, bez providera
+- **cookie-consent.tsx** — zgoda na cookies jako store modułowy; hook `useCookieConsent()`, bez providera
 
 ## Komponenty (`components/`)
 
 ### `components/layout/`
 - **Header.tsx** — responsywna nawigacja, ikona koszyka, menu mobilne
 - **Footer.tsx** — synchroniczny (ważne!), importuje `FooterContactsClient`; używany na wszystkich stronach poza stroną główną
-- **FooterWithInstagram.tsx** — scalona stopka + Instagram CTA (strona główna); grid 4-kolumnowy: [IG panel | nawigacja | kontakt | mapa]
-- **FooterInstagramPanel.tsx** — `"use client"`, animowany panel Instagram (używany wewnątrz `FooterWithInstagram`)
-- **FooterContactsClient.tsx** — `"use client"`, pobiera kontakty z `/api/public/contacts` po mount; renderuje defaults przed hydratacją
-- **Providers.tsx** — opakowuje `SessionProvider` (NextAuth) + `CartProvider`
+- **FooterWithInstagram.tsx** — scalona stopka + Instagram CTA (strona główna); grid: [IG panel | nawigacja | kontakt | mapa]
+- **FooterInstagramPanel.tsx** — `"use client"`, animowany panel Instagram
+- **FooterContactsClient.tsx** — `"use client"`, pobiera kontakty z `/api/public/contacts` po mount
+- **FooterMap.tsx** — `"use client"`, mapa Google w iframe — ładowana dopiero po zgodzie cookies
+- **CookieBanner.tsx** — `"use client"`, baner zgody na cookies
+- **Providers.tsx** — opakowuje tylko `SessionProvider` + renderuje `CookieBanner` (koszyk/zgoda nie potrzebują providerów)
 
 ### `components/home/`
 - **Hero.tsx**, **FeaturedProducts.tsx**, **AboutTeaser.tsx**, **WorkshopsTeaser.tsx**
-- **InstagramCta.tsx** — przyjmuje prop `instagram` (string), generuje link do profilu (nieużywany na stronie głównej od scalenia ze stopką)
+- **HomeScrollSnap.tsx** — `"use client"`, scroll-snap sekcji strony głównej
+- **ProductCarousel.tsx** — `"use client"`, mobilna karuzela wybranych prac
+- **InstagramCta.tsx** — przyjmuje prop `instagram` (nieużywany na stronie głównej od scalenia ze stopką)
 
 ### `components/ui/`
-- **ProductCard.tsx** — karta produktu
+- **ProductCard.tsx** — karta produktu (next/image + framer-motion)
 - **InstagramIcon.tsx** — SVG ikona Instagram
 
 ### `components/admin/`
 - **AdminNav.tsx** — sidebar + mobilny drawer
-- **ProductForm.tsx** — formularz dodawania/edycji produktu (z ImageUploader)
+- **ProductForm.tsx** — formularz produktu (z ImageUploader)
 - **ImageUploader.tsx** — upload na Supabase Storage przez `/api/admin/upload`
-- **RichEditor.tsx** — prosty edytor HTML dla długich treści
-- **SettingsForm.tsx** — formularz ustawień (taby: O mnie / Warsztaty / Regulamin / Polityka / Kontakt / Wysyłka / Płatności)
-- **OrderStatusSelect.tsx** — dropdown do zmiany statusu zamówienia
-- **CustomOrderActions.tsx** — przyciski akcji dla zamówień indywidualnych
+- **FocalPointPicker.tsx** — wybór punktu kadrowania zdjęć (`object-position`)
+- **RichEditor.tsx** — edytor HTML oparty o **Jodit z npm** (dynamiczny `import("jodit")` w useEffect — biblioteka tylko przeglądarkowa, nie może wykonać się przy SSR)
+- **SettingsForm.tsx** — formularz ustawień (taby: Strona główna / O mnie / Warsztaty / Regulamin / Polityka / Kontakt / Wysyłka / Płatności)
+- **OrderStatusSelect.tsx** — dropdown statusu zamówienia
+- **OrdersTabs.tsx** — zakładki listy zamówień
+- **ProductsSearch.tsx** — wyszukiwarka w liście produktów
+- **CustomOrderActions.tsx** — akcje zamówień indywidualnych (PATCH)
 
 ### `components/account/`
-- **AccountNav.tsx** — nawigacja boczna konta (Profil / Adres dostawy / Zamówienia)
+- **AccountNav.tsx** — nawigacja konta (Profil / Adres dostawy / Zamówienia)
 - **OrderStatusBadge.tsx** — kolorowy badge statusu
+- **StripeResumeButton.tsx** — `"use client"`, wznowienie płatności Stripe
+
+### `components/contact/`
+- **ContactForm.tsx** — `"use client"`, formularz → `/api/contact`
 
 ---
 
@@ -223,20 +245,25 @@ charcoal:    #4A3F38   tekst główny
 mist:        #F0EBE3   tło alternatywne
 ```
 
-Fonty:
-- `font-serif` → Playfair Display (nagłówki)
-- `font-sans` → Inter (tekst ciągły)
+Fonty: `font-serif` → Playfair Display, `font-sans` → Inter (oba przez `next/font`).
 
 ---
 
-## Autoryzacja (`auth.ts`)
+## Autoryzacja
 
-- NextAuth v5 beta, strategia JWT
-- Providery: Google OAuth + Credentials (email + bcryptjs)
-- `callbacks.jwt` — dołącza `id` i `role` do tokena
-- `callbacks.session` — dołącza `id` i `role` do `session.user`
-- Strony: `/logowanie` (signIn), `/logowanie?error=...` (error)
-- Sprawdzanie roli admina: `session.user.role === "ADMIN"`
+- **auth.ts** — NextAuth v5 beta, strategia JWT; providery: Google OAuth + Credentials (bcryptjs); rate limit logowania (5/min na konto + 30/min globalnie); `callbacks` dołączają `id` i `role` do tokena/sesji
+- **middleware.ts** — wymaga sesji na `/konto`, `/zamowienie`, `/admin` (redirect na `/logowanie?callbackUrl=...`)
+- **Admin:** rola sprawdzana przez `requireAdmin()` z `lib/admin-auth.ts` — **zawsze z bazy**, nie z JWT. Używaj go w każdej nowej trasie/stronie admina.
+
+## Bezpieczeństwo — zasady
+
+- **Nagłówki** (`next.config.ts`): CSP, X-Frame-Options DENY, nosniff, Referrer-Policy, HSTS, Permissions-Policy. Nowe zewnętrzne źródła (skrypty, iframy, obrazy) wymagają aktualizacji CSP.
+- **Nie ładuj skryptów z CDN** — zależności tylko przez npm (CSP je zablokuje).
+- **Kwoty i stany magazynowe** liczone wyłącznie po stronie serwera; checkout dekrementuje stock w transakcji z utworzeniem zamówienia.
+- **Nigdy nie pokazuj `e.message` użytkownikowi** — szczegóły błędów tylko do `console.error`, na stronie komunikat ogólny.
+- **HTML z ustawień** sanityzowany przy zapisie i renderze (`sanitizeRichHtml`).
+- **Endpointy publiczne przyjmujące dane** mają rate limit (`lib/rate-limit.ts`) i walidację długości pól.
+- Webhook Stripe: zawsze `constructEvent` z `STRIPE_WEBHOOK_SECRET`.
 
 ---
 
@@ -245,29 +272,33 @@ Fonty:
 ### Next.js — server vs client
 - **Nigdy nie importuj async funkcji serwera w komponentach `"use client"`** — powoduje React error #482
 - `"use client"` = cały moduł (i jego importy) idzie do bundle klienta
-- Jeśli strona jest `"use client"` i potrzebuje danych z DB → stwórz oddzielny server component lub API endpoint
-- `Footer.tsx` musi być w pełni synchroniczny — `app/sklep/[slug]/page.tsx` jest `"use client"` i go importuje
-- Strony z zapytaniami do DB muszą mieć `export const dynamic = "force-dynamic"`
+- Komponenty klienckie też renderują się raz na serwerze (SSR) — biblioteki tylko przeglądarkowe (np. Jodit) ładuj dynamicznym `import()` w `useEffect`
+- `Footer.tsx` musi być w pełni synchroniczny
+
+### Cache i rewalidacja
+- Strony sesyjne (`/konto`, `/zamowienie`, `/admin`) = `force-dynamic`; strony treściowe = ISR (`revalidate`); dane katalogu = `unstable_cache` z tagiem `products`
+- Trasy z parametrem (`[slug]`) wymagają `generateStaticParams` (może zwracać `[]`), żeby ISR działało — bez tego są w pełni dynamiczne
+- Po mutacji produktów w adminie wywołuj `revalidateProductPages()`; po zapisie ustawień `revalidatePath("/", "layout")`
+- Funkcje pobierające dane przy ISR **muszą mieć fallback** na wypadek braku DB podczas builda (wzorzec: try/catch + defaulty jak w `lib/settings.ts`)
+- W `generateMetadata` i stronie używaj wspólnej funkcji opakowanej w `React.cache()` — deduplikacja zapytań
+- W Next 16 `revalidateTag` przyjmuje drugi argument — używaj `revalidateTag(tag, "max")`
+
+### Koszyk i zgoda cookies (client state)
+- Store'y modułowe czytane przez `useSyncExternalStore` — **nie** dodawaj setState w `useEffect` do hydratacji localStorage (reguła `react-hooks/set-state-in-effect`)
 
 ### Adresy dostawy użytkownika
-- Przechowywane w tabeli `Setting` jako JSON: `key = user_address_{userId}`
-- Pobierane przez `GET /api/account/address`, zapisywane przez `PUT /api/account/address`
-- Automatycznie uzupełniają formularz checkout (`app/zamowienie/page.tsx` pobiera i przekazuje jako prop)
+- Tabela `Setting`, klucz `user_address_{userId}`, JSON; GET/PUT `/api/account/address`; auto-uzupełniają checkout
 
 ### Email (Resend)
-- Wysyłany po złożeniu zamówienia przelewem bankowym
-- Wymaga `RESEND_API_KEY` w env
-- Nadawca z `RESEND_FROM_EMAIL` lub fallback `onboarding@resend.dev`
-- Błąd wysyłki nie blokuje zamówienia (try/catch)
+- Po zamówieniu przelewowym: e-mail do klienta z danymi do przelewu + powiadomienie do właściciela
+- Nadawca z `RESEND_FROM_EMAIL` lub fallback `onboarding@resend.dev`; błąd wysyłki nie blokuje zamówienia
 
 ### Metody płatności
-- Przelew bankowy: zawsze dostępny
-- BLIK, Przelewy24, PayU: tylko jeśli `payment_*_enabled === "true"` w ustawieniach
-- Integracje API dla Przelewy24/PayU: skonfigurowane w UI admina, implementacja API jeszcze do zrobienia
+- Przelew bankowy (+ opcjonalnie BLIK na telefon): zawsze dostępny
+- Stripe (karta): tylko gdy `payment_stripe_enabled === "true"` **i** ustawiony `STRIPE_SECRET_KEY`; przepływ: checkout → sesja Stripe → webhook `completed` ustawia PAID; `expired` anuluje zamówienie i zwraca stock
 
 ### Tabela Setting — autokonfiguracja
-- Przy operacjach na `Setting` używaj `$executeRaw` z `CREATE TABLE IF NOT EXISTS` jako zabezpieczenie
-- Tabela może nie istnieć na świeżej bazie przed pierwszą migracją
+- Przy operacjach na `Setting` poza Prismą używaj `$executeRaw`/`$queryRaw` z tagged template (parametryzacja!)
 
 ---
 
@@ -277,4 +308,5 @@ Fonty:
 - Telefon: +48 668 443 706
 - E-mail: kontakt@uniqueceramics.pl
 - Instagram: @unique.ceramics
+- Adres pracowni: Familijna 23, 44-164 Kleszczów (k. Gliwic)
 - Wysyłka: 18 zł, darmowa od 300 zł

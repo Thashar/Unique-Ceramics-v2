@@ -7,7 +7,12 @@ export async function PATCH(req: Request) {
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { name } = await req.json();
-  if (!name?.trim()) return NextResponse.json({ error: "Imię jest wymagane." }, { status: 400 });
+  if (typeof name !== "string" || !name.trim()) {
+    return NextResponse.json({ error: "Imię jest wymagane." }, { status: 400 });
+  }
+  if (name.trim().length > 100) {
+    return NextResponse.json({ error: "Imię może mieć maksymalnie 100 znaków." }, { status: 400 });
+  }
 
   await db.user.update({
     where: { id: session.user!.id },

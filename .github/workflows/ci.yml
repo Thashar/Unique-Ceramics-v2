@@ -1,0 +1,35 @@
+# CI: typecheck + lint + build przy każdym pushu i PR
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalacja zależności
+        run: npm ci
+
+      - name: TypeScript
+        run: npx tsc --noEmit
+
+      - name: ESLint
+        run: npm run lint
+
+      - name: Build produkcyjny
+        run: npm run build
+        env:
+          # Atrapy — strony mają fallbacki gdy baza jest niedostępna podczas builda
+          DATABASE_URL: "postgresql://user:pass@localhost:5432/db"
+          DIRECT_URL: "postgresql://user:pass@localhost:5432/db"
+          AUTH_SECRET: "ci-only-secret-min-32-characters-long!!"

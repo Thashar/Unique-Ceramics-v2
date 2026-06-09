@@ -1,13 +1,8 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-
-declare global {
-  interface Window { Jodit: any; }
-}
-
-const JODIT_CSS = "https://cdn.jsdelivr.net/npm/jodit@3/build/jodit.min.css";
-const JODIT_JS  = "https://cdn.jsdelivr.net/npm/jodit@3/build/jodit.min.js";
+import type { Jodit as JoditEditor } from "jodit";
+import "jodit/build/jodit.min.css";
 
 const CONFIG = {
   height: 520,
@@ -34,51 +29,30 @@ interface Props {
   onChange: (val: string) => void;
 }
 
-let scriptLoaded = false;
-let scriptLoading = false;
-const onLoadCallbacks: (() => void)[] = [];
-
-function loadJodit(cb: () => void) {
-  if (scriptLoaded) { cb(); return; }
-  onLoadCallbacks.push(cb);
-  if (scriptLoading) return;
-  scriptLoading = true;
-
-  if (!document.getElementById("jodit-css")) {
-    const link = document.createElement("link");
-    link.id = "jodit-css";
-    link.rel = "stylesheet";
-    link.href = JODIT_CSS;
-    document.head.appendChild(link);
-  }
-
-  const script = document.createElement("script");
-  script.id = "jodit-js";
-  script.src = JODIT_JS;
-  script.onload = () => {
-    scriptLoaded = true;
-    onLoadCallbacks.forEach((fn) => fn());
-    onLoadCallbacks.length = 0;
-  };
-  document.body.appendChild(script);
-}
-
 export default function RichEditor({ value, onChange }: Props) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const editorRef   = useRef<any>(null);
+  const editorRef   = useRef<JoditEditor | null>(null);
   const onChangeRef = useRef(onChange);
-  onChangeRef.current = onChange;
 
   useEffect(() => {
-    loadJodit(() => {
-      if (editorRef.current || !textareaRef.current) return;
-      const editor = window.Jodit.make(textareaRef.current, CONFIG);
+    onChangeRef.current = onChange;
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+
+    // Jodit jest biblioteką wyłącznie przeglądarkową — import dynamiczny
+    // zapobiega wykonaniu bundle'a podczas SSR komponentu klienckiego
+    import("jodit").then(({ Jodit }) => {
+      if (cancelled || editorRef.current || !textareaRef.current) return;
+      const editor = Jodit.make(textareaRef.current, CONFIG);
       editor.value = value;
       editor.events.on("change", (v: string) => onChangeRef.current(v));
       editorRef.current = editor;
     });
 
     return () => {
+      cancelled = true;
       if (editorRef.current) {
         editorRef.current.destruct();
         editorRef.current = null;

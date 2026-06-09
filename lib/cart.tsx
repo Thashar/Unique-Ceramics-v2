@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, useCallback } from "react";
+import { useCallback, useSyncExternalStore } from "react";
 
 export type CartItem = {
   id: string;
@@ -12,20 +12,7 @@ export type CartItem = {
   stock: number;
 };
 
-type CartContextType = {
-  items: CartItem[];
-  addItem: (item: Omit<CartItem, "quantity">, quantity?: number) => void;
-  removeItem: (id: string) => void;
-  updateQuantity: (id: string, qty: number) => void;
-  clearCart: () => void;
-  count: number;
-  subtotal: number;
-};
-
-const CartContext = createContext<CartContextType | null>(null);
-
-export const SHIPPING = 18;
-export const FREE_SHIPPING_THRESHOLD = 300;
+const STORAGE_KEY = "uc-cart";
 
 function normalize(raw: unknown[]): CartItem[] {
   return raw.map((i) => {
@@ -44,70 +31,99 @@ function normalize(raw: unknown[]): CartItem[] {
   });
 }
 
-export function CartProvider({ children }: { children: React.ReactNode }) {
-  const [items, setItems] = useState<CartItem[]>([]);
-  const [hydrated, setHydrated] = useState(false);
+// ── Store modułowy (localStorage) czytany przez useSyncExternalStore ─────────
+// Koszyk żyje poza Reactem; komponenty subskrybują zmiany. Dzięki temu
+// hydratacja z localStorage nie wymaga setState w useEffect.
 
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem("uc-cart");
-      if (stored) setItems(normalize(JSON.parse(stored)));
-    } catch {}
-    setHydrated(true);
-  }, []);
+const EMPTY: CartItem[] = [];
+let items: CartItem[] = EMPTY;
+let loaded = false;
+const listeners = new Set<() => void>();
 
-  useEffect(() => {
-    if (hydrated) localStorage.setItem("uc-cart", JSON.stringify(items));
-  }, [items, hydrated]);
+function load() {
+  if (loaded) return;
+  loaded = true;
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) items = normalize(JSON.parse(stored));
+  } catch {}
+}
 
-  const addItem = useCallback((item: Omit<CartItem, "quantity">, quantity = 1) => {
-    const qty = Math.max(1, quantity);
-    setItems((prev) => {
-      const existing = prev.find((i) => i.id === item.id);
-      if (existing) {
-        const newQty = Math.min(existing.quantity + qty, item.stock);
-        if (newQty === existing.quantity) return prev;
-        return prev.map((i) =>
-          i.id === item.id
-            ? { ...i, quantity: newQty, stock: item.stock }
-            : i
-        );
-      }
-      if (item.stock < 1) return prev;
-      return [...prev, { ...item, quantity: Math.min(qty, item.stock) }];
-    });
-  }, []);
+function persist() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+  } catch {}
+}
 
-  const removeItem = useCallback((id: string) => {
-    setItems((prev) => prev.filter((i) => i.id !== id));
-  }, []);
+function setItems(next: CartItem[]) {
+  items = next;
+  persist();
+  listeners.forEach((l) => l());
+}
 
-  const updateQuantity = useCallback((id: string, qty: number) => {
-    if (qty < 1) return;
-    setItems((prev) =>
-      prev.map((i) => {
-        if (i.id !== id) return i;
-        return { ...i, quantity: Math.min(qty, i.stock) };
-      })
+function subscribe(listener: () => void): () => void {
+  // Pierwsza subskrypcja po hydratacji — React sam wykryje zmianę snapshotu
+  load();
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
+function getSnapshot(): CartItem[] {
+  return items;
+}
+
+function getServerSnapshot(): CartItem[] {
+  return EMPTY;
+}
+
+function addItemToStore(item: Omit<CartItem, "quantity">, quantity = 1) {
+  const qty = Math.max(1, quantity);
+  const existing = items.find((i) => i.id === item.id);
+  if (existing) {
+    const newQty = Math.min(existing.quantity + qty, item.stock);
+    if (newQty === existing.quantity) return;
+    setItems(
+      items.map((i) =>
+        i.id === item.id ? { ...i, quantity: newQty, stock: item.stock } : i
+      )
     );
-  }, []);
+    return;
+  }
+  if (item.stock < 1) return;
+  setItems([...items, { ...item, quantity: Math.min(qty, item.stock) }]);
+}
 
-  const clearCart = useCallback(() => setItems([]), []);
+function removeItemFromStore(id: string) {
+  setItems(items.filter((i) => i.id !== id));
+}
 
-  const count = items.reduce((sum, i) => sum + i.quantity, 0);
-  const subtotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
-
-  return (
-    <CartContext.Provider
-      value={{ items, addItem, removeItem, updateQuantity, clearCart, count, subtotal }}
-    >
-      {children}
-    </CartContext.Provider>
+function updateQuantityInStore(id: string, qty: number) {
+  if (qty < 1) return;
+  setItems(
+    items.map((i) => (i.id !== id ? i : { ...i, quantity: Math.min(qty, i.stock) }))
   );
 }
 
+function clearCartStore() {
+  setItems([]);
+}
+
 export function useCart() {
-  const ctx = useContext(CartContext);
-  if (!ctx) throw new Error("useCart must be used within CartProvider");
-  return ctx;
+  const current = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+
+  const addItem = useCallback(
+    (item: Omit<CartItem, "quantity">, quantity = 1) => addItemToStore(item, quantity),
+    []
+  );
+  const removeItem = useCallback((id: string) => removeItemFromStore(id), []);
+  const updateQuantity = useCallback(
+    (id: string, qty: number) => updateQuantityInStore(id, qty),
+    []
+  );
+  const clearCart = useCallback(() => clearCartStore(), []);
+
+  const count = current.reduce((sum, i) => sum + i.quantity, 0);
+  const subtotal = current.reduce((sum, i) => sum + i.price * i.quantity, 0);
+
+  return { items: current, addItem, removeItem, updateQuantity, clearCart, count, subtotal };
 }

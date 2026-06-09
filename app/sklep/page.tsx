@@ -1,12 +1,12 @@
-import { db } from "@/lib/db";
 import Link from "next/link";
 import { ShoppingBag } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import ProductCard from "@/components/ui/ProductCard";
+import { getShopProducts } from "@/lib/products";
 
-// Katalog produktów cachowany ISR — krótki czas dla świeżości stanu magazynowego
-export const revalidate = 60;
+// Strona czyta searchParams (rendering dynamiczny), ale dane katalogu są
+// cachowane w getShopProducts (60 s, tag "products" unieważniany w adminie)
 
 export const metadata = {
   title: "Sklep",
@@ -45,28 +45,20 @@ export default async function ShopPage({
 }) {
   const { kategoria } = await searchParams;
 
-  let products: Awaited<ReturnType<typeof db.product.findMany>> = [];
-  let dbError: string | null = null;
+  let products: Awaited<ReturnType<typeof getShopProducts>>["inStock"] = [];
+  let dbError = false;
   try {
-    const filterByCategory = kategoria && kategoria !== "wszystkie"
-      ? { category: kategoria }
-      : {};
+    const { inStock, soldOut } = await getShopProducts();
 
-    // Dostępne produkty — filtrowane wg kategorii
-    const inStock = await db.product.findMany({
-      where: { active: true, stock: { gt: 0 }, ...filterByCategory },
-      orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
-    });
+    // Dostępne — filtrowane wg kategorii; wyprzedane zawsze doklejone na końcu
+    const filtered = kategoria && kategoria !== "wszystkie"
+      ? inStock.filter((p) => p.category === kategoria)
+      : inStock;
 
-    // Wyprzedane — zawsze z całego sklepu, doklejone na końcu każdego widoku
-    const soldOut = await db.product.findMany({
-      where: { active: true, stock: { lte: 0 } },
-      orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
-    });
-
-    products = [...inStock, ...soldOut];
+    products = [...filtered, ...soldOut];
   } catch (e) {
-    dbError = e instanceof Error ? e.message : String(e);
+    // Szczegóły błędu tylko do logów — nie ujawniamy ich użytkownikowi
+    dbError = true;
     console.error("DB error in /sklep:", e);
   }
 
@@ -109,8 +101,8 @@ export default async function ShopPage({
           {dbError ? (
             <div className="text-center py-24">
               <ShoppingBag size={48} strokeWidth={1} className="mx-auto text-sand mb-6" />
-              <p className="font-serif text-2xl text-espresso mb-2">Błąd połączenia z bazą</p>
-              <p className="text-charcoal/50 text-xs font-mono mt-2 max-w-lg mx-auto break-all">{dbError}</p>
+              <p className="font-serif text-2xl text-espresso mb-2">Sklep chwilowo niedostępny</p>
+              <p className="text-charcoal/50 text-sm">Spróbuj ponownie za chwilę.</p>
             </div>
           ) : products.length === 0 ? (
             <div className="text-center py-24">

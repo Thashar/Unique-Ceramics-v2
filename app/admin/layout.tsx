@@ -1,11 +1,11 @@
-import { auth } from "@/auth";
+import { requireAdmin } from "@/lib/admin-auth";
 import { redirect } from "next/navigation";
 import AdminNav from "@/components/admin/AdminNav";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const session = await auth();
+  const session = await requireAdmin();
 
-  if (!session || session.user?.role !== "ADMIN") {
+  if (!session) {
     redirect("/");
   }
 

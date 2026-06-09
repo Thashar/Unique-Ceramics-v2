@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
-import { auth } from "@/auth";
+import { requireAdmin } from "@/lib/admin-auth";
 import { sanitizeRichHtml } from "@/lib/sanitize-html";
+import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
 // Klucze przechowujące HTML — sanityzowane już przy zapisie (defense in depth,
@@ -12,12 +13,18 @@ const HTML_KEYS = new Set([
   "workshops_intro",
 ]);
 
-async function checkAdmin() {
-  const session = await auth();
-  if (!session || session.user?.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+function parseBody(body: unknown): { key: string; value: string }[] | null {
+  if (!Array.isArray(body)) return null;
+  for (const entry of body) {
+    if (
+      typeof entry !== "object" || entry === null ||
+      typeof (entry as Record<string, unknown>).key !== "string" ||
+      typeof (entry as Record<string, unknown>).value !== "string"
+    ) {
+      return null;
+    }
   }
-  return null;
+  return body as { key: string; value: string }[];
 }
 
 async function saveSettings(body: { key: string; value: string }[]) {
@@ -31,34 +38,32 @@ async function saveSettings(body: { key: string; value: string }[]) {
       });
     })
   );
+  // Strony treściowe są cachowane (ISR) — po zapisie ustawień odśwież wszystko
+  revalidatePath("/", "layout");
+}
+
+async function handleSave(req: Request) {
+  const session = await requireAdmin();
+  if (!session) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+  const body = parseBody(await req.json());
+  if (!body) {
+    return NextResponse.json({ ok: false, error: "Nieprawidłowy format danych" }, { status: 400 });
+  }
+
+  try {
+    await saveSettings(body);
+    return NextResponse.json({ ok: true });
+  } catch (e) {
+    console.error("[admin/settings] save error:", e);
+    return NextResponse.json({ ok: false, error: "Błąd zapisu ustawień" }, { status: 500 });
+  }
 }
 
 export async function PATCH(req: Request) {
-  const authError = await checkAdmin();
-  if (authError) return authError;
-
-  const body: { key: string; value: string }[] = await req.json();
-
-  try {
-    await saveSettings(body);
-    return NextResponse.json({ ok: true });
-  } catch (e) {
-    console.error("[admin/settings] save error:", e);
-    return NextResponse.json({ ok: false, error: "Błąd zapisu ustawień" }, { status: 500 });
-  }
+  return handleSave(req);
 }
 
 export async function POST(req: Request) {
-  const authError = await checkAdmin();
-  if (authError) return authError;
-
-  const body: { key: string; value: string }[] = await req.json();
-
-  try {
-    await saveSettings(body);
-    return NextResponse.json({ ok: true });
-  } catch (e) {
-    console.error("[admin/settings] save error:", e);
-    return NextResponse.json({ ok: false, error: "Błąd zapisu ustawień" }, { status: 500 });
-  }
+  return handleSave(req);
 }

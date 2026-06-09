@@ -1,14 +1,7 @@
 import { db } from "@/lib/db";
-import { auth } from "@/auth";
+import { requireAdmin } from "@/lib/admin-auth";
+import { revalidateProductPages } from "@/lib/products";
 import { NextResponse } from "next/server";
-
-async function requireAdmin() {
-  const session = await auth();
-  if (!session || session.user?.role !== "ADMIN") {
-    return null;
-  }
-  return session;
-}
 
 export async function GET() {
   if (!await requireAdmin()) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -29,5 +22,6 @@ export async function POST(req: Request) {
     data: { name, slug, description, price, images, category, stock, featured, active },
   });
 
+  revalidateProductPages();
   return NextResponse.json(product, { status: 201 });
 }

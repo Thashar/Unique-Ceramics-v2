@@ -1,11 +1,7 @@
 import { db } from "@/lib/db";
-import { auth } from "@/auth";
+import { requireAdmin } from "@/lib/admin-auth";
+import { revalidateProductPages } from "@/lib/products";
 import { NextResponse } from "next/server";
-
-async function requireAdmin() {
-  const session = await auth();
-  return session?.user?.role === "ADMIN" ? session : null;
-}
 
 export async function PUT(
   req: Request,
@@ -21,6 +17,7 @@ export async function PUT(
     data: { name, slug, description, price, images, category, stock, featured, active },
   });
 
+  revalidateProductPages();
   return NextResponse.json(product);
 }
 
@@ -31,5 +28,7 @@ export async function DELETE(
   if (!await requireAdmin()) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const { id } = await params;
   await db.product.delete({ where: { id } });
+
+  revalidateProductPages();
   return NextResponse.json({ ok: true });
 }

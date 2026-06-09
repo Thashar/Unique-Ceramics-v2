@@ -22,8 +22,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Imię musi mieć od 2 do 100 znaków." }, { status: 400 });
     }
 
-    if (password.length < 8) {
-      return NextResponse.json({ error: "Hasło musi mieć co najmniej 8 znaków." }, { status: 400 });
+    if (typeof password !== "string" || password.length < 8 || password.length > 128) {
+      return NextResponse.json({ error: "Hasło musi mieć od 8 do 128 znaków." }, { status: 400 });
     }
 
     const existing = await db.user.findUnique({ where: { email } });

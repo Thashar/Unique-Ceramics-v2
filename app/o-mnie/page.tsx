@@ -1,4 +1,5 @@
-export const dynamic = "force-dynamic";
+// Treść zmienia się rzadko — ISR; zapis ustawień w adminie odświeża cache
+export const revalidate = 300;
 
 import type { Metadata } from "next";
 import Image from "next/image";
@@ -50,7 +51,7 @@ export default async function AboutPage() {
             {/* Tekst główny */}
             <div className="lg:col-span-7">
               <h2 className="font-serif text-3xl text-espresso mb-8 leading-snug">
-                „Ręcznie tworzone z sercem"
+                „Ręcznie tworzone z sercem&rdquo;
               </h2>
               <div
                 className="space-y-5 text-charcoal/80 leading-relaxed [&_p]:mb-4 [&_h2]:font-serif [&_h2]:text-2xl [&_h2]:text-espresso [&_h2]:mb-4 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:mb-4 [&_strong]:text-espresso"

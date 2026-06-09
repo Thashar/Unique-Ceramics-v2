@@ -17,6 +17,7 @@
     "@types/sanitize-html": "^2.16.1",
     "bcryptjs": "^3.0.3",
     "framer-motion": "^12.39.0",
+    "jodit": "^3.24.9",
     "lucide-react": "^1.16.0",
     "next": "16.2.6",
     "next-auth": "^5.0.0-beta.31",

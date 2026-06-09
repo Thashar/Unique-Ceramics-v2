@@ -188,7 +188,7 @@ export default function SettingsForm({ section, initial }: Props) {
           </div>
 
           <div className="border-t border-sand pt-6 space-y-4">
-            <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/70">Sekcja „O mnie"</h3>
+            <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/70">Sekcja „O mnie&rdquo;</h3>
             <p className="text-xs text-charcoal/40">Tło sekcji z historią — widoczne za tekstem na stronie głównej.</p>
             <ImageUploader
               currentUrl={homeAboutImage}
@@ -203,7 +203,7 @@ export default function SettingsForm({ section, initial }: Props) {
           </div>
 
           <div className="border-t border-sand pt-6 space-y-4">
-            <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/70">Sekcja „Warsztaty"</h3>
+            <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/70">Sekcja „Warsztaty&rdquo;</h3>
             <p className="text-xs text-charcoal/40">Tło sekcji warsztatów — widoczne za tekstem na stronie głównej.</p>
             <ImageUploader
               currentUrl={homeWorkshopsImage}
@@ -346,7 +346,7 @@ export default function SettingsForm({ section, initial }: Props) {
           <Field label="Numer konta (IBAN)" value={bankNumber} setter={setBankNumber} mono />
           <Field label="Nazwa banku" value={bankBankName} setter={setBankBankName} />
           <Field label="Prefiks tytułu przelewu" value={bankTitle} setter={setBankTitle} />
-          <p className="text-xs text-charcoal/40">Tytuł wysyłany do kupującego: „[prefiks] #NR_ZAMÓWIENIA"</p>
+          <p className="text-xs text-charcoal/40">Tytuł wysyłany do kupującego: „[prefiks] #NR_ZAMÓWIENIA&rdquo;</p>
           <div className="border-t border-sand pt-5">
             <p className="text-xs tracking-widest uppercase text-charcoal/80 mb-3">Przelew BLIK na telefon</p>
             <p className="text-xs text-charcoal/50 mb-3">

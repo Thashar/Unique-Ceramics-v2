@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useCart } from "@/lib/cart";
-import { validateAddress, ADDRESS_PATTERNS, ADDRESS_ERRORS } from "@/lib/address-validation";
+import { validateAddress } from "@/lib/address-validation";
 
 export interface PaymentMethod {
   value: string;

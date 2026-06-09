@@ -1,6 +1,9 @@
 import { MetadataRoute } from "next";
 import { db } from "@/lib/db";
 
+// Odświeżaj sitemapę co godzinę — nowe produkty trafiają do niej bez deployu
+export const revalidate = 3600;
+
 const BASE = "https://uniqueceramics.pl";
 
 const staticRoutes: MetadataRoute.Sitemap = [

@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { auth } from "@/auth";
+import { requireAdmin } from "@/lib/admin-auth";
 import { NextResponse } from "next/server";
 
 const ALLOWED_TYPES: Record<string, string> = {
@@ -10,8 +10,7 @@ const ALLOWED_TYPES: Record<string, string> = {
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 
 export async function POST(req: Request) {
-  const session = await auth();
-  if (!session || session.user?.role !== "ADMIN") {
+  if (!await requireAdmin()) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
