@@ -18,7 +18,16 @@
       "Bash(xargs sed -i 's/bg-espresso hover:bg-clay/bg-clay hover:bg-espresso/g')",
       "Bash(npx prisma *)",
       "Bash(xargs grep -l \"label.*text-charcoal/60\\\\|text-charcoal/60.*mb-2\")",
-      "Bash(xargs sed -i 's/\\\\btext-charcoal\\\\/60\\\\b/text-charcoal\\\\/80/g')"
+      "Bash(xargs sed -i 's/\\\\btext-charcoal\\\\/60\\\\b/text-charcoal\\\\/80/g')",
+      "Bash(node -e \"require\\('isomorphic-dompurify'\\)\")",
+      "Bash(node -e \"require\\('sanitize-html'\\)\")",
+      "Bash(git stash *)",
+      "Bash(Remove-Item -Recurse -Force .next/types)",
+      "Bash(python3 \"C:\\\\Users\\\\Thash\\\\.claude\\\\skills\\\\ui-ux-pro-max\\\\scripts\\\\search.py\" \"handmade ceramics artisan ecommerce warm minimal footer instagram\" --design-system -p \"Unique Ceramics\" -f markdown)",
+      "Bash(Copy-Item \"public\\\\images\\\\logo.png\" \"app\\\\icon.png\")",
+      "Bash(git check-ignore *)",
+      "Bash(base64 -w 0 \"public/images/logo.png\")",
+      "Read(//tmp/**)"
     ]
   }
 }
