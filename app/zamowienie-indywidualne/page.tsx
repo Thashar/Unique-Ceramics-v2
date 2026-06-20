@@ -84,8 +84,7 @@ export default function CustomOrderPage() {
             <p className="text-xs tracking-[0.3em] uppercase text-clay mb-3">Na zamówienie</p>
             <h1 className="font-serif text-5xl text-espresso mb-6">Zamówienie indywidualne</h1>
             <p className="text-charcoal/70 leading-relaxed">
-              Tworzę ceramikę na zamówienie — zestawy ślubne, prezenty firmowe,
-              naczynia z personalizacją lub konkretne formy, których nie ma w sklepie.
+              Tworzę ceramikę na zamówienie — zestawy ślubne, prezenty firmowe lub spersowanlizowaną ceramikę, której nie ma w sklepie.
               Czas realizacji wynosi zazwyczaj 4+ tygodnie od potwierdzenia projektu.
             </p>
           </div>
