@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     url: "https://uniqueceramics.pl",
     images: [
       {
-        url: "/images/logo.jpg",
+        url: "/images/logo.png",
         width: 1200,
         height: 630,
         alt: "Unique Ceramics — ręcznie robiona ceramika",
