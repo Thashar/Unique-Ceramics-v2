@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import OrderStatusSelect from "@/components/admin/OrderStatusSelect";
+import PaymentStatusToggle from "@/components/admin/PaymentStatusToggle";
 import Link from "next/link";
 import { ChevronLeft, User, MapPin, Package, CreditCard, MessageSquare } from "lucide-react";
 
@@ -12,11 +13,6 @@ const PAYMENT_LABELS: Record<string, string> = {
   stripe:   "Karta (Stripe)",
 };
 
-const PAYMENT_STATUS_COLORS: Record<string, string> = {
-  PENDING: "bg-amber-50 text-amber-700",
-  PAID:    "bg-green-50 text-green-700",
-  FAILED:  "bg-red-50 text-red-600",
-};
 
 export default async function AdminOrderDetailPage({
   params,
@@ -127,13 +123,7 @@ export default async function AdminOrderDetailPage({
           <p className="text-sm text-espresso">
             {PAYMENT_LABELS[order.paymentMethod] ?? order.paymentMethod}
           </p>
-          <span className={`inline-block mt-2 text-xs px-2 py-0.5 rounded-sm ${
-            PAYMENT_STATUS_COLORS[order.paymentStatus] ?? "bg-sand text-charcoal"
-          }`}>
-            {order.paymentStatus === "PENDING" ? "Oczekuje" :
-             order.paymentStatus === "PAID" ? "Opłacone" :
-             order.paymentStatus === "FAILED" ? "Nieudana" : order.paymentStatus}
-          </span>
+          <PaymentStatusToggle orderId={order.id} currentStatus={order.paymentStatus} />
         </div>
 
         {order.note ? (
