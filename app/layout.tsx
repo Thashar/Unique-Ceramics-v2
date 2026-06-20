@@ -169,6 +169,12 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="pl" className={`${playfair.variable} ${inter.variable} h-full`}>
+      <head>
+        {/* Blokuj przywracanie pozycji scrolla przez przeglądarkę na stronie głównej.
+            Musi działać przed DOMContentLoaded, zanim Chrome zdąży przywrócić scroll —
+            ustawienie tego w useEffect jest za późno i powoduje biały header przy odświeżeniu. */}
+        <script dangerouslySetInnerHTML={{ __html: `if(location.pathname==='/')history.scrollRestoration='manual';` }} />
+      </head>
       <body className="min-h-[100svh] flex flex-col">
         <Providers>{children}</Providers>
         <script
