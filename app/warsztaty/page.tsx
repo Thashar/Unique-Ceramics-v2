@@ -119,13 +119,13 @@ export default async function WorkshopsPage() {
         </div>
 
         {/* Lista warsztatów */}
-        <div className="bg-warm-white py-20 px-6 lg:px-10">
+        <div className="bg-cream py-20 px-6 lg:px-10">
           <div className="max-w-7xl mx-auto space-y-12">
             {workshops.map((w) => (
               <div key={w.id} className="grid grid-cols-1 lg:grid-cols-3 gap-10 border-b border-sand pb-12 last:border-0 last:pb-0">
                 <div className="lg:col-span-2">
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="w-9 h-9 bg-cream rounded-full flex items-center justify-center shrink-0">
+                    <div className="w-9 h-9 bg-warm-white rounded-full flex items-center justify-center shrink-0">
                       <w.icon size={18} strokeWidth={1.5} className="text-clay" />
                     </div>
                     <span className="text-xs tracking-widest uppercase text-clay">{w.level}</span>
@@ -133,7 +133,7 @@ export default async function WorkshopsPage() {
                   <h2 className="font-serif text-3xl text-espresso mb-4">{w.title}</h2>
                   <p className="text-charcoal/75 leading-relaxed mb-6">{w.description}</p>
                 </div>
-                <div className="bg-cream p-8 self-start">
+                <div className="bg-warm-white p-8 self-start">
                   <div className="space-y-3 mb-8">
                     <div className="flex justify-between text-sm">
                       <span className="text-charcoal/80">Czas trwania</span>
