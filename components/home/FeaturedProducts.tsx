@@ -52,7 +52,7 @@ export default async function FeaturedProducts() {
         </div>
 
         {/* Desktop: 4 kolumny, gdy >4 produktów — carousel z nawigacją */}
-        <div className="hidden lg:block max-w-7xl mx-auto w-full px-10">
+        <div className="hidden lg:block max-w-7xl mx-auto w-full px-16">
           <DesktopCarousel products={products} />
         </div>
       </div>

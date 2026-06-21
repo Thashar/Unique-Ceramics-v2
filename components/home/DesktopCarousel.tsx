@@ -7,6 +7,8 @@ import ProductCard from "@/components/ui/ProductCard";
 const DURATION = 520;
 const GAP = 32; // gap-8
 const PER_PAGE = 4;
+// Obrazki mają aspect-[4/5], więc height = width * 5/4
+const IMAGE_ASPECT = 5 / 4;
 
 const easeInOutSine = (t: number) => -(Math.cos(Math.PI * t) - 1) / 2;
 
@@ -18,6 +20,8 @@ type Product = {
 export default function DesktopCarousel({ products }: { products: Product[] }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const innerRef = useRef<HTMLDivElement>(null);
+  const leftArrowRef = useRef<HTMLButtonElement>(null);
+  const rightArrowRef = useRef<HTMLButtonElement>(null);
   const [page, setPage] = useState(0);
   const isAnimating = useRef(false);
   const currentOffset = useRef(0);
@@ -29,6 +33,15 @@ export default function DesktopCarousel({ products }: { products: Product[] }) {
     return containerRef.current
       ? (containerRef.current.offsetWidth - (PER_PAGE - 1) * GAP) / PER_PAGE
       : 0;
+  }
+
+  // Ustawia top strzałek na połowę wysokości obrazka
+  function positionArrows() {
+    const cw = getCardWidth();
+    const halfImage = (cw * IMAGE_ASPECT) / 2;
+    [leftArrowRef.current, rightArrowRef.current].forEach((el) => {
+      if (el) el.style.top = `${halfImage}px`;
+    });
   }
 
   function applyTranslate(x: number) {
@@ -60,21 +73,29 @@ export default function DesktopCarousel({ products }: { products: Product[] }) {
 
   useEffect(() => {
     applyTranslate(0);
-    function handleResize() { setPage(0); applyTranslate(0); }
+    positionArrows();
+    function handleResize() {
+      setPage(0);
+      applyTranslate(0);
+      positionArrows();
+    }
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const cardW = `calc((100% - ${(PER_PAGE - 1) * GAP}px) / ${PER_PAGE})`;
 
   return (
     <div ref={containerRef} className="relative w-full">
-      {/* Lewa strzałka */}
+      {/* Lewa strzałka — poza overflow, wycentrowana na obrazku */}
       {canNav && (
         <button
+          ref={leftArrowRef}
           onClick={() => animateTo(page - 1)}
           disabled={page === 0}
-          className="absolute -left-10 top-1/2 -translate-y-1/2 text-espresso/30 hover:text-espresso disabled:opacity-0 disabled:pointer-events-none transition-all duration-200"
+          className="absolute -translate-y-1/2 text-espresso/30 hover:text-espresso disabled:opacity-0 disabled:pointer-events-none transition-colors duration-200"
+          style={{ left: "-56px", top: 0 }}
           aria-label="Poprzednia strona"
         >
           <ChevronLeft size={36} strokeWidth={2.5} />
@@ -84,9 +105,11 @@ export default function DesktopCarousel({ products }: { products: Product[] }) {
       {/* Prawa strzałka */}
       {canNav && (
         <button
+          ref={rightArrowRef}
           onClick={() => animateTo(page + 1)}
           disabled={page === totalPages - 1}
-          className="absolute -right-10 top-1/2 -translate-y-1/2 text-espresso/30 hover:text-espresso disabled:opacity-0 disabled:pointer-events-none transition-all duration-200"
+          className="absolute -translate-y-1/2 text-espresso/30 hover:text-espresso disabled:opacity-0 disabled:pointer-events-none transition-colors duration-200"
+          style={{ right: "-56px", top: 0 }}
           aria-label="Następna strona"
         >
           <ChevronRight size={36} strokeWidth={2.5} />
