@@ -165,6 +165,17 @@ enum CustomOrderStatus {
   CANCELLED
 }
 
+// ─── Kategorie produktów ─────────────────────────────────────────────────────
+
+model Category {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  label     String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 // ─── Ustawienia sklepu ────────────────────────────────────────────────────────
 
 model Setting {

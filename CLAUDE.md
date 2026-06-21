@@ -69,6 +69,7 @@ CRON_SECRET="min-32-znaki"                  # autoryzacja /api/ping (cron Vercel
 - **Account**, **Session**, **VerificationToken** — OAuth / JWT
 
 ### Sklep
+- **Category** — `id`, `slug` (unique, używany w URL i w `Product.category`), `label` (nazwa wyświetlana), `order` (kolejność filtrów)
 - **Product** — `id`, `slug` (unique), `name`, `description`, `price`, `images[]`, `category`, `stock`, `featured`, `active`
 - **Order** — `id`, `userId` (nullable), `status`, `total`, `shippingCost`, pola adresowe, `paymentMethod` (`transfer`/`stripe`), `paymentStatus` (`pending`/`PAID`/`expired`)
 - **OrderItem** — referencja do Order, `productId`, `name`, `price`, `quantity`
@@ -149,6 +150,7 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 | `/admin/zamowienia`, `/admin/zamowienia/[id]` | Zamówienia sklepowe |
 | `/admin/zamowienia-indywidualne`, `/admin/zamowienia-indywidualne/[id]` | Zamówienia indywidualne |
 | `/admin/ustawienia` | Ustawienia sklepu (strona główna, o mnie, warsztaty, regulamin, polityka, kontakt, wysyłka, płatności) |
+| `/admin/kategorie` | Zarządzanie kategoriami produktów (CRUD + kolejność) |
 
 ### API Routes
 | Metoda | Endpoint | Opis |
@@ -166,6 +168,8 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 | POST | `/api/account/update-name` | Zmiana imienia (maks. 100 znaków) |
 | PATCH | `/api/account/change-password` | Zmiana hasła (rate limit 5/15 min, 8–128 znaków) |
 | GET/PUT | `/api/account/address` | Pobierz/zapisz adres dostawy (Setting: `user_address_{userId}`) |
+| GET/POST | `/api/admin/categories` | Lista/dodaj kategorie (ADMIN; mutacje → `revalidateCategories()`) |
+| PUT/DELETE | `/api/admin/categories/[id]` | Edytuj/usuń kategorię (ADMIN; usuwanie blokowane gdy istnieją produkty w kategorii) |
 | GET/POST | `/api/admin/products` | Lista/dodaj produkty (ADMIN; mutacje → `revalidateProductPages()`) |
 | PUT/DELETE | `/api/admin/products/[id]` | Edytuj/usuń produkt (ADMIN; mutacje → rewalidacja) |
 | PATCH | `/api/admin/orders/[id]` | Zmień status zamówienia (ADMIN, walidacja enuma) |
@@ -182,6 +186,7 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 - **db.ts** — singleton PrismaClient (`connection_limit=1` pod serverless)
 - **settings.ts** — `getSetting`/`getSettings` z defaultami i retry
 - **products.ts** — `getShopProducts()` (unstable_cache 60 s, tag `products`) + `revalidateProductPages()`
+- **categories.ts** — `getCategories()` (unstable_cache, tag `categories`; fallback do DEFAULT_CATEGORIES gdy DB pusta/niedostępna) + `revalidateCategories()`
 - **admin-auth.ts** — `requireAdmin()`: sesja + **aktualna rola z DB** (nie z JWT — odebranie uprawnień działa natychmiast)
 - **rate-limit.ts** — in-memory limiter (`isRateLimited`, `getClientIp`); per-instancja na serverless
 - **sanitize-html.ts** — `sanitizeRichHtml()` z allowlistą tagów/atrybutów
@@ -218,6 +223,7 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 - **ImageUploader.tsx** — upload na Supabase Storage przez `/api/admin/upload`
 - **FocalPointPicker.tsx** — wybór punktu kadrowania zdjęć (`object-position`)
 - **RichEditor.tsx** — edytor HTML oparty o **Jodit z npm** (dynamiczny `import("jodit")` w useEffect — biblioteka tylko przeglądarkowa, nie może wykonać się przy SSR)
+- **CategoriesManager.tsx** — `"use client"`, CRUD kategorii: lista z edycją inline, zmiana kolejności strzałkami, dodawanie, usuwanie (blokada przy produktach); seed domyślnych gdy DB pusta
 - **SettingsForm.tsx** — formularz ustawień (taby: Strona główna / O mnie / Warsztaty / Regulamin / Polityka / Kontakt / Wysyłka / Płatności)
 - **OrderStatusSelect.tsx** — dropdown statusu zamówienia
 - **OrdersTabs.tsx** — zakładki listy zamówień

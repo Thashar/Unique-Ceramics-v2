@@ -18,16 +18,16 @@ type Product = {
   active: boolean;
 };
 
-const CATEGORIES = ["kubki", "miski", "wazy", "talerze", "inne"];
+type Category = { slug: string; label: string };
 
-export default function ProductForm({ product }: { product?: Product }) {
+export default function ProductForm({ product, categories }: { product?: Product; categories: Category[] }) {
   const router = useRouter();
   const [form, setForm] = useState({
     name: product?.name ?? "",
     slug: product?.slug ?? "",
     description: product?.description ?? "",
     price: product?.price?.toString() ?? "",
-    category: product?.category ?? "inne",
+    category: product?.category ?? categories[0]?.slug ?? "",
     stock: product?.stock?.toString() ?? "0",
     featured: product?.featured ?? false,
     active: product?.active ?? true,
@@ -159,7 +159,7 @@ export default function ProductForm({ product }: { product?: Product }) {
           <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">Kategoria *</label>
           <select value={form.category} onChange={(e) => set("category", e.target.value)}
             className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm">
-            {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+            {categories.map((c) => <option key={c.slug} value={c.slug}>{c.label}</option>)}
           </select>
         </div>
         <div>

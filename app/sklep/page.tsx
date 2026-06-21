@@ -4,6 +4,7 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import ProductCard from "@/components/ui/ProductCard";
 import { getShopProducts } from "@/lib/products";
+import { getCategories } from "@/lib/categories";
 
 // Strona czyta searchParams (rendering dynamiczny), ale dane katalogu są
 // cachowane w getShopProducts (60 s, tag "products" unieważniany w adminie)
@@ -29,21 +30,18 @@ export const metadata = {
   },
 };
 
-const CATEGORIES = [
-  { value: "wszystkie", label: "Wszystkie" },
-  { value: "kubki",     label: "Kubki" },
-  { value: "miski",     label: "Miski" },
-  { value: "wazy",      label: "Wazy" },
-  { value: "talerze",   label: "Talerze" },
-  { value: "inne",      label: "Inne" },
-];
-
 export default async function ShopPage({
   searchParams,
 }: {
   searchParams: Promise<{ kategoria?: string }>;
 }) {
   const { kategoria } = await searchParams;
+
+  const dbCategories = await getCategories();
+  const CATEGORIES = [
+    { value: "wszystkie", label: "Wszystkie" },
+    ...dbCategories.map((c) => ({ value: c.slug, label: c.label })),
+  ];
 
   let products: Awaited<ReturnType<typeof getShopProducts>>["inStock"] = [];
   let dbError = false;

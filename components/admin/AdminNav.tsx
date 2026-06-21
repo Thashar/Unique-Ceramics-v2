@@ -6,7 +6,7 @@ import { signOut } from "next-auth/react";
 import { usePathname, useSearchParams } from "next/navigation";
 import {
   LayoutDashboard, Package, ShoppingBag, ClipboardList,
-  Settings, LogOut, Menu, X, ChevronDown, ChevronRight, ExternalLink,
+  Settings, LogOut, Menu, X, ChevronDown, ChevronRight, ExternalLink, Tag,
 } from "lucide-react";
 
 const topLinks = [
@@ -14,6 +14,7 @@ const topLinks = [
   { href: "/admin/produkty",                label: "Produkty",          icon: Package },
   { href: "/admin/zamowienia",              label: "Zamówienia",        icon: ShoppingBag },
   { href: "/admin/zamowienia-indywidualne", label: "Zam. indywidualne", icon: ClipboardList },
+  { href: "/admin/kategorie",               label: "Kategorie",         icon: Tag },
 ];
 
 const settingsItems = [
@@ -34,7 +35,7 @@ const paymentItems = [
 function AdminNavInner({ onClose }: { onClose?: () => void }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const activeSection = searchParams.get("s") ?? "omnie";
+  const activeSection = searchParams.get("s") ?? "strona_glowna";
 
   const onSettings = pathname.startsWith("/admin/ustawienia");
   const onPayments = activeSection.startsWith("platnosci_");
@@ -66,7 +67,7 @@ function AdminNavInner({ onClose }: { onClose?: () => void }) {
         {/* Ustawienia — rozwijane */}
         <div className="pt-1">
           <Link
-            href="/admin/ustawienia?s=omnie"
+            href="/admin/ustawienia?s=strona_glowna"
             onClick={onClose}
             className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-all duration-150 ${
               onSettings

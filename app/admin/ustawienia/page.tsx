@@ -9,7 +9,7 @@ export default async function AdminSettingsPage({
   searchParams: Promise<{ s?: string }>;
 }) {
   const { s } = await searchParams;
-  const section = s ?? "omnie";
+  const section = s ?? "strona_glowna";
 
   const settings = await getSettings([
     "home_hero_image",
