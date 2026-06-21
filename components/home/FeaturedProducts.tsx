@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { db } from "@/lib/db";
-import ProductCard from "@/components/ui/ProductCard";
 import ProductCarousel from "@/components/home/ProductCarousel";
+import DesktopCarousel from "@/components/home/DesktopCarousel";
 
 export default async function FeaturedProducts() {
   let products: Awaited<ReturnType<typeof db.product.findMany>> = [];
@@ -10,7 +10,6 @@ export default async function FeaturedProducts() {
     products = await db.product.findMany({
       where: { featured: true, active: true },
       orderBy: { createdAt: "desc" },
-      take: 4,
     });
   } catch {
     // Baza niedostępna — sekcja nie wyświetla produktów
@@ -52,13 +51,9 @@ export default async function FeaturedProducts() {
           <ProductCarousel products={products} />
         </div>
 
-        {/* Desktop: standardowy grid 4 kolumny */}
+        {/* Desktop: 4 kolumny, gdy >4 produktów — carousel z nawigacją */}
         <div className="hidden lg:block max-w-7xl mx-auto w-full px-10">
-          <div className="grid grid-cols-4 gap-8">
-            {products.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
+          <DesktopCarousel products={products} />
         </div>
       </div>
     </section>
