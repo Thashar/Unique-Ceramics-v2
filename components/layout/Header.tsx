@@ -116,12 +116,23 @@ export default function Header() {
 
   useEffect(() => {
     if (!isHome) return;
-    const sections = document.querySelectorAll('[data-header-theme="transparent"]');
+    const sections = document.querySelectorAll<HTMLElement>('[data-header-theme="transparent"]');
     if (!sections.length) return;
 
-    // Set akumuluje stan wszystkich obserwowanych sekcji między callbackami.
-    // Bez tego: gdy O mnie odpala false w osobnym callbacku niż Warsztaty (true),
-    // entries.some() widzi tylko false i błędnie ustawia header na solid.
+    // Warstwa 3: natychmiastowy synchroniczny check widoczności sekcji.
+    // IO callback jest asynchroniczny — może odpalić się PO tym jak przeglądarka
+    // przywróci scroll. Ten check działa od razu po HomeScrollSnap.scrollTo(0).
+    function checkNow() {
+      let anyVisible = false;
+      sections.forEach((el) => {
+        const rect = el.getBoundingClientRect();
+        const vis = Math.min(rect.bottom, window.innerHeight) - Math.max(rect.top, 0);
+        if (el.offsetHeight && vis / el.offsetHeight >= 0.3) anyVisible = true;
+      });
+      setTransparentVisible(anyVisible);
+    }
+    checkNow();
+
     const visible = new Set<Element>();
 
     const observer = new IntersectionObserver(
