@@ -15,8 +15,14 @@ interface Props {
     home_workshops_image: string;
     home_workshops_position: string;
     about_hero_image: string;
+    about_hero_position: string;
+    about_content_image: string;
+    about_content_position: string;
     about_story: string;
     workshops_hero_image: string;
+    workshops_hero_position: string;
+    workshops_content_image: string;
+    workshops_content_position: string;
     workshops_intro: string;
     regulamin: string;
     polityka_prywatnosci: string;
@@ -98,10 +104,16 @@ export default function SettingsForm({ section, initial }: Props) {
 
   // O mnie
   const [aboutImage, setAboutImage] = useState(initial.about_hero_image);
+  const [aboutHeroPos, setAboutHeroPos] = useState(initial.about_hero_position);
+  const [aboutContentImage, setAboutContentImage] = useState(initial.about_content_image);
+  const [aboutContentPos, setAboutContentPos] = useState(initial.about_content_position);
   const [aboutStory, setAboutStory] = useState(initial.about_story);
 
   // Warsztaty
   const [workshopsImage, setWorkshopsImage] = useState(initial.workshops_hero_image);
+  const [workshopsHeroPos, setWorkshopsHeroPos] = useState(initial.workshops_hero_position);
+  const [workshopsContentImage, setWorkshopsContentImage] = useState(initial.workshops_content_image);
+  const [workshopsContentPos, setWorkshopsContentPos] = useState(initial.workshops_content_position);
   const [workshopsIntro, setWorkshopsIntro] = useState(initial.workshops_intro);
 
   // Regulamin
@@ -240,21 +252,42 @@ export default function SettingsForm({ section, initial }: Props) {
       )}
 
       {section === "omnie" && (
-        <div className="max-w-2xl space-y-6">
+        <div className="max-w-2xl space-y-8">
           <h2 className="font-serif text-2xl text-espresso">O mnie</h2>
-          <ImageUploader
-            currentUrl={aboutImage}
-            onUploaded={(url) => setAboutImage(url)}
-            label="Zdjęcie nagłówka (hero + sidebar)"
-          />
-          <div>
+
+          <div className="space-y-4">
+            <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/70">Zdjęcie nagłówka (hero)</h3>
+            <ImageUploader
+              currentUrl={aboutImage}
+              onUploaded={(url) => setAboutImage(url)}
+              label="Zdjęcie hero"
+            />
+            <FocalPointPicker imageUrl={aboutImage} value={aboutHeroPos} onChange={setAboutHeroPos} />
+          </div>
+
+          <div className="border-t border-sand pt-6 space-y-4">
+            <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/70">Zdjęcie przy opisie (prawa kolumna)</h3>
+            <p className="text-xs text-charcoal/40">Jeżeli puste — kolumna zdjęcia znika, tekst zajmuje całą szerokość.</p>
+            <ImageUploader
+              currentUrl={aboutContentImage}
+              onUploaded={(url) => setAboutContentImage(url)}
+              label="Zdjęcie przy opisie"
+            />
+            <FocalPointPicker imageUrl={aboutContentImage} value={aboutContentPos} onChange={setAboutContentPos} />
+          </div>
+
+          <div className="border-t border-sand pt-6">
             <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-3">Treść — historia</label>
             <RichEditor value={aboutStory} onChange={setAboutStory} />
           </div>
+
           <SaveButton
             onClick={() => save([
-              { key: "about_hero_image", value: aboutImage },
-              { key: "about_story", value: aboutStory },
+              { key: "about_hero_image",        value: aboutImage },
+              { key: "about_hero_position",     value: aboutHeroPos },
+              { key: "about_content_image",     value: aboutContentImage },
+              { key: "about_content_position",  value: aboutContentPos },
+              { key: "about_story",             value: aboutStory },
             ])}
             label="Zapisz stronę O mnie"
           />
@@ -262,21 +295,42 @@ export default function SettingsForm({ section, initial }: Props) {
       )}
 
       {section === "warsztaty" && (
-        <div className="max-w-2xl space-y-6">
+        <div className="max-w-2xl space-y-8">
           <h2 className="font-serif text-2xl text-espresso">Warsztaty</h2>
-          <ImageUploader
-            currentUrl={workshopsImage}
-            onUploaded={(url) => setWorkshopsImage(url)}
-            label="Zdjęcie nagłówka (hero)"
-          />
-          <div>
+
+          <div className="space-y-4">
+            <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/70">Zdjęcie nagłówka (hero)</h3>
+            <ImageUploader
+              currentUrl={workshopsImage}
+              onUploaded={(url) => setWorkshopsImage(url)}
+              label="Zdjęcie hero"
+            />
+            <FocalPointPicker imageUrl={workshopsImage} value={workshopsHeroPos} onChange={setWorkshopsHeroPos} />
+          </div>
+
+          <div className="border-t border-sand pt-6 space-y-4">
+            <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/70">Zdjęcie przy opisie (prawa kolumna)</h3>
+            <p className="text-xs text-charcoal/40">Jeżeli puste — kolumna zdjęcia znika, tekst zajmuje całą szerokość.</p>
+            <ImageUploader
+              currentUrl={workshopsContentImage}
+              onUploaded={(url) => setWorkshopsContentImage(url)}
+              label="Zdjęcie przy opisie"
+            />
+            <FocalPointPicker imageUrl={workshopsContentImage} value={workshopsContentPos} onChange={setWorkshopsContentPos} />
+          </div>
+
+          <div className="border-t border-sand pt-6">
             <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-3">Tekst wprowadzający</label>
             <RichEditor value={workshopsIntro} onChange={setWorkshopsIntro} />
           </div>
+
           <SaveButton
             onClick={() => save([
-              { key: "workshops_hero_image", value: workshopsImage },
-              { key: "workshops_intro", value: workshopsIntro },
+              { key: "workshops_hero_image",       value: workshopsImage },
+              { key: "workshops_hero_position",    value: workshopsHeroPos },
+              { key: "workshops_content_image",    value: workshopsContentImage },
+              { key: "workshops_content_position", value: workshopsContentPos },
+              { key: "workshops_intro",            value: workshopsIntro },
             ])}
             label="Zapisz stronę Warsztaty"
           />

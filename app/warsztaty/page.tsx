@@ -49,8 +49,15 @@ const includes: { icon: LucideIcon; label: string }[] = [
 ];
 
 export default async function WorkshopsPage() {
-  const s = await getSettings(["workshops_hero_image", "workshops_intro", "contact_phone"]);
+  const s = await getSettings([
+    "workshops_hero_image", "workshops_hero_position",
+    "workshops_content_image", "workshops_content_position",
+    "workshops_intro", "contact_phone",
+  ]);
   const heroImage = s.workshops_hero_image || "/images/warsztaty-photo.jpg";
+  const heroPos = s.workshops_hero_position || "50% 50%";
+  const contentImage = s.workshops_content_image;
+  const contentPos = s.workshops_content_position || "50% 50%";
   const intro = s.workshops_intro;
   const phone = s.contact_phone;
 
@@ -60,7 +67,7 @@ export default async function WorkshopsPage() {
       <main className="flex-1 pt-20">
         {/* Hero */}
         <div className="relative h-[55vh] overflow-hidden">
-          <Image src={heroImage} alt="Warsztaty ceramiczne" fill priority className="object-cover" sizes="100vw" />
+          <Image src={heroImage} alt="Warsztaty ceramiczne" fill priority className="object-cover" style={{ objectPosition: heroPos }} sizes="100vw" />
           <div className="absolute inset-0 bg-espresso/60" />
           <div className="absolute inset-0 flex items-end">
             <div className="max-w-7xl mx-auto px-6 lg:px-10 w-full pb-16">
@@ -72,10 +79,29 @@ export default async function WorkshopsPage() {
 
         {/* Lead */}
         <div className="bg-cream py-16 px-6 lg:px-10">
-          <div
-            className="max-w-3xl mx-auto text-center text-charcoal/80 text-lg leading-relaxed [&_p]:mb-4 [&_strong]:text-espresso"
-            dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(intro) }}
-          />
+          {contentImage ? (
+            <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+              <div
+                className="text-charcoal/80 text-lg leading-relaxed [&_p]:mb-4 [&_strong]:text-espresso"
+                dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(intro) }}
+              />
+              <div className="relative aspect-[3/4] overflow-hidden rounded-sm">
+                <Image
+                  src={contentImage}
+                  alt="Warsztaty ceramiczne"
+                  fill
+                  className="object-cover"
+                  style={{ objectPosition: contentPos }}
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                />
+              </div>
+            </div>
+          ) : (
+            <div
+              className="max-w-3xl mx-auto text-center text-charcoal/80 text-lg leading-relaxed [&_p]:mb-4 [&_strong]:text-espresso"
+              dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(intro) }}
+            />
+          )}
         </div>
 
         {/* Lista warsztatów */}

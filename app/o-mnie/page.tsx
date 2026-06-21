@@ -18,8 +18,15 @@ export const metadata: Metadata = {
 };
 
 export default async function AboutPage() {
-  const s = await getSettings(["about_hero_image", "about_story"]);
+  const s = await getSettings([
+    "about_hero_image", "about_hero_position",
+    "about_content_image", "about_content_position",
+    "about_story",
+  ]);
   const heroImage = s.about_hero_image || "/images/about-photo.jpg";
+  const heroPos = s.about_hero_position || "50% 50%";
+  const contentImage = s.about_content_image;
+  const contentPos = s.about_content_position || "50% 50%";
   const story = s.about_story;
 
   return (
@@ -34,6 +41,7 @@ export default async function AboutPage() {
             fill
             priority
             className="object-cover"
+            style={{ objectPosition: heroPos }}
             sizes="100vw"
           />
           <div className="absolute inset-0 bg-espresso/50" />
@@ -47,9 +55,9 @@ export default async function AboutPage() {
 
         {/* Treść */}
         <div className="bg-warm-white py-24 px-6 lg:px-10">
-          <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-16">
+          <div className={`max-w-7xl mx-auto grid grid-cols-1 gap-16 ${contentImage ? "lg:grid-cols-12" : ""}`}>
             {/* Tekst główny */}
-            <div className="lg:col-span-7">
+            <div className={contentImage ? "lg:col-span-7" : ""}>
               <h2 className="font-serif text-3xl text-espresso mb-8 leading-snug">
                 „Ręcznie tworzone z sercem&rdquo;
               </h2>
@@ -75,18 +83,21 @@ export default async function AboutPage() {
               </div>
             </div>
 
-            {/* Sidebar ze zdjęciem */}
-            <div className="lg:col-span-5">
-              <div className="relative aspect-[3/4] overflow-hidden rounded-sm">
-                <Image
-                  src={heroImage}
-                  alt="Przy pracy"
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 1024px) 100vw, 40vw"
-                />
+            {/* Sidebar ze zdjęciem — widoczny tylko gdy ustawione */}
+            {contentImage && (
+              <div className="lg:col-span-5">
+                <div className="relative aspect-[3/4] overflow-hidden rounded-sm">
+                  <Image
+                    src={contentImage}
+                    alt="Przy pracy"
+                    fill
+                    className="object-cover"
+                    style={{ objectPosition: contentPos }}
+                    sizes="(max-width: 1024px) 100vw, 40vw"
+                  />
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
 
