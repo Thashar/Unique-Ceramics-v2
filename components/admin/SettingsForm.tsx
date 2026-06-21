@@ -23,6 +23,9 @@ interface Props {
     contact_phone: string;
     contact_email: string;
     contact_instagram: string;
+    contact_facebook: string;
+    contact_youtube: string;
+    contact_whatsapp: string;
     shipping_cost: string;
     shipping_free_enabled: string;
     shipping_free_from: string;
@@ -111,6 +114,9 @@ export default function SettingsForm({ section, initial }: Props) {
   const [phone, setPhone] = useState(initial.contact_phone);
   const [email, setEmail] = useState(initial.contact_email);
   const [instagram, setInstagram] = useState(initial.contact_instagram);
+  const [facebook, setFacebook] = useState(initial.contact_facebook);
+  const [youtube, setYoutube] = useState(initial.contact_youtube);
+  const [whatsapp, setWhatsapp] = useState(initial.contact_whatsapp);
 
   // Wysyłka
   const [shippingCost, setShippingCost] = useState(initial.shipping_cost);
@@ -304,12 +310,19 @@ export default function SettingsForm({ section, initial }: Props) {
           <h2 className="font-serif text-2xl text-espresso">Dane kontaktowe</h2>
           <Field label="Telefon" value={phone} setter={setPhone} type="tel" />
           <Field label="E-mail" value={email} setter={setEmail} type="email" />
-          <Field label="Instagram" value={instagram} setter={setInstagram} />
+          <Field label="Instagram (np. @unique.ceramics)" value={instagram} setter={setInstagram} />
+          <Field label="Facebook (pełny URL strony)" value={facebook} setter={setFacebook} placeholder="https://facebook.com/..." />
+          <Field label="YouTube (pełny URL kanału)" value={youtube} setter={setYoutube} placeholder="https://youtube.com/..." />
+          <Field label="WhatsApp (numer telefonu, np. 48668443706)" value={whatsapp} setter={setWhatsapp} placeholder="48668443706" />
+          <p className="text-xs text-charcoal/50">Facebook, YouTube i WhatsApp wyświetlają się w stopce tylko gdy są wypełnione.</p>
           <SaveButton
             onClick={() => save([
               { key: "contact_phone", value: phone },
               { key: "contact_email", value: email },
               { key: "contact_instagram", value: instagram },
+              { key: "contact_facebook", value: facebook },
+              { key: "contact_youtube", value: youtube },
+              { key: "contact_whatsapp", value: whatsapp },
             ])}
             label="Zapisz kontakt"
           />
