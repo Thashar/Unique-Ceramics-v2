@@ -1,18 +1,12 @@
 import { unstable_cache, revalidateTag } from "next/cache";
 import { db } from "@/lib/db";
+import { DEFAULT_CATEGORIES } from "@/lib/category-defaults";
 
-export type Category = { id: string; slug: string; label: string; order: number };
-
-export const DEFAULT_CATEGORIES: Category[] = [
-  { id: "_kubki",   slug: "kubki",   label: "Kubki",   order: 0 },
-  { id: "_miski",   slug: "miski",   label: "Miski",   order: 1 },
-  { id: "_wazy",    slug: "wazy",    label: "Wazy",    order: 2 },
-  { id: "_talerze", slug: "talerze", label: "Talerze", order: 3 },
-  { id: "_inne",    slug: "inne",    label: "Inne",    order: 4 },
-];
+export type { Category } from "@/lib/category-defaults";
+export { DEFAULT_CATEGORIES } from "@/lib/category-defaults";
 
 export const getCategories = unstable_cache(
-  async (): Promise<Category[]> => {
+  async () => {
     try {
       const cats = await db.category.findMany({
         orderBy: [{ order: "asc" }, { createdAt: "asc" }],

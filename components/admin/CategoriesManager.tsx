@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Plus, Pencil, Trash2, Check, X, ChevronUp, ChevronDown } from "lucide-react";
-import { DEFAULT_CATEGORIES, type Category } from "@/lib/categories";
+import { DEFAULT_CATEGORIES, type Category } from "@/lib/category-defaults";
 
 interface Props {
   initialCategories: Category[];
