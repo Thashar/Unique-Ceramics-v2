@@ -133,7 +133,7 @@ export default async function WorkshopsPage() {
                   <h2 className="font-serif text-3xl text-espresso mb-4">{w.title}</h2>
                   <p className="text-charcoal/75 leading-relaxed mb-6">{w.description}</p>
                 </div>
-                <div className="bg-warm-white p-8 self-start">
+                <div className="bg-warm-white p-8 self-start border border-sand">
                   <div className="space-y-3 mb-8">
                     <div className="flex justify-between text-sm">
                       <span className="text-charcoal/80">Czas trwania</span>
