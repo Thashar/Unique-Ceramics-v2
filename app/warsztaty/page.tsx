@@ -56,7 +56,7 @@ export default async function WorkshopsPage() {
     "workshops_content_image", "workshops_content_position",
     "workshops_intro", "contact_phone",
   ]);
-  const heroImage = s.workshops_hero_image || "/images/warsztaty-photo.jpg";
+  const heroImage = s.workshops_hero_image;
   const heroPos = s.workshops_hero_position || "50% 50%";
   const overlayBg = hexToRgba(s.workshops_hero_overlay_color, s.workshops_hero_overlay_opacity);
   const contentImage = s.workshops_content_image;
@@ -69,9 +69,13 @@ export default async function WorkshopsPage() {
       <Header />
       <main className="flex-1 pt-20">
         {/* Hero */}
-        <div className="relative h-[55vh] overflow-hidden">
-          <Image src={heroImage} alt="Warsztaty ceramiczne" fill priority className="object-cover" style={{ objectPosition: heroPos }} sizes="100vw" />
-          <div className="absolute inset-0" style={{ backgroundColor: overlayBg }} />
+        <div className="relative h-[55vh] overflow-hidden bg-espresso">
+          {heroImage && (
+            <>
+              <Image src={heroImage} alt="Warsztaty ceramiczne" fill priority className="object-cover" style={{ objectPosition: heroPos }} sizes="100vw" />
+              <div className="absolute inset-0" style={{ backgroundColor: overlayBg }} />
+            </>
+          )}
           <div className="absolute inset-0 flex items-end">
             <div className="max-w-7xl mx-auto px-6 lg:px-10 w-full pb-16">
               <p className="text-xs tracking-[0.3em] uppercase text-terracotta mb-3">Nauka</p>

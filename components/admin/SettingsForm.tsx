@@ -113,24 +113,25 @@ function SaveButton({ onClick, label }: { onClick: () => void; label: string }) 
 }
 
 function OverlayControl({
-  imageUrl, position, color, opacity, onColorChange, onOpacityChange,
+  imageUrl, position, color, opacity, onColorChange, onOpacityChange, aspectRatio = "16/9",
 }: {
   imageUrl: string; position: string; color: string; opacity: string;
   onColorChange: (v: string) => void; onOpacityChange: (v: string) => void;
+  aspectRatio?: string;
 }) {
   const pct = parseInt(opacity) || 0;
   return (
     <div className="space-y-3">
       <label className="block text-xs tracking-widest uppercase text-charcoal/80">Maska na zdjęcie (podgląd na żywo)</label>
       {imageUrl ? (
-        <div className="relative w-64 overflow-hidden rounded-sm border border-sand" style={{ aspectRatio: "16/9" }}>
-          <Image src={imageUrl} alt="" fill className="object-cover" style={{ objectPosition: position }} sizes="256px" unoptimized />
+        <div className="relative w-full overflow-hidden rounded-sm border border-sand" style={{ aspectRatio }}>
+          <Image src={imageUrl} alt="" fill className="object-cover" style={{ objectPosition: position }} sizes="100%" unoptimized />
           <div className="absolute inset-0" style={{ backgroundColor: hexToRgba(color, opacity) }} />
         </div>
       ) : (
         <div
-          className="w-64 border border-sand border-dashed rounded-sm flex items-center justify-center text-charcoal/30 text-xs"
-          style={{ aspectRatio: "16/9" }}
+          className="w-full border border-sand border-dashed rounded-sm flex items-center justify-center text-charcoal/30 text-xs"
+          style={{ aspectRatio }}
         >
           Najpierw wybierz zdjęcie
         </div>
@@ -346,7 +347,7 @@ export default function SettingsForm({ section, initial }: Props) {
               onUploaded={(url) => setAboutImage(url)}
               label="Zdjęcie hero"
             />
-            <FocalPointPicker imageUrl={aboutImage} value={aboutHeroPos} onChange={setAboutHeroPos} />
+            <FocalPointPicker imageUrl={aboutImage} value={aboutHeroPos} onChange={setAboutHeroPos} aspectRatio="3/1" />
             <OverlayControl
               imageUrl={aboutImage}
               position={aboutHeroPos}
@@ -354,6 +355,7 @@ export default function SettingsForm({ section, initial }: Props) {
               opacity={aboutOverlayOpacity}
               onColorChange={setAboutOverlayColor}
               onOpacityChange={setAboutOverlayOpacity}
+              aspectRatio="3/1"
             />
           </div>
 
@@ -400,7 +402,7 @@ export default function SettingsForm({ section, initial }: Props) {
               onUploaded={(url) => setShopHeroImage(url)}
               label="Zdjęcie hero"
             />
-            <FocalPointPicker imageUrl={shopHeroImage} value={shopHeroPos} onChange={setShopHeroPos} />
+            <FocalPointPicker imageUrl={shopHeroImage} value={shopHeroPos} onChange={setShopHeroPos} aspectRatio="3/1" />
             <OverlayControl
               imageUrl={shopHeroImage}
               position={shopHeroPos}
@@ -408,6 +410,7 @@ export default function SettingsForm({ section, initial }: Props) {
               opacity={shopOverlayOpacity}
               onColorChange={setShopOverlayColor}
               onOpacityChange={setShopOverlayOpacity}
+              aspectRatio="3/1"
             />
           </div>
 
@@ -434,7 +437,7 @@ export default function SettingsForm({ section, initial }: Props) {
               onUploaded={(url) => setWorkshopsImage(url)}
               label="Zdjęcie hero"
             />
-            <FocalPointPicker imageUrl={workshopsImage} value={workshopsHeroPos} onChange={setWorkshopsHeroPos} />
+            <FocalPointPicker imageUrl={workshopsImage} value={workshopsHeroPos} onChange={setWorkshopsHeroPos} aspectRatio="3/1" />
             <OverlayControl
               imageUrl={workshopsImage}
               position={workshopsHeroPos}
@@ -442,6 +445,7 @@ export default function SettingsForm({ section, initial }: Props) {
               opacity={workshopsOverlayOpacity}
               onColorChange={setWorkshopsOverlayColor}
               onOpacityChange={setWorkshopsOverlayOpacity}
+              aspectRatio="3/1"
             />
           </div>
 

@@ -16,10 +16,12 @@ export default function FocalPointPicker({
   imageUrl,
   value,
   onChange,
+  aspectRatio = "16/9",
 }: {
   imageUrl: string;
   value: string;
   onChange: (v: string) => void;
+  aspectRatio?: string;
 }) {
   if (!imageUrl) return null;
   const cur = fromValue(value);
@@ -29,7 +31,7 @@ export default function FocalPointPicker({
       <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">
         Punkt kadrowania
       </label>
-      <div className="relative w-64 overflow-hidden rounded-sm border border-sand bg-mist" style={{ aspectRatio: "16/9" }}>
+      <div className="relative w-full overflow-hidden rounded-sm border border-sand bg-mist" style={{ aspectRatio }}>
         <Image
           src={imageUrl}
           alt=""

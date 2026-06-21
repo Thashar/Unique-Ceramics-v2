@@ -25,7 +25,7 @@ export default async function AboutPage() {
     "about_content_image", "about_content_position",
     "about_story",
   ]);
-  const heroImage = s.about_hero_image || "/images/about-photo.jpg";
+  const heroImage = s.about_hero_image;
   const heroPos = s.about_hero_position || "50% 50%";
   const overlayBg = hexToRgba(s.about_hero_overlay_color, s.about_hero_overlay_opacity);
   const contentImage = s.about_content_image;
@@ -37,17 +37,21 @@ export default async function AboutPage() {
       <Header />
       <main className="flex-1 pt-20">
         {/* Hero */}
-        <div className="relative h-[55vh] overflow-hidden">
-          <Image
-            src={heroImage}
-            alt="Pracownia ceramiczna"
-            fill
-            priority
-            className="object-cover"
-            style={{ objectPosition: heroPos }}
-            sizes="100vw"
-          />
-          <div className="absolute inset-0" style={{ backgroundColor: overlayBg }} />
+        <div className="relative h-[55vh] overflow-hidden bg-espresso">
+          {heroImage && (
+            <>
+              <Image
+                src={heroImage}
+                alt="Pracownia ceramiczna"
+                fill
+                priority
+                className="object-cover"
+                style={{ objectPosition: heroPos }}
+                sizes="100vw"
+              />
+              <div className="absolute inset-0" style={{ backgroundColor: overlayBg }} />
+            </>
+          )}
           <div className="absolute inset-0 flex items-end">
             <div className="max-w-7xl mx-auto px-6 lg:px-10 w-full pb-16">
               <p className="text-xs tracking-[0.3em] uppercase text-terracotta mb-3">Pracownia</p>
