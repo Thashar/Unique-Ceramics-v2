@@ -106,6 +106,7 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 | `shipping_cost` | Koszt wysyłki w zł (default: 18) |
 | `shipping_free_enabled` | "true"/"false" — czy jest darmowa wysyłka |
 | `shipping_free_from` | Kwota progu darmowej wysyłki (default: 300) |
+| `shipping_time` | Czas realizacji wyświetlany na karcie produktu (default: „2–4 dni robocze") |
 | `payment_bank_account_name` | Nazwa odbiorcy przelewu |
 | `payment_bank_account_number` | Numer konta bankowego |
 | `payment_bank_name` | Nazwa banku |

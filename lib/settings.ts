@@ -150,6 +150,7 @@ const DEFAULTS: Record<string, string> = {
   shipping_cost: "18",
   shipping_free_enabled: "true",
   shipping_free_from: "300",
+  shipping_time: "2–4 dni robocze",
   // Płatności — przelew tradycyjny
   payment_bank_account_name: "",
   payment_bank_account_number: "",

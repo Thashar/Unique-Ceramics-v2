@@ -30,6 +30,7 @@ export default async function AdminSettingsPage({
     "shipping_cost",
     "shipping_free_enabled",
     "shipping_free_from",
+    "shipping_time",
     "payment_bank_account_name",
     "payment_bank_account_number",
     "payment_bank_name",

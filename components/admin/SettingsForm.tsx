@@ -26,6 +26,7 @@ interface Props {
     shipping_cost: string;
     shipping_free_enabled: string;
     shipping_free_from: string;
+    shipping_time: string;
     payment_bank_account_name: string;
     payment_bank_account_number: string;
     payment_bank_name: string;
@@ -115,6 +116,7 @@ export default function SettingsForm({ section, initial }: Props) {
   const [shippingCost, setShippingCost] = useState(initial.shipping_cost);
   const [freeEnabled, setFreeEnabled] = useState(initial.shipping_free_enabled === "true");
   const [freeFrom, setFreeFrom] = useState(initial.shipping_free_from);
+  const [shippingTime, setShippingTime] = useState(initial.shipping_time);
 
   // Przelew
   const [bankName, setBankName] = useState(initial.payment_bank_account_name);
@@ -325,11 +327,13 @@ export default function SettingsForm({ section, initial }: Props) {
           {freeEnabled && (
             <Field label="Darmowa wysyłka od (zł)" value={freeFrom} setter={setFreeFrom} type="number" />
           )}
+          <Field label="Czas realizacji (tekst na karcie produktu)" value={shippingTime} setter={setShippingTime} placeholder="np. 2–4 dni robocze" />
           <SaveButton
             onClick={() => save([
               { key: "shipping_cost", value: shippingCost },
               { key: "shipping_free_enabled", value: freeEnabled ? "true" : "false" },
               { key: "shipping_free_from", value: freeFrom },
+              { key: "shipping_time", value: shippingTime },
             ])}
             label="Zapisz wysyłkę"
           />

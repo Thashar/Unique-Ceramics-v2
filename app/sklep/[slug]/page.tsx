@@ -80,7 +80,7 @@ export default async function ProductPage({
 
   const [product, shippingSettings] = await Promise.all([
     getProduct(slug),
-    getSettings(["shipping_cost", "shipping_free_enabled", "shipping_free_from"]),
+    getSettings(["shipping_cost", "shipping_free_enabled", "shipping_free_from", "shipping_time"]),
   ]);
 
   if (!product) notFound();
@@ -99,6 +99,7 @@ export default async function ProductPage({
   const shippingCost = shippingSettings.shipping_cost || "18";
   const freeEnabled = shippingSettings.shipping_free_enabled === "true";
   const freeFrom = shippingSettings.shipping_free_from || "300";
+  const shippingTime = shippingSettings.shipping_time || "2–4 dni robocze";
 
   const effectiveShipping =
     freeEnabled && product.price >= parseFloat(freeFrom)
@@ -233,7 +234,7 @@ export default async function ProductPage({
                 <p>
                   Wysyłka {shippingCost} zł.
                   {freeEnabled && ` Darmowa od ${freeFrom} zł.`}
-                  {" "}Czas realizacji 2–4 dni robocze.
+                  {" "}Czas realizacji {shippingTime}.
                 </p>
               </div>
               <div className="flex items-start gap-3 text-sm text-charcoal/70">
