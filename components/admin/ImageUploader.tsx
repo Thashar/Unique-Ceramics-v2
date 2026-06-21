@@ -35,7 +35,7 @@ export default function ImageUploader({ currentUrl, onUploaded, label = "Zdjęci
       <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-3">{label}</label>
       {preview && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={preview} alt="" className="w-full h-48 object-cover mb-3 bg-sand" />
+        <img src={preview} alt="" className="w-full object-contain mb-3 bg-sand" />
       )}
       <input
         type="file"
