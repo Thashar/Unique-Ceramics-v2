@@ -3,7 +3,7 @@ import { cache } from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { ChevronLeft, ShoppingBag, Package } from "lucide-react";
+import { ChevronLeft, ShoppingBag, Package, Truck } from "lucide-react";
 import { db } from "@/lib/db";
 import { getSettings } from "@/lib/settings";
 import Header from "@/components/layout/Header";
@@ -228,16 +228,18 @@ export default async function ProductPage({
               stock: product.stock,
             }} />
 
-            <div className="mt-10 space-y-4 border-t border-sand pt-8">
-              <div className="flex items-start gap-3 text-sm text-charcoal/70">
-                <Package size={16} strokeWidth={1.5} className="text-clay mt-0.5 flex-shrink-0" />
+            <div className="mt-10 space-y-3 border-t border-sand pt-8">
+              <div className="flex items-center gap-3 text-sm text-charcoal/70">
+                <Truck size={16} strokeWidth={1.5} className="text-clay flex-shrink-0" />
                 <p>
                   Wysyłka {shippingCost} zł.
                   {freeEnabled && ` Darmowa od ${freeFrom} zł.`}
-                  {" "}Czas realizacji {shippingTime}.
                 </p>
               </div>
-
+              <div className="flex items-center gap-3 text-sm text-charcoal/70">
+                <Package size={16} strokeWidth={1.5} className="text-clay flex-shrink-0" />
+                <p>Czas realizacji {shippingTime}.</p>
+              </div>
             </div>
           </div>
         </div>
