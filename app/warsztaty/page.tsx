@@ -13,6 +13,7 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { getSettings } from "@/lib/settings";
 import { sanitizeRichHtml } from "@/lib/sanitize-html";
+import { hexToRgba } from "@/lib/overlay";
 
 export const metadata: Metadata = {
   title: "Warsztaty",
@@ -51,11 +52,13 @@ const includes: { icon: LucideIcon; label: string }[] = [
 export default async function WorkshopsPage() {
   const s = await getSettings([
     "workshops_hero_image", "workshops_hero_position",
+    "workshops_hero_overlay_color", "workshops_hero_overlay_opacity",
     "workshops_content_image", "workshops_content_position",
     "workshops_intro", "contact_phone",
   ]);
   const heroImage = s.workshops_hero_image || "/images/warsztaty-photo.jpg";
   const heroPos = s.workshops_hero_position || "50% 50%";
+  const overlayBg = hexToRgba(s.workshops_hero_overlay_color, s.workshops_hero_overlay_opacity);
   const contentImage = s.workshops_content_image;
   const contentPos = s.workshops_content_position || "50% 50%";
   const intro = s.workshops_intro;
@@ -68,7 +71,7 @@ export default async function WorkshopsPage() {
         {/* Hero */}
         <div className="relative h-[55vh] overflow-hidden">
           <Image src={heroImage} alt="Warsztaty ceramiczne" fill priority className="object-cover" style={{ objectPosition: heroPos }} sizes="100vw" />
-          <div className="absolute inset-0 bg-espresso/60" />
+          <div className="absolute inset-0" style={{ backgroundColor: overlayBg }} />
           <div className="absolute inset-0 flex items-end">
             <div className="max-w-7xl mx-auto px-6 lg:px-10 w-full pb-16">
               <p className="text-xs tracking-[0.3em] uppercase text-terracotta mb-3">Nauka</p>

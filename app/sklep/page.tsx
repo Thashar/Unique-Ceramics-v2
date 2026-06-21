@@ -1,13 +1,13 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ShoppingBag } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import ProductCard from "@/components/ui/ProductCard";
 import { getShopProducts } from "@/lib/products";
 import { getCategories } from "@/lib/categories";
-
-// Strona czyta searchParams (rendering dynamiczny), ale dane katalogu są
-// cachowane w getShopProducts (60 s, tag "products" unieważniany w adminie)
+import { getSettings } from "@/lib/settings";
+import { hexToRgba } from "@/lib/overlay";
 
 export const metadata = {
   title: "Sklep",
@@ -37,7 +37,17 @@ export default async function ShopPage({
 }) {
   const { kategoria } = await searchParams;
 
-  const dbCategories = await getCategories();
+  const [dbCategories, heroSettings] = await Promise.all([
+    getCategories(),
+    getSettings(["shop_hero_image", "shop_hero_position", "shop_hero_overlay_color", "shop_hero_overlay_opacity"]),
+  ]);
+
+  const shopHeroImage = heroSettings.shop_hero_image;
+  const shopHeroPos = heroSettings.shop_hero_position || "50% 50%";
+  const shopOverlayColor = heroSettings.shop_hero_overlay_color || "#2C2825";
+  const shopOverlayOpacity = heroSettings.shop_hero_overlay_opacity || "50";
+  const overlayBg = hexToRgba(shopOverlayColor, shopOverlayOpacity);
+
   const CATEGORIES = [
     { value: "wszystkie", label: "Wszystkie" },
     ...dbCategories.map((c) => ({ value: c.slug, label: c.label })),
@@ -48,14 +58,12 @@ export default async function ShopPage({
   try {
     const { inStock, soldOut } = await getShopProducts();
 
-    // Dostępne — filtrowane wg kategorii; wyprzedane zawsze doklejone na końcu
     const filtered = kategoria && kategoria !== "wszystkie"
       ? inStock.filter((p) => p.category === kategoria)
       : inStock;
 
     products = [...filtered, ...soldOut];
   } catch (e) {
-    // Szczegóły błędu tylko do logów — nie ujawniamy ich użytkownikowi
     dbError = true;
     console.error("DB error in /sklep:", e);
   }
@@ -67,13 +75,46 @@ export default async function ShopPage({
       <Header />
       <div className="min-h-[100svh] bg-warm-white pt-20">
         {/* Hero nagłówek */}
-        <div className="bg-cream py-20 px-6 text-center border-b border-sand">
-          <p className="text-xs tracking-[0.3em] uppercase text-clay mb-4">Kolekcja</p>
-          <h1 className="font-serif text-5xl md:text-6xl text-espresso">Sklep</h1>
-          <p className="mt-4 text-charcoal/55 max-w-md mx-auto text-sm">
-            Każdy przedmiot jest unikalny — tworzony ręcznie z lokalnej gliny.
-          </p>
-        </div>
+        {shopHeroImage ? (
+          <div className="relative h-[50vh] overflow-hidden">
+            <Image
+              src={shopHeroImage}
+              alt="Sklep"
+              fill
+              priority
+              className="object-cover"
+              style={{ objectPosition: shopHeroPos }}
+              sizes="100vw"
+            />
+            <div className="absolute inset-0" style={{ backgroundColor: overlayBg }} />
+            <div className="absolute inset-0 flex flex-col items-center justify-end pb-14 px-6 text-center">
+              <p className="text-xs tracking-[0.3em] uppercase text-terracotta mb-3">Kolekcja</p>
+              <h1 className="font-serif text-5xl md:text-6xl text-cream mb-6">Sklep</h1>
+              <Link
+                href="/zamowienie-indywidualne"
+                className="inline-flex items-center gap-2 border border-cream/60 hover:border-cream text-cream text-sm tracking-widest uppercase px-8 py-3 transition-colors duration-200"
+              >
+                Zamów indywidualnie
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-cream py-20 px-6 text-center border-b border-sand">
+            <p className="text-xs tracking-[0.3em] uppercase text-clay mb-4">Kolekcja</p>
+            <h1 className="font-serif text-5xl md:text-6xl text-espresso">Sklep</h1>
+            <p className="mt-4 text-charcoal/55 max-w-md mx-auto text-sm">
+              Każdy przedmiot jest unikalny — tworzony ręcznie z lokalnej gliny.
+            </p>
+            <div className="mt-8">
+              <Link
+                href="/zamowienie-indywidualne"
+                className="inline-flex items-center gap-2 border border-espresso hover:bg-espresso hover:text-cream text-espresso text-sm tracking-widest uppercase px-8 py-4 transition-colors duration-200"
+              >
+                Zamów indywidualnie
+              </Link>
+            </div>
+          </div>
+        )}
 
         {/* Filtry kategorii */}
         <div className="border-b border-sand bg-warm-white sticky top-20 z-30 shadow-sm">

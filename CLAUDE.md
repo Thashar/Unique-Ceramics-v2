@@ -97,8 +97,16 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 | `home_about_image` / `home_about_position` | Zdjęcie + pozycja sekcji „O mnie" na stronie głównej |
 | `home_workshops_image` / `home_workshops_position` | Zdjęcie + pozycja sekcji warsztatów na stronie głównej |
 | `about_hero_image` | Ścieżka do zdjęcia hero na /o-mnie |
+| `about_hero_overlay_color` | Kolor maski na hero /o-mnie (hex, default: #2C2825) |
+| `about_hero_overlay_opacity` | Przezroczystość maski /o-mnie (0–100, default: 50) |
 | `about_story` | HTML treści strony o mnie |
+| `shop_hero_image` | Ścieżka do zdjęcia hero na /sklep (opcjonalne) |
+| `shop_hero_position` | Punkt kadrowania hero na /sklep |
+| `shop_hero_overlay_color` | Kolor maski na hero /sklep (hex, default: #2C2825) |
+| `shop_hero_overlay_opacity` | Przezroczystość maski /sklep (0–100, default: 50) |
 | `workshops_hero_image` | Ścieżka do zdjęcia hero na /warsztaty |
+| `workshops_hero_overlay_color` | Kolor maski na hero /warsztaty (hex, default: #2C2825) |
+| `workshops_hero_overlay_opacity` | Przezroczystość maski /warsztaty (0–100, default: 60) |
 | `workshops_intro` | HTML wprowadzenia do warsztatów |
 | `contact_phone` | Numer telefonu (default: +48 668 443 706) |
 | `contact_email` | E-mail (default: kontakt@uniqueceramics.pl) |
@@ -149,7 +157,7 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 | `/admin/produkty`, `/admin/produkty/nowy`, `/admin/produkty/[id]` | Zarządzanie produktami |
 | `/admin/zamowienia`, `/admin/zamowienia/[id]` | Zamówienia sklepowe |
 | `/admin/zamowienia-indywidualne`, `/admin/zamowienia-indywidualne/[id]` | Zamówienia indywidualne |
-| `/admin/ustawienia` | Ustawienia sklepu (strona główna, o mnie, warsztaty, regulamin, polityka, kontakt, wysyłka, płatności) |
+| `/admin/ustawienia` | Ustawienia sklepu (strona główna, o mnie, **sklep**, warsztaty, regulamin, polityka, kontakt, wysyłka, płatności) |
 | `/admin/kategorie` | Zarządzanie kategoriami produktów (CRUD + kolejność) |
 
 ### API Routes
@@ -224,7 +232,7 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 - **FocalPointPicker.tsx** — wybór punktu kadrowania zdjęć (`object-position`)
 - **RichEditor.tsx** — edytor HTML oparty o **Jodit z npm** (dynamiczny `import("jodit")` w useEffect — biblioteka tylko przeglądarkowa, nie może wykonać się przy SSR)
 - **CategoriesManager.tsx** — `"use client"`, CRUD kategorii: lista z edycją inline, zmiana kolejności strzałkami, dodawanie, usuwanie (blokada przy produktach); seed domyślnych gdy DB pusta
-- **SettingsForm.tsx** — formularz ustawień (taby: Strona główna / O mnie / Warsztaty / Regulamin / Polityka / Kontakt / Wysyłka / Płatności)
+- **SettingsForm.tsx** — formularz ustawień (taby: Strona główna / O mnie / Sklep / Warsztaty / Regulamin / Polityka / Kontakt / Wysyłka / Płatności); zawiera `OverlayControl` — podgląd maski na żywo dla zdjęć hero (kolor + przezroczystość)
 - **OrderStatusSelect.tsx** — dropdown statusu zamówienia
 - **OrdersTabs.tsx** — zakładki listy zamówień
 - **ProductsSearch.tsx** — wyszukiwarka w liście produktów

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import RichEditor from "@/components/admin/RichEditor";
 import ImageUploader from "@/components/admin/ImageUploader";
 import FocalPointPicker from "@/components/admin/FocalPointPicker";
@@ -14,13 +15,21 @@ interface Props {
     home_about_position: string;
     home_workshops_image: string;
     home_workshops_position: string;
+    shop_hero_image: string;
+    shop_hero_position: string;
+    shop_hero_overlay_color: string;
+    shop_hero_overlay_opacity: string;
     about_hero_image: string;
     about_hero_position: string;
+    about_hero_overlay_color: string;
+    about_hero_overlay_opacity: string;
     about_content_image: string;
     about_content_position: string;
     about_story: string;
     workshops_hero_image: string;
     workshops_hero_position: string;
+    workshops_hero_overlay_color: string;
+    workshops_hero_overlay_opacity: string;
     workshops_content_image: string;
     workshops_content_position: string;
     workshops_intro: string;
@@ -44,6 +53,19 @@ interface Props {
     payment_blik_phone: string;
     payment_stripe_enabled: string;
   };
+}
+
+function hexToRgba(hex: string, opacity: string): string {
+  try {
+    const c = (hex || "#2C2825").replace("#", "");
+    const r = parseInt(c.slice(0, 2), 16);
+    const g = parseInt(c.slice(2, 4), 16);
+    const b = parseInt(c.slice(4, 6), 16);
+    const a = Math.max(0, Math.min(100, parseInt(opacity) || 0)) / 100;
+    return `rgba(${r},${g},${b},${a})`;
+  } catch {
+    return "rgba(44,40,37,0.5)";
+  }
 }
 
 function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
@@ -90,6 +112,58 @@ function SaveButton({ onClick, label }: { onClick: () => void; label: string }) 
   );
 }
 
+function OverlayControl({
+  imageUrl, position, color, opacity, onColorChange, onOpacityChange,
+}: {
+  imageUrl: string; position: string; color: string; opacity: string;
+  onColorChange: (v: string) => void; onOpacityChange: (v: string) => void;
+}) {
+  const pct = parseInt(opacity) || 0;
+  return (
+    <div className="space-y-3">
+      <label className="block text-xs tracking-widest uppercase text-charcoal/80">Maska na zdjęcie (podgląd na żywo)</label>
+      {imageUrl ? (
+        <div className="relative w-64 overflow-hidden rounded-sm border border-sand" style={{ aspectRatio: "16/9" }}>
+          <Image src={imageUrl} alt="" fill className="object-cover" style={{ objectPosition: position }} sizes="256px" unoptimized />
+          <div className="absolute inset-0" style={{ backgroundColor: hexToRgba(color, opacity) }} />
+        </div>
+      ) : (
+        <div
+          className="w-64 border border-sand border-dashed rounded-sm flex items-center justify-center text-charcoal/30 text-xs"
+          style={{ aspectRatio: "16/9" }}
+        >
+          Najpierw wybierz zdjęcie
+        </div>
+      )}
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-charcoal/60">Kolor:</span>
+          <input
+            type="color"
+            value={color || "#2C2825"}
+            onChange={(e) => onColorChange(e.target.value)}
+            className="w-8 h-8 cursor-pointer border border-sand rounded p-0.5 bg-warm-white"
+          />
+          <span className="text-[11px] text-charcoal/40 font-mono">{color}</span>
+        </div>
+        <div className="flex items-center gap-2 min-w-[220px]">
+          <span className="text-xs text-charcoal/60 shrink-0">Przezroczystość:</span>
+          <input
+            type="range"
+            min={0}
+            max={100}
+            value={pct}
+            onChange={(e) => onOpacityChange(e.target.value)}
+            className="flex-1 accent-clay"
+          />
+          <span className="text-xs text-charcoal/60 w-7 text-right">{pct}%</span>
+        </div>
+      </div>
+      <p className="text-[11px] text-charcoal/40">Podgląd natychmiastowy. Na stronie efekt widoczny po zapisaniu.</p>
+    </div>
+  );
+}
+
 export default function SettingsForm({ section, initial }: Props) {
   const [toast, setToast] = useState<"ok" | false>(false);
   const [errMsg, setErrMsg] = useState("");
@@ -102,9 +176,17 @@ export default function SettingsForm({ section, initial }: Props) {
   const [homeWorkshopsImage, setHomeWorkshopsImage] = useState(initial.home_workshops_image);
   const [homeWorkshopsPos, setHomeWorkshopsPos] = useState(initial.home_workshops_position);
 
+  // Sklep
+  const [shopHeroImage, setShopHeroImage] = useState(initial.shop_hero_image);
+  const [shopHeroPos, setShopHeroPos] = useState(initial.shop_hero_position);
+  const [shopOverlayColor, setShopOverlayColor] = useState(initial.shop_hero_overlay_color);
+  const [shopOverlayOpacity, setShopOverlayOpacity] = useState(initial.shop_hero_overlay_opacity);
+
   // O mnie
   const [aboutImage, setAboutImage] = useState(initial.about_hero_image);
   const [aboutHeroPos, setAboutHeroPos] = useState(initial.about_hero_position);
+  const [aboutOverlayColor, setAboutOverlayColor] = useState(initial.about_hero_overlay_color);
+  const [aboutOverlayOpacity, setAboutOverlayOpacity] = useState(initial.about_hero_overlay_opacity);
   const [aboutContentImage, setAboutContentImage] = useState(initial.about_content_image);
   const [aboutContentPos, setAboutContentPos] = useState(initial.about_content_position);
   const [aboutStory, setAboutStory] = useState(initial.about_story);
@@ -112,6 +194,8 @@ export default function SettingsForm({ section, initial }: Props) {
   // Warsztaty
   const [workshopsImage, setWorkshopsImage] = useState(initial.workshops_hero_image);
   const [workshopsHeroPos, setWorkshopsHeroPos] = useState(initial.workshops_hero_position);
+  const [workshopsOverlayColor, setWorkshopsOverlayColor] = useState(initial.workshops_hero_overlay_color);
+  const [workshopsOverlayOpacity, setWorkshopsOverlayOpacity] = useState(initial.workshops_hero_overlay_opacity);
   const [workshopsContentImage, setWorkshopsContentImage] = useState(initial.workshops_content_image);
   const [workshopsContentPos, setWorkshopsContentPos] = useState(initial.workshops_content_position);
   const [workshopsIntro, setWorkshopsIntro] = useState(initial.workshops_intro);
@@ -142,7 +226,7 @@ export default function SettingsForm({ section, initial }: Props) {
   const [bankBankName, setBankBankName] = useState(initial.payment_bank_name);
   const [bankTitle, setBankTitle] = useState(initial.payment_bank_transfer_title);
 
-  // BLIK phone (numer telefonu do przelewu BLIK — część sekcji przelewu)
+  // BLIK phone
   const [blikPhone, setBlikPhone] = useState(initial.payment_blik_phone);
 
   // Stripe
@@ -242,9 +326,9 @@ export default function SettingsForm({ section, initial }: Props) {
               { key: "home_hero_image",        value: homeHeroImage },
               { key: "home_hero_position",     value: homeHeroPos },
               { key: "home_about_image",       value: homeAboutImage },
-              { key: "home_about_position",    value: homeAboutPos },
-              { key: "home_workshops_image",   value: homeWorkshopsImage },
-              { key: "home_workshops_position",value: homeWorkshopsPos },
+              { key: "home_about_position",       value: homeAboutPos },
+              { key: "home_workshops_image",      value: homeWorkshopsImage },
+              { key: "home_workshops_position",   value: homeWorkshopsPos },
             ])}
             label="Zapisz zdjęcia strony głównej"
           />
@@ -263,6 +347,14 @@ export default function SettingsForm({ section, initial }: Props) {
               label="Zdjęcie hero"
             />
             <FocalPointPicker imageUrl={aboutImage} value={aboutHeroPos} onChange={setAboutHeroPos} />
+            <OverlayControl
+              imageUrl={aboutImage}
+              position={aboutHeroPos}
+              color={aboutOverlayColor}
+              opacity={aboutOverlayOpacity}
+              onColorChange={setAboutOverlayColor}
+              onOpacityChange={setAboutOverlayOpacity}
+            />
           </div>
 
           <div className="border-t border-sand pt-6 space-y-4">
@@ -283,13 +375,50 @@ export default function SettingsForm({ section, initial }: Props) {
 
           <SaveButton
             onClick={() => save([
-              { key: "about_hero_image",        value: aboutImage },
-              { key: "about_hero_position",     value: aboutHeroPos },
-              { key: "about_content_image",     value: aboutContentImage },
-              { key: "about_content_position",  value: aboutContentPos },
-              { key: "about_story",             value: aboutStory },
+              { key: "about_hero_image",           value: aboutImage },
+              { key: "about_hero_position",        value: aboutHeroPos },
+              { key: "about_hero_overlay_color",   value: aboutOverlayColor },
+              { key: "about_hero_overlay_opacity", value: aboutOverlayOpacity },
+              { key: "about_content_image",        value: aboutContentImage },
+              { key: "about_content_position",     value: aboutContentPos },
+              { key: "about_story",                value: aboutStory },
             ])}
             label="Zapisz stronę O mnie"
+          />
+        </div>
+      )}
+
+      {section === "sklep" && (
+        <div className="max-w-2xl space-y-8">
+          <h2 className="font-serif text-2xl text-espresso">Sklep</h2>
+
+          <div className="space-y-4">
+            <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/70">Zdjęcie nagłówka (hero)</h3>
+            <p className="text-xs text-charcoal/40">Tło nagłówka na stronie sklepu. Jeżeli puste — nagłówek ma jednolite kremowe tło.</p>
+            <ImageUploader
+              currentUrl={shopHeroImage}
+              onUploaded={(url) => setShopHeroImage(url)}
+              label="Zdjęcie hero"
+            />
+            <FocalPointPicker imageUrl={shopHeroImage} value={shopHeroPos} onChange={setShopHeroPos} />
+            <OverlayControl
+              imageUrl={shopHeroImage}
+              position={shopHeroPos}
+              color={shopOverlayColor}
+              opacity={shopOverlayOpacity}
+              onColorChange={setShopOverlayColor}
+              onOpacityChange={setShopOverlayOpacity}
+            />
+          </div>
+
+          <SaveButton
+            onClick={() => save([
+              { key: "shop_hero_image",           value: shopHeroImage },
+              { key: "shop_hero_position",        value: shopHeroPos },
+              { key: "shop_hero_overlay_color",   value: shopOverlayColor },
+              { key: "shop_hero_overlay_opacity", value: shopOverlayOpacity },
+            ])}
+            label="Zapisz Sklep"
           />
         </div>
       )}
@@ -306,6 +435,14 @@ export default function SettingsForm({ section, initial }: Props) {
               label="Zdjęcie hero"
             />
             <FocalPointPicker imageUrl={workshopsImage} value={workshopsHeroPos} onChange={setWorkshopsHeroPos} />
+            <OverlayControl
+              imageUrl={workshopsImage}
+              position={workshopsHeroPos}
+              color={workshopsOverlayColor}
+              opacity={workshopsOverlayOpacity}
+              onColorChange={setWorkshopsOverlayColor}
+              onOpacityChange={setWorkshopsOverlayOpacity}
+            />
           </div>
 
           <div className="border-t border-sand pt-6 space-y-4">
@@ -326,11 +463,13 @@ export default function SettingsForm({ section, initial }: Props) {
 
           <SaveButton
             onClick={() => save([
-              { key: "workshops_hero_image",       value: workshopsImage },
-              { key: "workshops_hero_position",    value: workshopsHeroPos },
-              { key: "workshops_content_image",    value: workshopsContentImage },
-              { key: "workshops_content_position", value: workshopsContentPos },
-              { key: "workshops_intro",            value: workshopsIntro },
+              { key: "workshops_hero_image",           value: workshopsImage },
+              { key: "workshops_hero_position",        value: workshopsHeroPos },
+              { key: "workshops_hero_overlay_color",   value: workshopsOverlayColor },
+              { key: "workshops_hero_overlay_opacity", value: workshopsOverlayOpacity },
+              { key: "workshops_content_image",        value: workshopsContentImage },
+              { key: "workshops_content_position",     value: workshopsContentPos },
+              { key: "workshops_intro",                value: workshopsIntro },
             ])}
             label="Zapisz stronę Warsztaty"
           />

@@ -9,6 +9,7 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { getSettings } from "@/lib/settings";
 import { sanitizeRichHtml } from "@/lib/sanitize-html";
+import { hexToRgba } from "@/lib/overlay";
 
 export const metadata: Metadata = {
   title: "O mnie",
@@ -20,11 +21,13 @@ export const metadata: Metadata = {
 export default async function AboutPage() {
   const s = await getSettings([
     "about_hero_image", "about_hero_position",
+    "about_hero_overlay_color", "about_hero_overlay_opacity",
     "about_content_image", "about_content_position",
     "about_story",
   ]);
   const heroImage = s.about_hero_image || "/images/about-photo.jpg";
   const heroPos = s.about_hero_position || "50% 50%";
+  const overlayBg = hexToRgba(s.about_hero_overlay_color, s.about_hero_overlay_opacity);
   const contentImage = s.about_content_image;
   const contentPos = s.about_content_position || "50% 50%";
   const story = s.about_story;
@@ -44,7 +47,7 @@ export default async function AboutPage() {
             style={{ objectPosition: heroPos }}
             sizes="100vw"
           />
-          <div className="absolute inset-0 bg-espresso/50" />
+          <div className="absolute inset-0" style={{ backgroundColor: overlayBg }} />
           <div className="absolute inset-0 flex items-end">
             <div className="max-w-7xl mx-auto px-6 lg:px-10 w-full pb-16">
               <p className="text-xs tracking-[0.3em] uppercase text-terracotta mb-3">Pracownia</p>
