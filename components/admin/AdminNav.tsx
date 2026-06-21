@@ -7,12 +7,14 @@ import { usePathname, useSearchParams } from "next/navigation";
 import {
   LayoutDashboard, Package, ShoppingBag, ClipboardList,
   Settings, LogOut, Menu, X, ChevronDown, ChevronRight, ExternalLink, Tag,
+  GalleryHorizontal,
 } from "lucide-react";
 
 const topLinks = [
   { href: "/admin",                         label: "Dashboard",         icon: LayoutDashboard },
   { href: "/admin/kategorie",               label: "Kategorie",         icon: Tag },
   { href: "/admin/produkty",                label: "Produkty",          icon: Package },
+  { href: "/admin/projekty",                label: "Projekty",          icon: GalleryHorizontal },
   { href: "/admin/zamowienia",              label: "Zamówienia",        icon: ShoppingBag },
   { href: "/admin/zamowienia-indywidualne", label: "Zam. indywidualne", icon: ClipboardList },
 ];

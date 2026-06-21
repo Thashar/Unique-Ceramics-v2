@@ -9,10 +9,11 @@ import { ShoppingBag, Menu, X, User, Package, LogOut, ChevronDown } from "lucide
 import { useCart } from "@/lib/cart";
 
 const navLinks = [
-  { href: "/sklep",     label: "Sklep" },
-  { href: "/o-mnie",    label: "O mnie" },
-  { href: "/warsztaty", label: "Warsztaty" },
-  { href: "/kontakt",   label: "Kontakt" },
+  { href: "/sklep",         label: "Sklep" },
+  { href: "/o-mnie",        label: "O mnie" },
+  { href: "/moje-projekty", label: "Moje projekty" },
+  { href: "/warsztaty",     label: "Warsztaty" },
+  { href: "/kontakt",       label: "Kontakt" },
 ];
 
 function AccountDropdown({ scrolled }: { scrolled: boolean }) {

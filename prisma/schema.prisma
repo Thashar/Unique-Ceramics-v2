@@ -165,6 +165,21 @@ enum CustomOrderStatus {
   CANCELLED
 }
 
+// ─── Portfolio (Moje projekty) ────────────────────────────────────────────────
+
+model Project {
+  id          String   @id @default(cuid())
+  title       String
+  description String   @default("") @db.Text
+  images      String[]
+  order       Int      @default(0)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([active, order])
+}
+
 // ─── Kategorie produktów ─────────────────────────────────────────────────────
 
 model Category {

@@ -27,7 +27,14 @@
       "Bash(Copy-Item \"public\\\\images\\\\logo.png\" \"app\\\\icon.png\")",
       "Bash(git check-ignore *)",
       "Bash(base64 -w 0 \"public/images/logo.png\")",
-      "Read(//tmp/**)"
+      "Read(//tmp/**)",
+      "Bash(git restore *)",
+      "Bash(mkdir -p \"c:/Users/Thash/Desktop/Bots/Unique Ceramics v2/app/api/admin/categories/[id]\")",
+      "Bash(node -e \"const p = require\\('./package.json'\\); console.log\\('scripts:', JSON.stringify\\(p.scripts, null, 2\\)\\)\")",
+      "Bash(node -e \"console.log\\(require\\('./node_modules/lucide-react/package.json'\\).version\\)\")"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\Thash\\Desktop\\Bots\\Unique Ceramics v2\\app\\api\\admin\\categories"
     ]
   }
 }
