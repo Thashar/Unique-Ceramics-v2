@@ -8,7 +8,7 @@ export default async function FeaturedProducts() {
   let products: Awaited<ReturnType<typeof db.product.findMany>> = [];
   try {
     products = await db.product.findMany({
-      where: { featured: true, active: true },
+      where: { featured: true, active: true, stock: { gt: 0 } },
       orderBy: { createdAt: "desc" },
     });
   } catch {

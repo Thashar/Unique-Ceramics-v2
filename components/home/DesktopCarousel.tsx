@@ -68,7 +68,31 @@ export default function DesktopCarousel({ products }: { products: Product[] }) {
   const cardW = `calc((100% - ${(PER_PAGE - 1) * GAP}px) / ${PER_PAGE})`;
 
   return (
-    <div ref={containerRef} className="w-full">
+    <div ref={containerRef} className="relative w-full">
+      {/* Lewa strzałka */}
+      {canNav && (
+        <button
+          onClick={() => animateTo(page - 1)}
+          disabled={page === 0}
+          className="absolute -left-10 top-1/2 -translate-y-1/2 text-espresso/30 hover:text-espresso disabled:opacity-0 disabled:pointer-events-none transition-all duration-200"
+          aria-label="Poprzednia strona"
+        >
+          <ChevronLeft size={36} strokeWidth={2.5} />
+        </button>
+      )}
+
+      {/* Prawa strzałka */}
+      {canNav && (
+        <button
+          onClick={() => animateTo(page + 1)}
+          disabled={page === totalPages - 1}
+          className="absolute -right-10 top-1/2 -translate-y-1/2 text-espresso/30 hover:text-espresso disabled:opacity-0 disabled:pointer-events-none transition-all duration-200"
+          aria-label="Następna strona"
+        >
+          <ChevronRight size={36} strokeWidth={2.5} />
+        </button>
+      )}
+
       <div className="overflow-hidden">
         <div
           ref={innerRef}
@@ -82,41 +106,6 @@ export default function DesktopCarousel({ products }: { products: Product[] }) {
           ))}
         </div>
       </div>
-
-      {canNav && (
-        <div className="flex items-center justify-center gap-5 mt-8">
-          <button
-            onClick={() => animateTo(page - 1)}
-            disabled={page === 0}
-            className="w-9 h-9 flex items-center justify-center border border-sand text-charcoal/50 hover:border-clay hover:text-clay disabled:opacity-25 disabled:cursor-default transition-colors"
-            aria-label="Poprzednia strona"
-          >
-            <ChevronLeft size={16} strokeWidth={1.5} />
-          </button>
-
-          <div className="flex gap-2">
-            {Array.from({ length: totalPages }).map((_, i) => (
-              <button
-                key={i}
-                onClick={() => animateTo(i)}
-                className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
-                  i === page ? "bg-clay scale-125" : "bg-sand hover:bg-clay/40"
-                }`}
-                aria-label={`Strona ${i + 1}`}
-              />
-            ))}
-          </div>
-
-          <button
-            onClick={() => animateTo(page + 1)}
-            disabled={page === totalPages - 1}
-            className="w-9 h-9 flex items-center justify-center border border-sand text-charcoal/50 hover:border-clay hover:text-clay disabled:opacity-25 disabled:cursor-default transition-colors"
-            aria-label="Następna strona"
-          >
-            <ChevronRight size={16} strokeWidth={1.5} />
-          </button>
-        </div>
-      )}
     </div>
   );
 }
