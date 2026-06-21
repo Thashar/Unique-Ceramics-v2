@@ -21,9 +21,7 @@ function autoSlug(label: string) {
 export default function CategoriesManager({ initialCategories }: Props) {
   const [categories, setCategories] = useState<Category[]>(initialCategories);
   const [editId, setEditId] = useState<string | null>(null);
-  const [editSlug, setEditSlug] = useState("");
   const [editLabel, setEditLabel] = useState("");
-  const [addSlug, setAddSlug] = useState("");
   const [addLabel, setAddLabel] = useState("");
   const [addOpen, setAddOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -58,7 +56,6 @@ export default function CategoriesManager({ initialCategories }: Props) {
 
   function startEdit(cat: Category) {
     setEditId(cat.id);
-    setEditSlug(cat.slug);
     setEditLabel(cat.label);
     setError("");
   }
@@ -69,16 +66,17 @@ export default function CategoriesManager({ initialCategories }: Props) {
   }
 
   async function saveEdit(cat: Category) {
-    if (!editLabel.trim() || !editSlug.trim()) {
-      setError("Slug i nazwa są wymagane");
+    if (!editLabel.trim()) {
+      setError("Nazwa jest wymagana");
       return;
     }
     setSaving(true);
     setError("");
+    const slug = autoSlug(editLabel.trim()) || cat.slug;
     const res = await fetch(`/api/admin/categories/${cat.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ slug: editSlug.trim(), label: editLabel.trim(), order: cat.order }),
+      body: JSON.stringify({ slug, label: editLabel.trim(), order: cat.order }),
     });
     const data = await res.json();
     if (!res.ok) {
@@ -136,8 +134,13 @@ export default function CategoriesManager({ initialCategories }: Props) {
   }
 
   async function addCategory() {
-    if (!addLabel.trim() || !addSlug.trim()) {
-      setError("Slug i nazwa są wymagane");
+    if (!addLabel.trim()) {
+      setError("Nazwa jest wymagana");
+      return;
+    }
+    const slug = autoSlug(addLabel.trim());
+    if (!slug) {
+      setError("Nie można wygenerować sluga z podanej nazwy");
       return;
     }
     setSaving(true);
@@ -146,7 +149,7 @@ export default function CategoriesManager({ initialCategories }: Props) {
     const res = await fetch("/api/admin/categories", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ slug: addSlug.trim(), label: addLabel.trim(), order: maxOrder + 1 }),
+      body: JSON.stringify({ slug, label: addLabel.trim(), order: maxOrder + 1 }),
     });
     const data = await res.json();
     if (!res.ok) {
@@ -156,7 +159,6 @@ export default function CategoriesManager({ initialCategories }: Props) {
     }
     setCategories((prev) => [...prev, data]);
     setAddLabel("");
-    setAddSlug("");
     setAddOpen(false);
     showToast("Dodano kategorię");
     setSaving(false);
@@ -228,19 +230,14 @@ export default function CategoriesManager({ initialCategories }: Props) {
                   <div className="flex-1 flex items-center gap-2 flex-wrap">
                     <input
                       value={editLabel}
-                      onChange={(e) => {
-                        setEditLabel(e.target.value);
-                        setEditSlug(autoSlug(e.target.value));
-                      }}
+                      onChange={(e) => setEditLabel(e.target.value)}
                       placeholder="Nazwa"
                       className="flex-1 min-w-[100px] bg-cream border border-sand focus:border-clay outline-none px-3 py-1.5 text-espresso text-sm"
+                      autoFocus
                     />
-                    <input
-                      value={editSlug}
-                      onChange={(e) => setEditSlug(e.target.value)}
-                      placeholder="slug"
-                      className="w-32 bg-cream border border-sand focus:border-clay outline-none px-3 py-1.5 text-espresso text-sm font-mono"
-                    />
+                    <span className="text-xs text-charcoal/35 font-mono hidden sm:inline">
+                      → {autoSlug(editLabel) || cat.slug}
+                    </span>
                     <button
                       onClick={() => saveEdit(cat)}
                       disabled={saving}
@@ -259,21 +256,28 @@ export default function CategoriesManager({ initialCategories }: Props) {
                     <div className="flex-1">
                       <span className="text-sm text-espresso font-medium">{cat.label}</span>
                       <span className="ml-2 text-xs text-charcoal/40 font-mono">{cat.slug}</span>
+                      {cat.slug === "inne" && (
+                        <span className="ml-2 text-[10px] tracking-widest uppercase text-charcoal/30">domyślna</span>
+                      )}
                     </div>
-                    <button
-                      onClick={() => startEdit(cat)}
-                      className="p-1.5 text-charcoal/40 hover:text-espresso transition-colors"
-                      title="Edytuj"
-                    >
-                      <Pencil size={14} />
-                    </button>
-                    <button
-                      onClick={() => deleteCategory(cat)}
-                      className="p-1.5 text-charcoal/40 hover:text-red-600 transition-colors"
-                      title="Usuń"
-                    >
-                      <Trash2 size={14} />
-                    </button>
+                    {cat.slug !== "inne" && (
+                      <>
+                        <button
+                          onClick={() => startEdit(cat)}
+                          className="p-1.5 text-charcoal/40 hover:text-espresso transition-colors"
+                          title="Edytuj"
+                        >
+                          <Pencil size={14} />
+                        </button>
+                        <button
+                          onClick={() => deleteCategory(cat)}
+                          className="p-1.5 text-charcoal/40 hover:text-red-600 transition-colors"
+                          title="Usuń"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </>
+                    )}
                   </>
                 )}
               </div>
@@ -284,23 +288,20 @@ export default function CategoriesManager({ initialCategories }: Props) {
           {addOpen ? (
             <div className="border border-clay/40 bg-cream px-4 py-4 space-y-3">
               <p className="text-xs tracking-widest uppercase text-charcoal/60">Nowa kategoria</p>
-              <div className="flex gap-2 flex-wrap">
+              <div className="space-y-1.5">
                 <input
                   value={addLabel}
-                  onChange={(e) => {
-                    setAddLabel(e.target.value);
-                    setAddSlug(autoSlug(e.target.value));
-                  }}
-                  placeholder="Nazwa (np. Misy)"
-                  className="flex-1 min-w-[120px] bg-warm-white border border-sand focus:border-clay outline-none px-3 py-2 text-espresso text-sm"
+                  onChange={(e) => setAddLabel(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && addCategory()}
+                  placeholder="Nazwa (np. Miski)"
+                  className="w-full bg-warm-white border border-sand focus:border-clay outline-none px-3 py-2 text-espresso text-sm"
                   autoFocus
                 />
-                <input
-                  value={addSlug}
-                  onChange={(e) => setAddSlug(e.target.value)}
-                  placeholder="slug"
-                  className="w-32 bg-warm-white border border-sand focus:border-clay outline-none px-3 py-2 text-espresso text-sm font-mono"
-                />
+                {addLabel && (
+                  <p className="text-xs text-charcoal/35 font-mono pl-1">
+                    slug: {autoSlug(addLabel) || "—"}
+                  </p>
+                )}
               </div>
               <div className="flex gap-3">
                 <button
@@ -311,7 +312,7 @@ export default function CategoriesManager({ initialCategories }: Props) {
                   {saving ? "Dodaję..." : "Dodaj"}
                 </button>
                 <button
-                  onClick={() => { setAddOpen(false); setAddLabel(""); setAddSlug(""); setError(""); }}
+                  onClick={() => { setAddOpen(false); setAddLabel(""); setError(""); }}
                   className="text-sm text-charcoal/40 hover:text-espresso transition-colors"
                 >
                   Anuluj

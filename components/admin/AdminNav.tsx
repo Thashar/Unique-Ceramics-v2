@@ -11,10 +11,10 @@ import {
 
 const topLinks = [
   { href: "/admin",                         label: "Dashboard",         icon: LayoutDashboard },
+  { href: "/admin/kategorie",               label: "Kategorie",         icon: Tag },
   { href: "/admin/produkty",                label: "Produkty",          icon: Package },
   { href: "/admin/zamowienia",              label: "Zamówienia",        icon: ShoppingBag },
   { href: "/admin/zamowienia-indywidualne", label: "Zam. indywidualne", icon: ClipboardList },
-  { href: "/admin/kategorie",               label: "Kategorie",         icon: Tag },
 ];
 
 const settingsItems = [

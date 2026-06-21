@@ -3,6 +3,8 @@ import { requireAdmin } from "@/lib/admin-auth";
 import { db } from "@/lib/db";
 import { revalidateCategories } from "@/lib/categories";
 
+const PERMANENT_SLUG = "inne";
+
 function isValidSlug(slug: string) {
   return /^[a-z0-9-]+$/.test(slug);
 }
@@ -15,6 +17,12 @@ export async function PUT(
 
   const { id } = await params;
   const { slug, label, order } = await req.json();
+
+  const existing = await db.category.findUnique({ where: { id } });
+  if (!existing) return NextResponse.json({ error: "Nie znaleziono kategorii" }, { status: 404 });
+  if (existing.slug === PERMANENT_SLUG) {
+    return NextResponse.json({ error: "Kategoria domyślna nie może być edytowana" }, { status: 409 });
+  }
 
   if (!slug || typeof slug !== "string" || slug.length > 60) {
     return NextResponse.json({ error: "Nieprawidłowy slug" }, { status: 400 });
@@ -34,9 +42,6 @@ export async function PUT(
     revalidateCategories();
     return NextResponse.json(cat);
   } catch (e: unknown) {
-    if ((e as { code?: string }).code === "P2025") {
-      return NextResponse.json({ error: "Nie znaleziono kategorii" }, { status: 404 });
-    }
     if ((e as { code?: string }).code === "P2002") {
       return NextResponse.json({ error: "Kategoria z tym slugiem już istnieje" }, { status: 409 });
     }
@@ -55,17 +60,30 @@ export async function DELETE(
 
   const cat = await db.category.findUnique({ where: { id } });
   if (!cat) return NextResponse.json({ error: "Nie znaleziono kategorii" }, { status: 404 });
-
-  const productCount = await db.product.count({ where: { category: cat.slug } });
-  if (productCount > 0) {
-    return NextResponse.json({
-      error: `Nie można usunąć — ${productCount} ${
-        productCount === 1 ? "produkt używa" : productCount < 5 ? "produkty używają" : "produktów używa"
-      } tej kategorii`,
-    }, { status: 409 });
+  if (cat.slug === PERMANENT_SLUG) {
+    return NextResponse.json({ error: "Kategoria domyślna nie może być usunięta" }, { status: 409 });
   }
 
-  await db.category.delete({ where: { id } });
+  const productCount = await db.product.count({ where: { category: cat.slug } });
+
+  if (productCount > 0) {
+    // Upewnij się że "inne" istnieje, przenieś produkty i usuń kategorię w transakcji
+    await db.$transaction(async (tx) => {
+      await tx.category.upsert({
+        where: { slug: PERMANENT_SLUG },
+        update: {},
+        create: { slug: PERMANENT_SLUG, label: "Inne", order: 9999 },
+      });
+      await tx.product.updateMany({
+        where: { category: cat.slug },
+        data: { category: PERMANENT_SLUG },
+      });
+      await tx.category.delete({ where: { id } });
+    });
+  } else {
+    await db.category.delete({ where: { id } });
+  }
+
   revalidateCategories();
   return NextResponse.json({ ok: true });
 }
