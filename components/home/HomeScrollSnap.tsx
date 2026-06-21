@@ -11,28 +11,12 @@ export default function HomeScrollSnap() {
     history.scrollRestoration = "manual";
     window.scrollTo({ top: 0, behavior: "instant" });
 
-    // Warstwa 1: Przed odświeżeniem/zamknięciem — zresetuj scroll do 0,
-    // żeby Chrome zapisał pozycję 0 do session history i nie przywracał
-    // środka strony przy kolejnym otwarciu/odświeżeniu.
+    // Przed odświeżeniem/zamknięciem: zresetuj scroll do 0 żeby Chrome
+    // zapisał pozycję 0 do session history i nie przywracał środka strony.
     function resetBeforeUnload() {
       window.scrollTo({ top: 0, behavior: "instant" });
     }
     window.addEventListener("beforeunload", resetBeforeUnload);
-
-    // Warstwa 2: Strażnik — przez 600 ms po montowaniu każde przesunięcie
-    // scrolla (np. późne Chrome scroll restoration podczas load event)
-    // jest natychmiast korygowane z powrotem do 0.
-    let guardActive = true;
-    function scrollGuard() {
-      if (guardActive && window.scrollY !== 0) {
-        window.scrollTo({ top: 0, behavior: "instant" });
-      }
-    }
-    window.addEventListener("scroll", scrollGuard, { passive: true });
-    const guardTimer = setTimeout(() => {
-      guardActive = false;
-      window.removeEventListener("scroll", scrollGuard);
-    }, 600);
 
     const html = document.documentElement;
     html.style.scrollBehavior = "auto";
@@ -201,9 +185,6 @@ export default function HomeScrollSnap() {
     window.addEventListener("resize", handleResize);
 
     return () => {
-      clearTimeout(guardTimer);
-      guardActive = false;
-      window.removeEventListener("scroll", scrollGuard);
       window.removeEventListener("beforeunload", resetBeforeUnload);
       document.removeEventListener("wheel", handleWheel);
       document.removeEventListener("keydown", handleKeyDown);
