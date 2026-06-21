@@ -92,7 +92,7 @@ export default async function WorkshopsPage() {
         )}
 
         {/* Lead */}
-        <div className="bg-cream py-16 px-6 lg:px-10">
+        <div className="bg-warm-white py-16 px-6 lg:px-10">
           {contentImage ? (
             <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
               <div
