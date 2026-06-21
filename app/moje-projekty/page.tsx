@@ -27,10 +27,10 @@ export default async function ProjectsPage() {
       <Header />
       <main className="flex-1 pt-20">
         {/* Nagłówek */}
-        <div className="relative h-[35vh] bg-espresso flex items-end">
-          <div className="max-w-7xl mx-auto px-6 lg:px-10 w-full pb-16">
-            <p className="text-xs tracking-[0.3em] uppercase text-terracotta mb-3">Portfolio</p>
-            <h1 className="font-serif text-5xl md:text-6xl text-cream">Moje projekty</h1>
+        <div className="bg-cream px-6 lg:px-10 py-20">
+          <div className="max-w-7xl mx-auto">
+            <p className="text-xs tracking-[0.3em] uppercase text-clay mb-3">Portfolio</p>
+            <h1 className="font-serif text-5xl md:text-6xl text-espresso">Moje projekty</h1>
           </div>
         </div>
 

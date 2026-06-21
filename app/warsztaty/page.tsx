@@ -53,11 +53,13 @@ export default async function WorkshopsPage() {
   const s = await getSettings([
     "workshops_hero_image", "workshops_hero_position",
     "workshops_hero_overlay_color", "workshops_hero_overlay_opacity",
+    "workshops_hero_height",
     "workshops_content_image", "workshops_content_position",
     "workshops_intro", "contact_phone",
   ]);
   const heroImage = s.workshops_hero_image;
   const heroPos = s.workshops_hero_position || "50% 50%";
+  const heroHeight = parseInt(s.workshops_hero_height) || 50;
   const overlayBg = hexToRgba(s.workshops_hero_overlay_color, s.workshops_hero_overlay_opacity);
   const contentImage = s.workshops_content_image;
   const contentPos = s.workshops_content_position || "50% 50%";
@@ -69,20 +71,25 @@ export default async function WorkshopsPage() {
       <Header />
       <main className="flex-1 pt-20">
         {/* Hero */}
-        <div className="relative h-[55vh] overflow-hidden bg-espresso">
-          {heroImage && (
-            <>
-              <Image src={heroImage} alt="Warsztaty ceramiczne" fill priority className="object-cover" style={{ objectPosition: heroPos }} sizes="100vw" />
-              <div className="absolute inset-0" style={{ backgroundColor: overlayBg }} />
-            </>
-          )}
-          <div className="absolute inset-0 flex items-end">
-            <div className="max-w-7xl mx-auto px-6 lg:px-10 w-full pb-16">
-              <p className="text-xs tracking-[0.3em] uppercase text-terracotta mb-3">Nauka</p>
-              <h1 className="font-serif text-5xl md:text-6xl text-cream">Warsztaty</h1>
+        {heroImage ? (
+          <div className="relative overflow-hidden" style={{ height: `${heroHeight}vh` }}>
+            <Image src={heroImage} alt="Warsztaty ceramiczne" fill priority className="object-cover" style={{ objectPosition: heroPos }} sizes="100vw" />
+            <div className="absolute inset-0" style={{ backgroundColor: overlayBg }} />
+            <div className="absolute inset-0 flex items-end">
+              <div className="max-w-7xl mx-auto px-6 lg:px-10 w-full pb-16">
+                <p className="text-xs tracking-[0.3em] uppercase text-terracotta mb-3">Nauka</p>
+                <h1 className="font-serif text-5xl md:text-6xl text-cream">Warsztaty</h1>
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          <div className="bg-cream px-6 lg:px-10 py-20">
+            <div className="max-w-7xl mx-auto">
+              <p className="text-xs tracking-[0.3em] uppercase text-clay mb-3">Nauka</p>
+              <h1 className="font-serif text-5xl md:text-6xl text-espresso">Warsztaty</h1>
+            </div>
+          </div>
+        )}
 
         {/* Lead */}
         <div className="bg-cream py-16 px-6 lg:px-10">

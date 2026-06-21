@@ -19,10 +19,12 @@ interface Props {
     shop_hero_position: string;
     shop_hero_overlay_color: string;
     shop_hero_overlay_opacity: string;
+    shop_hero_height: string;
     about_hero_image: string;
     about_hero_position: string;
     about_hero_overlay_color: string;
     about_hero_overlay_opacity: string;
+    about_hero_height: string;
     about_content_image: string;
     about_content_position: string;
     about_story: string;
@@ -30,6 +32,7 @@ interface Props {
     workshops_hero_position: string;
     workshops_hero_overlay_color: string;
     workshops_hero_overlay_opacity: string;
+    workshops_hero_height: string;
     workshops_content_image: string;
     workshops_content_position: string;
     workshops_intro: string;
@@ -182,12 +185,14 @@ export default function SettingsForm({ section, initial }: Props) {
   const [shopHeroPos, setShopHeroPos] = useState(initial.shop_hero_position);
   const [shopOverlayColor, setShopOverlayColor] = useState(initial.shop_hero_overlay_color);
   const [shopOverlayOpacity, setShopOverlayOpacity] = useState(initial.shop_hero_overlay_opacity);
+  const [shopHeroHeight, setShopHeroHeight] = useState(initial.shop_hero_height);
 
   // O mnie
   const [aboutImage, setAboutImage] = useState(initial.about_hero_image);
   const [aboutHeroPos, setAboutHeroPos] = useState(initial.about_hero_position);
   const [aboutOverlayColor, setAboutOverlayColor] = useState(initial.about_hero_overlay_color);
   const [aboutOverlayOpacity, setAboutOverlayOpacity] = useState(initial.about_hero_overlay_opacity);
+  const [aboutHeroHeight, setAboutHeroHeight] = useState(initial.about_hero_height);
   const [aboutContentImage, setAboutContentImage] = useState(initial.about_content_image);
   const [aboutContentPos, setAboutContentPos] = useState(initial.about_content_position);
   const [aboutStory, setAboutStory] = useState(initial.about_story);
@@ -197,6 +202,7 @@ export default function SettingsForm({ section, initial }: Props) {
   const [workshopsHeroPos, setWorkshopsHeroPos] = useState(initial.workshops_hero_position);
   const [workshopsOverlayColor, setWorkshopsOverlayColor] = useState(initial.workshops_hero_overlay_color);
   const [workshopsOverlayOpacity, setWorkshopsOverlayOpacity] = useState(initial.workshops_hero_overlay_opacity);
+  const [workshopsHeroHeight, setWorkshopsHeroHeight] = useState(initial.workshops_hero_height);
   const [workshopsContentImage, setWorkshopsContentImage] = useState(initial.workshops_content_image);
   const [workshopsContentPos, setWorkshopsContentPos] = useState(initial.workshops_content_position);
   const [workshopsIntro, setWorkshopsIntro] = useState(initial.workshops_intro);
@@ -357,6 +363,14 @@ export default function SettingsForm({ section, initial }: Props) {
               onOpacityChange={setAboutOverlayOpacity}
               aspectRatio="3/1"
             />
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="text-xs tracking-widest uppercase text-charcoal/80">Wysokość nagłówka z obrazem</label>
+                <span className="text-sm font-medium text-espresso tabular-nums">{aboutHeroHeight}vh</span>
+              </div>
+              <input type="range" min="20" max="80" step="5" value={aboutHeroHeight} onChange={(e) => setAboutHeroHeight(e.target.value)} className="w-full accent-clay" />
+              <p className="text-[11px] text-charcoal/40">Aktywne gdy zdjęcie jest ustawione. Bez zdjęcia nagłówek ma jasne tło jak w /kontakt.</p>
+            </div>
           </div>
 
           <div className="border-t border-sand pt-6 space-y-4">
@@ -381,6 +395,7 @@ export default function SettingsForm({ section, initial }: Props) {
               { key: "about_hero_position",        value: aboutHeroPos },
               { key: "about_hero_overlay_color",   value: aboutOverlayColor },
               { key: "about_hero_overlay_opacity", value: aboutOverlayOpacity },
+              { key: "about_hero_height",          value: aboutHeroHeight },
               { key: "about_content_image",        value: aboutContentImage },
               { key: "about_content_position",     value: aboutContentPos },
               { key: "about_story",                value: aboutStory },
@@ -412,6 +427,14 @@ export default function SettingsForm({ section, initial }: Props) {
               onOpacityChange={setShopOverlayOpacity}
               aspectRatio="3/1"
             />
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="text-xs tracking-widest uppercase text-charcoal/80">Wysokość nagłówka z obrazem</label>
+                <span className="text-sm font-medium text-espresso tabular-nums">{shopHeroHeight}vh</span>
+              </div>
+              <input type="range" min="20" max="80" step="5" value={shopHeroHeight} onChange={(e) => setShopHeroHeight(e.target.value)} className="w-full accent-clay" />
+              <p className="text-[11px] text-charcoal/40">Aktywne gdy zdjęcie jest ustawione. Bez zdjęcia nagłówek ma jasne tło jak w /kontakt.</p>
+            </div>
           </div>
 
           <SaveButton
@@ -420,6 +443,7 @@ export default function SettingsForm({ section, initial }: Props) {
               { key: "shop_hero_position",        value: shopHeroPos },
               { key: "shop_hero_overlay_color",   value: shopOverlayColor },
               { key: "shop_hero_overlay_opacity", value: shopOverlayOpacity },
+              { key: "shop_hero_height",          value: shopHeroHeight },
             ])}
             label="Zapisz Sklep"
           />
@@ -447,6 +471,14 @@ export default function SettingsForm({ section, initial }: Props) {
               onOpacityChange={setWorkshopsOverlayOpacity}
               aspectRatio="3/1"
             />
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="text-xs tracking-widest uppercase text-charcoal/80">Wysokość nagłówka z obrazem</label>
+                <span className="text-sm font-medium text-espresso tabular-nums">{workshopsHeroHeight}vh</span>
+              </div>
+              <input type="range" min="20" max="80" step="5" value={workshopsHeroHeight} onChange={(e) => setWorkshopsHeroHeight(e.target.value)} className="w-full accent-clay" />
+              <p className="text-[11px] text-charcoal/40">Aktywne gdy zdjęcie jest ustawione. Bez zdjęcia nagłówek ma jasne tło jak w /kontakt.</p>
+            </div>
           </div>
 
           <div className="border-t border-sand pt-6 space-y-4">
@@ -471,6 +503,7 @@ export default function SettingsForm({ section, initial }: Props) {
               { key: "workshops_hero_position",        value: workshopsHeroPos },
               { key: "workshops_hero_overlay_color",   value: workshopsOverlayColor },
               { key: "workshops_hero_overlay_opacity", value: workshopsOverlayOpacity },
+              { key: "workshops_hero_height",          value: workshopsHeroHeight },
               { key: "workshops_content_image",        value: workshopsContentImage },
               { key: "workshops_content_position",     value: workshopsContentPos },
               { key: "workshops_intro",                value: workshopsIntro },

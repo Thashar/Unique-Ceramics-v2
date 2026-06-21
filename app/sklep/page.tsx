@@ -39,11 +39,12 @@ export default async function ShopPage({
 
   const [dbCategories, heroSettings] = await Promise.all([
     getCategories(),
-    getSettings(["shop_hero_image", "shop_hero_position", "shop_hero_overlay_color", "shop_hero_overlay_opacity"]),
+    getSettings(["shop_hero_image", "shop_hero_position", "shop_hero_overlay_color", "shop_hero_overlay_opacity", "shop_hero_height"]),
   ]);
 
   const shopHeroImage = heroSettings.shop_hero_image;
   const shopHeroPos = heroSettings.shop_hero_position || "50% 50%";
+  const shopHeroHeight = parseInt(heroSettings.shop_hero_height) || 50;
   const shopOverlayColor = heroSettings.shop_hero_overlay_color || "#2C2825";
   const shopOverlayOpacity = heroSettings.shop_hero_overlay_opacity || "50";
   const overlayBg = hexToRgba(shopOverlayColor, shopOverlayOpacity);
@@ -76,7 +77,7 @@ export default async function ShopPage({
       <div className="min-h-[100svh] bg-warm-white pt-20">
         {/* Hero nagłówek */}
         {shopHeroImage ? (
-          <div className="relative h-[50vh] overflow-hidden">
+          <div className="relative overflow-hidden" style={{ height: `${shopHeroHeight}vh` }}>
             <Image
               src={shopHeroImage}
               alt="Sklep"
