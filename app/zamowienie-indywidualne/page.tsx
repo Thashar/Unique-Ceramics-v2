@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 
@@ -87,6 +88,14 @@ export default function CustomOrderPage() {
               Tworzę ceramikę na zamówienie — zestawy ślubne, prezenty firmowe lub spersowanlizowaną ceramikę, której nie ma w sklepie.
               Czas realizacji wynosi zazwyczaj 4+ tygodnie od potwierdzenia projektu.
             </p>
+            <div className="mt-8 text-center">
+              <Link
+                href="/sklep"
+                className="inline-flex items-center gap-2 border border-espresso hover:bg-espresso hover:text-cream text-espresso text-sm tracking-widest uppercase px-8 py-4 transition-colors"
+              >
+                Sklep
+              </Link>
+            </div>
           </div>
         </div>
 
