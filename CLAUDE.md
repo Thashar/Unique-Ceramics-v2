@@ -212,6 +212,7 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 
 ### `components/admin/`
 - **AdminNav.tsx** — sidebar + mobilny drawer
+- **BfcacheGuard.tsx** — `"use client"`, wykrywa przywrócenie strony z bfcache (`pageshow` + `event.persisted`) i wywołuje `router.refresh()` by middleware sprawdził sesję (używany w `app/admin/layout.tsx`)
 - **ProductForm.tsx** — formularz produktu (z ImageUploader)
 - **ImageUploader.tsx** — upload na Supabase Storage przez `/api/admin/upload`
 - **FocalPointPicker.tsx** — wybór punktu kadrowania zdjęć (`object-position`)
@@ -221,6 +222,7 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 - **OrdersTabs.tsx** — zakładki listy zamówień
 - **ProductsSearch.tsx** — wyszukiwarka w liście produktów
 - **CustomOrderActions.tsx** — akcje zamówień indywidualnych (PATCH)
+- **PaymentStatusToggle.tsx** — `"use client"`, dropdown ręcznej zmiany statusu płatności zamówienia (PENDING/PAID/FAILED) — PATCH `/api/admin/orders/[id]` z `{ paymentStatus }`
 
 ### `components/account/`
 - **AccountNav.tsx** — nawigacja konta (Profil / Adres dostawy / Zamówienia)

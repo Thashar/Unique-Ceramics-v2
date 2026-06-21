@@ -28,7 +28,7 @@ export default function ProductCard({ product }: { product: ProductCardProduct }
     <motion.div
       initial={{ opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-60px" }}
+      viewport={{ once: true, amount: 0.1 }}
       transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
     >
       <Link href={`/sklep/${product.slug}`} className="group block">

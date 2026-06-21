@@ -2,6 +2,7 @@
 
 import { Suspense, useState } from "react";
 import Link from "next/link";
+import { signOut } from "next-auth/react";
 import { usePathname, useSearchParams } from "next/navigation";
 import {
   LayoutDashboard, Package, ShoppingBag, ClipboardList,
@@ -145,14 +146,13 @@ function AdminNavInner({ onClose }: { onClose?: () => void }) {
           <ExternalLink size={14} strokeWidth={1.5} />
           Otwórz sklep
         </Link>
-        <Link
-          href="/api/auth/signout"
-          onClick={onClose}
-          className="flex items-center gap-3 px-3 py-2 text-xs text-white/35 hover:text-white/65 transition-colors rounded-lg hover:bg-white/5"
+        <button
+          onClick={() => signOut({ callbackUrl: "/" })}
+          className="w-full flex items-center gap-3 px-3 py-2 text-xs text-white/35 hover:text-white/65 transition-colors rounded-lg hover:bg-white/5"
         >
           <LogOut size={14} strokeWidth={1.5} />
           Wyloguj się
-        </Link>
+        </button>
       </div>
     </>
   );
