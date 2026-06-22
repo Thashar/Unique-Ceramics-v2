@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { db } from "@/lib/db";
 import Link from "next/link";
-import { ChevronLeft, TrendingUp, ShoppingBag, Package, Truck, CreditCard, BarChart2 } from "lucide-react";
+import { ChevronLeft, TrendingUp, ShoppingBag, Package, Truck, CreditCard, BarChart2, Download } from "lucide-react";
 
 // ── Typy dla raw queries ───────────────────────────────────────────────────────
 
@@ -320,6 +320,7 @@ export default async function AnalitykiPage() {
                 <th className="pb-2 font-normal text-right">Przychód</th>
                 <th className="pb-2 font-normal text-right">Wysyłka</th>
                 <th className="pb-2 font-normal text-right">Śr. zam.</th>
+                <th className="pb-2 font-normal text-right">Raport</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-sand">
@@ -331,6 +332,20 @@ export default async function AnalitykiPage() {
                   <td className="py-2 text-right tabular-nums">{fmt(m.ship)} zł</td>
                   <td className="py-2 text-right tabular-nums">
                     {m.cnt > 0 ? `${(m.rev / m.cnt).toFixed(0)} zł` : "—"}
+                  </td>
+                  <td className="py-2 text-right">
+                    {m.cnt > 0 ? (
+                      <a
+                        href={`/api/admin/reports/${m.yr}/${m.mo}`}
+                        className="inline-flex items-center gap-1 text-clay hover:text-espresso transition-colors"
+                        title={`Pobierz raport PDF — ${m.label || `${m.mo}/${m.yr}`}`}
+                      >
+                        <Download size={12} />
+                        <span>PDF</span>
+                      </a>
+                    ) : (
+                      <span className="text-charcoal/20">—</span>
+                    )}
                   </td>
                 </tr>
               ))}
