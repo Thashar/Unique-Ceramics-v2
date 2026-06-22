@@ -32,7 +32,6 @@ export default async function AccountLayout({
                 Witaj, {session.user?.name?.split(" ")[0] ?? "Kliencie"}
               </h1>
             </div>
-            <p className="text-sm text-charcoal/50 hidden md:block">{session.user?.email}</p>
           </div>
         </div>
 
