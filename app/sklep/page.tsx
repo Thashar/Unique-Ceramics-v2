@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ShoppingBag } from "lucide-react";
 import Header from "@/components/layout/Header";
+import VacationBanner from "@/components/layout/VacationBanner";
 import Footer from "@/components/layout/Footer";
 import ProductCard from "@/components/ui/ProductCard";
 import { getShopProducts } from "@/lib/products";
@@ -39,7 +40,10 @@ export default async function ShopPage({
 
   const [dbCategories, heroSettings] = await Promise.all([
     getCategories(),
-    getSettings(["shop_hero_image", "shop_hero_position", "shop_hero_overlay_color", "shop_hero_overlay_opacity", "shop_hero_height"]),
+    getSettings([
+      "shop_hero_image", "shop_hero_position", "shop_hero_overlay_color", "shop_hero_overlay_opacity", "shop_hero_height",
+      "vacation_enabled", "vacation_end_date", "vacation_message",
+    ]),
   ]);
 
   const shopHeroImage = heroSettings.shop_hero_image;
@@ -48,6 +52,27 @@ export default async function ShopPage({
   const shopOverlayColor = heroSettings.shop_hero_overlay_color || "#2C2825";
   const shopOverlayOpacity = heroSettings.shop_hero_overlay_opacity || "50";
   const overlayBg = hexToRgba(shopOverlayColor, shopOverlayOpacity);
+
+  const vacationEnabled = heroSettings.vacation_enabled === "true";
+  const vacationEndDate = heroSettings.vacation_end_date;
+  const vacationCustomMsg = heroSettings.vacation_message;
+  let vacationMessage = "";
+  if (vacationEnabled) {
+    if (vacationCustomMsg) {
+      vacationMessage = vacationCustomMsg;
+    } else if (vacationEndDate) {
+      try {
+        const formatted = new Date(vacationEndDate + "T00:00:00").toLocaleDateString("pl-PL", {
+          day: "numeric", month: "long", year: "numeric",
+        });
+        vacationMessage = `Jestem na urlopie — zamówienia złożone teraz będą realizowane od ${formatted}.`;
+      } catch {
+        vacationMessage = "Jestem na urlopie — zamówienia będą realizowane po moim powrocie.";
+      }
+    } else {
+      vacationMessage = "Jestem na urlopie — zamówienia będą realizowane po moim powrocie.";
+    }
+  }
 
   const CATEGORIES = [
     { value: "wszystkie", label: "Wszystkie" },
@@ -73,8 +98,9 @@ export default async function ShopPage({
 
   return (
     <>
-      <Header />
-      <div className="min-h-[100svh] bg-warm-white pt-20">
+      <VacationBanner message={vacationMessage} />
+      <Header topOffset={vacationEnabled} />
+      <div className={`min-h-[100svh] bg-warm-white ${vacationEnabled ? "pt-[120px]" : "pt-20"}`}>
         {/* Hero nagłówek */}
         {shopHeroImage ? (
           <div className="relative overflow-hidden" style={{ height: `${shopHeroHeight}vh` }}>
@@ -118,7 +144,7 @@ export default async function ShopPage({
         )}
 
         {/* Filtry kategorii */}
-        <div className="border-b border-sand bg-warm-white sticky top-20 z-30 shadow-sm">
+        <div className={`border-b border-sand bg-warm-white sticky ${vacationEnabled ? "top-[120px]" : "top-20"} z-30 shadow-sm`}>
           <div className="max-w-7xl mx-auto px-6 lg:px-10 flex gap-2 overflow-x-auto py-4 no-scrollbar">
             {CATEGORIES.map((cat) => (
               <Link

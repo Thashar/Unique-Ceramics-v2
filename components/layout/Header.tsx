@@ -96,7 +96,7 @@ function AccountDropdown({ scrolled }: { scrolled: boolean }) {
   );
 }
 
-export default function Header() {
+export default function Header({ topOffset = false }: { topOffset?: boolean }) {
   // Na homepage header jest przezroczysty gdy widoczna sekcja z ciemnym tłem
   // (Hero, O mnie, Warsztaty). W pozostałych sekcjach i na innych stronach — solid.
   const [transparentVisible, setTransparentVisible] = useState(true);
@@ -137,7 +137,7 @@ export default function Header() {
   return (
     <>
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+      className={`fixed ${topOffset ? "top-10" : "top-0"} left-0 right-0 z-50 transition-all duration-500 ${
         dark
           ? "bg-warm-white/95 backdrop-blur-md shadow-sm"
           : "bg-transparent"

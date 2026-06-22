@@ -126,6 +126,9 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 | `payment_blik_enabled` | "true"/"false" |
 | `payment_blik_phone` | Numer do przelewu BLIK na telefon |
 | `payment_stripe_enabled` | "true"/"false" — płatność kartą przez Stripe |
+| `vacation_enabled` | "true"/"false" — tryb urlopu; gdy aktywny pojawia się baner w /sklep i wzmianka w mailach |
+| `vacation_end_date` | Data powrotu z urlopu (YYYY-MM-DD) — używana w automatycznym komunikacie |
+| `vacation_message` | Własny komunikat urlopowy; jeśli pusty — generowany z daty |
 
 ---
 

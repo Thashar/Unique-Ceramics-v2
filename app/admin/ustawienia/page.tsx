@@ -61,6 +61,9 @@ export default async function AdminSettingsPage({
     "payment_blik_enabled",
     "payment_blik_phone",
     "payment_stripe_enabled",
+    "vacation_enabled",
+    "vacation_end_date",
+    "vacation_message",
   ]);
 
   return (

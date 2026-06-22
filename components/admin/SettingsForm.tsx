@@ -59,6 +59,9 @@ interface Props {
     payment_blik_enabled: string;
     payment_blik_phone: string;
     payment_stripe_enabled: string;
+    vacation_enabled: string;
+    vacation_end_date: string;
+    vacation_message: string;
   };
 }
 
@@ -245,6 +248,11 @@ export default function SettingsForm({ section, initial }: Props) {
 
   // Stripe
   const [stripeEnabled, setStripeEnabled] = useState(initial.payment_stripe_enabled === "true");
+
+  // Urlop
+  const [vacationEnabled, setVacationEnabled] = useState(initial.vacation_enabled === "true");
+  const [vacationEndDate, setVacationEndDate] = useState(initial.vacation_end_date);
+  const [vacationMessage, setVacationMessage] = useState(initial.vacation_message);
 
   const save = async (pairs: { key: string; value: string }[]) => {
     setErrMsg("");
@@ -631,6 +639,65 @@ export default function SettingsForm({ section, initial }: Props) {
               { key: "payment_blik_phone", value: blikPhone },
             ])}
             label="Zapisz"
+          />
+        </div>
+      )}
+
+      {section === "urlop" && (
+        <div className="max-w-md space-y-6">
+          <h2 className="font-serif text-2xl text-espresso">Urlop</h2>
+          <p className="text-xs text-charcoal/50 leading-relaxed">
+            Gdy urlop jest włączony, w sklepie pojawia się pasek informacyjny,
+            a zamówienia złożone w tym czasie zawierają wzmiankę w e-mailu potwierdzającym.
+          </p>
+
+          <div className="flex items-center justify-between">
+            <span className="text-xs tracking-widest uppercase text-charcoal/80">Tryb urlopu aktywny</span>
+            <Toggle checked={vacationEnabled} onChange={setVacationEnabled} />
+          </div>
+
+          {vacationEnabled && (
+            <>
+              <div>
+                <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">
+                  Realizacja zamówień od
+                </label>
+                <input
+                  type="date"
+                  value={vacationEndDate}
+                  onChange={(e) => setVacationEndDate(e.target.value)}
+                  className="w-full bg-warm-white border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors"
+                />
+                <p className="text-[11px] text-charcoal/40 mt-1">
+                  Jeśli puste — komunikat nie będzie zawierał daty.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">
+                  Własna wiadomość (opcjonalnie)
+                </label>
+                <input
+                  type="text"
+                  value={vacationMessage}
+                  onChange={(e) => setVacationMessage(e.target.value)}
+                  placeholder="Jestem na urlopie — zamówienia będą realizowane od..."
+                  className="w-full bg-warm-white border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors"
+                />
+                <p className="text-[11px] text-charcoal/40 mt-1">
+                  Jeśli puste — komunikat zostanie wygenerowany automatycznie na podstawie daty.
+                </p>
+              </div>
+            </>
+          )}
+
+          <SaveButton
+            onClick={() => save([
+              { key: "vacation_enabled", value: vacationEnabled ? "true" : "false" },
+              { key: "vacation_end_date", value: vacationEndDate },
+              { key: "vacation_message", value: vacationMessage },
+            ])}
+            label="Zapisz ustawienia urlopu"
           />
         </div>
       )}

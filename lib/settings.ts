@@ -210,6 +210,10 @@ const DEFAULTS: Record<string, string> = {
   payment_blik_phone: "",
   // Stripe
   payment_stripe_enabled: "false",
+  // Urlop
+  vacation_enabled: "false",
+  vacation_end_date: "",
+  vacation_message: "",
 };
 
 async function querySettings(keys: string[]): Promise<Record<string, string>> {

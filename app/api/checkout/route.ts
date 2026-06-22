@@ -27,6 +27,7 @@ async function sendAdminNotification(params: {
   shippingCost: number;
   total: number;
   orderId: string;
+  vacationNote?: string;
 }) {
   const resendApiKey = process.env.RESEND_API_KEY;
   if (!resendApiKey) return;
@@ -34,7 +35,7 @@ async function sendAdminNotification(params: {
   const {
     orderNumber, firstName, lastName, email, phone,
     street, city, postcode, note, paymentMethod,
-    items, shippingCost, total, orderId,
+    items, shippingCost, total, orderId, vacationNote,
   } = params;
 
   const rows = items
@@ -55,6 +56,7 @@ async function sendAdminNotification(params: {
       subject: `🛒 Nowe zamówienie #${orderNumber} — ${firstName} ${lastName} — ${total.toFixed(2)} zł`,
       text: [
         `Nowe zamówienie #${orderNumber}`,
+        ...(vacationNote ? [``, `⚠️ URLOP: ${vacationNote}`] : []),
         ``,
         `Klient: ${firstName} ${lastName}`,
         `E-mail: ${email}`,
@@ -90,6 +92,7 @@ function buildTransferEmail(params: {
   bankName: string;
   transferTitle: string;
   blikPhone?: string;
+  vacationNote?: string;
 }): string {
   const {
     orderNumber,
@@ -102,6 +105,7 @@ function buildTransferEmail(params: {
     bankName,
     transferTitle,
     blikPhone,
+    vacationNote,
   } = params;
 
   const itemsHtml = items
@@ -130,6 +134,11 @@ function buildTransferEmail(params: {
         Twoje zamówienie <strong style="color:#3d2b1f;">#${orderNumber}</strong> zostało przyjęte.
         Aby je zrealizować, prosimy o dokonanie przelewu na poniższe dane:
       </p>
+      ${vacationNote ? `
+      <div style="background:#fff8f0;border-left:3px solid #c87941;padding:16px 20px;margin:0 0 24px;">
+        <p style="margin:0 0 4px;font-family:Arial,sans-serif;font-size:11px;color:#9a7a6a;letter-spacing:0.15em;text-transform:uppercase;">Informacja o realizacji</p>
+        <p style="margin:0;font-size:14px;color:#7a4a1e;line-height:1.5;">${vacationNote}</p>
+      </div>` : ""}
 
       <div style="background:#f5f0eb;border-left:3px solid #c87941;padding:20px 24px;margin:0 0 ${blikPhone ? "16px" : "28px"};">
         <p style="margin:0 0 6px;font-family:Arial,sans-serif;font-size:11px;color:#9a7a6a;letter-spacing:0.15em;text-transform:uppercase;">Przelew bankowy</p>
@@ -272,8 +281,32 @@ export async function POST(req: Request) {
     "shipping_cost",
     "shipping_free_enabled",
     "shipping_free_from",
+    "vacation_enabled",
+    "vacation_end_date",
+    "vacation_message",
   ]);
   const shippingCostSetting = Number(shippingSettings.shipping_cost) || 18;
+
+  // Urlop — wylicz notatkę raz, użyj w obu mailach
+  let vacationNote: string | undefined;
+  if (shippingSettings.vacation_enabled === "true") {
+    const customMsg = shippingSettings.vacation_message;
+    const endDate = shippingSettings.vacation_end_date;
+    if (customMsg) {
+      vacationNote = customMsg;
+    } else if (endDate) {
+      try {
+        const formatted = new Date(endDate + "T00:00:00").toLocaleDateString("pl-PL", {
+          day: "numeric", month: "long", year: "numeric",
+        });
+        vacationNote = `Zamówienie zostanie zrealizowane po powrocie z urlopu (od ${formatted}).`;
+      } catch {
+        vacationNote = "Zamówienie zostanie zrealizowane po powrocie z urlopu.";
+      }
+    } else {
+      vacationNote = "Zamówienie zostanie zrealizowane po powrocie z urlopu.";
+    }
+  }
   const freeEnabled = shippingSettings.shipping_free_enabled === "true";
   const freeFrom = Number(shippingSettings.shipping_free_from) || 300;
 
@@ -356,7 +389,7 @@ export async function POST(req: Request) {
   void sendAdminNotification({
     orderNumber, firstName, lastName, email, phone: phone?.trim() || null,
     street, city, postcode, note: note?.trim() || null, paymentMethod,
-    items: verifiedItems, shippingCost, total, orderId: order.id,
+    items: verifiedItems, shippingCost, total, orderId: order.id, vacationNote,
   });
 
   // Stripe — create Checkout session and redirect
@@ -434,6 +467,7 @@ export async function POST(req: Request) {
             transferTitle:
               bankSettings.payment_bank_transfer_title || "Zamówienie",
             blikPhone: bankSettings.payment_blik_phone || undefined,
+            vacationNote,
           }),
         });
       } catch {
