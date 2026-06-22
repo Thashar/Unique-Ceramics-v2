@@ -56,23 +56,9 @@ export default async function ShopPage({
   const vacationEnabled = heroSettings.vacation_enabled === "true";
   const vacationEndDate = heroSettings.vacation_end_date;
   const vacationCustomMsg = heroSettings.vacation_message;
-  let vacationMessage = "";
-  if (vacationEnabled) {
-    if (vacationCustomMsg) {
-      vacationMessage = vacationCustomMsg;
-    } else if (vacationEndDate) {
-      try {
-        const formatted = new Date(vacationEndDate + "T00:00:00").toLocaleDateString("pl-PL", {
-          day: "numeric", month: "long", year: "numeric",
-        });
-        vacationMessage = `Jestem na urlopie — zamówienia złożone teraz będą realizowane od ${formatted}.`;
-      } catch {
-        vacationMessage = "Jestem na urlopie — zamówienia będą realizowane po moim powrocie.";
-      }
-    } else {
-      vacationMessage = "Jestem na urlopie — zamówienia będą realizowane po moim powrocie.";
-    }
-  }
+  const vacationMessage = vacationEnabled
+    ? (vacationCustomMsg || "Jestem na urlopie.")
+    : "";
 
   const CATEGORIES = [
     { value: "wszystkie", label: "Wszystkie" },
@@ -98,7 +84,7 @@ export default async function ShopPage({
 
   return (
     <>
-      <VacationBanner message={vacationMessage} />
+      <VacationBanner message={vacationMessage} returnDate={vacationEnabled ? vacationEndDate : undefined} />
       <Header topOffset={vacationEnabled} />
       <div className={`min-h-[100svh] bg-warm-white ${vacationEnabled ? "pt-[120px]" : "pt-20"}`}>
         {/* Hero nagłówek */}
