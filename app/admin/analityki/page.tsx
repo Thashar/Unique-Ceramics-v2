@@ -2,7 +2,9 @@ export const dynamic = "force-dynamic";
 
 import { db } from "@/lib/db";
 import Link from "next/link";
-import { ChevronLeft, TrendingUp, ShoppingBag, Package, Truck, CreditCard, BarChart2, Download, Scale, AlertTriangle } from "lucide-react";
+import { ChevronLeft, TrendingUp, ShoppingBag, Package, Truck, CreditCard, BarChart2, Download } from "lucide-react";
+import DznSection from "@/components/admin/DznSection";
+import { getSetting } from "@/lib/settings";
 
 // ── Typy dla raw queries ───────────────────────────────────────────────────────
 
@@ -217,25 +219,15 @@ export default async function AnalitykiPage() {
   const totalOrders   = statusRaw.reduce((s, r) => s + Number(r.cnt), 0);
 
   // ── Działalność nierejestrowana ────────────────────────────────────────────
-  // Limit = 75% minimalnego wynagrodzenia × 3 miesiące (art. 5 Prawa przedsiębiorców)
-  // Aktualizuj DZN_MIN_WAGE co rok! (Dz.U. 2024 poz. 1516 → 4 666 zł od 2025-01-01)
-  const DZN_MIN_WAGE  = 4_666;
-  const DZN_MONTHLY   = Math.round(DZN_MIN_WAGE * 0.75 * 100) / 100; // 3 499,50 zł
-  const DZN_QUARTERLY = Math.round(DZN_MONTHLY * 3 * 100) / 100;     // 10 498,50 zł
-  const DZN_WARN      = 0.8; // próg ostrzegawczy
-
-  const quarterMap = new Map<number, { rev: number; cnt: number }>();
-  for (const r of quarterlyRaw) {
-    quarterMap.set(Number(r.q), { rev: Number(r.rev), cnt: Number(r.cnt) });
-  }
+  const dznMinWageStr = await getSetting("dzn_min_wage").catch(() => "4806");
+  const dznMinWage    = Math.max(1000, parseInt(dznMinWageStr || "4806", 10) || 4806);
   const currentQuarter = Math.ceil((now.getMonth() + 1) / 3); // 1–4
 
-  const QUARTERS = [
-    { q: 1, label: "Q1", months: "Styczeń – Marzec" },
-    { q: 2, label: "Q2", months: "Kwiecień – Czerwiec" },
-    { q: 3, label: "Q3", months: "Lipiec – Wrzesień" },
-    { q: 4, label: "Q4", months: "Październik – Grudzień" },
-  ];
+  // Konwertuj Map → zwykły obiekt (JSON-serialisowalny do przekazania do Client Component)
+  const quarterData: Record<number, { rev: number; cnt: number }> = {};
+  for (const r of quarterlyRaw) {
+    quarterData[Number(r.q)] = { rev: Number(r.rev), cnt: Number(r.cnt) };
+  }
 
   return (
     <div className="max-w-5xl space-y-8">
@@ -575,106 +567,12 @@ export default async function AnalitykiPage() {
       </div>
 
       {/* ── Działalność nierejestrowana ───────────────────────────────────── */}
-      <div className="bg-cream p-6">
-        <div className="flex items-start gap-3 mb-6">
-          <div className="w-9 h-9 bg-warm-white rounded-full flex items-center justify-center shrink-0 mt-0.5">
-            <Scale size={17} strokeWidth={1.5} className="text-clay" />
-          </div>
-          <div className="flex-1">
-            <h2 className="font-serif text-lg text-espresso leading-tight">
-              Działalność nierejestrowana — {now.getFullYear()}
-            </h2>
-            <p className="text-xs text-charcoal/45 mt-0.5">
-              Limit kwartalny: <span className="font-medium text-charcoal/70">{fmt(DZN_QUARTERLY)} zł</span>
-              {" "}· 75% minimalnego wynagrodzenia ({DZN_MIN_WAGE.toLocaleString("pl-PL")} zł) × 3 miesiące
-              · uwzględnia tylko opłacone zamówienia
-            </p>
-          </div>
-        </div>
-
-        <div className="space-y-5">
-          {QUARTERS.map(({ q, label, months }) => {
-            const data     = quarterMap.get(q) ?? { rev: 0, cnt: 0 };
-            const pctVal   = DZN_QUARTERLY > 0 ? (data.rev / DZN_QUARTERLY) * 100 : 0;
-            const isOver80 = pctVal >= DZN_WARN * 100;
-            const isCurrent = q === currentQuarter;
-
-            const barColor = isOver80
-              ? "bg-red-400"
-              : pctVal >= 60
-              ? "bg-amber-400"
-              : "bg-green-400";
-
-            return (
-              <div
-                key={q}
-                className={`rounded-sm p-3 -mx-1 ${isCurrent ? "bg-warm-white" : ""}`}
-              >
-                {/* Nagłówek kwartału */}
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2.5">
-                    <span className={`text-xs font-semibold tabular-nums ${isOver80 ? "text-red-600" : "text-espresso"}`}>
-                      {label}
-                    </span>
-                    <span className="text-[11px] text-charcoal/45">{months}</span>
-                    {isCurrent && (
-                      <span className="text-[10px] tracking-widest uppercase text-terracotta font-medium">
-                        Bieżący
-                      </span>
-                    )}
-                    {isOver80 && (
-                      <AlertTriangle size={13} className="text-red-500 shrink-0" />
-                    )}
-                  </div>
-                  <div className="flex items-baseline gap-1.5">
-                    <span className={`text-sm font-medium tabular-nums ${isOver80 ? "text-red-600" : "text-espresso"}`}>
-                      {fmt(data.rev)} zł
-                    </span>
-                    <span className="text-xs text-charcoal/40 tabular-nums">
-                      ({Math.min(pctVal, 999).toFixed(0)}%)
-                    </span>
-                  </div>
-                </div>
-
-                {/* Pasek postępu */}
-                <div className="h-2.5 bg-sand rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all ${barColor}`}
-                    style={{ width: `${Math.min(pctVal, 100)}%` }}
-                  />
-                </div>
-
-                {/* Podpis */}
-                <div className="flex items-center justify-between mt-1.5">
-                  <p className="text-[11px] text-charcoal/35">
-                    {data.cnt > 0 ? `${data.cnt} zam.` : "Brak zamówień"}
-                  </p>
-                  <p className="text-[11px] text-charcoal/35 tabular-nums">
-                    {data.rev > 0 && data.rev < DZN_QUARTERLY
-                      ? `Pozostało: ${fmt(DZN_QUARTERLY - data.rev)} zł`
-                      : data.rev >= DZN_QUARTERLY
-                      ? "Limit przekroczony!"
-                      : `Limit: ${fmt(DZN_QUARTERLY)} zł`}
-                  </p>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Linia z ostrzeżeniem przy 80% */}
-        <div className="relative mt-4 pt-4 border-t border-sand">
-          <div
-            className="absolute top-0 h-[1px] bg-amber-400/60"
-            style={{ left: `${DZN_WARN * 100}%`, right: 0 }}
-          />
-          <p className="text-[11px] text-charcoal/35">
-            Podstawa: art. 5 ustawy Prawo przedsiębiorców (Dz.U. 2018 poz. 646 ze zm.).
-            Czerwony = powyżej {Math.round(DZN_WARN * 100)}% limitu.
-            Miesięczny limit: {fmt(DZN_MONTHLY)} zł — sprawdzaj też każdy miesiąc osobno.
-          </p>
-        </div>
-      </div>
+      <DznSection
+        initialMinWage={dznMinWage}
+        quarterMap={quarterData}
+        currentQuarter={currentQuarter}
+        currentYear={now.getFullYear()}
+      />
     </div>
   );
 }

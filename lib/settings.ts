@@ -217,6 +217,9 @@ const DEFAULTS: Record<string, string> = {
   vacation_message: "",
   // Zamówienia indywidualne
   custom_order_notify_email_enabled: "true",
+  // Działalność nierejestrowana — minimalne wynagrodzenie (aktualizuj co rok!)
+  // 2026: 4806 zł (ustawa z 25.07.2025 r. o ograniczeniu biurokracji i wsparciu przedsiębiorczości)
+  dzn_min_wage: "4806",
 };
 
 async function querySettings(keys: string[]): Promise<Record<string, string>> {
