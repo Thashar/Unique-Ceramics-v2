@@ -21,8 +21,12 @@ export default function OrdersTabs({ counts }: { counts: Record<string, number> 
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
 
   function navigate(status: string) {
-    const params = new URLSearchParams();
-    if (status) params.set("status", status);
+    const params = new URLSearchParams(searchParams.toString());
+    if (status) {
+      params.set("status", status);
+    } else {
+      params.delete("status");
+    }
     router.replace(`${pathname}?${params.toString()}`);
   }
 
