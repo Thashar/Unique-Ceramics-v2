@@ -94,42 +94,40 @@ function InPostMapWidget({ token, value, onChange }: Props & { token: string }) 
   );
 }
 
-// --- Wykrywanie trybu wyszukiwania ---
+// --- Pomocnicze ---
 
-type SearchMode = "zip_code" | "name" | "city";
-
-function detectMode(q: string): SearchMode {
-  const t = q.trim();
-  // Kod pocztowy: XX-XXX
-  if (/^\d{2}-\d{3}$/.test(t)) return "zip_code";
-  // Kod paczkomatu: 3–8 znaków złożonych WYŁĄCZNIE z liter A-Z i cyfr (bez polskich znaków, bez spacji)
-  if (/^[A-Z0-9]{3,8}$/i.test(t) && /[A-Z]/i.test(t)) return "name";
-  return "city";
+// Normalizuje tekst do porównywania: małe litery, bez polskich znaków diakrytycznych
+function norm(s: string): string {
+  return s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
 }
 
-async function fetchPoints(q: string, mode: SearchMode): Promise<Point[]> {
+// Filtruje listę punktów po zapytaniu we WSZYSTKICH polach (kod, ulica, miasto, kod pocztowy)
+function filterByQuery(items: Point[], q: string): Point[] {
+  const n = norm(q);
+  return items.filter((p) =>
+    norm(`${p.name} ${p.address.line1} ${p.address.line2}`).includes(n),
+  );
+}
+
+// Buduje URL do API InPost:
+// - cyfry z myślnikiem (44, 44-, 44-100) → zip_code
+// - litery + cyfry (WAR010) → bezpośredni endpoint /points/{code}
+// - wszystko inne (miasto, ulica, etc.) → city
+function buildApiUrl(q: string): { url: string; direct: boolean } {
   const t = q.trim();
-
-  if (mode === "name") {
-    // Próba pobrania pojedynczego paczkomatu po kodzie
-    const res = await fetch(`${API}/${encodeURIComponent(t.toUpperCase())}`, {
-      headers: { Accept: "application/json" },
-    });
-    if (res.ok) {
-      const item = await res.json() as Point;
-      return item?.name ? [item] : [];
-    }
-    // Jeśli nie znaleziono — szukaj jako prefiks w mieście (fallback)
-    return [];
+  if (/^[A-Za-z]{2,5}\d{1,5}$/.test(t)) {
+    return { url: `${API}/${t.toUpperCase()}`, direct: true };
   }
-
-  const param = mode === "zip_code" ? `zip_code=${encodeURIComponent(t)}` : `city=${encodeURIComponent(t)}`;
-  const res = await fetch(`${API}?per_page=80&type=parcel_locker&${param}`, {
-    headers: { Accept: "application/json" },
-  });
-  if (!res.ok) throw new Error("API error");
-  const data = await res.json();
-  return (data.items ?? []) as Point[];
+  if (/^\d{1,2}(-\d{0,3})?$/.test(t)) {
+    return {
+      url: `${API}?per_page=100&type=parcel_locker&zip_code=${encodeURIComponent(t)}`,
+      direct: false,
+    };
+  }
+  return {
+    url: `${API}?per_page=100&type=parcel_locker&city=${encodeURIComponent(t)}`,
+    direct: false,
+  };
 }
 
 // --- Wyszukiwarka (bez tokenu) ---
@@ -140,37 +138,81 @@ function InPostSearch({ value, onChange }: { value: string; onChange: (code: str
   const [loading, setLoading] = useState(false);
   const [fetchError, setFetchError] = useState("");
   const [selectedPoint, setSelectedPoint] = useState<Point | null>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const search = useCallback(async (q: string) => {
-    const trimmed = q.trim();
-    if (trimmed.length < 3) {
+  // Cache ostatniego zapytania API — umożliwia natychmiastowe filtrowanie bez nowego requestu
+  const apiCacheRef = useRef<{ url: string; items: Point[] }>({ url: "", items: [] });
+  const abortRef    = useRef<AbortController | null>(null);
+  const timerRef    = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const runSearch = useCallback(async (q: string) => {
+    const t = q.trim();
+    if (t.length < 3) {
       setResults([]);
       setFetchError("");
       return;
     }
+
+    // 1. Natychmiastowy wynik z cache (filtr client-side po wszystkich polach)
+    const fromCache = filterByQuery(apiCacheRef.current.items, t);
+    if (fromCache.length > 0) {
+      setResults(fromCache);
+      setLoading(false);
+    }
+
+    // 2. Wyznacz URL do API
+    const { url, direct } = buildApiUrl(t);
+    if (url === apiCacheRef.current.url) return; // cache aktualny, nie ma sensu ponownie fetchować
+
+    // 3. Anuluj poprzedni request w locie
+    abortRef.current?.abort();
+    abortRef.current = new AbortController();
+
     setLoading(true);
     setFetchError("");
+
     try {
-      const mode = detectMode(trimmed);
-      const items = await fetchPoints(trimmed, mode);
-      setResults(items);
-      if (items.length === 0 && mode === "city") {
-        setFetchError("Brak wyników. Spróbuj innej nazwy miasta lub wpisz kod pocztowy (np. 44-100).");
+      const res = await fetch(url, {
+        headers: { Accept: "application/json" },
+        signal: abortRef.current.signal,
+      });
+
+      if (!res.ok) throw new Error("http");
+
+      let items: Point[];
+      if (direct) {
+        const item = (await res.json()) as Point;
+        items = item?.name ? [item] : [];
+      } else {
+        const data = await res.json();
+        items = (data.items ?? []) as Point[];
       }
-    } catch {
-      setFetchError("Nie udało się pobrać listy paczkomatów. Sprawdź połączenie i spróbuj ponownie.");
+
+      apiCacheRef.current = { url, items };
+
+      // 4. Filtruj nowe dane po aktualnym zapytaniu wyszukiwania
+      const filtered = filterByQuery(items, t);
+      setResults(filtered);
+
+      if (filtered.length === 0) {
+        setFetchError("Brak wyników — sprawdź pisownię lub spróbuj kodu pocztowego (np. 44-100).");
+      }
+    } catch (e: unknown) {
+      if ((e as Error)?.name === "AbortError") return;
+      setFetchError("Nie udało się pobrać listy paczkomatów. Sprawdź połączenie.");
       setResults([]);
     } finally {
       setLoading(false);
     }
   }, []);
 
+  // Debounce 150 ms — krótki bo cache sprawdzany natychmiast
   useEffect(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => search(query), 400);
-    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
-  }, [query, search]);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => runSearch(query), 150);
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [query, runSearch]);
 
   function select(point: Point) {
     onChange(point.name);
