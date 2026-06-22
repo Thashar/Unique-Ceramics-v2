@@ -4,8 +4,9 @@ import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import OrderStatusSelect from "@/components/admin/OrderStatusSelect";
 import PaymentStatusToggle from "@/components/admin/PaymentStatusToggle";
+import TrackingForm from "@/components/admin/TrackingForm";
 import Link from "next/link";
-import { ChevronLeft, User, MapPin, Package, CreditCard, MessageSquare } from "lucide-react";
+import { ChevronLeft, User, MapPin, Package, CreditCard, MessageSquare, Truck } from "lucide-react";
 
 const PAYMENT_LABELS: Record<string, string> = {
   transfer: "Przelew bankowy",
@@ -13,6 +14,11 @@ const PAYMENT_LABELS: Record<string, string> = {
   stripe:   "Karta (Stripe)",
 };
 
+const SHIPPING_LABELS: Record<string, string> = {
+  courier:       "Kurier",
+  parcel_locker: "Paczkomat InPost",
+  pickup:        "Odbiór osobisty",
+};
 
 export default async function AdminOrderDetailPage({
   params,
@@ -25,6 +31,8 @@ export default async function AdminOrderDetailPage({
     include: { items: true, user: true },
   });
   if (!order) notFound();
+
+  const needsTracking = order.shippingMethod !== "pickup";
 
   return (
     <div className="max-w-3xl">
@@ -48,7 +56,12 @@ export default async function AdminOrderDetailPage({
             })}
           </p>
         </div>
-        <OrderStatusSelect orderId={order.id} currentStatus={order.status} />
+        <OrderStatusSelect
+          orderId={order.id}
+          currentStatus={order.status}
+          shippingMethod={order.shippingMethod}
+          hasTracking={!!(order.trackingNumber && order.trackingCarrier)}
+        />
       </div>
 
       {/* Klient i adres */}
@@ -68,11 +81,27 @@ export default async function AdminOrderDetailPage({
         <div className="bg-cream p-5">
           <div className="flex items-center gap-2 mb-3">
             <MapPin size={14} className="text-clay" strokeWidth={1.5} />
-            <h2 className="text-xs tracking-widest uppercase text-charcoal/50">Adres dostawy</h2>
+            <h2 className="text-xs tracking-widest uppercase text-charcoal/50">
+              {order.shippingMethod === "parcel_locker" ? "Paczkomat" : "Adres dostawy"}
+            </h2>
           </div>
-          <p className="text-sm text-charcoal/80">{order.street}</p>
-          <p className="text-sm text-charcoal/80">{order.postcode} {order.city}</p>
-          <p className="text-sm text-charcoal/80">{order.country}</p>
+          {order.shippingMethod === "pickup" ? (
+            <p className="text-sm text-charcoal/80">Odbiór osobisty w pracowni</p>
+          ) : order.shippingMethod === "parcel_locker" ? (
+            <>
+              <p className="text-sm font-medium text-espresso font-mono">{order.parcelLockerCode ?? "—"}</p>
+              <p className="text-xs text-charcoal/50 mt-1">Kod paczkomatu InPost</p>
+            </>
+          ) : (
+            <>
+              <p className="text-sm text-charcoal/80">{order.street}</p>
+              <p className="text-sm text-charcoal/80">{order.postcode} {order.city}</p>
+              <p className="text-sm text-charcoal/80">{order.country}</p>
+            </>
+          )}
+          <p className="text-xs text-clay mt-2 font-medium">
+            {SHIPPING_LABELS[order.shippingMethod] ?? order.shippingMethod}
+          </p>
         </div>
       </div>
 
@@ -101,7 +130,9 @@ export default async function AdminOrderDetailPage({
           <div className="flex justify-between text-sm text-charcoal/55">
             <span>Wysyłka</span>
             <span className="tabular-nums">
-              {order.shippingCost === 0 ? "Gratis" : `${order.shippingCost} zł`}
+              {order.shippingCost === 0
+                ? (order.shippingMethod === "pickup" ? "Odbiór osobisty" : "Gratis")
+                : `${order.shippingCost} zł`}
             </span>
           </div>
           <div className="flex justify-between">
@@ -114,7 +145,7 @@ export default async function AdminOrderDetailPage({
       </div>
 
       {/* Płatność i uwagi */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
         <div className="bg-cream p-5">
           <div className="flex items-center gap-2 mb-3">
             <CreditCard size={14} className="text-clay" strokeWidth={1.5} />
@@ -136,6 +167,21 @@ export default async function AdminOrderDetailPage({
           </div>
         ) : null}
       </div>
+
+      {/* Dane wysyłki (tylko kurier / paczkomat) */}
+      {needsTracking && (
+        <div className="bg-cream p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <Truck size={14} className="text-clay" strokeWidth={1.5} />
+            <h2 className="text-xs tracking-widest uppercase text-charcoal/50">List przewozowy</h2>
+          </div>
+          <TrackingForm
+            orderId={order.id}
+            initialTrackingNumber={order.trackingNumber}
+            initialCarrier={order.trackingCarrier}
+          />
+        </div>
+      )}
     </div>
   );
 }

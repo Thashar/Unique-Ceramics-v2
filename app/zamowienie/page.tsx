@@ -63,6 +63,7 @@ export default async function CheckoutPage() {
       shippingCost={Number(settings.shipping_cost) || 18}
       shippingFreeEnabled={settings.shipping_free_enabled === "true"}
       shippingFreeFrom={Number(settings.shipping_free_from) || 300}
+      inpostToken={process.env.INPOST_GEOWIDGET_TOKEN ?? null}
     />
   );
 }

@@ -12,6 +12,12 @@ const PAYMENT_LABEL: Record<string, string> = {
   stripe:   "Karta (Stripe)",
 };
 
+const SHIPPING_LABEL: Record<string, string> = {
+  courier:       "Kurier",
+  parcel_locker: "Paczkomat InPost",
+  pickup:        "Odbiór osobisty",
+};
+
 async function sendAdminNotification(params: {
   orderNumber: string;
   firstName: string;
@@ -28,6 +34,8 @@ async function sendAdminNotification(params: {
   total: number;
   orderId: string;
   vacationNote?: string;
+  shippingMethod?: string;
+  parcelLockerCode?: string | null;
 }) {
   const resendApiKey = process.env.RESEND_API_KEY;
   if (!resendApiKey) return;
@@ -36,7 +44,10 @@ async function sendAdminNotification(params: {
     orderNumber, firstName, lastName, email, phone,
     street, city, postcode, note, paymentMethod,
     items, shippingCost, total, orderId, vacationNote,
+    shippingMethod, parcelLockerCode,
   } = params;
+
+  const shippingLabel = SHIPPING_LABEL[shippingMethod ?? "courier"] ?? shippingMethod ?? "Kurier";
 
   const rows = items
     .map((i) => `${i.name} ×${i.quantity} — ${(i.price * i.quantity).toFixed(2)} zł`)
@@ -61,8 +72,9 @@ async function sendAdminNotification(params: {
         `Klient: ${firstName} ${lastName}`,
         `E-mail: ${email}`,
         `Telefon: ${phone || "—"}`,
-        `Adres: ${street}, ${postcode} ${city}`,
+        `Adres: ${shippingMethod === "pickup" ? "Odbiór osobisty" : `${street}, ${postcode} ${city}`}`,
         ``,
+        `Metoda wysyłki: ${shippingLabel}${shippingMethod === "parcel_locker" && parcelLockerCode ? ` (${parcelLockerCode})` : ""}`,
         `Płatność: ${PAYMENT_LABEL[paymentMethod] ?? paymentMethod}`,
         ``,
         `Zamówione produkty:`,
@@ -93,6 +105,8 @@ function buildTransferEmail(params: {
   transferTitle: string;
   blikPhone?: string;
   vacationNote?: string;
+  shippingMethod?: string;
+  parcelLockerCode?: string | null;
 }): string {
   const {
     orderNumber,
@@ -106,7 +120,14 @@ function buildTransferEmail(params: {
     transferTitle,
     blikPhone,
     vacationNote,
+    shippingMethod,
+    parcelLockerCode,
   } = params;
+
+  const shippingLabel = SHIPPING_LABEL[shippingMethod ?? "courier"] ?? "Kurier";
+  const shippingInfo = shippingMethod === "parcel_locker" && parcelLockerCode
+    ? `${shippingLabel} — paczkomat <strong style="font-family:monospace;">${parcelLockerCode}</strong>`
+    : shippingLabel;
 
   const itemsHtml = items
     .map(
@@ -139,6 +160,11 @@ function buildTransferEmail(params: {
         <p style="margin:0 0 4px;font-family:Arial,sans-serif;font-size:11px;color:#9a7a6a;letter-spacing:0.15em;text-transform:uppercase;">Informacja o realizacji</p>
         <p style="margin:0;font-size:14px;color:#7a4a1e;line-height:1.5;">${vacationNote}</p>
       </div>` : ""}
+
+      <div style="background:#f5f0eb;padding:12px 24px;margin:0 0 20px;font-size:13px;color:#4a3728;">
+        <span style="color:#9a7a6a;font-family:Arial,sans-serif;font-size:11px;text-transform:uppercase;letter-spacing:0.12em;">Metoda wysyłki: </span>
+        ${shippingInfo}
+      </div>
 
       <div style="background:#f5f0eb;border-left:3px solid #c87941;padding:20px 24px;margin:0 0 ${blikPhone ? "16px" : "28px"};">
         <p style="margin:0 0 6px;font-family:Arial,sans-serif;font-size:11px;color:#9a7a6a;letter-spacing:0.15em;text-transform:uppercase;">Przelew bankowy</p>
@@ -218,20 +244,27 @@ export async function POST(req: Request) {
     postcode,
     note,
     paymentMethod,
+    shippingMethod,
+    parcelLockerCode,
     items,
   } = body;
 
+  const ALLOWED_SHIPPING_METHODS = ["courier", "parcel_locker", "pickup"];
+  if (!ALLOWED_SHIPPING_METHODS.includes(shippingMethod)) {
+    return NextResponse.json({ error: "Nieprawidłowa metoda wysyłki" }, { status: 400 });
+  }
+
+  if (shippingMethod === "parcel_locker" && !String(parcelLockerCode ?? "").trim()) {
+    return NextResponse.json({ error: "Brak kodu paczkomatu" }, { status: 400 });
+  }
+
   // Walidacja wymaganych pól
-  if (
-    !firstName?.trim() ||
-    !lastName?.trim() ||
-    !email?.trim() ||
-    !street?.trim() ||
-    !city?.trim() ||
-    !postcode?.trim() ||
-    !paymentMethod
-  ) {
+  if (!firstName?.trim() || !lastName?.trim() || !email?.trim() || !paymentMethod) {
     return NextResponse.json({ error: "Brakuje wymaganych pól" }, { status: 400 });
+  }
+
+  if (shippingMethod !== "pickup" && (!street?.trim() || !city?.trim() || !postcode?.trim())) {
+    return NextResponse.json({ error: "Brakuje wymaganych pól adresu" }, { status: 400 });
   }
 
   const ALLOWED_PAYMENT_METHODS = ["transfer", "stripe"];
@@ -243,10 +276,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Nieprawidłowy adres e-mail" }, { status: 400 });
   }
 
-  const addrValidation = validateAddress({ firstName, lastName, phone, street, postcode, city });
-  if (!addrValidation.valid) {
-    const firstError = Object.values(addrValidation.errors)[0];
-    return NextResponse.json({ error: firstError }, { status: 400 });
+  if (shippingMethod !== "pickup") {
+    const addrValidation = validateAddress({ firstName, lastName, phone, street, postcode, city });
+    if (!addrValidation.valid) {
+      const firstError = Object.values(addrValidation.errors)[0];
+      return NextResponse.json({ error: firstError }, { status: 400 });
+    }
   }
 
   if (!items?.length) {
@@ -317,7 +352,9 @@ export async function POST(req: Request) {
     }, 0) * 100
   ) / 100;
 
-  const shippingCost = freeEnabled && subtotal >= freeFrom ? 0 : shippingCostSetting;
+  const shippingCost = shippingMethod === "pickup"
+    ? 0
+    : (freeEnabled && subtotal >= freeFrom ? 0 : shippingCostSetting);
   const total = Math.round((subtotal + shippingCost) * 100) / 100;
 
   const typedItems = items as { productId: string; quantity: number }[];
@@ -354,6 +391,8 @@ export async function POST(req: Request) {
           paymentMethod,
           shippingCost,
           total,
+          shippingMethod: shippingMethod ?? "courier",
+          parcelLockerCode: shippingMethod === "parcel_locker" ? String(parcelLockerCode ?? "").trim() : null,
           items: {
             create: typedItems.map((item) => {
               const product = productMap.get(item.productId)!;
@@ -390,6 +429,8 @@ export async function POST(req: Request) {
     orderNumber, firstName, lastName, email, phone: phone?.trim() || null,
     street, city, postcode, note: note?.trim() || null, paymentMethod,
     items: verifiedItems, shippingCost, total, orderId: order.id, vacationNote,
+    shippingMethod: shippingMethod ?? "courier",
+    parcelLockerCode: shippingMethod === "parcel_locker" ? String(parcelLockerCode ?? "").trim() : null,
   });
 
   // Stripe — create Checkout session and redirect
@@ -468,6 +509,8 @@ export async function POST(req: Request) {
               bankSettings.payment_bank_transfer_title || "Zamówienie",
             blikPhone: bankSettings.payment_blik_phone || undefined,
             vacationNote,
+            shippingMethod: shippingMethod ?? "courier",
+            parcelLockerCode: shippingMethod === "parcel_locker" ? String(parcelLockerCode ?? "").trim() : null,
           }),
         });
       } catch {

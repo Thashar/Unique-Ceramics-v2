@@ -56,6 +56,7 @@ SUPABASE_SERVICE_ROLE_KEY="xxxx"            # upload zdjęć (tylko serwer!)
 STRIPE_SECRET_KEY="sk_live_xxxx"            # płatności kartą
 STRIPE_WEBHOOK_SECRET="whsec_xxxx"          # weryfikacja webhooków Stripe
 CRON_SECRET="min-32-znaki"                  # autoryzacja /api/ping (cron Vercel)
+INPOST_GEOWIDGET_TOKEN="xxxx"               # token widgetu mapy paczkomatów InPost (opcjonalne — bez niego wyświetla pole tekstowe)
 ```
 
 > `DATABASE_URL` używa pgbouncer (Transaction Pooler). `DIRECT_URL` wymagany przez Prisma do migracji. `SUPABASE_SERVICE_ROLE_KEY` nigdy nie może trafić do klienta.
@@ -71,7 +72,7 @@ CRON_SECRET="min-32-znaki"                  # autoryzacja /api/ping (cron Vercel
 ### Sklep
 - **Category** — `id`, `slug` (unique, używany w URL i w `Product.category`), `label` (nazwa wyświetlana), `order` (kolejność filtrów)
 - **Product** — `id`, `slug` (unique), `name`, `description`, `price`, `images[]`, `category`, `stock`, `featured`, `active`
-- **Order** — `id`, `userId` (nullable), `status`, `total`, `shippingCost`, pola adresowe, `paymentMethod` (`transfer`/`stripe`), `paymentStatus` (`pending`/`PAID`/`expired`)
+- **Order** — `id`, `userId` (nullable), `status`, `total`, `shippingCost`, pola adresowe, `paymentMethod` (`transfer`/`stripe`), `paymentStatus` (`pending`/`PAID`/`expired`), `shippingMethod` (`courier`/`parcel_locker`/`pickup`), `parcelLockerCode` (nullable), `trackingNumber` (nullable), `trackingCarrier` (nullable — `dpd`/`dhl`/`inpost`/`poczta`)
 - **OrderItem** — referencja do Order, `productId`, `name`, `price`, `quantity`
 - **CustomOrder** — `id`, `customerName`, `customerEmail`, `customerPhone`, `orderType`, `description`, `deadline`, `budget`, `status`, `adminNotes`
 - **Setting** — `key` (unique), `value` — magazyn key-value dla dynamicznych ustawień (także adresy użytkowników: `user_address_{userId}`)
@@ -231,6 +232,9 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 - **ProductCard.tsx** — karta produktu (next/image + framer-motion)
 - **InstagramIcon.tsx** — SVG ikona Instagram
 
+### `components/checkout/`
+- **InPostWidget.tsx** — `"use client"`, widget mapy paczkomatów InPost; gdy `INPOST_GEOWIDGET_TOKEN` ustawiony: ładuje CDN geowidget.inpost.pl i pozwala wybrać paczkomat z mapy; bez tokenu: pole tekstowe + link do strony InPost. Zwraca kod paczkomatu przez `onChange`.
+
 ### `components/admin/`
 - **AdminNav.tsx** — sidebar + mobilny drawer
 - **BfcacheGuard.tsx** — `"use client"`, wykrywa przywrócenie strony z bfcache (`pageshow` + `event.persisted`) i wywołuje `router.refresh()` by middleware sprawdził sesję (używany w `app/admin/layout.tsx`)
@@ -241,11 +245,12 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 - **CategoriesManager.tsx** — `"use client"`, CRUD kategorii: lista z edycją inline, zmiana kolejności strzałkami, dodawanie, usuwanie (blokada przy produktach); seed domyślnych gdy DB pusta
 - **SettingsForm.tsx** — formularz ustawień (taby: Strona główna / O mnie / Sklep / Warsztaty / Regulamin / Polityka / Kontakt / Wysyłka / Płatności); zawiera `OverlayControl` — podgląd maski na żywo dla zdjęć hero (kolor + przezroczystość)
 - **WorkshopsOffersEditor.tsx** — `"use client"`, edytor ofert warsztatów: karty z akordeonem (tytuł, opis, czas, cena, ikona, widoczność), lista „Co zawiera?" i FAQ; każda sekcja obsługuje dodawanie, usuwanie i zmianę kolejności; zwraca dane jako JSON string przez `onChange`
-- **OrderStatusSelect.tsx** — dropdown statusu zamówienia
+- **OrderStatusSelect.tsx** — dropdown statusu zamówienia; przyjmuje `shippingMethod` i `hasTracking` — blokuje zmianę na SHIPPED/DELIVERED gdy brak danych listu (kurier/paczkomat)
 - **OrdersTabs.tsx** — zakładki listy zamówień
 - **ProductsSearch.tsx** — wyszukiwarka w liście produktów
 - **CustomOrderActions.tsx** — akcje zamówień indywidualnych (PATCH)
-- **PaymentStatusToggle.tsx** — `"use client"`, dropdown ręcznej zmiany statusu płatności zamówienia (PENDING/PAID/FAILED) — PATCH `/api/admin/orders/[id]` z `{ paymentStatus }`
+- **PaymentStatusToggle.tsx** — `"use client"`, dropdown ręcznej zmiany statusu płatności zamówienia (PENDING/PAID) — PATCH `/api/admin/orders/[id]` z `{ paymentStatus }`
+- **TrackingForm.tsx** — `"use client"`, formularz listu przewozowego: wybór dostawcy (DPD/DHL/InPost/Poczta Polska) + pole numeru; PATCH `/api/admin/orders/[id]` z `{ trackingNumber, trackingCarrier }`; pokazuje link śledzenia po wypełnieniu
 
 ### `components/account/`
 - **AccountNav.tsx** — nawigacja konta (Profil / Adres dostawy / Zamówienia)

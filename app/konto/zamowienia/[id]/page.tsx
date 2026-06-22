@@ -2,11 +2,34 @@ export const dynamic = "force-dynamic";
 
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, Package, MapPin, CreditCard, Clock } from "lucide-react";
+import { ChevronLeft, Package, MapPin, CreditCard, Clock, Truck, ExternalLink } from "lucide-react";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import OrderStatusBadge from "@/components/account/OrderStatusBadge";
 import StripeResumeButton from "@/components/account/StripeResumeButton";
+
+const CARRIER_LABELS: Record<string, string> = {
+  dpd:    "DPD",
+  dhl:    "DHL",
+  inpost: "InPost",
+  poczta: "Poczta Polska",
+};
+
+const SHIPPING_LABELS: Record<string, string> = {
+  courier:       "Kurier",
+  parcel_locker: "Paczkomat InPost",
+  pickup:        "Odbiór osobisty",
+};
+
+function carrierTrackUrl(carrier: string, number: string): string {
+  switch (carrier) {
+    case "dpd":    return `https://tracktrace.dpd.com.pl/parcelDetails?typ=1&p1=${number}`;
+    case "dhl":    return `https://www.dhl.com/pl-pl/home/tracking/tracking-express.html?submit=1&tracking-id=${number}`;
+    case "inpost": return `https://inpost.pl/sledzenie-przesylek?number=${number}`;
+    case "poczta": return `https://emonitoring.poczta-polska.pl/?numer=${number}`;
+    default:       return "";
+  }
+}
 
 export default async function OrderDetailPage({
   params,
@@ -32,6 +55,11 @@ export default async function OrderDetailPage({
     { key: "DELIVERED",   label: "Dostarczone" },
   ];
   const currentStep = statusSteps.findIndex((s) => s.key === order.status);
+
+  const trackingUrl = order.trackingNumber && order.trackingCarrier
+    ? carrierTrackUrl(order.trackingCarrier, order.trackingNumber)
+    : null;
+  const carrierLabel = order.trackingCarrier ? (CARRIER_LABELS[order.trackingCarrier] ?? order.trackingCarrier) : null;
 
   return (
     <div>
@@ -85,6 +113,33 @@ export default async function OrderDetailPage({
         </div>
       )}
 
+      {/* Śledzenie przesyłki */}
+      {order.trackingNumber && order.trackingCarrier && (
+        <div className="bg-cream border border-clay/20 p-5 mb-6">
+          <h3 className="text-xs tracking-widest uppercase text-clay mb-3 flex items-center gap-2">
+            <Truck size={14} strokeWidth={1.5} />
+            Śledzenie przesyłki
+          </h3>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <p className="text-sm text-charcoal/60">Dostawca: <span className="text-espresso font-medium">{carrierLabel}</span></p>
+              <p className="text-sm text-charcoal/60 mt-0.5">Numer listu: <span className="text-espresso font-mono">{order.trackingNumber}</span></p>
+            </div>
+            {trackingUrl && (
+              <a
+                href={trackingUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 bg-clay hover:bg-espresso text-warm-white text-xs uppercase tracking-wide px-4 py-2.5 transition-colors shrink-0"
+              >
+                <ExternalLink size={13} />
+                Śledź przesyłkę
+              </a>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Produkty */}
         <div className="lg:col-span-2 space-y-4">
@@ -113,7 +168,11 @@ export default async function OrderDetailPage({
               </div>
               <div className="flex justify-between text-sm text-charcoal/80">
                 <span>Wysyłka</span>
-                <span>{order.shippingCost === 0 ? "Gratis" : order.shippingCost.toLocaleString("pl-PL", { style: "currency", currency: "PLN", minimumFractionDigits: 0 })}</span>
+                <span>
+                  {order.shippingCost === 0
+                    ? (order.shippingMethod === "pickup" ? "Odbiór osobisty" : "Gratis")
+                    : order.shippingCost.toLocaleString("pl-PL", { style: "currency", currency: "PLN", minimumFractionDigits: 0 })}
+                </span>
               </div>
               <div className="flex justify-between text-base font-medium text-espresso border-t border-sand pt-2">
                 <span>Do zapłaty</span>
@@ -127,17 +186,29 @@ export default async function OrderDetailPage({
 
         {/* Sidebar */}
         <div className="space-y-4">
-          {/* Adres */}
+          {/* Adres / metoda wysyłki */}
           <div className="bg-cream p-5">
             <h3 className="text-xs tracking-widest uppercase text-clay mb-3 flex items-center gap-2">
               <MapPin size={14} strokeWidth={1.5} />
-              Adres dostawy
+              {order.shippingMethod === "parcel_locker" ? "Paczkomat" : "Dostawa"}
             </h3>
-            <p className="text-sm text-espresso font-medium">{order.firstName} {order.lastName}</p>
-            <p className="text-sm text-charcoal/70 mt-1">{order.street}</p>
-            <p className="text-sm text-charcoal/70">{order.postcode} {order.city}</p>
-            {order.phone && <p className="text-sm text-charcoal/70 mt-1">{order.phone}</p>}
-            <p className="text-sm text-charcoal/70">{order.email}</p>
+            <p className="text-xs text-clay font-medium mb-2">{SHIPPING_LABELS[order.shippingMethod] ?? order.shippingMethod}</p>
+            {order.shippingMethod === "pickup" ? (
+              <p className="text-sm text-charcoal/70">Odbiór osobisty w pracowni — Kleszczów k. Gliwic</p>
+            ) : order.shippingMethod === "parcel_locker" ? (
+              <>
+                <p className="text-sm text-espresso font-mono font-medium">{order.parcelLockerCode ?? "—"}</p>
+                <p className="text-xs text-charcoal/50 mt-1">Kod paczkomatu InPost</p>
+              </>
+            ) : (
+              <>
+                <p className="text-sm text-espresso font-medium">{order.firstName} {order.lastName}</p>
+                <p className="text-sm text-charcoal/70 mt-1">{order.street}</p>
+                <p className="text-sm text-charcoal/70">{order.postcode} {order.city}</p>
+                {order.phone && <p className="text-sm text-charcoal/70 mt-1">{order.phone}</p>}
+                <p className="text-sm text-charcoal/70">{order.email}</p>
+              </>
+            )}
           </div>
 
           {/* Płatność */}

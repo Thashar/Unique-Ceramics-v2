@@ -84,6 +84,11 @@ model Order {
   paymentMethod String @default("transfer")
   paymentStatus String @default("pending")
 
+  shippingMethod   String  @default("courier")   // courier | parcel_locker | pickup
+  parcelLockerCode String?
+  trackingNumber   String?
+  trackingCarrier  String?                        // DPD | DHL | InPost | PocztaPolska
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

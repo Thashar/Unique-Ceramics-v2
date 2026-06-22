@@ -13,49 +13,73 @@ const STATUSES = [
   { value: "CANCELLED",   label: "Anulowane",    color: "bg-red-50 text-red-700 border-red-300" },
 ];
 
+const SHIPPED_OR_LATER = ["SHIPPED", "DELIVERED"];
+
 export default function OrderStatusSelect({
   orderId,
   currentStatus,
+  shippingMethod,
+  hasTracking,
 }: {
   orderId: string;
   currentStatus: string;
+  shippingMethod?: string;
+  hasTracking?: boolean;
 }) {
   const router = useRouter();
   const [status, setStatus] = useState(currentStatus);
   const [saving, setSaving] = useState(false);
+  const [trackingError, setTrackingError] = useState(false);
 
   const current = STATUSES.find((s) => s.value === status);
 
+  const requiresTracking = shippingMethod !== "pickup";
+
   async function handleChange(newStatus: string) {
+    if (SHIPPED_OR_LATER.includes(newStatus) && requiresTracking && !hasTracking) {
+      setTrackingError(true);
+      return;
+    }
+    setTrackingError(false);
     setSaving(true);
     setStatus(newStatus);
-    await fetch(`/api/admin/orders/${orderId}`, {
+    const res = await fetch(`/api/admin/orders/${orderId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status: newStatus }),
     });
     setSaving(false);
+    if (!res.ok) {
+      setStatus(currentStatus);
+    }
     router.refresh();
   }
 
   return (
-    <div className="flex items-center gap-2.5">
-      {saving && <Loader2 size={14} className="text-charcoal/40 animate-spin" />}
-      <div className="relative">
-        <select
-          value={status}
-          onChange={(e) => handleChange(e.target.value)}
-          disabled={saving}
-          className={`appearance-none border pl-3 pr-8 py-2 text-xs font-medium tracking-wide rounded-sm outline-none cursor-pointer transition-colors disabled:opacity-60 disabled:cursor-wait ${
-            current?.color ?? "bg-sand text-charcoal border-sand"
-          }`}
-        >
-          {STATUSES.map((s) => (
-            <option key={s.value} value={s.value}>{s.label}</option>
-          ))}
-        </select>
-        <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none opacity-50" />
+    <div className="flex flex-col items-end gap-1">
+      <div className="flex items-center gap-2.5">
+        {saving && <Loader2 size={14} className="text-charcoal/40 animate-spin" />}
+        <div className="relative">
+          <select
+            value={status}
+            onChange={(e) => handleChange(e.target.value)}
+            disabled={saving}
+            className={`appearance-none border pl-3 pr-8 py-2 text-xs font-medium tracking-wide rounded-sm outline-none cursor-pointer transition-colors disabled:opacity-60 disabled:cursor-wait ${
+              current?.color ?? "bg-sand text-charcoal border-sand"
+            }`}
+          >
+            {STATUSES.map((s) => (
+              <option key={s.value} value={s.value}>{s.label}</option>
+            ))}
+          </select>
+          <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none opacity-50" />
+        </div>
       </div>
+      {trackingError && (
+        <p className="text-xs text-red-600 text-right max-w-48">
+          Uzupełnij numer listu i dostawcę przed zmianą na „Wysłane".
+        </p>
+      )}
     </div>
   );
 }
