@@ -64,6 +64,7 @@ export default async function AdminSettingsPage({
     "vacation_enabled",
     "vacation_end_date",
     "vacation_message",
+    "custom_order_notify_email_enabled",
   ]);
 
   return (

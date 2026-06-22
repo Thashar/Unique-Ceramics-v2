@@ -28,7 +28,8 @@ const settingsItems = [
   { id: "polityka",  label: "Polityka prywatności" },
   { id: "kontakt",   label: "Kontakt" },
   { id: "wysylka",   label: "Wysyłka" },
-  { id: "urlop",     label: "Urlop" },
+  { id: "urlop",            label: "Urlop" },
+  { id: "zam_indywidualne", label: "Zam. indywidualne" },
 ];
 
 const paymentItems = [

@@ -62,6 +62,7 @@ interface Props {
     vacation_enabled: string;
     vacation_end_date: string;
     vacation_message: string;
+    custom_order_notify_email_enabled: string;
   };
 }
 
@@ -253,6 +254,11 @@ export default function SettingsForm({ section, initial }: Props) {
   const [vacationEnabled, setVacationEnabled] = useState(initial.vacation_enabled === "true");
   const [vacationEndDate, setVacationEndDate] = useState(initial.vacation_end_date);
   const [vacationMessage, setVacationMessage] = useState(initial.vacation_message);
+
+  // Zamówienia indywidualne
+  const [customOrderNotifyEnabled, setCustomOrderNotifyEnabled] = useState(
+    initial.custom_order_notify_email_enabled !== "false"
+  );
 
   const save = async (pairs: { key: string; value: string }[]) => {
     setErrMsg("");
@@ -698,6 +704,30 @@ export default function SettingsForm({ section, initial }: Props) {
               { key: "vacation_message", value: vacationMessage },
             ])}
             label="Zapisz ustawienia urlopu"
+          />
+        </div>
+      )}
+
+      {section === "zam_indywidualne" && (
+        <div className="max-w-md space-y-6">
+          <h2 className="font-serif text-2xl text-espresso">Zamówienia indywidualne</h2>
+
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-xs tracking-widest uppercase text-charcoal/80">Powiadomienia e-mail</span>
+              <p className="text-[11px] text-charcoal/40 mt-0.5">
+                Gdy włączone — przy każdym nowym zamówieniu indywidualnym
+                zostanie wysłany e-mail na adres kontaktowy sklepu.
+              </p>
+            </div>
+            <Toggle checked={customOrderNotifyEnabled} onChange={setCustomOrderNotifyEnabled} />
+          </div>
+
+          <SaveButton
+            onClick={() => save([
+              { key: "custom_order_notify_email_enabled", value: customOrderNotifyEnabled ? "true" : "false" },
+            ])}
+            label="Zapisz"
           />
         </div>
       )}

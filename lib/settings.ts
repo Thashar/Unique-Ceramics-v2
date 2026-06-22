@@ -214,6 +214,8 @@ const DEFAULTS: Record<string, string> = {
   vacation_enabled: "false",
   vacation_end_date: "",
   vacation_message: "",
+  // Zamówienia indywidualne
+  custom_order_notify_email_enabled: "true",
 };
 
 async function querySettings(keys: string[]): Promise<Record<string, string>> {
