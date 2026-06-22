@@ -5,6 +5,7 @@ import Image from "next/image";
 import RichEditor from "@/components/admin/RichEditor";
 import ImageUploader from "@/components/admin/ImageUploader";
 import FocalPointPicker from "@/components/admin/FocalPointPicker";
+import WorkshopsOffersEditor from "@/components/admin/WorkshopsOffersEditor";
 
 interface Props {
   section: string;
@@ -36,6 +37,9 @@ interface Props {
     workshops_content_image: string;
     workshops_content_position: string;
     workshops_intro: string;
+    workshops_offers: string;
+    workshops_includes: string;
+    workshops_faq: string;
     regulamin: string;
     polityka_prywatnosci: string;
     contact_phone: string;
@@ -206,6 +210,9 @@ export default function SettingsForm({ section, initial }: Props) {
   const [workshopsContentImage, setWorkshopsContentImage] = useState(initial.workshops_content_image);
   const [workshopsContentPos, setWorkshopsContentPos] = useState(initial.workshops_content_position);
   const [workshopsIntro, setWorkshopsIntro] = useState(initial.workshops_intro);
+  const [workshopsOffers, setWorkshopsOffers] = useState(initial.workshops_offers);
+  const [workshopsIncludes, setWorkshopsIncludes] = useState(initial.workshops_includes);
+  const [workshopsFaq, setWorkshopsFaq] = useState(initial.workshops_faq);
 
   // Regulamin
   const [regulamin, setRegulamin] = useState(initial.regulamin);
@@ -497,6 +504,17 @@ export default function SettingsForm({ section, initial }: Props) {
             <RichEditor value={workshopsIntro} onChange={setWorkshopsIntro} />
           </div>
 
+          <div className="border-t border-sand pt-6">
+            <WorkshopsOffersEditor
+              offersJson={workshopsOffers}
+              includesJson={workshopsIncludes}
+              faqJson={workshopsFaq}
+              onOffersChange={setWorkshopsOffers}
+              onIncludesChange={setWorkshopsIncludes}
+              onFaqChange={setWorkshopsFaq}
+            />
+          </div>
+
           <SaveButton
             onClick={() => save([
               { key: "workshops_hero_image",           value: workshopsImage },
@@ -507,6 +525,9 @@ export default function SettingsForm({ section, initial }: Props) {
               { key: "workshops_content_image",        value: workshopsContentImage },
               { key: "workshops_content_position",     value: workshopsContentPos },
               { key: "workshops_intro",                value: workshopsIntro },
+              { key: "workshops_offers",               value: workshopsOffers },
+              { key: "workshops_includes",             value: workshopsIncludes },
+              { key: "workshops_faq",                  value: workshopsFaq },
             ])}
             label="Zapisz stronę Warsztaty"
           />

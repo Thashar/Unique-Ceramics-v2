@@ -130,6 +130,32 @@ const ABOUT_STORY_DEFAULT = `<p>Od 20 lat zajmuję się ceramiką w obszarze prz
 const WORKSHOPS_INTRO_DEFAULT = `<p>Organizuję warsztaty ceramiczne dla grup i indywidualnych uczestników. Idealne na urodziny, wieczory panieńskie, imprezy firmowe czy po prostu wyjątkowy wieczór z przyjaciółmi. Nie potrzebujesz żadnego doświadczenia — wszystkiego nauczę Cię od podstaw.</p>
 <p>W trakcie warsztatów uformujecie własne wyroby z gliny, które po wypaleniu możecie odebrać lub wysłać pocztą. Każdy uczestnik wychodzi z wyjątkowym, własnoręcznie wykonanym dziełem.</p>`;
 
+const WORKSHOPS_OFFERS_DEFAULT = JSON.stringify([
+  { id: 1, iconName: "Cake",      title: "Warsztaty urodzinowe",  description: "Wyjątkowe urodziny w towarzystwie gliny! Idealne dla grup od 4 osób. W trakcie warsztatu uformujecie własne wyroby z gliny, które po wypaleniu możecie odebrać lub wysłać pocztą.", duration: "3–4 godziny", maxPeople: "od 4 osób",           priceLabel: "od 80 zł / os.",      level: "Każdy poziom",    active: true },
+  { id: 2, iconName: "Gem",       title: "Wieczory panieńskie",   description: "Niezapomniane wieczory panieńskie z ceramiką. Możliwość degustacji wina. Każda uczestniczka wychodzi z własnoręcznie wykonanym, unikatowym dziełem.",                                         duration: "3–4 godziny", maxPeople: "od 4 osób",           priceLabel: "od 100 zł / os.",     level: "Każdy poziom",    active: true },
+  { id: 3, iconName: "Building2", title: "Team Building",         description: "Integracja przez ceramikę dla firm i grup zawodowych. Doskonała alternatywa dla standardowych eventów — kreatywna, angażująca i pełna niespodzianek.",                                         duration: "Do ustalenia", maxPeople: "wycena indywidualna", priceLabel: "wycena indywidualna", level: "Każdy poziom",    active: true },
+  { id: 4, iconName: "Leaf",      title: "Warsztaty otwarte",     description: "Regularne warsztaty dla osób indywidualnych. Poznasz podstawy pracy z gliną — toczenie na kole lub hand-building. Nie potrzebujesz żadnego doświadczenia.",                                   duration: "3 godziny",    maxPeople: "małe grupy",          priceLabel: "od 90 zł / os.",      level: "Każdy poziom",    active: true },
+  { id: 5, iconName: "Users",     title: "Dla dzieci i rodzin",   description: "Warsztaty dla dzieci od 8 lat i całych rodzin. Bezpieczne materiały, przystępna forma, mnóstwo frajdy i niepowtarzalne wspomnienia.",                                                           duration: "2–3 godziny",  maxPeople: "rodziny i grupy",     priceLabel: "od 60 zł / os.",      level: "Dzieci od 8 lat", active: true },
+  { id: 6, iconName: "Gift",      title: "Vouchery prezentowe",   description: "Podaruj komuś wyjątkowe doświadczenie! Vouchery na dowolny rodzaj warsztatów. Idealne na urodziny, imieniny, Dzień Matki lub po prostu z okazji.",                                             duration: "według wybranego warsztatu", maxPeople: "dla 1 osoby lub pary", priceLabel: "od 80 zł",  level: "Każdy poziom",    active: true },
+]);
+
+const WORKSHOPS_INCLUDES_DEFAULT = JSON.stringify([
+  { id: 1, iconName: "Package",       label: "Materiały (glina, narzędzia)" },
+  { id: 2, iconName: "GraduationCap", label: "Prowadzenie przez ceramiczkę" },
+  { id: 3, iconName: "Flame",         label: "Wypalanie Twoich prac" },
+  { id: 4, iconName: "CheckCircle",   label: "Gotowe wyroby do odbioru" },
+  { id: 5, iconName: "Camera",        label: "Pamiątkowe zdjęcia" },
+  { id: 6, iconName: "Coffee",        label: "Napoje podczas warsztatów" },
+]);
+
+const WORKSHOPS_FAQ_DEFAULT = JSON.stringify([
+  { id: 1, question: "Co muszę zabrać?",                     answer: "Nic — wszystkie materiały są zapewnione. Warto mieć na sobie ubranie, które może się zabrudzić (glina to glina)." },
+  { id: 2, question: "Czy otrzymam swoje prace?",            answer: "Tak! Przedmioty po wysuszeniu i wypaleniu możesz odebrać osobiście lub wyślę je pocztą." },
+  { id: 3, question: "Kiedy dostanę gotowe prace?",          answer: "Wypalanie trwa ok. 2–3 tygodni od warsztatów. Poinformuję Cię, gdy prace będą gotowe." },
+  { id: 4, question: "Czy mogę kupić voucher na warsztaty?", answer: "Tak, zapraszam do kontaktu — wystawiam vouchery podarunkowe od 80 zł." },
+  { id: 5, question: "Jak zarezerwować miejsce?",            answer: "Napisz do mnie przez formularz kontaktowy lub zadzwoń." },
+]);
+
 const DEFAULTS: Record<string, string> = {
   regulamin: REGULAMIN_DEFAULT,
   polityka_prywatnosci: POLITYKA_DEFAULT,
@@ -160,6 +186,9 @@ const DEFAULTS: Record<string, string> = {
   workshops_content_image: "",
   workshops_content_position: "50% 50%",
   workshops_intro: WORKSHOPS_INTRO_DEFAULT,
+  workshops_offers: WORKSHOPS_OFFERS_DEFAULT,
+  workshops_includes: WORKSHOPS_INCLUDES_DEFAULT,
+  workshops_faq: WORKSHOPS_FAQ_DEFAULT,
   contact_phone: "+48 668 443 706",
   contact_email: "kontakt@uniqueceramics.pl",
   contact_instagram: "@unique.ceramics",

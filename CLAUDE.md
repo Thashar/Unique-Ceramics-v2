@@ -108,6 +108,9 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 | `workshops_hero_overlay_color` | Kolor maski na hero /warsztaty (hex, default: #2C2825) |
 | `workshops_hero_overlay_opacity` | Przezroczystość maski /warsztaty (0–100, default: 60) |
 | `workshops_intro` | HTML wprowadzenia do warsztatów |
+| `workshops_offers` | JSON — tablica kart ofert warsztatów (`WorkshopOffer[]`): id, iconName, title, description, duration, maxPeople, priceLabel, level, active |
+| `workshops_includes` | JSON — tablica elementów „Co zawiera warsztat?" (`WorkshopInclude[]`): id, iconName, label |
+| `workshops_faq` | JSON — tablica pytań i odpowiedzi FAQ (`WorkshopFaq[]`): id, question, answer |
 | `contact_phone` | Numer telefonu (default: +48 668 443 706) |
 | `contact_email` | E-mail (default: kontakt@uniqueceramics.pl) |
 | `contact_instagram` | Handle Instagram (default: @unique.ceramics) |
@@ -233,6 +236,7 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 - **RichEditor.tsx** — edytor HTML oparty o **Jodit z npm** (dynamiczny `import("jodit")` w useEffect — biblioteka tylko przeglądarkowa, nie może wykonać się przy SSR)
 - **CategoriesManager.tsx** — `"use client"`, CRUD kategorii: lista z edycją inline, zmiana kolejności strzałkami, dodawanie, usuwanie (blokada przy produktach); seed domyślnych gdy DB pusta
 - **SettingsForm.tsx** — formularz ustawień (taby: Strona główna / O mnie / Sklep / Warsztaty / Regulamin / Polityka / Kontakt / Wysyłka / Płatności); zawiera `OverlayControl` — podgląd maski na żywo dla zdjęć hero (kolor + przezroczystość)
+- **WorkshopsOffersEditor.tsx** — `"use client"`, edytor ofert warsztatów: karty z akordeonem (tytuł, opis, czas, cena, ikona, widoczność), lista „Co zawiera?" i FAQ; każda sekcja obsługuje dodawanie, usuwanie i zmianę kolejności; zwraca dane jako JSON string przez `onChange`
 - **OrderStatusSelect.tsx** — dropdown statusu zamówienia
 - **OrdersTabs.tsx** — zakładki listy zamówień
 - **ProductsSearch.tsx** — wyszukiwarka w liście produktów
