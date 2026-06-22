@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { MapPin, Search, Loader2, Check, X } from "lucide-react";
+import { MapPin, Search, Loader2, Check, X, RefreshCw } from "lucide-react";
+
+const API = "https://api-shipx-pl.easypack24.net/v1/points";
 
 interface Point {
   name: string;
@@ -30,6 +32,8 @@ declare global {
     }
   }
 }
+
+// --- Mapa-widget (gdy token jest dostępny) ---
 
 function InPostMapWidget({ token, value, onChange }: Props & { token: string }) {
   const widgetRef = useRef<HTMLElement>(null);
@@ -90,11 +94,52 @@ function InPostMapWidget({ token, value, onChange }: Props & { token: string }) 
   );
 }
 
+// --- Wykrywanie trybu wyszukiwania ---
+
+type SearchMode = "zip_code" | "name" | "city";
+
+function detectMode(q: string): SearchMode {
+  const t = q.trim();
+  // Kod pocztowy: XX-XXX
+  if (/^\d{2}-\d{3}$/.test(t)) return "zip_code";
+  // Kod paczkomatu: 3–8 znaków złożonych WYŁĄCZNIE z liter A-Z i cyfr (bez polskich znaków, bez spacji)
+  if (/^[A-Z0-9]{3,8}$/i.test(t) && /[A-Z]/i.test(t)) return "name";
+  return "city";
+}
+
+async function fetchPoints(q: string, mode: SearchMode): Promise<Point[]> {
+  const t = q.trim();
+
+  if (mode === "name") {
+    // Próba pobrania pojedynczego paczkomatu po kodzie
+    const res = await fetch(`${API}/${encodeURIComponent(t.toUpperCase())}`, {
+      headers: { Accept: "application/json" },
+    });
+    if (res.ok) {
+      const item = await res.json() as Point;
+      return item?.name ? [item] : [];
+    }
+    // Jeśli nie znaleziono — szukaj jako prefiks w mieście (fallback)
+    return [];
+  }
+
+  const param = mode === "zip_code" ? `zip_code=${encodeURIComponent(t)}` : `city=${encodeURIComponent(t)}`;
+  const res = await fetch(`${API}?per_page=80&type=parcel_locker&${param}`, {
+    headers: { Accept: "application/json" },
+  });
+  if (!res.ok) throw new Error("API error");
+  const data = await res.json();
+  return (data.items ?? []) as Point[];
+}
+
+// --- Wyszukiwarka (bez tokenu) ---
+
 function InPostSearch({ value, onChange }: { value: string; onChange: (code: string) => void }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Point[]>([]);
   const [loading, setLoading] = useState(false);
   const [fetchError, setFetchError] = useState("");
+  const [selectedPoint, setSelectedPoint] = useState<Point | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const search = useCallback(async (q: string) => {
@@ -107,15 +152,14 @@ function InPostSearch({ value, onChange }: { value: string; onChange: (code: str
     setLoading(true);
     setFetchError("");
     try {
-      const res = await fetch(
-        `https://api-shipx-pl.easypack24.net/v1/points?per_page=50&type=parcel_locker&city=${encodeURIComponent(trimmed)}`,
-        { headers: { Accept: "application/json" } }
-      );
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      setResults((data.items ?? []) as Point[]);
+      const mode = detectMode(trimmed);
+      const items = await fetchPoints(trimmed, mode);
+      setResults(items);
+      if (items.length === 0 && mode === "city") {
+        setFetchError("Brak wyników. Spróbuj innej nazwy miasta lub wpisz kod pocztowy (np. 44-100).");
+      }
     } catch {
-      setFetchError("Nie udało się pobrać listy. Sprawdź nazwę miasta lub wpisz kod paczkomatu ręcznie.");
+      setFetchError("Nie udało się pobrać listy paczkomatów. Sprawdź połączenie i spróbuj ponownie.");
       setResults([]);
     } finally {
       setLoading(false);
@@ -124,125 +168,110 @@ function InPostSearch({ value, onChange }: { value: string; onChange: (code: str
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => search(query), 500);
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
+    debounceRef.current = setTimeout(() => search(query), 400);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [query, search]);
 
-  function select(name: string) {
-    onChange(name);
+  function select(point: Point) {
+    onChange(point.name);
+    setSelectedPoint(point);
     setQuery("");
     setResults([]);
+    setFetchError("");
   }
 
-  return (
-    <div className="space-y-4">
-      {/* Wybrany paczkomat */}
-      {value && (
-        <div className="flex items-center justify-between gap-2 bg-green-50 border border-green-200 px-3 py-2.5">
-          <div className="flex items-center gap-2 text-sm">
-            <Check size={14} className="text-green-600 shrink-0" />
-            <span className="text-green-800">
-              Wybrany paczkomat: <strong className="font-mono">{value}</strong>
-            </span>
+  function clear() {
+    onChange("");
+    setSelectedPoint(null);
+  }
+
+  // Wybrany paczkomat — pokaż szczegóły i opcję zmiany
+  if (value) {
+    return (
+      <div className="bg-green-50 border border-green-200 p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-start gap-2.5">
+            <Check size={16} className="text-green-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-semibold text-green-800 font-mono">{value}</p>
+              {selectedPoint && (
+                <p className="text-xs text-green-700 mt-0.5">
+                  {selectedPoint.address.line1}, {selectedPoint.address.line2}
+                </p>
+              )}
+            </div>
           </div>
           <button
             type="button"
-            onClick={() => onChange("")}
-            className="text-green-600 hover:text-green-800 shrink-0"
-            aria-label="Usuń wybór"
+            onClick={clear}
+            className="flex items-center gap-1.5 text-xs text-green-700 hover:text-green-900 shrink-0 border border-green-300 hover:border-green-500 px-2.5 py-1.5 transition-colors"
           >
-            <X size={14} />
+            <RefreshCw size={12} />
+            Zmień
           </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      <label className="block text-xs text-charcoal/60 mb-1">
+        Szukaj po nazwie miasta, kodzie pocztowym lub kodzie paczkomatu
+      </label>
+
+      <div className="relative">
+        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-charcoal/40 pointer-events-none" />
+        <input
+          type="text"
+          placeholder="np. Warszawa / 44-100 / WAR010"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          autoComplete="off"
+          className="w-full bg-cream border border-sand focus:border-clay outline-none pl-9 pr-10 py-3 text-espresso text-sm"
+        />
+        {loading && (
+          <Loader2 size={15} className="absolute right-3 top-1/2 -translate-y-1/2 text-clay animate-spin" />
+        )}
+        {!loading && query && (
+          <button
+            type="button"
+            onClick={() => { setQuery(""); setResults([]); setFetchError(""); }}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-charcoal/30 hover:text-charcoal/60"
+          >
+            <X size={15} />
+          </button>
+        )}
+      </div>
+
+      {fetchError && <p className="text-xs text-amber-700">{fetchError}</p>}
+
+      {results.length > 0 && (
+        <div className="border border-sand max-h-64 overflow-y-auto divide-y divide-sand">
+          {results.map((point) => (
+            <button
+              key={point.name}
+              type="button"
+              onClick={() => select(point)}
+              className="w-full text-left px-4 py-2.5 hover:bg-mist bg-warm-white transition-colors"
+            >
+              <span className="font-mono text-xs font-semibold text-clay">{point.name}</span>
+              <span className="block text-xs text-charcoal/60 mt-0.5">
+                {point.address.line1}, {point.address.line2}
+              </span>
+            </button>
+          ))}
         </div>
       )}
 
-      {/* Wyszukiwarka po mieście */}
-      <div>
-        <label className="block text-xs text-charcoal/60 mb-2">Wyszukaj paczkomat po nazwie miasta</label>
-        <div className="relative">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-charcoal/40 pointer-events-none" />
-          <input
-            type="text"
-            placeholder="np. Warszawa, Kraków, Gliwice…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="w-full bg-cream border border-sand focus:border-clay outline-none pl-9 pr-10 py-3 text-espresso text-sm"
-          />
-          {loading && (
-            <Loader2 size={15} className="absolute right-3 top-1/2 -translate-y-1/2 text-clay animate-spin" />
-          )}
-          {!loading && query && (
-            <button
-              type="button"
-              onClick={() => { setQuery(""); setResults([]); }}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-charcoal/30 hover:text-charcoal/60"
-            >
-              <X size={15} />
-            </button>
-          )}
-        </div>
-
-        {fetchError && <p className="mt-1.5 text-xs text-red-600">{fetchError}</p>}
-
-        {query.length >= 3 && !loading && results.length === 0 && !fetchError && (
-          <p className="mt-1.5 text-xs text-charcoal/50">Brak wyników dla „{query}". Sprawdź pisownię lub wpisz kod ręcznie.</p>
-        )}
-
-        {results.length > 0 && (
-          <div className="mt-1 border border-sand max-h-60 overflow-y-auto divide-y divide-sand">
-            {results.map((point) => (
-              <button
-                key={point.name}
-                type="button"
-                onClick={() => select(point.name)}
-                className={`w-full text-left px-4 py-2.5 hover:bg-mist transition-colors ${
-                  value === point.name ? "bg-cream" : "bg-warm-white"
-                }`}
-              >
-                <span className="font-mono text-xs font-semibold text-clay">{point.name}</span>
-                <span className="block text-xs text-charcoal/60 mt-0.5 truncate">
-                  {point.address.line1}, {point.address.line2}
-                </span>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Separator */}
-      <div className="flex items-center gap-3">
-        <div className="flex-1 h-px bg-sand" />
-        <span className="text-xs text-charcoal/40">lub wpisz kod bezpośrednio</span>
-        <div className="flex-1 h-px bg-sand" />
-      </div>
-
-      {/* Pole ręczne */}
-      <div>
-        <input
-          type="text"
-          placeholder="np. WAR010"
-          value={value}
-          onChange={(e) => { onChange(e.target.value.toUpperCase()); setResults([]); }}
-          className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm font-mono uppercase tracking-widest"
-        />
-        <p className="mt-1.5 text-xs text-charcoal/40">
-          Kod znajdziesz na naklejce paczkomatu lub w{" "}
-          <a
-            href="https://inpost.pl/znajdz-paczkomat"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-clay hover:text-espresso underline underline-offset-2"
-          >
-            wyszukiwarce InPost
-          </a>
-          .
-        </p>
-      </div>
+      {query.length >= 3 && !loading && results.length === 0 && !fetchError && (
+        <p className="text-xs text-charcoal/40">Szukam…</p>
+      )}
     </div>
   );
 }
+
+// --- Eksport ---
 
 export default function InPostWidget({ token, value, onChange }: Props) {
   if (token) {

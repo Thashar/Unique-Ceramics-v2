@@ -49,6 +49,7 @@ interface Props {
     contact_youtube: string;
     contact_whatsapp: string;
     shipping_cost: string;
+    shipping_cost_parcel_locker: string;
     shipping_free_enabled: string;
     shipping_free_from: string;
     shipping_time: string;
@@ -234,6 +235,7 @@ export default function SettingsForm({ section, initial }: Props) {
 
   // Wysyłka
   const [shippingCost, setShippingCost] = useState(initial.shipping_cost);
+  const [shippingCostParcel, setShippingCostParcel] = useState(initial.shipping_cost_parcel_locker);
   const [freeEnabled, setFreeEnabled] = useState(initial.shipping_free_enabled === "true");
   const [freeFrom, setFreeFrom] = useState(initial.shipping_free_from);
   const [shippingTime, setShippingTime] = useState(initial.shipping_time);
@@ -601,7 +603,8 @@ export default function SettingsForm({ section, initial }: Props) {
             <span className="text-xs tracking-widest uppercase text-charcoal/80">Darmowa wysyłka</span>
             <Toggle checked={freeEnabled} onChange={setFreeEnabled} />
           </div>
-          <Field label="Koszt wysyłki (zł)" value={shippingCost} setter={setShippingCost} type="number" />
+          <Field label="Koszt wysyłki — Kurier (zł)" value={shippingCost} setter={setShippingCost} type="number" />
+          <Field label="Koszt wysyłki — Paczkomat InPost (zł)" value={shippingCostParcel} setter={setShippingCostParcel} type="number" />
           {freeEnabled && (
             <Field label="Darmowa wysyłka od (zł)" value={freeFrom} setter={setFreeFrom} type="number" />
           )}
@@ -609,6 +612,7 @@ export default function SettingsForm({ section, initial }: Props) {
           <SaveButton
             onClick={() => save([
               { key: "shipping_cost", value: shippingCost },
+              { key: "shipping_cost_parcel_locker", value: shippingCostParcel },
               { key: "shipping_free_enabled", value: freeEnabled ? "true" : "false" },
               { key: "shipping_free_from", value: freeFrom },
               { key: "shipping_time", value: shippingTime },

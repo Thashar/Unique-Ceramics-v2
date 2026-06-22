@@ -197,6 +197,7 @@ const DEFAULTS: Record<string, string> = {
   contact_whatsapp: "",
   contact_hours: "Pon–Pt 9:00–17:00",
   shipping_cost: "18",
+  shipping_cost_parcel_locker: "18",
   shipping_free_enabled: "true",
   shipping_free_from: "300",
   shipping_time: "2–4 dni robocze",

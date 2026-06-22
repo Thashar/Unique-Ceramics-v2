@@ -116,7 +116,8 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 | `contact_email` | E-mail (default: kontakt@uniqueceramics.pl) |
 | `contact_instagram` | Handle Instagram (default: @unique.ceramics) |
 | `contact_hours` | Godziny otwarcia (default: Pon–Pt 9:00–17:00) |
-| `shipping_cost` | Koszt wysyłki w zł (default: 18) |
+| `shipping_cost` | Koszt wysyłki kurierem w zł (default: 18) |
+| `shipping_cost_parcel_locker` | Koszt wysyłki paczkomatem InPost w zł (default: 18) |
 | `shipping_free_enabled` | "true"/"false" — czy jest darmowa wysyłka |
 | `shipping_free_from` | Kwota progu darmowej wysyłki (default: 300) |
 | `shipping_time` | Czas realizacji wyświetlany na karcie produktu (default: „2–4 dni robocze") |
@@ -233,7 +234,7 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 - **InstagramIcon.tsx** — SVG ikona Instagram
 
 ### `components/checkout/`
-- **InPostWidget.tsx** — `"use client"`, widget mapy paczkomatów InPost; gdy `INPOST_GEOWIDGET_TOKEN` ustawiony: ładuje CDN geowidget.inpost.pl i pozwala wybrać paczkomat z mapy; bez tokenu: pole tekstowe + link do strony InPost. Zwraca kod paczkomatu przez `onChange`.
+- **InPostWidget.tsx** — `"use client"`, widget wyboru paczkomatu InPost; gdy `INPOST_GEOWIDGET_TOKEN` ustawiony: mapa CDN geowidget.inpost.pl; bez tokenu: wyszukiwarka przez publiczne API `api-shipx-pl.easypack24.net` — obsługuje wyszukiwanie po nazwie miasta (`city`), kodzie pocztowym XX-XXX (`zip_code`) i kodzie paczkomatu (indywidualny endpoint `/points/{code}`). Zwraca wybrany kod przez `onChange`.
 
 ### `components/admin/`
 - **AdminNav.tsx** — sidebar + mobilny drawer

@@ -51,6 +51,7 @@ export default async function AdminSettingsPage({
     "contact_youtube",
     "contact_whatsapp",
     "shipping_cost",
+    "shipping_cost_parcel_locker",
     "shipping_free_enabled",
     "shipping_free_from",
     "shipping_time",

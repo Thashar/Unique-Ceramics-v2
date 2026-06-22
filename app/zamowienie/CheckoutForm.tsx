@@ -29,7 +29,8 @@ interface Props {
   userEmail: string;
   savedAddress: SavedAddress | null;
   paymentMethods: PaymentMethod[];
-  shippingCost: number;
+  shippingCostCourier: number;
+  shippingCostParcelLocker: number;
   shippingFreeEnabled: boolean;
   shippingFreeFrom: number;
   inpostToken: string | null;
@@ -51,7 +52,8 @@ export default function CheckoutForm({
   userEmail,
   savedAddress,
   paymentMethods,
-  shippingCost,
+  shippingCostCourier,
+  shippingCostParcelLocker,
   shippingFreeEnabled,
   shippingFreeFrom,
   inpostToken,
@@ -63,8 +65,14 @@ export default function CheckoutForm({
   const [shippingMethod, setShippingMethod] = useState<"courier" | "parcel_locker" | "pickup">("courier");
   const [parcelLockerCode, setParcelLockerCode] = useState("");
 
-  const baseShipping = shippingFreeEnabled && subtotal >= shippingFreeFrom ? 0 : shippingCost;
-  const shipping = shippingMethod === "pickup" ? 0 : baseShipping;
+  // Koszt wysyłki zależy od wybranej metody; darmowa wysyłka stosuje się do obu
+  function methodShippingCost(method: string): number {
+    if (method === "pickup") return 0;
+    const raw = method === "parcel_locker" ? shippingCostParcelLocker : shippingCostCourier;
+    return shippingFreeEnabled && subtotal >= shippingFreeFrom ? 0 : raw;
+  }
+
+  const shipping = methodShippingCost(shippingMethod);
   const total = subtotal + shipping;
 
   // Zablokuj złożenie zamówienia jeśli zalogowany użytkownik nie ma kompletnego adresu
@@ -240,12 +248,12 @@ export default function CheckoutForm({
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
                         <p className="text-sm font-medium text-espresso">{label}</p>
-                        {value === "pickup"
-                          ? <span className="text-xs text-green-600 font-medium">Bezpłatne</span>
-                          : baseShipping === 0
-                            ? <span className="text-xs text-green-600 font-medium">Gratis</span>
-                            : <span className="text-xs text-charcoal/60">{shippingCost} zł</span>
-                        }
+                        {(() => {
+                          const cost = methodShippingCost(value);
+                          if (value === "pickup") return <span className="text-xs text-green-600 font-medium">Bezpłatne</span>;
+                          if (cost === 0) return <span className="text-xs text-green-600 font-medium">Gratis</span>;
+                          return <span className="text-xs text-charcoal/60">{cost} zł</span>;
+                        })()}
                       </div>
                       <p className="text-xs text-charcoal/50 mt-0.5">{desc}</p>
                     </div>

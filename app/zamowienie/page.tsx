@@ -20,6 +20,7 @@ export default async function CheckoutPage() {
     "payment_blik_phone",
     "payment_stripe_enabled",
     "shipping_cost",
+    "shipping_cost_parcel_locker",
     "shipping_free_enabled",
     "shipping_free_from",
   ]);
@@ -76,7 +77,8 @@ export default async function CheckoutPage() {
       userEmail={session?.user?.email ?? ""}
       savedAddress={savedAddress}
       paymentMethods={paymentMethods}
-      shippingCost={Number(settings.shipping_cost) || 18}
+      shippingCostCourier={Number(settings.shipping_cost) || 18}
+      shippingCostParcelLocker={Number(settings.shipping_cost_parcel_locker) || 18}
       shippingFreeEnabled={settings.shipping_free_enabled === "true"}
       shippingFreeFrom={Number(settings.shipping_free_from) || 300}
       inpostToken={process.env.INPOST_GEOWIDGET_TOKEN ?? null}

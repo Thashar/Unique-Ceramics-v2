@@ -345,13 +345,15 @@ export async function POST(req: Request) {
   // Kwoty liczone po stronie serwera — nie ufamy wartościom z klienta
   const shippingSettings = await getSettings([
     "shipping_cost",
+    "shipping_cost_parcel_locker",
     "shipping_free_enabled",
     "shipping_free_from",
     "vacation_enabled",
     "vacation_end_date",
     "vacation_message",
   ]);
-  const shippingCostSetting = Number(shippingSettings.shipping_cost) || 18;
+  const shippingCostCourier = Number(shippingSettings.shipping_cost) || 18;
+  const shippingCostParcel = Number(shippingSettings.shipping_cost_parcel_locker) || 18;
 
   // Urlop — wylicz notatkę raz, użyj w obu mailach
   let vacationNote: string | undefined;
@@ -383,9 +385,10 @@ export async function POST(req: Request) {
     }, 0) * 100
   ) / 100;
 
+  const rawCost = shippingMethod === "parcel_locker" ? shippingCostParcel : shippingCostCourier;
   const shippingCost = shippingMethod === "pickup"
     ? 0
-    : (freeEnabled && subtotal >= freeFrom ? 0 : shippingCostSetting);
+    : (freeEnabled && subtotal >= freeFrom ? 0 : rawCost);
   const total = Math.round((subtotal + shippingCost) * 100) / 100;
 
   const typedItems = items as { productId: string; quantity: number }[];
