@@ -46,7 +46,6 @@ export default async function ContactPage() {
   const workshopOptions = parseWorkshopTitles(settings.workshops_offers);
 
   const vacationEnabled = settings.vacation_enabled === "true";
-  const vacationMessage = vacationEnabled ? settings.vacation_message : "";
 
   // Derive href from instagram handle (strip leading @)
   const instagramHandle = instagram.startsWith("@")
@@ -60,7 +59,7 @@ export default async function ContactPage() {
   return (
     <>
       <VacationBanner
-        message={vacationMessage}
+        message={vacationEnabled ? "Jestem na urlopie - odpowiem od razu po powrocie" : ""}
         returnDate={vacationEnabled ? settings.vacation_end_date : undefined}
       />
       <Header topOffset={vacationEnabled} />

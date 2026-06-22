@@ -12,12 +12,11 @@ export default async function CustomOrderPage() {
   ]);
 
   const vacationEnabled = settings.vacation_enabled === "true";
-  const vacationMessage = vacationEnabled ? settings.vacation_message : "";
 
   return (
     <>
       <VacationBanner
-        message={vacationMessage}
+        message={vacationEnabled ? "Jestem na urlopie - odpowiem od razu po powrocie" : ""}
         returnDate={vacationEnabled ? settings.vacation_end_date : undefined}
       />
       <Header topOffset={vacationEnabled} />
