@@ -33,6 +33,7 @@ interface Props {
   shippingFreeEnabled: boolean;
   shippingFreeFrom: number;
   inpostToken: string | null;
+  savedAddressComplete: boolean | null; // null = gość
 }
 
 function FieldError({ msg }: { msg?: string }) {
@@ -54,6 +55,7 @@ export default function CheckoutForm({
   shippingFreeEnabled,
   shippingFreeFrom,
   inpostToken,
+  savedAddressComplete,
 }: Props) {
   const router = useRouter();
   const { items, subtotal, clearCart } = useCart();
@@ -64,6 +66,10 @@ export default function CheckoutForm({
   const baseShipping = shippingFreeEnabled && subtotal >= shippingFreeFrom ? 0 : shippingCost;
   const shipping = shippingMethod === "pickup" ? 0 : baseShipping;
   const total = subtotal + shipping;
+
+  // Zablokuj złożenie zamówienia jeśli zalogowany użytkownik nie ma kompletnego adresu
+  // (null = gość — brak blokady; false = niekompletny; true = OK)
+  const addressBlocked = savedAddressComplete === false && shippingMethod !== "pickup";
 
   const [form, setForm] = useState({
     firstName: savedAddress?.firstName ?? "",
@@ -261,6 +267,15 @@ export default function CheckoutForm({
             {shippingMethod !== "pickup" && (
               <div>
                 <h2 className="font-serif text-2xl text-espresso mb-6">Adres dostawy</h2>
+                {addressBlocked && (
+                  <div className="bg-amber-50 border border-amber-300 px-4 py-3 mb-6 text-sm text-amber-800">
+                    Aby złożyć zamówienie, uzupełnij najpierw adres dostawy w{" "}
+                    <Link href="/konto/adres" className="font-semibold underline hover:text-amber-900">
+                      ustawieniach konta
+                    </Link>
+                    .
+                  </div>
+                )}
                 <div className="mt-4">
                   <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">Ulica i numer *</label>
                   <input required value={form.street} onChange={(e) => set("street", e.target.value)} autoComplete="street-address" placeholder="np. Różana 1 lub Kwiatowa 2/3" className={inputCls("street")} />
@@ -337,11 +352,20 @@ export default function CheckoutForm({
               </div>
               <button
                 type="submit"
-                disabled={loading}
-                className="w-full mt-6 bg-clay hover:bg-terracotta disabled:bg-sand disabled:text-charcoal/40 text-warm-white text-xs tracking-widest uppercase py-4 transition-colors"
+                disabled={loading || addressBlocked}
+                className="w-full mt-6 bg-clay hover:bg-terracotta disabled:bg-sand disabled:text-charcoal/40 disabled:cursor-not-allowed text-warm-white text-xs tracking-widest uppercase py-4 transition-colors"
               >
                 {loading ? "Proszę czekać..." : form.paymentMethod === "stripe" ? "Przejdź do płatności" : "Złóż zamówienie"}
               </button>
+              {addressBlocked && (
+                <p className="mt-2 text-xs text-amber-700 text-center">
+                  Uzupełnij{" "}
+                  <Link href="/konto/adres" className="underline font-medium">
+                    adres dostawy w koncie
+                  </Link>{" "}
+                  aby odblokować zamówienie.
+                </p>
+              )}
             </div>
           </div>
         </form>

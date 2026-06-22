@@ -10,6 +10,7 @@ export const metadata: Metadata = {
 };
 import { db } from "@/lib/db";
 import { getSettings } from "@/lib/settings";
+import { validateAddress } from "@/lib/address-validation";
 import CheckoutForm from "./CheckoutForm";
 
 export default async function CheckoutPage() {
@@ -24,6 +25,8 @@ export default async function CheckoutPage() {
   ]);
 
   let savedAddress = null;
+  let savedAddressComplete: boolean | null = null; // null = gość (niezalogowany)
+
   if (session?.user?.id) {
     try {
       const key = `user_address_${session.user.id}`;
@@ -33,6 +36,19 @@ export default async function CheckoutPage() {
       if (rows.length > 0) savedAddress = JSON.parse(rows[0].value);
     } catch {
       // Setting table may not exist yet — address just won't be prefilled
+    }
+
+    if (savedAddress) {
+      const result = validateAddress({
+        firstName: savedAddress.firstName ?? "",
+        lastName:  savedAddress.lastName  ?? "",
+        street:    savedAddress.street    ?? "",
+        postcode:  savedAddress.postcode  ?? "",
+        city:      savedAddress.city      ?? "",
+      });
+      savedAddressComplete = result.valid;
+    } else {
+      savedAddressComplete = false;
     }
   }
 
@@ -64,6 +80,7 @@ export default async function CheckoutPage() {
       shippingFreeEnabled={settings.shipping_free_enabled === "true"}
       shippingFreeFrom={Number(settings.shipping_free_from) || 300}
       inpostToken={process.env.INPOST_GEOWIDGET_TOKEN ?? null}
+      savedAddressComplete={savedAddressComplete}
     />
   );
 }

@@ -236,6 +236,35 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Nieprawidłowe dane żądania" }, { status: 400 });
   }
 
+  // Zablokuj zalogowanych użytkowników bez kompletnego adresu dostawy (nie dotyczy odbioru osobistego)
+  if (session?.user?.id && String(body.shippingMethod ?? "courier") !== "pickup") {
+    let savedAddress: Record<string, string> | null = null;
+    try {
+      const key = `user_address_${session.user.id}`;
+      const rows = await db.$queryRaw<{ value: string }[]>`
+        SELECT value FROM "Setting" WHERE key = ${key}
+      `;
+      if (rows.length > 0) savedAddress = JSON.parse(rows[0].value);
+    } catch { /* ignoruj błąd DB */ }
+
+    const ok = savedAddress
+      ? validateAddress({
+          firstName: savedAddress.firstName ?? "",
+          lastName:  savedAddress.lastName  ?? "",
+          street:    savedAddress.street    ?? "",
+          postcode:  savedAddress.postcode  ?? "",
+          city:      savedAddress.city      ?? "",
+        }).valid
+      : false;
+
+    if (!ok) {
+      return NextResponse.json(
+        { error: "Uzupełnij adres dostawy w panelu konta przed złożeniem zamówienia." },
+        { status: 400 }
+      );
+    }
+  }
+
   const {
     firstName,
     lastName,
