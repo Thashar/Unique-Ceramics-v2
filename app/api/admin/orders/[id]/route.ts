@@ -31,9 +31,21 @@ export async function PATCH(
     return NextResponse.json({ error: "Nieprawidłowy status" }, { status: 400 });
   }
 
+  const updateData: { status: OrderStatus; paymentStatus?: string } = { status: body.status };
+
+  if (body.status === OrderStatus.CANCELLED) {
+    const existing = await db.order.findUnique({
+      where: { id },
+      select: { paymentStatus: true },
+    });
+    if (existing && existing.paymentStatus !== "PAID") {
+      updateData.paymentStatus = "expired";
+    }
+  }
+
   const order = await db.order.update({
     where: { id },
-    data: { status: body.status },
+    data: updateData,
   });
 
   return NextResponse.json(order);
