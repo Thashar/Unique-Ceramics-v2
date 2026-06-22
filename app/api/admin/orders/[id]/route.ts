@@ -99,6 +99,70 @@ async function sendPaymentConfirmationEmail(order: {
   }
 }
 
+async function sendCancellationEmail(order: {
+  id: string;
+  email: string;
+  firstName: string;
+}) {
+  try {
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) return;
+
+    const orderNumber = order.id.slice(-8).toUpperCase();
+    const fromEmail = process.env.RESEND_FROM_EMAIL ?? "onboarding@resend.dev";
+
+    const { Resend } = await import("resend");
+    const resend = new Resend(apiKey);
+
+    await resend.emails.send({
+      from: fromEmail,
+      to: order.email,
+      subject: `Zamówienie #${orderNumber} — anulowane`,
+      html: `
+<!DOCTYPE html>
+<html lang="pl">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f5f0e8;font-family:Georgia,serif;">
+  <div style="max-width:560px;margin:40px auto;background:#faf8f5;">
+    <div style="background:#2c2825;padding:28px 40px;text-align:center;">
+      <p style="margin:0;font-family:Georgia,serif;font-size:18px;color:#f5f0e8;letter-spacing:0.1em;">Unique Ceramics</p>
+      <p style="margin:4px 0 0;font-family:Arial,sans-serif;font-size:10px;color:#f5f0e8;letter-spacing:0.2em;text-transform:uppercase;opacity:0.55;">Ręcznie tworzone z sercem</p>
+    </div>
+
+    <div style="padding:32px 40px;">
+      <p style="color:#4a3728;font-size:15px;margin:0 0 24px;">Cześć ${order.firstName},</p>
+
+      <div style="background:#fff5f5;border-left:3px solid #ef4444;padding:16px 20px;margin:0 0 24px;">
+        <p style="margin:0 0 4px;font-family:Arial,sans-serif;font-size:11px;color:#b91c1c;letter-spacing:0.15em;text-transform:uppercase;">Zamówienie anulowane</p>
+        <p style="margin:0;font-size:14px;color:#991b1b;line-height:1.5;">
+          Zamówienie <strong>#${orderNumber}</strong> zostało anulowane.
+        </p>
+      </div>
+
+      <p style="color:#6b5748;font-size:14px;line-height:1.6;margin:0 0 20px;">
+        Jeśli to pomyłka lub masz pytania, odpowiedz na tę wiadomość — chętnie pomogę.
+        Zapraszam do ponownych zakupów w sklepie.
+      </p>
+
+      <p style="color:#9a8a80;font-size:12px;line-height:1.6;margin:0;">
+        Jeśli dokonałaś/eś płatności, a zamówienie zostało anulowane przez pomyłkę — skontaktuj się ze mną niezwłocznie.
+      </p>
+    </div>
+
+    <div style="background:#f5f0e8;padding:20px 40px;text-align:center;border-top:1px solid #e8dfd0;">
+      <p style="margin:0;font-family:Arial,sans-serif;font-size:11px;color:#9a8a80;">
+        © Unique Ceramics · kontakt@uniqueceramics.pl
+      </p>
+    </div>
+  </div>
+</body>
+</html>`,
+    });
+  } catch (err) {
+    console.error("[orders/patch] Błąd wysyłki powiadomienia o anulowaniu:", err);
+  }
+}
+
 async function sendShippedEmail(order: {
   id: string;
   email: string;
@@ -251,27 +315,65 @@ export async function PATCH(
     }
   }
 
-  const updateData: { status: OrderStatus; paymentStatus?: string } = { status: body.status };
+  let cancelledOrderForEmail: { id: string; email: string; firstName: string } | null = null;
+
+  let order: {
+    id: string; status: OrderStatus; paymentStatus: string;
+    email: string; firstName: string;
+    trackingNumber: string | null; trackingCarrier: string | null; shippingMethod: string;
+  };
 
   if (body.status === OrderStatus.CANCELLED) {
     const existing = await db.order.findUnique({
       where: { id },
-      select: { paymentStatus: true },
+      select: { paymentStatus: true, email: true, firstName: true, status: true, items: { select: { productId: true, quantity: true } } },
     });
+
+    const updateData: { status: OrderStatus; paymentStatus?: string } = { status: body.status };
     if (existing && existing.paymentStatus !== "PAID") {
       updateData.paymentStatus = "expired";
     }
+
+    order = await db.$transaction(async (tx) => {
+      // Zwróć stany magazynowe
+      if (existing && existing.status !== OrderStatus.CANCELLED) {
+        for (const item of existing.items) {
+          await tx.product.update({
+            where: { id: item.productId },
+            data: { stock: { increment: item.quantity } },
+          });
+        }
+      }
+      return tx.order.update({
+        where: { id },
+        data: updateData,
+        select: {
+          id: true, status: true, paymentStatus: true,
+          email: true, firstName: true,
+          trackingNumber: true, trackingCarrier: true, shippingMethod: true,
+        },
+      });
+    });
+
+    if (existing) {
+      cancelledOrderForEmail = { id, email: existing.email, firstName: existing.firstName };
+    }
+  } else {
+    order = await db.order.update({
+      where: { id },
+      data: { status: body.status },
+      select: {
+        id: true, status: true, paymentStatus: true,
+        email: true, firstName: true,
+        trackingNumber: true, trackingCarrier: true, shippingMethod: true,
+      },
+    });
   }
 
-  const order = await db.order.update({
-    where: { id },
-    data: updateData,
-    select: {
-      id: true, status: true, paymentStatus: true,
-      email: true, firstName: true,
-      trackingNumber: true, trackingCarrier: true, shippingMethod: true,
-    },
-  });
+  // Mail o anulowaniu
+  if (cancelledOrderForEmail) {
+    void sendCancellationEmail(cancelledOrderForEmail);
+  }
 
   // Mail o wysyłce — gdy status zmieniony na SHIPPED i są dane listu
   if (

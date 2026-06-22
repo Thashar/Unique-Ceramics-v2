@@ -130,7 +130,7 @@ export default async function ConfirmationPage({
               </div>
             </div>
             <p className="text-xs text-charcoal/50 mt-4 leading-relaxed">
-              Płatność zrealizuj w ciągu 7 dni. Dane zostały też wysłane na Twój adres e-mail.
+              Płatność zrealizuj w ciągu <strong>48 godzin</strong> — po tym czasie zamówienie zostanie automatycznie anulowane. Dane zostały też wysłane na Twój adres e-mail.
             </p>
           </div>
         )}

@@ -26,6 +26,7 @@ export default function CustomOrderActions({
   const [saved, setSaved] = useState(false);
 
   async function handleSave() {
+    if (!window.confirm("Zapisać zmiany w zamówieniu indywidualnym?")) return;
     setSaving(true);
     setSaved(false);
     await fetch(`/api/admin/custom-orders/${orderId}`, {

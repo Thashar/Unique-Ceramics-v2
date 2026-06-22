@@ -32,6 +32,12 @@ export default async function AdminOrderDetailPage({
   });
   if (!order) notFound();
 
+  const productSlugs = await db.product.findMany({
+    where: { id: { in: order.items.map((i) => i.productId) } },
+    select: { id: true, slug: true },
+  }).catch(() => []);
+  const slugMap = new Map(productSlugs.map((p) => [p.id, p.slug]));
+
   const needsTracking = order.shippingMethod !== "pickup";
 
   return (
@@ -112,19 +118,32 @@ export default async function AdminOrderDetailPage({
           <h2 className="text-xs tracking-widest uppercase text-charcoal/50">Produkty</h2>
         </div>
         <div className="space-y-2.5">
-          {order.items.map((item) => (
-            <div key={item.id} className="flex items-center justify-between gap-3">
-              <div className="flex-1 min-w-0">
-                <p className="text-sm text-espresso">{item.name}</p>
-                <p className="text-xs text-charcoal/45">
-                  {item.price.toFixed(2).replace(".", ",")} zł × {item.quantity}
+          {order.items.map((item) => {
+            const slug = slugMap.get(item.productId);
+            return (
+              <div key={item.id} className="flex items-center justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  {slug ? (
+                    <Link
+                      href={`/sklep/${slug}`}
+                      target="_blank"
+                      className="text-sm text-espresso hover:text-clay underline-offset-2 hover:underline transition-colors"
+                    >
+                      {item.name}
+                    </Link>
+                  ) : (
+                    <p className="text-sm text-espresso">{item.name}</p>
+                  )}
+                  <p className="text-xs text-charcoal/45">
+                    {item.price.toFixed(2).replace(".", ",")} zł × {item.quantity}
+                  </p>
+                </div>
+                <p className="text-sm text-espresso tabular-nums shrink-0">
+                  {(item.price * item.quantity).toFixed(2).replace(".", ",")} zł
                 </p>
               </div>
-              <p className="text-sm text-espresso tabular-nums shrink-0">
-                {(item.price * item.quantity).toFixed(2).replace(".", ",")} zł
-              </p>
-            </div>
-          ))}
+            );
+          })}
         </div>
         <div className="border-t border-sand mt-4 pt-4 space-y-2">
           <div className="flex justify-between text-sm text-charcoal/55">

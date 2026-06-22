@@ -47,6 +47,12 @@ export default async function OrderDetailPage({
 
   if (!order || order.userId !== session.user!.id) notFound();
 
+  const productSlugs = await db.product.findMany({
+    where: { id: { in: order.items.map((i) => i.productId) } },
+    select: { id: true, slug: true },
+  }).catch(() => []);
+  const slugMap = new Map(productSlugs.map((p) => [p.id, p.slug]));
+
   const statusSteps = [
     { key: "PENDING",     label: "Przyjęte" },
     { key: "CONFIRMED",   label: "Potwierdzone" },
@@ -148,19 +154,31 @@ export default async function OrderDetailPage({
             Zamówione produkty
           </h3>
           <div className="bg-cream divide-y divide-sand">
-            {order.items.map((item) => (
-              <div key={item.id} className="flex items-center justify-between p-4">
-                <div>
-                  <p className="text-sm font-medium text-espresso">{item.name}</p>
-                  <p className="text-xs text-charcoal/50 mt-0.5">
-                    {item.price.toLocaleString("pl-PL", { style: "currency", currency: "PLN", minimumFractionDigits: 0 })} × {item.quantity}
+            {order.items.map((item) => {
+              const slug = slugMap.get(item.productId);
+              return (
+                <div key={item.id} className="flex items-center justify-between p-4">
+                  <div>
+                    {slug ? (
+                      <Link
+                        href={`/sklep/${slug}`}
+                        className="text-sm font-medium text-espresso hover:text-clay underline-offset-2 hover:underline transition-colors"
+                      >
+                        {item.name}
+                      </Link>
+                    ) : (
+                      <p className="text-sm font-medium text-espresso">{item.name}</p>
+                    )}
+                    <p className="text-xs text-charcoal/50 mt-0.5">
+                      {item.price.toLocaleString("pl-PL", { style: "currency", currency: "PLN", minimumFractionDigits: 0 })} × {item.quantity}
+                    </p>
+                  </div>
+                  <p className="font-serif text-lg text-espresso">
+                    {(item.price * item.quantity).toLocaleString("pl-PL", { style: "currency", currency: "PLN", minimumFractionDigits: 0 })}
                   </p>
                 </div>
-                <p className="font-serif text-lg text-espresso">
-                  {(item.price * item.quantity).toLocaleString("pl-PL", { style: "currency", currency: "PLN", minimumFractionDigits: 0 })}
-                </p>
-              </div>
-            ))}
+              );
+            })}
             <div className="p-4 space-y-2">
               <div className="flex justify-between text-sm text-charcoal/80">
                 <span>Suma produktów</span>

@@ -203,10 +203,12 @@ function buildTransferEmail(params: {
         </tr>
       </table>
 
-      <p style="color:#9a7a6a;font-size:13px;margin:28px 0 0;line-height:1.6;">
-        Po zaksięgowaniu płatności wyślę potwierdzenie i zajmę się realizacją zamówienia.
-        Płatność powinna zostać zrealizowana w ciągu <strong>7 dni</strong>.
-      </p>
+      <div style="background:#fff8f0;border-left:3px solid #e07b39;padding:14px 20px;margin:28px 0 0;">
+        <p style="margin:0;font-size:13px;color:#7a4a1e;line-height:1.6;">
+          Prosimy o dokonanie płatności w ciągu <strong>48 godzin</strong>.
+          Po upływie tego czasu zamówienie zostanie automatycznie anulowane, a zarezerwowane produkty wrócą do sprzedaży.
+        </p>
+      </div>
     </div>
     <div style="background:#f5f0eb;padding:20px 40px;text-align:center;">
       <p style="color:#9a7a6a;font-size:12px;margin:0;">© ${new Date().getFullYear()} Unique Ceramics · ręcznie tworzone z sercem</p>

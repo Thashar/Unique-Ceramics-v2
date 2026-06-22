@@ -23,6 +23,10 @@ export default function PaymentStatusToggle({
   const current = STATUSES.find((s) => s.value === status);
 
   async function handleChange(newStatus: string) {
+    const targetLabel = STATUSES.find((s) => s.value === newStatus)?.label ?? newStatus;
+    const currentLabel = STATUSES.find((s) => s.value === status)?.label ?? status;
+    if (!window.confirm(`Zmienić status płatności z „${currentLabel}" na „${targetLabel}"?`)) return;
+
     setSaving(true);
     setStatus(newStatus);
     await fetch(`/api/admin/orders/${orderId}`, {

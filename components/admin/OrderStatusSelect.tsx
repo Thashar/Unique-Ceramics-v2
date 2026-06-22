@@ -41,6 +41,11 @@ export default function OrderStatusSelect({
       return;
     }
     setTrackingError(false);
+
+    const targetLabel = STATUSES.find((s) => s.value === newStatus)?.label ?? newStatus;
+    const currentLabel = STATUSES.find((s) => s.value === status)?.label ?? status;
+    if (!window.confirm(`Zmienić status z „${currentLabel}" na „${targetLabel}"?`)) return;
+
     setSaving(true);
     setStatus(newStatus);
     const res = await fetch(`/api/admin/orders/${orderId}`, {
