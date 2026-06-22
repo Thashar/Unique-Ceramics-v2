@@ -13,13 +13,6 @@ const ORDER_TYPES = [
   "Inne",
 ];
 
-const BUDGETS = [
-  "Do 200 zł",
-  "200–500 zł",
-  "500–1000 zł",
-  "Powyżej 1000 zł",
-  "Nie wiem jeszcze",
-];
 
 export default function CustomOrderPage() {
   const [name, setName] = useState("");
@@ -28,9 +21,7 @@ export default function CustomOrderPage() {
   const [orderType, setOrderType] = useState(ORDER_TYPES[0]);
   const [description, setDescription] = useState("");
   const [deadline, setDeadline] = useState("");
-  const [budget, setBudget] = useState(BUDGETS[0]);
-
-  const [loading, setLoading] = useState(false);
+const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
 
@@ -50,7 +41,6 @@ export default function CustomOrderPage() {
           orderType,
           description,
           deadline,
-          budget,
         }),
       });
 
@@ -68,7 +58,6 @@ export default function CustomOrderPage() {
       setOrderType(ORDER_TYPES[0]);
       setDescription("");
       setDeadline("");
-      setBudget(BUDGETS[0]);
     } catch {
       setError("Wystąpił błąd sieci. Spróbuj ponownie.");
     } finally {
@@ -198,21 +187,6 @@ export default function CustomOrderPage() {
                     onChange={(e) => setDeadline(e.target.value)}
                     className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm"
                   />
-                </div>
-
-                <div>
-                  <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">
-                    Budżet (orientacyjnie)
-                  </label>
-                  <select
-                    value={budget}
-                    onChange={(e) => setBudget(e.target.value)}
-                    className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm"
-                  >
-                    {BUDGETS.map((b) => (
-                      <option key={b}>{b}</option>
-                    ))}
-                  </select>
                 </div>
 
                 <button
