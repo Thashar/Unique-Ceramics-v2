@@ -30,7 +30,7 @@ function AccountDropdown({ scrolled }: { scrolled: boolean }) {
   }, []);
 
   const iconClass = `transition-colors duration-500 ${
-    scrolled ? "text-espresso hover:text-clay" : "text-cream hover:text-sand"
+    scrolled ? "text-cream hover:text-terracotta" : "text-cream hover:text-sand"
   }`;
 
   if (!session) {
@@ -139,7 +139,7 @@ export default function Header({ topOffset = false }: { topOffset?: boolean }) {
     <header
       className={`fixed ${topOffset ? "top-10" : "top-0"} left-0 right-0 z-50 transition-all duration-500 ${
         dark
-          ? "bg-warm-white/95 backdrop-blur-md shadow-sm"
+          ? "bg-espresso shadow-sm"
           : "bg-transparent"
       }`}
     >
@@ -151,21 +151,19 @@ export default function Header({ topOffset = false }: { topOffset?: boolean }) {
             alt="Unique Ceramics"
             width={40}
             height={40}
-            className={`h-9 w-auto transition-all duration-500 ${
-              dark ? "" : "brightness-0 invert"
-            }`}
+            className="h-9 w-auto transition-all duration-500 brightness-0 invert"
           />
           <div className="flex flex-col leading-none pt-1.5">
             <span
               className={`font-serif text-base sm:text-lg font-semibold tracking-wide transition-colors duration-500 ${
-                dark ? "text-espresso group-hover:text-clay" : "text-white group-hover:text-white/80"
+                dark ? "text-cream group-hover:text-terracotta" : "text-white group-hover:text-white/80"
               }`}
             >
               Unique Ceramics
             </span>
             <span
               className={`text-[6.5px] tracking-[0.18em] uppercase mt-0.5 transition-colors duration-500 ${
-                dark ? "text-charcoal/40" : "text-white/55"
+                dark ? "text-cream/40" : "text-white/55"
               }`}
             >
               Ręcznie tworzone z sercem
@@ -183,7 +181,7 @@ export default function Header({ topOffset = false }: { topOffset?: boolean }) {
                 href={link.href}
                 className={`group relative pb-1 text-sm tracking-widest uppercase transition-colors duration-300 ${
                   dark
-                    ? isActive ? "text-clay" : "text-charcoal hover:text-clay"
+                    ? isActive ? "text-terracotta" : "text-cream/75 hover:text-cream"
                     : isActive ? "text-cream" : "text-cream/75 hover:text-cream"
                 }`}
               >
@@ -192,7 +190,7 @@ export default function Header({ topOffset = false }: { topOffset?: boolean }) {
                 <span
                   className={`absolute bottom-0 left-0 right-0 h-px transition-transform duration-300 origin-left ${
                     isActive ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"
-                  } ${dark ? "bg-clay" : "bg-cream/60"}`}
+                  } ${dark ? "bg-terracotta" : "bg-cream/60"}`}
                 />
               </Link>
             );
@@ -204,7 +202,7 @@ export default function Header({ topOffset = false }: { topOffset?: boolean }) {
           <Link
             href="/koszyk"
             className={`relative p-2 transition-colors duration-500 ${
-              dark ? "text-espresso hover:text-clay" : "text-cream hover:text-sand"
+              dark ? "text-cream hover:text-terracotta" : "text-cream hover:text-sand"
             }`}
             aria-label="Koszyk"
           >
@@ -220,7 +218,7 @@ export default function Header({ topOffset = false }: { topOffset?: boolean }) {
 
           <button
             className={`md:hidden p-2 transition-colors duration-500 ${
-              dark ? "text-espresso hover:text-clay" : "text-cream hover:text-sand"
+              dark ? "text-cream hover:text-terracotta" : "text-cream hover:text-sand"
             }`}
             onClick={() => setMenuOpen(!menuOpen)}
             aria-label={menuOpen ? "Zamknij menu" : "Otwórz menu"}
@@ -238,7 +236,7 @@ export default function Header({ topOffset = false }: { topOffset?: boolean }) {
           id="mobile-nav"
           role="dialog"
           aria-label="Menu nawigacyjne"
-          className="md:hidden bg-warm-white/98 backdrop-blur-md border-t border-sand px-6 pb-8 pt-4"
+          className="md:hidden bg-espresso border-t border-white/10 px-6 pb-8 pt-4"
         >
           <nav className="flex flex-col gap-1 mt-2">
             {navLinks.map((link) => {
@@ -248,8 +246,8 @@ export default function Header({ topOffset = false }: { topOffset?: boolean }) {
                   key={link.href}
                   href={link.href}
                   onClick={() => setMenuOpen(false)}
-                  className={`py-3 border-b border-sand/50 text-base tracking-widest uppercase transition-colors ${
-                    isActive ? "text-clay" : "text-charcoal hover:text-clay"
+                  className={`py-3 border-b border-white/10 text-base tracking-widest uppercase transition-colors ${
+                    isActive ? "text-terracotta" : "text-cream/75 hover:text-cream"
                   }`}
                 >
                   {link.label}
@@ -259,7 +257,7 @@ export default function Header({ topOffset = false }: { topOffset?: boolean }) {
             <Link
               href="/konto"
               onClick={() => setMenuOpen(false)}
-              className="py-3 text-base tracking-widest uppercase text-charcoal hover:text-clay transition-colors"
+              className="py-3 text-base tracking-widest uppercase text-cream/75 hover:text-cream transition-colors"
             >
               Moje konto
             </Link>
