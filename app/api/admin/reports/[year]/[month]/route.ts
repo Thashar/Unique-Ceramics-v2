@@ -85,10 +85,12 @@ export async function GET(
   const periodEnd   = new Date(yr, mo,     1);
 
   // Definiujemy query przed try/catch, żeby TypeScript wywnioskował typ z include
+  // Tylko opłacone zamówienia (paymentStatus=PAID) — niezbędne do rozliczenia podatkowego
   const ordersQuery = db.order.findMany({
     where: {
-      status: { not: "CANCELLED" },
-      createdAt: { gte: periodStart, lt: periodEnd },
+      status:        { not: "CANCELLED" },
+      paymentStatus: "PAID",
+      createdAt:     { gte: periodStart, lt: periodEnd },
     },
     include: { items: true },
     orderBy: { createdAt: "asc" },
@@ -271,20 +273,25 @@ export async function GET(
   for (let idx = 0; idx < orders.length; idx++) {
     const order = orders[idx];
 
+    // Klient: imię + email (2 linie) + numer zamówienia
     const customerText = [
       `${order.firstName} ${order.lastName}`,
       order.email,
-      order.phone || null,
-      `Nr: ${order.id.slice(0, 8).toUpperCase()}`,
+      `#${order.id.slice(0, 8).toUpperCase()}`,
     ].filter(Boolean).join("\n");
 
-    const productsText = order.items
-      .map(
-        (i) =>
-          `${i.name}  x${i.quantity}   ` +
-          `${(i.price * i.quantity).toFixed(2).replace(".", ",")} zl`,
-      )
-      .join("\n");
+    // Produkty: max 5 pozycji — dłuższe listy obcinamy z adnotacją
+    const MAX_ITEMS = 5;
+    const allItemLines = order.items.map(
+      (i) =>
+        `${i.name}  x${i.quantity}  ` +
+        `${(i.price * i.quantity).toFixed(2).replace(".", ",")} zl`,
+    );
+    const productsText =
+      allItemLines.slice(0, MAX_ITEMS).join("\n") +
+      (allItemLines.length > MAX_ITEMS
+        ? `\n+ ${allItemLines.length - MAX_ITEMS} wiecej`
+        : "");
 
     let addressText: string;
     if (order.shippingMethod === "pickup") {
@@ -319,13 +326,14 @@ export async function GET(
       fmtMoney(order.total),
     ];
 
-    // Wysokość wiersza
+    // Wysokość wiersza: mierzymy każdą komórkę + 20% margines bezpieczeństwa
+    // (heightOfString może zaniżać przy złożonych łamaniach), max 70 pt
     let maxH = 0;
     cells.forEach((text, ci) => {
       const h = doc.font(R).fontSize(FS).heightOfString(text, { width: COLS[ci].w - 8 });
       if (h > maxH) maxH = h;
     });
-    const rowH = Math.max(maxH + ROW_PAD * 2, 15);
+    const rowH = Math.max(Math.ceil(maxH * 1.2) + ROW_PAD * 2, 16);
 
     // Przełom strony
     if (posY + rowH > PH - MBT - 4) {
@@ -341,13 +349,17 @@ export async function GET(
        .rect(ML, posY, TW, rowH)
        .fill();
 
-    // Treść
+    // Treść — height MUSI być podane, bo pdfkit bez niego automatycznie dodaje
+    // nowe strony przy przepełnieniu komórki, co tworzy puste strony w raporcie
+    const cellH = rowH - ROW_PAD * 2;
     let cx = ML;
     cells.forEach((text, ci) => {
       doc.font(R).fontSize(FS).fillColor("#2C2825")
          .text(text, cx + 4, posY + ROW_PAD, {
-           width:    COLS[ci].w - 8,
-           align:    COLS[ci].align,
+           width:     COLS[ci].w - 8,
+           height:    cellH,
+           ellipsis:  true,
+           align:     COLS[ci].align,
            lineBreak: true,
          });
       cx += COLS[ci].w;
