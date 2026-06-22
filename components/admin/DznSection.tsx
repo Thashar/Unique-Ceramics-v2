@@ -62,7 +62,7 @@ export default function DznSection({
       const res = await fetch("/api/admin/settings", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dzn_min_wage: String(parsed) }),
+        body: JSON.stringify([{ key: "dzn_min_wage", value: String(parsed) }]),
       });
       if (!res.ok) throw new Error();
       setMinWage(parsed);
