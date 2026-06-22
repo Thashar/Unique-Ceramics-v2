@@ -82,17 +82,17 @@ export default async function AboutPage() {
 
               <div className="mt-12 flex flex-wrap gap-6">
                 <Link
-                  href="/sklep"
+                  href="/moje-projekty"
                   className="inline-flex items-center gap-2 bg-clay hover:bg-terracotta text-warm-white text-sm tracking-widest uppercase px-8 py-4 transition-colors group"
                 >
                   Moje prace
                   <ArrowRight size={15} className="group-hover:translate-x-1 transition-transform" strokeWidth={1.5} />
                 </Link>
                 <Link
-                  href="/zamowienie-indywidualne"
+                  href="/sklep"
                   className="inline-flex items-center gap-2 border border-espresso hover:bg-espresso hover:text-cream text-espresso text-sm tracking-widest uppercase px-8 py-4 transition-colors"
                 >
-                  Zamówienie indywidualne
+                  Asortyment sklepu
                 </Link>
               </div>
             </div>
