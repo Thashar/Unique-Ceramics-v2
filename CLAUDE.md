@@ -168,6 +168,7 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 | `/admin/zamowienia-indywidualne`, `/admin/zamowienia-indywidualne/[id]` | Zamówienia indywidualne |
 | `/admin/ustawienia` | Ustawienia sklepu (strona główna, o mnie, **sklep**, warsztaty, regulamin, polityka, kontakt, wysyłka, płatności) |
 | `/admin/kategorie` | Zarządzanie kategoriami produktów (CRUD + kolejność) |
+| `/admin/analityki` | Panel analityczny — przychód miesięczny (wykres + tabela), bestsellery, metody wysyłki, płatności, statusy zamówień, podsumowanie roczne |
 
 ### API Routes
 | Metoda | Endpoint | Opis |

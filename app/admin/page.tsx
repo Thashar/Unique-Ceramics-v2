@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import Link from "next/link";
 import {
   Package, ShoppingBag, Users, TrendingUp,
-  AlertCircle, ArrowRight, Plus, Settings, ClipboardList,
+  AlertCircle, ArrowRight, Plus, Settings, ClipboardList, BarChart2,
 } from "lucide-react";
 
 const STATUS_LABELS: Record<string, string> = {
@@ -251,6 +251,14 @@ export default async function AdminDashboard() {
             <p className="text-xs text-charcoal/40 mt-2">
               Łącznie: {(revenueAll._sum.total ?? 0).toFixed(0)} zł
             </p>
+            <Link
+              href="/admin/analityki"
+              className="mt-4 flex items-center gap-1.5 text-xs text-clay hover:text-espresso transition-colors"
+            >
+              <BarChart2 size={13} strokeWidth={1.5} />
+              Zobacz analityki
+              <ArrowRight size={11} />
+            </Link>
           </div>
         </div>
       </div>
