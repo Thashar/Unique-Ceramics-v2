@@ -257,6 +257,14 @@ export async function PATCH(
 
   // Zapis danych listu przewozowego
   if (body.trackingNumber !== undefined || body.trackingCarrier !== undefined) {
+    const existing = await db.order.findUnique({ where: { id }, select: { status: true } });
+    if (existing?.status !== OrderStatus.IN_PROGRESS) {
+      return NextResponse.json(
+        { error: "Dane listu przewozowego można uzupełnić tylko gdy zamówienie ma status W realizacji." },
+        { status: 400 }
+      );
+    }
+
     const updateData: { trackingNumber?: string; trackingCarrier?: string } = {};
     if (body.trackingNumber !== undefined) updateData.trackingNumber = String(body.trackingNumber).trim();
     if (body.trackingCarrier !== undefined) updateData.trackingCarrier = String(body.trackingCarrier).trim();

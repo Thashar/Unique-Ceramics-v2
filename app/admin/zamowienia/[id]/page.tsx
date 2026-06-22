@@ -196,6 +196,7 @@ export default async function AdminOrderDetailPage({
           </div>
           <TrackingForm
             orderId={order.id}
+            orderStatus={order.status}
             initialTrackingNumber={order.trackingNumber}
             initialCarrier={order.trackingCarrier}
           />

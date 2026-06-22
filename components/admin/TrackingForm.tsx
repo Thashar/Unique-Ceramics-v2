@@ -14,11 +14,13 @@ type Carrier = (typeof CARRIERS)[number]["value"];
 
 interface Props {
   orderId: string;
+  orderStatus: string;
   initialTrackingNumber?: string | null;
   initialCarrier?: string | null;
 }
 
-export default function TrackingForm({ orderId, initialTrackingNumber, initialCarrier }: Props) {
+export default function TrackingForm({ orderId, orderStatus, initialTrackingNumber, initialCarrier }: Props) {
+  const editable = orderStatus === "IN_PROGRESS";
   const [trackingNumber, setTrackingNumber] = useState(initialTrackingNumber ?? "");
   const [carrier, setCarrier] = useState<Carrier | "">(
     CARRIERS.some((c) => c.value === initialCarrier) ? (initialCarrier as Carrier) : ""
@@ -56,13 +58,20 @@ export default function TrackingForm({ orderId, initialTrackingNumber, initialCa
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-3">
+      {!editable && (
+        <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 px-3 py-2">
+          Dane listu przewozowego można uzupełnić tylko gdy zamówienie ma status <strong>W realizacji</strong>.
+        </p>
+      )}
+
+      <div className={`grid grid-cols-2 gap-3 ${!editable ? "opacity-50 pointer-events-none select-none" : ""}`}>
         <div>
           <label className="block text-xs text-gray-500 uppercase tracking-wide mb-1">Dostawca</label>
           <select
             value={carrier}
             onChange={(e) => setCarrier(e.target.value as Carrier | "")}
-            className="w-full border border-gray-200 px-3 py-2 text-sm bg-white focus:outline-none focus:border-clay"
+            disabled={!editable}
+            className="w-full border border-gray-200 px-3 py-2 text-sm bg-white focus:outline-none focus:border-clay disabled:cursor-not-allowed"
           >
             <option value="">Wybierz dostawcę</option>
             {CARRIERS.map((c) => (
@@ -77,24 +86,27 @@ export default function TrackingForm({ orderId, initialTrackingNumber, initialCa
             value={trackingNumber}
             onChange={(e) => setTrackingNumber(e.target.value)}
             placeholder="np. 00123456789"
-            className="w-full border border-gray-200 px-3 py-2 text-sm font-mono focus:outline-none focus:border-clay"
+            disabled={!editable}
+            className="w-full border border-gray-200 px-3 py-2 text-sm font-mono focus:outline-none focus:border-clay disabled:cursor-not-allowed"
           />
         </div>
       </div>
 
       {error && <p className="text-xs text-red-600">{error}</p>}
 
-      <div className="flex items-center gap-3">
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="inline-flex items-center gap-2 bg-clay hover:bg-espresso text-white text-xs uppercase tracking-wide px-4 py-2 transition-colors disabled:opacity-50"
-        >
-          <Truck size={14} />
-          {saving ? "Zapisywanie…" : "Zapisz dane wysyłki"}
-        </button>
-        {saved && <span className="text-xs text-green-600 font-medium">Zapisano</span>}
-      </div>
+      {editable && (
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="inline-flex items-center gap-2 bg-clay hover:bg-espresso text-white text-xs uppercase tracking-wide px-4 py-2 transition-colors disabled:opacity-50"
+          >
+            <Truck size={14} />
+            {saving ? "Zapisywanie…" : "Zapisz dane wysyłki"}
+          </button>
+          {saved && <span className="text-xs text-green-600 font-medium">Zapisano</span>}
+        </div>
+      )}
 
       {trackingUrl && (
         <a
