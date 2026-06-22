@@ -5,7 +5,7 @@ export async function POST(request: Request) {
   if (isRateLimited(getClientIp(request), 5, 60_000)) {
     return NextResponse.json({ error: "Zbyt wiele żądań. Spróbuj za chwilę." }, { status: 429 });
   }
-  const { name, phone, email, subject, message } = await request.json();
+  const { name, phone, email, subject, message, workshopType } = await request.json();
 
   if (!email || !message) {
     return NextResponse.json({ error: "Brak wymaganych pól" }, { status: 400 });
@@ -45,6 +45,7 @@ export async function POST(request: Request) {
         `Telefon: ${phone || "—"}`,
         `E-mail: ${email}`,
         `Temat: ${subject || "—"}`,
+        ...(workshopType ? [`Rodzaj warsztatu: ${workshopType}`] : []),
         "",
         message,
       ].join("\n"),

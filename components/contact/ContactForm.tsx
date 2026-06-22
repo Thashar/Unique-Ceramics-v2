@@ -4,8 +4,16 @@ import { useState } from "react";
 
 type Status = "idle" | "sending" | "success" | "error";
 
-export default function ContactForm() {
+interface Props {
+  workshopOptions?: string[];
+}
+
+export default function ContactForm({ workshopOptions = [] }: Props) {
   const [status, setStatus] = useState<Status>("idle");
+  const [subject, setSubject] = useState("");
+  const [workshopType, setWorkshopType] = useState("");
+
+  const showWorkshopSelect = subject === "Warsztaty" && workshopOptions.length > 0;
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -16,8 +24,9 @@ export default function ContactForm() {
       name: fd.get("name"),
       phone: fd.get("phone"),
       email: fd.get("email"),
-      subject: fd.get("subject"),
+      subject,
       message: fd.get("message"),
+      ...(showWorkshopSelect && workshopType ? { workshopType } : {}),
     };
 
     try {
@@ -30,6 +39,8 @@ export default function ContactForm() {
       if (res.ok) {
         setStatus("success");
         (e.target as HTMLFormElement).reset();
+        setSubject("");
+        setWorkshopType("");
       } else {
         setStatus("error");
       }
@@ -83,7 +94,11 @@ export default function ContactForm() {
           Temat
         </label>
         <select
-          name="subject"
+          value={subject}
+          onChange={(e) => {
+            setSubject(e.target.value);
+            setWorkshopType("");
+          }}
           className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors"
         >
           <option value="">Wybierz temat</option>
@@ -93,6 +108,24 @@ export default function ContactForm() {
           <option>Inne</option>
         </select>
       </div>
+
+      {showWorkshopSelect && (
+        <div>
+          <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">
+            Rodzaj warsztatu
+          </label>
+          <select
+            value={workshopType}
+            onChange={(e) => setWorkshopType(e.target.value)}
+            className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors"
+          >
+            <option value="">Wybierz rodzaj warsztatu</option>
+            {workshopOptions.map((name) => (
+              <option key={name} value={name}>{name}</option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <div>
         <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">

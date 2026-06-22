@@ -16,16 +16,30 @@ export const metadata: Metadata = {
   alternates: { canonical: "https://uniqueceramics.pl/kontakt" },
 };
 
+function parseWorkshopTitles(json: string): string[] {
+  try {
+    const arr = JSON.parse(json);
+    if (!Array.isArray(arr)) return [];
+    return arr
+      .filter((w: { active?: boolean; title?: string }) => w.active && w.title)
+      .map((w: { title: string }) => w.title);
+  } catch {
+    return [];
+  }
+}
+
 export default async function ContactPage() {
   const settings = await getSettings([
     "contact_phone",
     "contact_email",
     "contact_instagram",
+    "workshops_offers",
   ]);
 
   const phone = settings.contact_phone;
   const email = settings.contact_email;
   const instagram = settings.contact_instagram;
+  const workshopOptions = parseWorkshopTitles(settings.workshops_offers);
 
   // Derive href from instagram handle (strip leading @)
   const instagramHandle = instagram.startsWith("@")
@@ -140,7 +154,7 @@ export default async function ContactPage() {
             {/* Formularz */}
             <div>
               <h2 className="font-serif text-2xl text-espresso mb-8">Napisz wiadomość</h2>
-              <ContactForm />
+              <ContactForm workshopOptions={workshopOptions} />
             </div>
           </div>
         </div>
