@@ -6,6 +6,7 @@ import { Phone, Mail, Clock, MapPin } from "lucide-react";
 import InstagramIcon from "@/components/ui/InstagramIcon";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import VacationBanner from "@/components/layout/VacationBanner";
 import { getSettings } from "@/lib/settings";
 import ContactForm from "@/components/contact/ContactForm";
 
@@ -34,12 +35,18 @@ export default async function ContactPage() {
     "contact_email",
     "contact_instagram",
     "workshops_offers",
+    "vacation_enabled",
+    "vacation_end_date",
+    "vacation_message",
   ]);
 
   const phone = settings.contact_phone;
   const email = settings.contact_email;
   const instagram = settings.contact_instagram;
   const workshopOptions = parseWorkshopTitles(settings.workshops_offers);
+
+  const vacationEnabled = settings.vacation_enabled === "true";
+  const vacationMessage = vacationEnabled ? settings.vacation_message : "";
 
   // Derive href from instagram handle (strip leading @)
   const instagramHandle = instagram.startsWith("@")
@@ -52,8 +59,12 @@ export default async function ContactPage() {
 
   return (
     <>
-      <Header />
-      <main className="flex-1 pt-20">
+      <VacationBanner
+        message={vacationMessage}
+        returnDate={vacationEnabled ? settings.vacation_end_date : undefined}
+      />
+      <Header topOffset={vacationEnabled} />
+      <main className={`flex-1 ${vacationEnabled ? "pt-[120px]" : "pt-20"}`}>
         {/* Nagłówek */}
         <div className="bg-cream px-6 lg:px-10 py-20">
           <div className="max-w-7xl mx-auto">

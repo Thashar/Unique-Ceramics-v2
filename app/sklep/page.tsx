@@ -55,10 +55,7 @@ export default async function ShopPage({
 
   const vacationEnabled = heroSettings.vacation_enabled === "true";
   const vacationEndDate = heroSettings.vacation_end_date;
-  const vacationCustomMsg = heroSettings.vacation_message;
-  const vacationMessage = vacationEnabled
-    ? (vacationCustomMsg || "Jestem na urlopie.")
-    : "";
+  const vacationMessage = vacationEnabled ? heroSettings.vacation_message : "";
 
   const CATEGORIES = [
     { value: "wszystkie", label: "Wszystkie" },

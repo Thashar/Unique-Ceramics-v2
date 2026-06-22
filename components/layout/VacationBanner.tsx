@@ -21,11 +21,9 @@ export default function VacationBanner({
   }
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-[60] h-10 bg-terracotta text-espresso text-xs flex items-center justify-center px-6 text-center tracking-wide">
-      {message && <span>{message}&nbsp;</span>}
-      {formattedDate && (
-        <span>Zamówienia zostaną wysłane po {formattedDate}.</span>
-      )}
+    <div className="fixed top-0 left-0 right-0 z-[60] h-10 bg-terracotta text-espresso text-xs font-semibold flex items-center justify-center px-6 text-center tracking-wide gap-2">
+      {message && <span>{message}</span>}
+      {formattedDate && <span>{formattedDate}</span>}
     </div>
   );
 }
