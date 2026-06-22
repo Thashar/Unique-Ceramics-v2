@@ -5,9 +5,8 @@ import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 
 const STATUSES = [
-  { value: "PENDING", label: "Oczekuje",  color: "bg-amber-50 text-amber-700 border-amber-300" },
-  { value: "PAID",    label: "Opłacone",  color: "bg-green-50 text-green-700 border-green-300" },
-  { value: "FAILED",  label: "Nieudana",  color: "bg-red-50 text-red-600 border-red-300" },
+  { value: "PENDING", label: "Oczekuje", color: "bg-amber-50 text-amber-700 border-amber-300" },
+  { value: "PAID",    label: "Opłacone", color: "bg-green-50 text-green-700 border-green-300" },
 ];
 
 export default function PaymentStatusToggle({

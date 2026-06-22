@@ -3,7 +3,7 @@ import { requireAdmin } from "@/lib/admin-auth";
 import { OrderStatus } from "@prisma/client";
 import { NextResponse } from "next/server";
 
-const PAYMENT_STATUSES = ["PENDING", "PAID", "FAILED"];
+const PAYMENT_STATUSES = ["PENDING", "PAID"];
 
 export async function PATCH(
   req: Request,
