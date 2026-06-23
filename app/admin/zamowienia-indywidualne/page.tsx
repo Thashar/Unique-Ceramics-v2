@@ -4,17 +4,19 @@ import { db } from "@/lib/db";
 import Link from "next/link";
 
 const STATUS_COLORS: Record<string, string> = {
-  NEW:        "bg-yellow-100 text-yellow-700",
-  IN_REVIEW:  "bg-blue-100 text-blue-700",
-  DONE:       "bg-green-100 text-green-700",
-  CANCELLED:  "bg-red-100 text-red-700",
+  NEW:       "bg-yellow-100 text-yellow-700",
+  IN_REVIEW: "bg-blue-100 text-blue-700",
+  PAID:      "bg-purple-100 text-purple-700",
+  DONE:      "bg-green-100 text-green-700",
+  CANCELLED: "bg-red-100 text-red-700",
 };
 
 const STATUS_LABELS: Record<string, string> = {
-  NEW:        "Nowe",
-  IN_REVIEW:  "W trakcie",
-  DONE:       "Zrealizowane",
-  CANCELLED:  "Anulowane",
+  NEW:       "Nowe",
+  IN_REVIEW: "W trakcie",
+  PAID:      "Opłacone",
+  DONE:      "Zrealizowane",
+  CANCELLED: "Anulowane",
 };
 
 export default async function AdminCustomOrdersPage() {
@@ -31,7 +33,8 @@ export default async function AdminCustomOrdersPage() {
       ) : (
         <div className="space-y-2">
           {/* Nagłówek — tylko desktop */}
-          <div className="hidden md:grid md:grid-cols-[1fr_auto_auto_auto_auto] text-xs tracking-widest uppercase text-charcoal/50 bg-cream border border-sand/60 px-4 py-3">
+          <div className="hidden md:grid md:grid-cols-[auto_1fr_auto_auto_auto_auto] text-xs tracking-widest uppercase text-charcoal/50 bg-cream border border-sand/60 px-4 py-3">
+            <span className="w-24 pr-4">Nr</span>
             <span>Klient</span>
             <span className="w-36 pl-4">Rodzaj</span>
             <span className="w-28 text-center">Data</span>
@@ -40,13 +43,16 @@ export default async function AdminCustomOrdersPage() {
           </div>
 
           {orders.map((order) => (
-            <Link key={order.id} href={`/admin/zamowienia-indywidualne/${order.id}`}
-              className="block bg-cream border border-sand/60 hover:bg-warm-white transition-colors">
-
+            <Link
+              key={order.id}
+              href={`/admin/zamowienia-indywidualne/${order.id}`}
+              className="block bg-cream border border-sand/60 hover:bg-warm-white transition-colors"
+            >
               {/* Mobile */}
               <div className="md:hidden px-4 py-3 space-y-1.5">
                 <div className="flex items-start justify-between gap-2">
                   <div>
+                    <p className="text-[10px] font-mono text-clay">IND-{order.orderNumber}</p>
                     <p className="text-sm font-medium text-espresso">{order.customerName}</p>
                     <p className="text-xs text-charcoal/50">{order.customerEmail}</p>
                   </div>
@@ -61,7 +67,10 @@ export default async function AdminCustomOrdersPage() {
               </div>
 
               {/* Desktop */}
-              <div className="hidden md:grid md:grid-cols-[1fr_auto_auto_auto_auto] items-center px-4 py-3">
+              <div className="hidden md:grid md:grid-cols-[auto_1fr_auto_auto_auto_auto] items-center px-4 py-3">
+                <div className="w-24 pr-4">
+                  <p className="text-xs font-mono text-clay">IND-{order.orderNumber}</p>
+                </div>
                 <div>
                   <p className="text-sm font-medium text-espresso">{order.customerName}</p>
                   <p className="text-xs text-charcoal/50">{order.customerEmail}</p>

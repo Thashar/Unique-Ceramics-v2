@@ -109,25 +109,40 @@ function filterByQuery(items: Point[], q: string): Point[] {
   );
 }
 
-// Buduje URL do API InPost:
-// - cyfry z myślnikiem (44, 44-, 44-100) → zip_code
-// - litery + cyfry (WAR010) → bezpośredni endpoint /points/{code}
-// - wszystko inne (miasto, ulica, etc.) → city
-function buildApiUrl(q: string): { url: string; direct: boolean } {
+// Normalizuje nazwę miasta: pierwsza litera każdego słowa wielka, reszta mała.
+// Obsługuje spacje i myślniki (np. "bielsko-biała" → "Bielsko-Biała").
+// API InPost wymaga dokładnej wielkości liter (gliwice → 0 wyników, Gliwice → 153).
+function capitalizeCity(s: string): string {
+  return s.toLowerCase().replace(/(^|[\s-])(\S)/g, (_, sep, char) => sep + char.toUpperCase());
+}
+
+// Zwraca strategię API dla zapytania.
+// Obsługiwane parametry InPost API (zweryfikowane):
+//   city=<Nazwa>        — dokładna nazwa miasta (wymaga wielkiej litery)
+//   post_code=<XX-XXX>  — dokładny kod pocztowy (też format XXXXX bez myślnika)
+//   /points/<KOD>       — bezpośredni endpoint po kodzie paczkomatu
+// UWAGA: zip_code, name, street — ignorowane przez API, zwracają wszystkie wyniki.
+function buildApiStrategies(q: string): Array<{ url: string; direct: boolean }> {
   const t = q.trim();
-  if (/^[A-Za-z]{2,5}\d{1,5}$/.test(t)) {
-    return { url: `${API}/${t.toUpperCase()}`, direct: true };
+
+  // Dokładny kod paczkomatu: GLI01M, WAR010, GLI11Z
+  if (/^[A-Za-z]{2,5}\d{1,5}[A-Za-z]?$/.test(t)) {
+    return [{ url: `${API}/${t.toUpperCase()}`, direct: true }];
   }
-  if (/^\d{1,2}(-\d{0,3})?$/.test(t)) {
-    return {
-      url: `${API}?per_page=100&type=parcel_locker&zip_code=${encodeURIComponent(t)}`,
+
+  // Pełny kod pocztowy: XX-XXX lub XXXXX (bez myślnika też obsługiwany)
+  if (/^\d{2}-\d{3}$/.test(t) || /^\d{5}$/.test(t)) {
+    return [{
+      url: `${API}?per_page=500&type=parcel_locker&post_code=${encodeURIComponent(t)}`,
       direct: false,
-    };
+    }];
   }
-  return {
-    url: `${API}?per_page=100&type=parcel_locker&city=${encodeURIComponent(t)}`,
+
+  // Nazwa miasta (API wymaga dokładnej, z wielką literą) — auto-kapitalizacja
+  return [{
+    url: `${API}?per_page=500&type=parcel_locker&city=${encodeURIComponent(capitalizeCity(t))}`,
     direct: false,
-  };
+  }];
 }
 
 // --- Wyszukiwarka (bez tokenu) ---
@@ -139,10 +154,15 @@ function InPostSearch({ value, onChange }: { value: string; onChange: (code: str
   const [fetchError, setFetchError] = useState("");
   const [selectedPoint, setSelectedPoint] = useState<Point | null>(null);
 
-  // Cache ostatniego zapytania API — umożliwia natychmiastowe filtrowanie bez nowego requestu
-  const apiCacheRef = useRef<{ url: string; items: Point[] }>({ url: "", items: [] });
-  const abortRef    = useRef<AbortController | null>(null);
-  const timerRef    = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Akumulowany cache — zbiera wyniki ze WSZYSTKICH dotychczasowych zapytań API.
+  // Dzięki temu po wyszukaniu "Gliwice" filtrowanie po "gli", "Poe", "113", "i11" itp.
+  // działa natychmiast bez kolejnych requestów sieciowych.
+  const cacheRef = useRef<{ fetchedUrls: Set<string>; items: Point[] }>({
+    fetchedUrls: new Set(),
+    items: [],
+  });
+  const abortRef = useRef<AbortController | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const runSearch = useCallback(async (q: string) => {
     const t = q.trim();
@@ -152,54 +172,72 @@ function InPostSearch({ value, onChange }: { value: string; onChange: (code: str
       return;
     }
 
-    // 1. Natychmiastowy wynik z cache (filtr client-side po wszystkich polach)
-    const fromCache = filterByQuery(apiCacheRef.current.items, t);
+    // 1. Natychmiastowy wynik z akumulowanego cache — filtr po WSZYSTKICH polach
+    //    (kod, ulica, miasto, kod pocztowy, każdy podciąg).
+    const fromCache = filterByQuery(cacheRef.current.items, t);
     if (fromCache.length > 0) {
       setResults(fromCache);
       setLoading(false);
     }
 
-    // 2. Wyznacz URL do API
-    const { url, direct } = buildApiUrl(t);
-    if (url === apiCacheRef.current.url) return; // cache aktualny, nie ma sensu ponownie fetchować
+    // 2. Wyznacz strategie API i odfiltruj już pobrane URLe
+    const strategies = buildApiStrategies(t);
+    const pending = strategies.filter((s) => !cacheRef.current.fetchedUrls.has(s.url));
+    if (pending.length === 0) return;
 
-    // 3. Anuluj poprzedni request w locie
+    // 3. Anuluj poprzednie requesty w locie
     abortRef.current?.abort();
     abortRef.current = new AbortController();
+    const signal = abortRef.current.signal;
 
-    setLoading(true);
+    if (fromCache.length === 0) setLoading(true);
     setFetchError("");
 
     try {
-      const res = await fetch(url, {
-        headers: { Accept: "application/json" },
-        signal: abortRef.current.signal,
-      });
+      // 4. Wszystkie strategie równolegle
+      const allItems = (
+        await Promise.all(
+          pending.map(async ({ url, direct }) => {
+            const res = await fetch(url, {
+              headers: { Accept: "application/json" },
+              signal,
+            });
+            // Oznacz jako pobrane nawet gdy 0 wyników, żeby nie ponawiać
+            cacheRef.current.fetchedUrls.add(url);
+            if (!res.ok) return [] as Point[];
+            if (direct) {
+              const item = (await res.json()) as Point;
+              return item?.name ? [item] : ([] as Point[]);
+            }
+            const data = await res.json();
+            return (data.items ?? []) as Point[];
+          }),
+        )
+      ).flat();
 
-      if (!res.ok) throw new Error("http");
-
-      let items: Point[];
-      if (direct) {
-        const item = (await res.json()) as Point;
-        items = item?.name ? [item] : [];
-      } else {
-        const data = await res.json();
-        items = (data.items ?? []) as Point[];
+      // 5. Scalaj z cache (deduplikacja po nazwie kodu)
+      if (allItems.length > 0) {
+        const existing = new Set(cacheRef.current.items.map((i: Point) => i.name));
+        const fresh = allItems.filter((i: Point) => !existing.has(i.name));
+        cacheRef.current.items = [...cacheRef.current.items, ...fresh];
       }
 
-      apiCacheRef.current = { url, items };
-
-      // 4. Filtruj nowe dane po aktualnym zapytaniu wyszukiwania
-      const filtered = filterByQuery(items, t);
+      // 6. Filtruj pełen (scalony) cache po aktualnym zapytaniu
+      const filtered = filterByQuery(cacheRef.current.items, t);
       setResults(filtered);
 
-      if (filtered.length === 0) {
-        setFetchError("Brak wyników — sprawdź pisownię lub spróbuj kodu pocztowego (np. 44-100).");
+      if (filtered.length === 0 && fromCache.length === 0) {
+        setFetchError(
+          "Brak wyników. Wpisz pełną nazwę miasta (np. Gliwice) lub kod pocztowy (np. 44-113), " +
+          "a potem możesz zawęzić wyniki po fragmencie kodu, ulicy lub adresu."
+        );
       }
     } catch (e: unknown) {
       if ((e as Error)?.name === "AbortError") return;
-      setFetchError("Nie udało się pobrać listy paczkomatów. Sprawdź połączenie.");
-      setResults([]);
+      if (fromCache.length === 0) {
+        setFetchError("Nie udało się pobrać listy paczkomatów. Sprawdź połączenie.");
+        setResults([]);
+      }
     } finally {
       setLoading(false);
     }
@@ -259,14 +297,14 @@ function InPostSearch({ value, onChange }: { value: string; onChange: (code: str
   return (
     <div className="space-y-2">
       <label className="block text-xs text-charcoal/60 mb-1">
-        Szukaj po nazwie miasta, kodzie pocztowym lub kodzie paczkomatu
+        Wpisz pełną nazwę miasta lub kod pocztowy (XX-XXX), aby załadować listę — potem możesz zawęzić wyniki wpisując fragment kodu, ulicy lub adresu
       </label>
 
       <div className="relative">
         <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-charcoal/40 pointer-events-none" />
         <input
           type="text"
-          placeholder="np. Warszawa / 44-100 / WAR010"
+          placeholder="np. Gliwice / 44-113 / GLI01M"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           autoComplete="off"

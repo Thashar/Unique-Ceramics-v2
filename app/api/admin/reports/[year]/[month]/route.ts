@@ -84,8 +84,7 @@ export async function GET(
   const periodStart = new Date(yr, mo - 1, 1);
   const periodEnd   = new Date(yr, mo,     1);
 
-  // Definiujemy query przed try/catch, żeby TypeScript wywnioskował typ z include
-  // Tylko opłacone zamówienia (paymentStatus=PAID) — niezbędne do rozliczenia podatkowego
+  // Zamówienia sklepowe — tylko opłacone (PAID) — do rozliczenia podatkowego
   const ordersQuery = db.order.findMany({
     where: {
       status:        { not: "CANCELLED" },
@@ -96,19 +95,42 @@ export async function GET(
     orderBy: { createdAt: "asc" },
   });
 
+  // Zamówienia indywidualne — statusy PAID lub DONE, z podaną ceną
+  const customOrdersQuery = db.customOrder.findMany({
+    where: {
+      status:    { in: ["PAID", "DONE"] },
+      price:     { not: null },
+      createdAt: { gte: periodStart, lt: periodEnd },
+    },
+    orderBy: { createdAt: "asc" },
+  });
+
   let orders: Awaited<typeof ordersQuery>;
+  let customOrders: Awaited<typeof customOrdersQuery>;
   try {
-    orders = await ordersQuery;
+    [orders, customOrders] = await Promise.all([ordersQuery, customOrdersQuery]);
   } catch {
     return new Response("Błąd bazy danych", { status: 500 });
   }
 
-  // ── Sumy ─────────────────────────────────────────────────────────────────────
+  // ── Sumy sklepowych ───────────────────────────────────────────────────────────
 
-  const totalRevenue  = orders.reduce((s, o) => s + o.total,        0);
-  const totalShipping = orders.reduce((s, o) => s + o.shippingCost, 0);
-  const totalProducts = totalRevenue - totalShipping;
-  const avgOrder      = orders.length > 0 ? totalRevenue / orders.length : 0;
+  const shopRevenue   = orders.reduce((s, o) => s + o.total,        0);
+  const shopShipping  = orders.reduce((s, o) => s + o.shippingCost, 0);
+  const shopProducts  = shopRevenue - shopShipping;
+
+  // ── Sumy indywidualnych ───────────────────────────────────────────────────────
+
+  const customRevenue  = customOrders.reduce((s, o) => s + (o.price        ?? 0), 0);
+  const customShipping = customOrders.reduce((s, o) => s + (o.shippingCost ?? 0), 0);
+
+  // ── Łącznie ───────────────────────────────────────────────────────────────────
+
+  const totalCount    = orders.length + customOrders.length;
+  const totalRevenue  = shopRevenue  + customRevenue + customShipping;
+  const totalShipping = shopShipping + customShipping;
+  const totalProducts = shopProducts + customRevenue;
+  const avgOrder      = totalCount > 0 ? totalRevenue / totalCount : 0;
 
   // ── PDF ───────────────────────────────────────────────────────────────────────
 
@@ -142,7 +164,7 @@ export async function GET(
   const MBT = 42;
   const TW  = PW - ML * 2;     // 772
 
-  // Kolumny (suma = 772)
+  // Kolumny tabeli zamówień sklepowych (suma = 772)
   const COLS = [
     { label: "Nr",            w:  20, align: "right" as const },
     { label: "Data",          w:  58, align: "left"  as const },
@@ -153,7 +175,20 @@ export async function GET(
     { label: "Platnosc",      w:  60, align: "left"  as const },
     { label: "Razem",         w: 108, align: "right" as const },
   ];
-  // 20+58+132+200+120+74+60+108 = 772 ✓
+
+  // Kolumny tabeli zamówień indywidualnych (suma = 772)
+  const CUSTOM_COLS = [
+    { label: "Nr",       w:  40, align: "left"  as const },
+    { label: "Data",     w:  52, align: "left"  as const },
+    { label: "Klient",   w: 115, align: "left"  as const },
+    { label: "Rodzaj",   w: 100, align: "left"  as const },
+    { label: "Opis",     w: 155, align: "left"  as const },
+    { label: "Adres",    w: 105, align: "left"  as const },
+    { label: "Wysylka",  w:  55, align: "right" as const },
+    { label: "Wplacono", w:  65, align: "right" as const },
+    { label: "Cena",     w:  85, align: "right" as const },
+  ];
+  // 40+52+115+100+155+105+55+65+85 = 772 ✓
 
   const FS      = 7;
   const FS_HDR  = 6.5;
@@ -173,7 +208,7 @@ export async function GET(
        .text(`Strona ${pageNum}`, ML, yf, { width: TW, align: "right", lineBreak: false });
   }
 
-  // ── Nagłówek tabeli ───────────────────────────────────────────────────────────
+  // ── Nagłówek tabeli sklepowej ─────────────────────────────────────────────────
   function drawTableHeader(startY: number): number {
     doc.fillColor("#2C2825").rect(ML, startY, TW, HDR_H).fill();
     let cx = ML;
@@ -187,11 +222,32 @@ export async function GET(
                });
       cx += col.w;
     }
-    // Separatory pionowe
     cx = ML;
     for (let i = 1; i < COLS.length; i++) {
       cx += COLS[i - 1].w;
       doc.strokeColor("#4A3F38").lineWidth(0.3)
+         .moveTo(cx, startY).lineTo(cx, startY + HDR_H).stroke();
+    }
+    return startY + HDR_H;
+  }
+
+  // ── Nagłówek tabeli zamówień indywidualnych ───────────────────────────────────
+  function drawCustomTableHeader(startY: number): number {
+    doc.fillColor("#6B21A8").rect(ML, startY, TW, HDR_H).fill();
+    let cx = ML;
+    for (const col of CUSTOM_COLS) {
+      doc.font(B).fontSize(FS_HDR).fillColor("#FAF8F5")
+         .text(col.label, cx + 4, startY + 3, {
+           width: col.w - 8,
+           align: col.align,
+           lineBreak: false,
+         });
+      cx += col.w;
+    }
+    cx = ML;
+    for (let i = 1; i < CUSTOM_COLS.length; i++) {
+      cx += CUSTOM_COLS[i - 1].w;
+      doc.strokeColor("#9333EA").lineWidth(0.3)
          .moveTo(cx, startY).lineTo(cx, startY + HDR_H).stroke();
     }
     return startY + HDR_H;
@@ -217,7 +273,7 @@ export async function GET(
          hour: "2-digit", minute: "2-digit",
        })}  ·  ` +
        `Okres: ${fmtDate(periodStart)} – ${fmtDate(periodEndDisplay)}  ·  ` +
-       `Bez zamowien anulowanych`,
+       `Sklep: ${orders.length} zam. oplaconych  ·  Indywidualne: ${customOrders.length} zam.`,
        ML, posY, { lineBreak: false }
      );
 
@@ -230,11 +286,11 @@ export async function GET(
 
   // ── Podsumowanie ──────────────────────────────────────────────────────────────
   const summary: [string, string][] = [
-    ["ZAMOWIEN",              String(orders.length)],
-    ["PRZYCHOD BRUTTO",       fmtMoney(totalRevenue)],
-    ["KOSZTY WYSYLKI",        fmtMoney(totalShipping)],
-    ["PRZYCHOD Z PRODUKTOW",  fmtMoney(totalProducts)],
-    ["SR. WARTOSC ZAMOWIENIA",fmtMoney(avgOrder)],
+    ["ZAMOWIEN LACZNIE",        String(totalCount)],
+    ["PRZYCHOD BRUTTO",         fmtMoney(totalRevenue)],
+    ["KOSZTY WYSYLKI",          fmtMoney(totalShipping)],
+    ["PRZYCHOD Z PRODUKTOW",    fmtMoney(totalProducts)],
+    ["SR. WARTOSC ZAMOWIENIA",  fmtMoney(avgOrder)],
   ];
 
   const SW  = TW / summary.length;
@@ -259,28 +315,27 @@ export async function GET(
 
   posY += SBH + 10;
 
-  // ── Tabela ────────────────────────────────────────────────────────────────────
+  // ── Tabela zamówień sklepowych ────────────────────────────────────────────────
   posY = drawTableHeader(posY);
   drawFooter();
 
   if (orders.length === 0) {
     doc.font(R).fontSize(9).fillColor("#9A7A6A")
-       .text("Brak zamowien w tym miesiacu.", ML, posY + 14, {
+       .text("Brak zamowien sklepowych w tym miesiacu.", ML, posY + 14, {
          width: TW, align: "center",
        });
+    posY += 30;
   }
 
   for (let idx = 0; idx < orders.length; idx++) {
     const order = orders[idx];
 
-    // Klient: imię + email (2 linie) + numer zamówienia
     const customerText = [
       `${order.firstName} ${order.lastName}`,
       order.email,
       `#${order.id.slice(0, 8).toUpperCase()}`,
     ].filter(Boolean).join("\n");
 
-    // Produkty: max 5 pozycji — dłuższe listy obcinamy z adnotacją
     const MAX_ITEMS = 5;
     const allItemLines = order.items.map(
       (i) =>
@@ -326,8 +381,6 @@ export async function GET(
       fmtMoney(order.total),
     ];
 
-    // Wysokość wiersza: mierzymy każdą komórkę + 20% margines bezpieczeństwa
-    // (heightOfString może zaniżać przy złożonych łamaniach), max 70 pt
     let maxH = 0;
     cells.forEach((text, ci) => {
       const h = doc.font(R).fontSize(FS).heightOfString(text, { width: COLS[ci].w - 8 });
@@ -335,7 +388,6 @@ export async function GET(
     });
     const rowH = Math.max(Math.ceil(maxH * 1.2) + ROW_PAD * 2, 16);
 
-    // Przełom strony
     if (posY + rowH > PH - MBT - 4) {
       doc.addPage();
       pageNum++;
@@ -344,13 +396,10 @@ export async function GET(
       posY = drawTableHeader(posY);
     }
 
-    // Tło wiersza
     doc.fillColor(idx % 2 === 0 ? "#FDFCFB" : "#F5F0E8")
        .rect(ML, posY, TW, rowH)
        .fill();
 
-    // Treść — height MUSI być podane, bo pdfkit bez niego automatycznie dodaje
-    // nowe strony przy przepełnieniu komórki, co tworzy puste strony w raporcie
     const cellH = rowH - ROW_PAD * 2;
     let cx = ML;
     cells.forEach((text, ci) => {
@@ -365,7 +414,6 @@ export async function GET(
       cx += COLS[ci].w;
     });
 
-    // Separator wiersza
     doc.strokeColor("#E8DFD0").lineWidth(0.3)
        .moveTo(ML, posY + rowH)
        .lineTo(ML + TW, posY + rowH)
@@ -374,7 +422,6 @@ export async function GET(
     posY += rowH;
   }
 
-  // Linia zamknięcia + suma
   if (orders.length > 0) {
     doc.strokeColor("#C4A882").lineWidth(0.8)
        .moveTo(ML, posY).lineTo(ML + TW, posY).stroke();
@@ -383,12 +430,134 @@ export async function GET(
 
     doc.font(B).fontSize(8).fillColor("#2C2825")
        .text(
-         `Lacznie ${orders.length} zamowien   |   ` +
-         `Przychod brutto: ${fmtMoney(totalRevenue)}   |   ` +
-         `Koszty wysylki: ${fmtMoney(totalShipping)}   |   ` +
-         `Przychod z produktow: ${fmtMoney(totalProducts)}`,
+         `Lacznie ${orders.length} zamowien sklepowych   |   ` +
+         `Przychod brutto: ${fmtMoney(shopRevenue)}   |   ` +
+         `Koszty wysylki: ${fmtMoney(shopShipping)}   |   ` +
+         `Przychod z produktow: ${fmtMoney(shopProducts)}`,
          ML, posY, { width: TW, align: "right", lineBreak: false }
        );
+    posY += 16;
+  }
+
+  // ── Tabela zamówień indywidualnych ────────────────────────────────────────────
+  if (customOrders.length > 0) {
+    // Nagłówek sekcji
+    if (posY + 60 > PH - MBT - 4) {
+      doc.addPage();
+      pageNum++;
+      posY = MT;
+      drawFooter();
+    }
+
+    posY += 4;
+    doc.font(B).fontSize(9).fillColor("#6B21A8")
+       .text("Zamowienia indywidualne (Oplacone / Zrealizowane)", ML, posY, { lineBreak: false });
+    posY += 14;
+
+    posY = drawCustomTableHeader(posY);
+
+    for (let idx = 0; idx < customOrders.length; idx++) {
+      const co = customOrders[idx];
+
+      const clientText = [
+        co.customerName,
+        co.customerEmail,
+        co.customerPhone ?? "",
+      ].filter(Boolean).join("\n");
+
+      const descText = co.description.slice(0, 300) + (co.description.length > 300 ? "..." : "");
+
+      const STATUS_LABEL_MAP: Record<string, string> = { PAID: "Oplacone", DONE: "Zrealizowane" };
+      const statusLabel = STATUS_LABEL_MAP[co.status] ?? co.status;
+
+      const addressText = [
+        co.street ?? "",
+        [co.postcode, co.city].filter(Boolean).join(" "),
+      ].filter(Boolean).join("\n") || "—";
+
+      const cells = [
+        `IND-${co.orderNumber}\n${statusLabel}`,
+        fmtDate(new Date(co.createdAt)),
+        clientText,
+        co.orderType,
+        descText,
+        addressText,
+        co.shippingCost != null ? fmtMoney(co.shippingCost) : "—",
+        co.paidAmount   != null ? fmtMoney(co.paidAmount)   : "—",
+        fmtMoney(co.price ?? 0),
+      ];
+
+      let maxH = 0;
+      cells.forEach((text, ci) => {
+        const h = doc.font(R).fontSize(FS).heightOfString(text, { width: CUSTOM_COLS[ci].w - 8 });
+        if (h > maxH) maxH = h;
+      });
+      const rowH = Math.max(Math.ceil(maxH * 1.2) + ROW_PAD * 2, 16);
+
+      if (posY + rowH > PH - MBT - 4) {
+        doc.addPage();
+        pageNum++;
+        posY = MT;
+        drawFooter();
+        posY = drawCustomTableHeader(posY);
+      }
+
+      doc.fillColor(idx % 2 === 0 ? "#FDFAFF" : "#F5F0FE")
+         .rect(ML, posY, TW, rowH)
+         .fill();
+
+      const cellH = rowH - ROW_PAD * 2;
+      let cx = ML;
+      cells.forEach((text, ci) => {
+        doc.font(R).fontSize(FS).fillColor("#2C2825")
+           .text(text, cx + 4, posY + ROW_PAD, {
+             width:     CUSTOM_COLS[ci].w - 8,
+             height:    cellH,
+             ellipsis:  true,
+             align:     CUSTOM_COLS[ci].align,
+             lineBreak: true,
+           });
+        cx += CUSTOM_COLS[ci].w;
+      });
+
+      doc.strokeColor("#E8DFD0").lineWidth(0.3)
+         .moveTo(ML, posY + rowH)
+         .lineTo(ML + TW, posY + rowH)
+         .stroke();
+
+      posY += rowH;
+    }
+
+    // Suma zamówień indywidualnych
+    doc.strokeColor("#9333EA").lineWidth(0.8)
+       .moveTo(ML, posY).lineTo(ML + TW, posY).stroke();
+
+    posY += 8;
+
+    doc.font(B).fontSize(8).fillColor("#6B21A8")
+       .text(
+         `Lacznie ${customOrders.length} zamowien indywidualnych   |   ` +
+         `Przychod z produktow: ${fmtMoney(customRevenue)}   |   ` +
+         `Koszty wysylki: ${fmtMoney(customShipping)}`,
+         ML, posY, { width: TW, align: "right", lineBreak: false }
+       );
+
+    posY += 16;
+
+    // Suma łączna
+    if (orders.length > 0) {
+      doc.strokeColor("#C4A882").lineWidth(1.2)
+         .moveTo(ML, posY).lineTo(ML + TW, posY).stroke();
+
+      posY += 8;
+
+      doc.font(B).fontSize(9).fillColor("#2C2825")
+         .text(
+           `LACZNIE ${totalCount} zamowien   |   Przychod brutto: ${fmtMoney(totalRevenue)}   |   ` +
+           `w tym wysylka: ${fmtMoney(totalShipping)}   |   Przychod netto: ${fmtMoney(totalProducts)}`,
+           ML, posY, { width: TW, align: "right", lineBreak: false }
+         );
+    }
   }
 
   // ── Buffer ────────────────────────────────────────────────────────────────────
