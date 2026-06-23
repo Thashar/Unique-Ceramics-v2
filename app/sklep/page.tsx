@@ -73,7 +73,7 @@ export default async function ShopPage({
       <Header topOffset={vacationEnabled} />
       <div className={`min-h-[100svh] bg-warm-white ${vacationEnabled ? "pt-[100px]" : "pt-20"}`}>
         {/* Filtry kategorii */}
-        <div className={`border-b border-sand bg-warm-white sticky ${vacationEnabled ? "top-[100px]" : "top-20"} z-30 shadow-sm`}>
+        <div className={`border-b border-sand bg-cream sticky ${vacationEnabled ? "top-[100px]" : "top-20"} z-30 shadow-sm`}>
           <div className="max-w-7xl mx-auto px-6 lg:px-10 flex gap-2 overflow-x-auto py-4 no-scrollbar">
             {CATEGORIES.map((cat) => (
               <Link
@@ -82,7 +82,7 @@ export default async function ShopPage({
                 className={`shrink-0 px-5 py-2 text-xs tracking-widest uppercase transition-all duration-200 ${
                   activeCategory === cat.value
                     ? "bg-espresso text-warm-white"
-                    : "bg-cream text-charcoal hover:bg-sand border border-transparent hover:border-sand"
+                    : "bg-warm-white text-charcoal hover:bg-sand border border-transparent hover:border-sand"
                 }`}
               >
                 {cat.label}
@@ -124,7 +124,7 @@ export default async function ShopPage({
       {/* Pływający przycisk zamówień indywidualnych */}
       <Link
         href="/zamowienie-indywidualne"
-        className="fixed bottom-6 right-5 z-40 hidden md:flex items-center gap-2 bg-espresso hover:bg-clay text-cream text-[10px] tracking-widest uppercase px-4 py-3 shadow-md hover:shadow-lg transition-colors duration-200"
+        className="fixed bottom-6 right-5 z-40 flex items-center gap-2 bg-espresso hover:bg-clay text-cream text-[11px] tracking-widest uppercase px-4 py-3 shadow-md hover:shadow-lg transition-colors duration-200"
       >
         <PenLine size={13} strokeWidth={1.5} />
         <span>Zamów indywidualnie</span>
