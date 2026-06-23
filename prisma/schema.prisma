@@ -154,11 +154,15 @@ model CustomOrder {
   customerName  String
   customerEmail String
   customerPhone String?
+  street        String?
+  city          String?
+  postcode      String?
   orderType     String
   description   String
   deadline      String?
   budget        String?
   price         Float?
+  shippingCost  Float?
   paidAmount    Float?
   status        CustomOrderStatus @default(NEW)
   adminNotes    String?

@@ -74,7 +74,7 @@ INPOST_GEOWIDGET_TOKEN="xxxx"               # token widgetu mapy paczkomatów In
 - **Product** — `id`, `slug` (unique), `name`, `description`, `price`, `images[]`, `category`, `stock`, `featured`, `active`
 - **Order** — `id`, `userId` (nullable), `status`, `total`, `shippingCost`, pola adresowe, `paymentMethod` (`transfer`/`stripe`), `paymentStatus` (`pending`/`PAID`/`expired`), `shippingMethod` (`courier`/`parcel_locker`/`pickup`), `parcelLockerCode` (nullable), `trackingNumber` (nullable), `trackingCarrier` (nullable — `dpd`/`dhl`/`inpost`/`poczta`)
 - **OrderItem** — referencja do Order, `productId`, `name`, `price`, `quantity`
-- **CustomOrder** — `id`, `customerName`, `customerEmail`, `customerPhone`, `orderType`, `description`, `deadline`, `budget`, `status`, `adminNotes`
+- **CustomOrder** — `id`, `orderNumber` (auto-increment, wyświetlany jako `IND-{n}`), `customerName`, `customerEmail`, `customerPhone`, `street`, `city`, `postcode`, `orderType`, `description`, `deadline`, `budget`, `price` (cena zamówienia admina), `shippingCost` (koszt wysyłki), `paidAmount` (kwota wpłacona), `status`, `adminNotes`
 - **Setting** — `key` (unique), `value` — magazyn key-value dla dynamicznych ustawień (także adresy użytkowników: `user_address_{userId}`)
 
 ### Enumy

@@ -17,10 +17,14 @@ export async function PATCH(
       status,
       adminNotes,
       price,
+      shippingCost,
       paidAmount,
       customerName,
       customerEmail,
       customerPhone,
+      street,
+      city,
+      postcode,
     } = await req.json();
 
     if (status !== undefined && !Object.values(CustomOrderStatus).includes(status)) {
@@ -56,13 +60,17 @@ export async function PATCH(
     const order = await db.customOrder.update({
       where: { id },
       data: {
-        ...(status !== undefined && { status }),
-        ...(adminNotes !== undefined && { adminNotes: adminNotes.slice(0, 5000) }),
-        ...(price !== undefined && { price: price === null ? null : Math.round(Number(price) * 100) / 100 }),
-        ...(paidAmount !== undefined && { paidAmount: paidAmount === null ? null : Math.round(Number(paidAmount) * 100) / 100 }),
-        ...(customerName !== undefined && { customerName: String(customerName).trim().slice(0, 100) }),
+        ...(status       !== undefined && { status }),
+        ...(adminNotes   !== undefined && { adminNotes: adminNotes.slice(0, 5000) }),
+        ...(price        !== undefined && { price:        price        === null ? null : Math.round(Number(price)        * 100) / 100 }),
+        ...(shippingCost !== undefined && { shippingCost: shippingCost === null ? null : Math.round(Number(shippingCost) * 100) / 100 }),
+        ...(paidAmount   !== undefined && { paidAmount:   paidAmount   === null ? null : Math.round(Number(paidAmount)   * 100) / 100 }),
+        ...(customerName  !== undefined && { customerName:  String(customerName).trim().slice(0, 100) }),
         ...(customerEmail !== undefined && { customerEmail: String(customerEmail).trim() }),
         ...(customerPhone !== undefined && { customerPhone: customerPhone ? String(customerPhone).trim().slice(0, 20) : null }),
+        ...(street   !== undefined && { street:   street   ? String(street).trim().slice(0, 200)  : null }),
+        ...(city     !== undefined && { city:     city     ? String(city).trim().slice(0, 100)    : null }),
+        ...(postcode !== undefined && { postcode: postcode ? String(postcode).trim().slice(0, 20) : null }),
       },
     });
 

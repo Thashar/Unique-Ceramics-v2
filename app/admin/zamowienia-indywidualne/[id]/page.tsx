@@ -75,6 +75,12 @@ export default async function AdminCustomOrderDetailPage({
                 <p className="text-espresso font-semibold">{order.price.toFixed(2)} zł</p>
               </div>
             )}
+            {order.shippingCost != null && (
+              <div>
+                <span className="text-charcoal/50 text-xs">Koszt wysyłki:</span>
+                <p className="text-espresso">{order.shippingCost.toFixed(2)} zł</p>
+              </div>
+            )}
             {order.paidAmount != null && (
               <div>
                 <span className="text-charcoal/50 text-xs">Kwota wpłacona:</span>
@@ -114,10 +120,14 @@ export default async function AdminCustomOrderDetailPage({
         currentStatus={order.status}
         currentNotes={order.adminNotes}
         currentPrice={order.price}
+        currentShippingCost={order.shippingCost}
         currentPaidAmount={order.paidAmount}
         currentCustomerName={order.customerName}
         currentCustomerEmail={order.customerEmail}
         currentCustomerPhone={order.customerPhone}
+        currentStreet={order.street}
+        currentCity={order.city}
+        currentPostcode={order.postcode}
       />
     </div>
   );
