@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { ShoppingBag } from "lucide-react";
+import { ShoppingBag, PenLine } from "lucide-react";
 import Header from "@/components/layout/Header";
 import VacationBanner from "@/components/layout/VacationBanner";
 import Footer from "@/components/layout/Footer";
@@ -87,47 +87,35 @@ export default async function ShopPage({
       <VacationBanner message={vacationMessage} returnDate={vacationEnabled ? vacationEndDate : undefined} />
       <Header topOffset={vacationEnabled} />
       <div className={`min-h-[100svh] bg-warm-white ${vacationEnabled ? "pt-[100px]" : "pt-20"}`}>
-        {/* Hero nagłówek */}
-        {shopHeroImage ? (
-          <div className="relative overflow-hidden" style={{ height: `${shopHeroHeight}vh` }}>
-            <Image
-              src={shopHeroImage}
-              alt="Sklep"
-              fill
-              priority
-              className="object-cover"
-              style={{ objectPosition: shopHeroPos }}
-              sizes="100vw"
-            />
-            <div className="absolute inset-0" style={{ backgroundColor: overlayBg }} />
-            <div className="absolute inset-0 flex flex-col items-center justify-end pb-14 px-6 text-center">
-              <p className="text-xs tracking-[0.3em] uppercase text-terracotta mb-3">Kolekcja</p>
-              <h1 className="font-serif text-5xl md:text-6xl text-cream mb-6">Sklep</h1>
-              <Link
-                href="/zamowienie-indywidualne"
-                className="inline-flex items-center gap-2 border border-cream/60 hover:border-cream text-cream text-sm tracking-widest uppercase px-8 py-3 transition-colors duration-200"
-              >
-                Zamów indywidualnie
-              </Link>
+        {/* Hero nagłówek — ukryty na mobile */}
+        <div className="hidden md:block">
+          {shopHeroImage ? (
+            <div className="relative overflow-hidden" style={{ height: `${shopHeroHeight}vh` }}>
+              <Image
+                src={shopHeroImage}
+                alt="Sklep"
+                fill
+                priority
+                className="object-cover"
+                style={{ objectPosition: shopHeroPos }}
+                sizes="100vw"
+              />
+              <div className="absolute inset-0" style={{ backgroundColor: overlayBg }} />
+              <div className="absolute inset-0 flex flex-col items-center justify-end pb-14 px-6 text-center">
+                <p className="text-xs tracking-[0.3em] uppercase text-terracotta mb-3">Kolekcja</p>
+                <h1 className="font-serif text-5xl md:text-6xl text-cream">Sklep</h1>
+              </div>
             </div>
-          </div>
-        ) : (
-          <div className="bg-cream py-20 px-6 text-center border-b border-sand">
-            <p className="text-xs tracking-[0.3em] uppercase text-clay mb-4">Kolekcja</p>
-            <h1 className="font-serif text-5xl md:text-6xl text-espresso">Sklep</h1>
-            {shopSubtitle && (
-              <p className="mt-4 text-charcoal/55 max-w-md mx-auto text-sm">{shopSubtitle}</p>
-            )}
-            <div className="mt-8">
-              <Link
-                href="/zamowienie-indywidualne"
-                className="inline-flex items-center gap-2 border border-espresso hover:bg-espresso hover:text-cream text-espresso text-sm tracking-widest uppercase px-8 py-4 transition-colors duration-200"
-              >
-                Zamów indywidualnie
-              </Link>
+          ) : (
+            <div className="bg-cream py-20 px-6 text-center border-b border-sand">
+              <p className="text-xs tracking-[0.3em] uppercase text-clay mb-4">Kolekcja</p>
+              <h1 className="font-serif text-5xl md:text-6xl text-espresso">Sklep</h1>
+              {shopSubtitle && (
+                <p className="mt-4 text-charcoal/55 max-w-md mx-auto text-sm">{shopSubtitle}</p>
+              )}
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Filtry kategorii */}
         <div className={`border-b border-sand bg-warm-white sticky ${vacationEnabled ? "top-[100px]" : "top-20"} z-30 shadow-sm`}>
@@ -178,6 +166,15 @@ export default async function ShopPage({
           )}
         </div>
       </div>
+      {/* Pływający przycisk zamówień indywidualnych */}
+      <Link
+        href="/zamowienie-indywidualne"
+        className="fixed bottom-6 right-5 z-40 flex items-center gap-2 bg-espresso hover:bg-clay text-cream text-[11px] tracking-widest uppercase px-4 py-3 shadow-md hover:shadow-lg transition-colors duration-200"
+      >
+        <PenLine size={13} strokeWidth={1.5} />
+        <span>Zamów indywidualnie</span>
+      </Link>
+
       <Footer />
     </>
   );

@@ -59,7 +59,7 @@ export default async function ContactPage() {
   return (
     <>
       <VacationBanner
-        message={vacationEnabled ? "Jestem na urlopie - odpowiem od razu po powrocie" : ""}
+        message={vacationEnabled ? settings.vacation_message : ""}
         returnDate={vacationEnabled ? settings.vacation_end_date : undefined}
       />
       <Header topOffset={vacationEnabled} />

@@ -165,6 +165,7 @@ const DEFAULTS: Record<string, string> = {
   home_about_position: "50% 50%",
   home_workshops_image: "",
   home_workshops_position: "50% 50%",
+  shop_subtitle: "Każdy przedmiot jest unikalny — tworzony ręcznie z lokalnej gliny.",
   shop_hero_image: "",
   shop_hero_position: "50% 50%",
   shop_hero_overlay_color: "#2C2825",
