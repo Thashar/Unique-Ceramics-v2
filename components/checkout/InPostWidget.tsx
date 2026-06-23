@@ -110,15 +110,15 @@ function filterByQuery(items: Point[], q: string): Point[] {
 }
 
 // Buduje URL do API InPost:
-// - cyfry z myślnikiem (44, 44-, 44-100) → zip_code
-// - litery + cyfry (WAR010) → bezpośredni endpoint /points/{code}
-// - wszystko inne (miasto, ulica, etc.) → city
+// - litery + cyfry (WAR010, GLI11Z) → bezpośredni endpoint /points/{code}
+// - cyfry z opcjonalnym myślnikiem (44, 44-, 44-100, 113, 44113) → zip_code
+// - wszystko inne (miasto, ulica, fragment kodu) → city
 function buildApiUrl(q: string): { url: string; direct: boolean } {
   const t = q.trim();
-  if (/^[A-Za-z]{2,5}\d{1,5}$/.test(t)) {
+  if (/^[A-Za-z]{2,5}\d{1,5}[A-Za-z]?$/.test(t)) {
     return { url: `${API}/${t.toUpperCase()}`, direct: true };
   }
-  if (/^\d{1,2}(-\d{0,3})?$/.test(t)) {
+  if (/^\d{2,5}(-\d{0,3})?$/.test(t)) {
     return {
       url: `${API}?per_page=100&type=parcel_locker&zip_code=${encodeURIComponent(t)}`,
       direct: false,
@@ -139,10 +139,15 @@ function InPostSearch({ value, onChange }: { value: string; onChange: (code: str
   const [fetchError, setFetchError] = useState("");
   const [selectedPoint, setSelectedPoint] = useState<Point | null>(null);
 
-  // Cache ostatniego zapytania API — umożliwia natychmiastowe filtrowanie bez nowego requestu
-  const apiCacheRef = useRef<{ url: string; items: Point[] }>({ url: "", items: [] });
-  const abortRef    = useRef<AbortController | null>(null);
-  const timerRef    = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Akumulowany cache — zbiera wyniki ze WSZYSTKICH dotychczasowych zapytań API.
+  // Dzięki temu po wyszukaniu "Gliwice" filtrowanie po "gli", "Poe", "113", "i11" itp.
+  // działa natychmiast bez kolejnych requestów sieciowych.
+  const cacheRef = useRef<{ fetchedUrls: Set<string>; items: Point[] }>({
+    fetchedUrls: new Set(),
+    items: [],
+  });
+  const abortRef = useRef<AbortController | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const runSearch = useCallback(async (q: string) => {
     const t = q.trim();
@@ -152,8 +157,9 @@ function InPostSearch({ value, onChange }: { value: string; onChange: (code: str
       return;
     }
 
-    // 1. Natychmiastowy wynik z cache (filtr client-side po wszystkich polach)
-    const fromCache = filterByQuery(apiCacheRef.current.items, t);
+    // 1. Natychmiastowy wynik z akumulowanego cache — filtr po WSZYSTKICH polach
+    //    (kod, ulica, miasto, kod pocztowy, każdy podciąg).
+    const fromCache = filterByQuery(cacheRef.current.items, t);
     if (fromCache.length > 0) {
       setResults(fromCache);
       setLoading(false);
@@ -161,13 +167,17 @@ function InPostSearch({ value, onChange }: { value: string; onChange: (code: str
 
     // 2. Wyznacz URL do API
     const { url, direct } = buildApiUrl(t);
-    if (url === apiCacheRef.current.url) return; // cache aktualny, nie ma sensu ponownie fetchować
+
+    // Jeśli ten URL był już fetchowany — nie ma potrzeby odpytywać API ponownie.
+    // Wyniki z cache (krok 1) są aktualne.
+    if (cacheRef.current.fetchedUrls.has(url)) return;
 
     // 3. Anuluj poprzedni request w locie
     abortRef.current?.abort();
     abortRef.current = new AbortController();
 
-    setLoading(true);
+    // Spinner tylko gdy nie mamy nic do pokazania z cache
+    if (fromCache.length === 0) setLoading(true);
     setFetchError("");
 
     try {
@@ -187,19 +197,30 @@ function InPostSearch({ value, onChange }: { value: string; onChange: (code: str
         items = (data.items ?? []) as Point[];
       }
 
-      apiCacheRef.current = { url, items };
+      // Oznacz URL jako pobrany (nawet gdy zwrócił 0 wyników — nie próbujemy ponownie)
+      cacheRef.current.fetchedUrls.add(url);
 
-      // 4. Filtruj nowe dane po aktualnym zapytaniu wyszukiwania
-      const filtered = filterByQuery(items, t);
+      // 4. Scalaj nowe wyniki z cache (deduplikacja po nazwie kodu)
+      if (items.length > 0) {
+        const existing = new Set(cacheRef.current.items.map((i: Point) => i.name));
+        const fresh = items.filter((i: Point) => !existing.has(i.name));
+        cacheRef.current.items = [...cacheRef.current.items, ...fresh];
+      }
+
+      // 5. Filtruj pełen (scalony) cache po aktualnym zapytaniu
+      const filtered = filterByQuery(cacheRef.current.items, t);
       setResults(filtered);
 
-      if (filtered.length === 0) {
+      if (filtered.length === 0 && fromCache.length === 0) {
         setFetchError("Brak wyników — sprawdź pisownię lub spróbuj kodu pocztowego (np. 44-100).");
       }
     } catch (e: unknown) {
       if ((e as Error)?.name === "AbortError") return;
-      setFetchError("Nie udało się pobrać listy paczkomatów. Sprawdź połączenie.");
-      setResults([]);
+      // Jeśli mamy wyniki z cache — nie nadpisuj błędem, tylko zgaś spinner
+      if (fromCache.length === 0) {
+        setFetchError("Nie udało się pobrać listy paczkomatów. Sprawdź połączenie.");
+        setResults([]);
+      }
     } finally {
       setLoading(false);
     }
@@ -259,14 +280,14 @@ function InPostSearch({ value, onChange }: { value: string; onChange: (code: str
   return (
     <div className="space-y-2">
       <label className="block text-xs text-charcoal/60 mb-1">
-        Szukaj po nazwie miasta, kodzie pocztowym lub kodzie paczkomatu
+        Szukaj po mieście, kodzie pocztowym lub kodzie paczkomatu — po wyszukaniu miasta możesz zawęzić wyniki wpisując ulicę, kod lub fragment nazwy
       </label>
 
       <div className="relative">
         <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-charcoal/40 pointer-events-none" />
         <input
           type="text"
-          placeholder="np. Warszawa / 44-100 / WAR010"
+          placeholder="np. Gliwice / 44-100 / GLI11Z"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           autoComplete="off"
