@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { Plus, Pencil, Trash2, Check, X, GripVertical } from "lucide-react";
 import { DEFAULT_CATEGORIES, type Category } from "@/lib/category-defaults";
 
@@ -36,16 +36,8 @@ export default function CategoriesManager({ initialCategories }: Props) {
 
   // ── Touch drag & drop (mobile) ─────────────────────────────────────────────
   const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [longPressIdx, setLongPressIdx] = useState<number | null>(null);
   const [touchDraggingIdx, setTouchDraggingIdx] = useState<number | null>(null);
   const [touchDragOverIdx, setTouchDragOverIdx] = useState<number | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
-    };
-  }, []);
 
   function showToast(msg: string) {
     setToast(msg);
@@ -55,53 +47,11 @@ export default function CategoriesManager({ initialCategories }: Props) {
   // ── Touch handlers ─────────────────────────────────────────────────────────
 
   function onGripTouchStart(idx: number, e: React.TouchEvent) {
-    e.stopPropagation();
-    const t = e.touches[0];
-    const startX = t.clientX;
-    const startY = t.clientY;
-    let cancelled = false;
+    e.preventDefault(); // touch-action:none na gripce, ale preventDefault gwarantuje brak scrolla
+    setTouchDraggingIdx(idx);
+    setTouchDragOverIdx(idx);
 
-    setLongPressIdx(idx);
-
-    function onEarlyMove(me: TouchEvent) {
-      const mt = me.touches[0];
-      if (Math.abs(mt.clientX - startX) > 8 || Math.abs(mt.clientY - startY) > 8) {
-        cancel();
-      }
-    }
-
-    function onEarlyEnd() {
-      cancel();
-    }
-
-    function cancel() {
-      if (cancelled) return;
-      cancelled = true;
-      clearTimeout(longPressTimerRef.current!);
-      setLongPressIdx(null);
-      document.removeEventListener("touchmove", onEarlyMove);
-      document.removeEventListener("touchend", onEarlyEnd);
-    }
-
-    document.addEventListener("touchmove", onEarlyMove, { passive: true });
-    document.addEventListener("touchend", onEarlyEnd, { once: true });
-
-    longPressTimerRef.current = setTimeout(() => {
-      if (cancelled) return;
-      document.removeEventListener("touchmove", onEarlyMove);
-      document.removeEventListener("touchend", onEarlyEnd);
-      startTouchDrag(idx);
-    }, 1000);
-  }
-
-  function startTouchDrag(fromIdx: number) {
-    setLongPressIdx(null);
-    setTouchDraggingIdx(fromIdx);
-    setTouchDragOverIdx(fromIdx);
-    if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(50);
-
-    // Use closure ref to track current target without stale state
-    const dropTargetRef = { current: fromIdx };
+    const dropTargetRef = { current: idx };
 
     function onMove(e: TouchEvent) {
       e.preventDefault();
@@ -112,18 +62,17 @@ export default function CategoriesManager({ initialCategories }: Props) {
         const rect = ref.getBoundingClientRect();
         if (y >= rect.top && y <= rect.bottom) target = i;
       });
-      const resolved = target ?? fromIdx;
-      dropTargetRef.current = resolved;
+      dropTargetRef.current = target ?? idx;
       setTouchDragOverIdx(target);
     }
 
     function onEnd() {
       document.removeEventListener("touchmove", onMove);
       const to = dropTargetRef.current;
-      if (fromIdx !== to) {
+      if (idx !== to) {
         setCategories((prev) => {
           const updated = [...prev];
-          const [moved] = updated.splice(fromIdx, 1);
+          const [moved] = updated.splice(idx, 1);
           updated.splice(to, 0, moved);
           return updated.map((c, i) => ({ ...c, order: i }));
         });
@@ -309,11 +258,6 @@ export default function CategoriesManager({ initialCategories }: Props) {
             </p>
           </div>
 
-          {/* Wskazówka dotykowa */}
-          <p className="text-[11px] text-charcoal/35 mb-3 md:hidden">
-            Przytrzymaj <GripVertical size={11} className="inline" /> przez 1 sekundę, aby przeciągnąć.
-          </p>
-
           <div className="border border-sand divide-y divide-sand mb-4">
             {categories.length === 0 && (
               <p className="px-4 py-6 text-sm text-charcoal/40 text-center">Brak kategorii — dodaj pierwszą poniżej.</p>
@@ -322,7 +266,6 @@ export default function CategoriesManager({ initialCategories }: Props) {
             {categories.map((cat, idx) => {
               const isBeingDragged = touchDraggingIdx === idx;
               const isDropTarget = (dragOverIdx === idx || touchDragOverIdx === idx) && touchDraggingIdx !== idx && dragIdxRef.current !== idx;
-              const isLongPressing = longPressIdx === idx;
 
               return (
                 <div
@@ -341,9 +284,7 @@ export default function CategoriesManager({ initialCategories }: Props) {
                   {/* Uchwyt drag & drop */}
                   <div
                     className={`shrink-0 touch-none transition-colors select-none
-                      ${isLongPressing
-                        ? "text-terracotta animate-pulse cursor-wait"
-                        : isBeingDragged
+                      ${isBeingDragged
                         ? "text-clay cursor-grabbing"
                         : "text-charcoal/25 hover:text-charcoal/50 cursor-grab active:cursor-grabbing"
                       }`}
