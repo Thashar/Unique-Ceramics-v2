@@ -43,7 +43,7 @@ export default async function Home() {
   return (
     <>
       <HomeScrollSnap />
-      <Header />
+      <Header hideVacation />
       <main className="flex-1">
         <Hero heroImage={s.home_hero_image} heroPosition={s.home_hero_position} />
         <FeaturedProducts />

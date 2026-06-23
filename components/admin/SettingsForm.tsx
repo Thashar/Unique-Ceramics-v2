@@ -430,66 +430,6 @@ export default function SettingsForm({ section, initial }: Props) {
         </div>
       )}
 
-      {section === "sklep" && (
-        <div className="max-w-2xl space-y-8">
-          <h2 className="font-serif text-2xl text-espresso">Sklep</h2>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium tracking-widest uppercase text-charcoal/70">
-              Podtytuł sklepu
-            </label>
-            <p className="text-xs text-charcoal/40">Widoczny pod nagłówkiem &quot;Sklep&quot; gdy nie ma ustawionego zdjęcia hero.</p>
-            <input
-              type="text"
-              value={shopSubtitle}
-              onChange={(e) => setShopSubtitle(e.target.value)}
-              maxLength={200}
-              placeholder="Każdy przedmiot jest unikalny — tworzony ręcznie z lokalnej gliny."
-              className="w-full bg-warm-white border border-sand focus:border-clay outline-none px-4 py-2.5 text-sm text-espresso"
-            />
-          </div>
-
-          <div className="space-y-4">
-            <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/70">Zdjęcie nagłówka (hero)</h3>
-            <p className="text-xs text-charcoal/40">Tło nagłówka na stronie sklepu. Jeżeli puste — nagłówek ma jednolite kremowe tło.</p>
-            <ImageUploader
-              currentUrl={shopHeroImage}
-              onUploaded={(url) => setShopHeroImage(url)}
-              label="Zdjęcie hero"
-            />
-            <FocalPointPicker imageUrl={shopHeroImage} value={shopHeroPos} onChange={setShopHeroPos} aspectRatio="3/1" />
-            <OverlayControl
-              imageUrl={shopHeroImage}
-              position={shopHeroPos}
-              color={shopOverlayColor}
-              opacity={shopOverlayOpacity}
-              onColorChange={setShopOverlayColor}
-              onOpacityChange={setShopOverlayOpacity}
-              aspectRatio="3/1"
-            />
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label className="text-xs tracking-widest uppercase text-charcoal/80">Wysokość nagłówka z obrazem</label>
-                <span className="text-sm font-medium text-espresso tabular-nums">{shopHeroHeight}vh</span>
-              </div>
-              <input type="range" min="20" max="80" step="5" value={shopHeroHeight} onChange={(e) => setShopHeroHeight(e.target.value)} className="w-full accent-clay" />
-              <p className="text-[11px] text-charcoal/40">Aktywne gdy zdjęcie jest ustawione. Bez zdjęcia nagłówek ma jasne tło jak w /kontakt.</p>
-            </div>
-          </div>
-
-          <SaveButton
-            onClick={() => save([
-              { key: "shop_subtitle",             value: shopSubtitle },
-              { key: "shop_hero_image",           value: shopHeroImage },
-              { key: "shop_hero_position",        value: shopHeroPos },
-              { key: "shop_hero_overlay_color",   value: shopOverlayColor },
-              { key: "shop_hero_overlay_opacity", value: shopOverlayOpacity },
-              { key: "shop_hero_height",          value: shopHeroHeight },
-            ])}
-            label="Zapisz Sklep"
-          />
-        </div>
-      )}
 
       {section === "warsztaty" && (
         <div className="max-w-2xl space-y-8">

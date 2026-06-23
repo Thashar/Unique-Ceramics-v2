@@ -3,7 +3,7 @@ import VacationBanner from "./VacationBanner";
 import { getProjects } from "@/lib/portfolio";
 import { getSettings } from "@/lib/settings";
 
-export default async function HeaderWrapper() {
+export default async function HeaderWrapper({ hideVacation }: { hideVacation?: boolean } = {}) {
   const [projects, settings] = await Promise.all([
     getProjects(),
     getSettings(["vacation_enabled", "vacation_end_date", "vacation_message"]),
@@ -14,10 +14,12 @@ export default async function HeaderWrapper() {
 
   return (
     <>
-      <VacationBanner
-        message={vacationMessage}
-        returnDate={vacationEnabled ? settings.vacation_end_date : undefined}
-      />
+      {!hideVacation && (
+        <VacationBanner
+          message={vacationMessage}
+          returnDate={vacationEnabled ? settings.vacation_end_date : undefined}
+        />
+      )}
       <Header topOffset={vacationEnabled} showProjects={projects.length > 0} />
     </>
   );

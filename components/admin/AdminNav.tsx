@@ -24,7 +24,6 @@ const topLinks = [
 const settingsItems = [
   { id: "strona_glowna", label: "Strona główna" },
   { id: "omnie",     label: "O mnie" },
-  { id: "sklep",     label: "Sklep" },
   { id: "warsztaty", label: "Warsztaty" },
   { id: "regulamin", label: "Regulamin" },
   { id: "polityka",  label: "Polityka prywatności" },
