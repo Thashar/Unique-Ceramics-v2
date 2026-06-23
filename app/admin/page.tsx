@@ -102,25 +102,25 @@ export default async function AdminDashboard() {
 
       {/* Wymaga uwagi */}
       {needsAttention && (
-        <div className="bg-amber-50 border border-amber-200 p-4 flex items-start gap-3">
-          <AlertCircle size={17} className="text-amber-600 mt-0.5 shrink-0" />
+        <div className="bg-amber-50 border border-amber-200 px-3 py-2.5 sm:p-4 flex items-center sm:items-start gap-2 sm:gap-3">
+          <AlertCircle size={15} className="text-amber-600 shrink-0" />
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-amber-800 mb-1">Wymaga uwagi</p>
+            <p className="hidden sm:block text-sm font-medium text-amber-800 mb-1">Wymaga uwagi</p>
             <div className="flex flex-wrap gap-x-4 gap-y-0.5">
               {pendingCount > 0 && (
                 <Link
                   href="/admin/zamowienia?status=PENDING"
-                  className="text-sm text-amber-700 hover:underline"
+                  className="text-xs sm:text-sm text-amber-700 hover:underline"
                 >
-                  {pendingCount} nowe zamówienie{pendingCount > 1 ? "a" : ""} czeka na potwierdzenie →
+                  {pendingCount} zamówieni{pendingCount === 1 ? "e" : "a"} czeka{pendingCount === 1 ? "" : "ją"} →
                 </Link>
               )}
               {newCustomOrderCount > 0 && (
                 <Link
                   href="/admin/zamowienia-indywidualne"
-                  className="text-sm text-amber-700 hover:underline"
+                  className="text-xs sm:text-sm text-amber-700 hover:underline"
                 >
-                  {newCustomOrderCount} nowe zamówienie indywidualne →
+                  {newCustomOrderCount} zam. indywidualne →
                 </Link>
               )}
             </div>
@@ -129,21 +129,21 @@ export default async function AdminDashboard() {
       )}
 
       {/* Statystyki */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {stats.map(({ label, value, icon: Icon, href, sub }) => (
           <Link
             key={label}
             href={href}
-            className="bg-cream border border-sand/60 p-5 hover:border-clay/40 hover:shadow-sm transition-all group"
+            className="bg-cream border border-sand/60 p-3.5 sm:p-5 hover:border-clay/40 hover:shadow-sm transition-all group"
           >
-            <div className="flex items-start justify-between mb-4">
-              <div className="w-9 h-9 bg-warm-white border border-sand/60 rounded-full flex items-center justify-center">
-                <Icon size={17} strokeWidth={1.5} className="text-clay" />
+            <div className="flex items-start justify-between mb-2 sm:mb-4">
+              <div className="w-7 h-7 sm:w-9 sm:h-9 bg-warm-white border border-sand/60 rounded-full flex items-center justify-center">
+                <Icon size={14} strokeWidth={1.5} className="text-clay" />
               </div>
             </div>
-            <p className="font-serif text-2xl text-espresso leading-none tabular-nums">{value}</p>
-            {sub && <p className="text-[11px] text-terracotta mt-1.5">{sub}</p>}
-            <p className="text-[11px] tracking-widest uppercase text-charcoal/45 mt-1.5">{label}</p>
+            <p className="font-serif text-xl sm:text-2xl text-espresso leading-none tabular-nums">{value}</p>
+            {sub && <p className="text-[10px] sm:text-[11px] text-terracotta mt-1 sm:mt-1.5 leading-tight">{sub}</p>}
+            <p className="text-[10px] sm:text-[11px] tracking-widest uppercase text-charcoal/45 mt-1 sm:mt-1.5 leading-tight">{label}</p>
           </Link>
         ))}
       </div>

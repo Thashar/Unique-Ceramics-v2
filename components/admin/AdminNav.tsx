@@ -2,6 +2,7 @@
 
 import { Suspense, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { signOut } from "next-auth/react";
 import { usePathname, useSearchParams } from "next/navigation";
 import {
@@ -172,9 +173,12 @@ export default function AdminNav() {
     <>
       {/* Desktop sidebar */}
       <aside className="hidden md:flex w-56 bg-espresso text-warm-white flex-col fixed inset-y-0 left-0 z-40">
-        <div className="px-5 py-6 border-b border-white/8">
-          <p className="font-serif text-base tracking-wide text-white">Unique Ceramics</p>
-          <p className="text-[10px] text-white/30 mt-0.5 tracking-widest uppercase">Panel administracyjny</p>
+        <div className="px-5 py-5 border-b border-white/8 flex items-center gap-3">
+          <Image src="/images/logo.png" alt="" width={32} height={32} className="h-7 w-auto brightness-0 invert shrink-0" />
+          <div>
+            <p className="font-serif text-base tracking-wide text-white leading-none">Unique Ceramics</p>
+            <p className="text-[10px] text-white/30 mt-0.5 tracking-widest uppercase">Panel administracyjny</p>
+          </div>
         </div>
         <Suspense fallback={null}>
           <AdminNavInner />
@@ -183,7 +187,10 @@ export default function AdminNav() {
 
       {/* Mobile top bar */}
       <header className="md:hidden fixed top-0 left-0 right-0 z-50 bg-espresso text-warm-white flex items-center justify-between px-4 h-14 border-b border-white/10">
-        <p className="font-serif text-base tracking-wide">Unique Ceramics</p>
+        <div className="flex items-center gap-2.5">
+          <Image src="/images/logo.png" alt="" width={28} height={28} className="h-6 w-auto brightness-0 invert shrink-0" />
+          <p className="font-serif text-base tracking-wide">Unique Ceramics</p>
+        </div>
         <button
           onClick={() => setOpen(true)}
           className="p-2 text-white/70 hover:text-white transition-colors"
@@ -206,9 +213,12 @@ export default function AdminNav() {
         }`}
       >
         <div className="px-5 py-5 border-b border-white/10 flex items-center justify-between">
-          <div>
-            <p className="font-serif text-base tracking-wide text-white">Unique Ceramics</p>
-            <p className="text-[10px] text-white/30 mt-0.5 tracking-widest uppercase">Panel admina</p>
+          <div className="flex items-center gap-3">
+            <Image src="/images/logo.png" alt="" width={32} height={32} className="h-7 w-auto brightness-0 invert shrink-0" />
+            <div>
+              <p className="font-serif text-base tracking-wide text-white leading-none">Unique Ceramics</p>
+              <p className="text-[10px] text-white/30 mt-0.5 tracking-widest uppercase">Panel admina</p>
+            </div>
           </div>
           <button
             onClick={() => setOpen(false)}
