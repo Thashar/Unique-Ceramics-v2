@@ -137,7 +137,7 @@ export default function Header({ topOffset = false }: { topOffset?: boolean }) {
   return (
     <>
     <header
-      className={`fixed ${topOffset ? "top-10" : "top-0"} left-0 right-0 z-50 transition-all duration-500 ${
+      className={`fixed ${topOffset ? "top-5" : "top-0"} left-0 right-0 z-50 transition-all duration-500 ${
         dark
           ? "bg-espresso shadow-sm"
           : "bg-transparent"

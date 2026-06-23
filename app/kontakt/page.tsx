@@ -63,7 +63,7 @@ export default async function ContactPage() {
         returnDate={vacationEnabled ? settings.vacation_end_date : undefined}
       />
       <Header topOffset={vacationEnabled} />
-      <main className={`flex-1 ${vacationEnabled ? "pt-[120px]" : "pt-20"}`}>
+      <main className={`flex-1 ${vacationEnabled ? "pt-[100px]" : "pt-20"}`}>
         {/* Nagłówek */}
         <div className="bg-cream px-6 lg:px-10 py-20">
           <div className="max-w-7xl mx-auto">

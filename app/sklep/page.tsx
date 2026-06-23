@@ -86,7 +86,7 @@ export default async function ShopPage({
     <>
       <VacationBanner message={vacationMessage} returnDate={vacationEnabled ? vacationEndDate : undefined} />
       <Header topOffset={vacationEnabled} />
-      <div className={`min-h-[100svh] bg-warm-white ${vacationEnabled ? "pt-[120px]" : "pt-20"}`}>
+      <div className={`min-h-[100svh] bg-warm-white ${vacationEnabled ? "pt-[100px]" : "pt-20"}`}>
         {/* Hero nagłówek */}
         {shopHeroImage ? (
           <div className="relative overflow-hidden" style={{ height: `${shopHeroHeight}vh` }}>
@@ -130,7 +130,7 @@ export default async function ShopPage({
         )}
 
         {/* Filtry kategorii */}
-        <div className={`border-b border-sand bg-warm-white sticky ${vacationEnabled ? "top-[120px]" : "top-20"} z-30 shadow-sm`}>
+        <div className={`border-b border-sand bg-warm-white sticky ${vacationEnabled ? "top-[100px]" : "top-20"} z-30 shadow-sm`}>
           <div className="max-w-7xl mx-auto px-6 lg:px-10 flex gap-2 overflow-x-auto py-4 no-scrollbar">
             {CATEGORIES.map((cat) => (
               <Link
