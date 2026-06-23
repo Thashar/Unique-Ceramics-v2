@@ -137,7 +137,7 @@ export default async function ShopPage({
         </div>
 
         {/* Siatka produktów */}
-        <div className="max-w-7xl mx-auto px-6 lg:px-10 py-16">
+        <div className="max-w-7xl mx-auto px-6 lg:px-10 pt-8 pb-16 md:py-16">
           {dbError ? (
             <div className="text-center py-24">
               <ShoppingBag size={48} strokeWidth={1} className="mx-auto text-sand mb-6" />
@@ -169,7 +169,7 @@ export default async function ShopPage({
       {/* Pływający przycisk zamówień indywidualnych */}
       <Link
         href="/zamowienie-indywidualne"
-        className="fixed bottom-6 right-5 z-40 flex items-center gap-2 bg-espresso hover:bg-clay text-cream text-[11px] tracking-widest uppercase px-4 py-3 shadow-md hover:shadow-lg transition-colors duration-200"
+        className="fixed bottom-6 right-5 z-40 hidden md:flex items-center gap-2 bg-espresso hover:bg-clay text-cream text-[10px] tracking-widest uppercase px-4 py-3 shadow-md hover:shadow-lg transition-colors duration-200"
       >
         <PenLine size={13} strokeWidth={1.5} />
         <span>Zamów indywidualnie</span>
