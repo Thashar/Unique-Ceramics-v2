@@ -20,10 +20,16 @@ export default function VacationBanner({
     }
   }
 
+  const text = [message, formattedDate].filter(Boolean).join(" — ");
+
   return (
-    <div className="fixed top-0 left-0 right-0 z-[60] h-10 bg-terracotta text-espresso text-xs font-semibold flex items-center justify-center px-6 text-center tracking-wide gap-2">
-      {message && <span>{message}</span>}
-      {formattedDate && <span>{formattedDate}</span>}
+    <div className="fixed top-0 left-0 right-0 z-[60] h-10 bg-terracotta text-espresso font-semibold flex items-center justify-center px-4 text-center tracking-wide overflow-hidden">
+      <span
+        className="block whitespace-nowrap"
+        style={{ fontSize: "clamp(10px, 2.2vw, 13px)" }}
+      >
+        {text}
+      </span>
     </div>
   );
 }

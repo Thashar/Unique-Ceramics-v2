@@ -103,6 +103,7 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 | `about_hero_overlay_color` | Kolor maski na hero /o-mnie (hex, default: #2C2825) |
 | `about_hero_overlay_opacity` | Przezroczystość maski /o-mnie (0–100, default: 50) |
 | `about_story` | HTML treści strony o mnie |
+| `shop_subtitle` | Podtytuł pod nagłówkiem „Sklep" na /sklep (widoczny bez zdjęcia hero; default: „Każdy przedmiot jest unikalny — tworzony ręcznie z lokalnej gliny.") |
 | `shop_hero_image` | Ścieżka do zdjęcia hero na /sklep (opcjonalne) |
 | `shop_hero_position` | Punkt kadrowania hero na /sklep |
 | `shop_hero_overlay_color` | Kolor maski na hero /sklep (hex, default: #2C2825) |

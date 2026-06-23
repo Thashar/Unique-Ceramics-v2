@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Plus, Pencil, Trash2, Check, X, ChevronUp, ChevronDown } from "lucide-react";
+import { useState, useRef } from "react";
+import { Plus, Pencil, Trash2, Check, X, GripVertical } from "lucide-react";
 import { DEFAULT_CATEGORIES, type Category } from "@/lib/category-defaults";
 
 interface Props {
@@ -25,8 +25,14 @@ export default function CategoriesManager({ initialCategories }: Props) {
   const [addLabel, setAddLabel] = useState("");
   const [addOpen, setAddOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [orderDirty, setOrderDirty] = useState(false);
+  const [savingOrder, setSavingOrder] = useState(false);
   const [error, setError] = useState("");
   const [toast, setToast] = useState("");
+
+  // drag & drop state
+  const dragIdxRef = useRef<number | null>(null);
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
 
   const isEmpty = categories.length === 0 || categories[0].id.startsWith("_");
 
@@ -103,36 +109,6 @@ export default function CategoriesManager({ initialCategories }: Props) {
     showToast("Kategoria usunięta");
   }
 
-  async function moveCategory(cat: Category, dir: "up" | "down") {
-    const idx = categories.findIndex((c) => c.id === cat.id);
-    const swapIdx = dir === "up" ? idx - 1 : idx + 1;
-    if (swapIdx < 0 || swapIdx >= categories.length) return;
-
-    const updated = [...categories];
-    const orderA = updated[idx].order;
-    const orderB = updated[swapIdx].order;
-
-    // Swap orders
-    updated[idx] = { ...updated[idx], order: orderB };
-    updated[swapIdx] = { ...updated[swapIdx], order: orderA };
-    [updated[idx], updated[swapIdx]] = [updated[swapIdx], updated[idx]];
-    setCategories(updated);
-
-    // Persist both
-    await Promise.all([
-      fetch(`/api/admin/categories/${updated[idx].id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug: updated[idx].slug, label: updated[idx].label, order: updated[idx].order }),
-      }),
-      fetch(`/api/admin/categories/${updated[swapIdx].id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug: updated[swapIdx].slug, label: updated[swapIdx].label, order: updated[swapIdx].order }),
-      }),
-    ]);
-  }
-
   async function addCategory() {
     if (!addLabel.trim()) {
       setError("Nazwa jest wymagana");
@@ -162,6 +138,62 @@ export default function CategoriesManager({ initialCategories }: Props) {
     setAddOpen(false);
     showToast("Dodano kategorię");
     setSaving(false);
+  }
+
+  // ── Drag & drop ────────────────────────────────────────────────────────────
+
+  function handleDragStart(idx: number) {
+    dragIdxRef.current = idx;
+  }
+
+  function handleDragOver(e: React.DragEvent, idx: number) {
+    e.preventDefault();
+    setDragOverIdx(idx);
+  }
+
+  function handleDrop(idx: number) {
+    const from = dragIdxRef.current;
+    if (from === null || from === idx) {
+      dragIdxRef.current = null;
+      setDragOverIdx(null);
+      return;
+    }
+    const updated = [...categories];
+    const [moved] = updated.splice(from, 1);
+    updated.splice(idx, 0, moved);
+    // assign new order values
+    const reordered = updated.map((c, i) => ({ ...c, order: i }));
+    setCategories(reordered);
+    setOrderDirty(true);
+    dragIdxRef.current = null;
+    setDragOverIdx(null);
+  }
+
+  function handleDragEnd() {
+    dragIdxRef.current = null;
+    setDragOverIdx(null);
+  }
+
+  async function saveOrder() {
+    setSavingOrder(true);
+    setError("");
+    try {
+      await Promise.all(
+        categories.map((cat) =>
+          fetch(`/api/admin/categories/${cat.id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ slug: cat.slug, label: cat.label, order: cat.order }),
+          })
+        )
+      );
+      setOrderDirty(false);
+      showToast("Kolejność zapisana");
+    } catch {
+      setError("Błąd zapisu kolejności");
+    } finally {
+      setSavingOrder(false);
+    }
   }
 
   const isDefaultFallback = categories.length > 0 && categories[0].id.startsWith("_");
@@ -196,9 +228,21 @@ export default function CategoriesManager({ initialCategories }: Props) {
 
       {!isDefaultFallback && (
         <>
-          <p className="text-xs text-charcoal/40 tracking-widest uppercase mb-4">
-            {categories.length} {categories.length === 1 ? "kategoria" : categories.length < 5 ? "kategorie" : "kategorii"}
-          </p>
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-xs text-charcoal/40 tracking-widest uppercase">
+              {categories.length} {categories.length === 1 ? "kategoria" : categories.length < 5 ? "kategorie" : "kategorii"}
+            </p>
+            {orderDirty && (
+              <button
+                onClick={saveOrder}
+                disabled={savingOrder}
+                className="flex items-center gap-2 bg-clay hover:bg-espresso disabled:opacity-50 text-cream text-xs tracking-widest uppercase px-4 py-2 transition-colors"
+              >
+                <Check size={13} />
+                {savingOrder ? "Zapisuję..." : "Zatwierdź kolejność"}
+              </button>
+            )}
+          </div>
 
           <div className="border border-sand divide-y divide-sand mb-4">
             {categories.length === 0 && (
@@ -206,23 +250,23 @@ export default function CategoriesManager({ initialCategories }: Props) {
             )}
 
             {categories.map((cat, idx) => (
-              <div key={cat.id} className="flex items-center gap-2 px-4 py-3 bg-warm-white">
-                {/* Kolejność */}
-                <div className="flex flex-col gap-0.5 mr-1">
-                  <button
-                    onClick={() => moveCategory(cat, "up")}
-                    disabled={idx === 0 || saving}
-                    className="text-charcoal/30 hover:text-espresso disabled:opacity-20 transition-colors"
-                  >
-                    <ChevronUp size={14} />
-                  </button>
-                  <button
-                    onClick={() => moveCategory(cat, "down")}
-                    disabled={idx === categories.length - 1 || saving}
-                    className="text-charcoal/30 hover:text-espresso disabled:opacity-20 transition-colors"
-                  >
-                    <ChevronDown size={14} />
-                  </button>
+              <div
+                key={cat.id}
+                draggable
+                onDragStart={() => handleDragStart(idx)}
+                onDragOver={(e) => handleDragOver(e, idx)}
+                onDrop={() => handleDrop(idx)}
+                onDragEnd={handleDragEnd}
+                className={`flex items-center gap-2 px-3 py-3 bg-warm-white transition-colors ${
+                  dragOverIdx === idx ? "bg-sand/40" : ""
+                }`}
+              >
+                {/* Uchwyt drag & drop */}
+                <div
+                  className="cursor-grab active:cursor-grabbing text-charcoal/25 hover:text-charcoal/50 transition-colors shrink-0 touch-none"
+                  title="Przeciągnij, aby zmienić kolejność"
+                >
+                  <GripVertical size={16} strokeWidth={1.5} />
                 </div>
 
                 {editId === cat.id ? (
@@ -284,6 +328,20 @@ export default function CategoriesManager({ initialCategories }: Props) {
             ))}
           </div>
 
+          {orderDirty && (
+            <div className="mb-4 flex items-center gap-3 px-4 py-3 bg-amber-50 border border-amber-200">
+              <p className="text-xs text-amber-700 flex-1">Kolejność zmieniona — zatwierdź, żeby zapisać.</p>
+              <button
+                onClick={saveOrder}
+                disabled={savingOrder}
+                className="flex items-center gap-1.5 bg-clay hover:bg-espresso disabled:opacity-50 text-cream text-xs tracking-widest uppercase px-4 py-2 transition-colors shrink-0"
+              >
+                <Check size={12} />
+                {savingOrder ? "Zapisuję..." : "Zatwierdź"}
+              </button>
+            </div>
+          )}
+
           {/* Formularz dodawania */}
           {addOpen ? (
             <div className="border border-clay/40 bg-cream px-4 py-4 space-y-3">
@@ -331,7 +389,7 @@ export default function CategoriesManager({ initialCategories }: Props) {
 
           {!isEmpty && (
             <p className="mt-8 text-xs text-charcoal/35">
-              Slug kategorii musi odpowiadac wartosci pola Kategoria w produktach. Zmiana sluga nie aktualizuje automatycznie produktow.
+              Slug kategorii musi odpowiadać wartości pola Kategoria w produktach. Zmiana sluga nie aktualizuje automatycznie produktów.
             </p>
           )}
         </>

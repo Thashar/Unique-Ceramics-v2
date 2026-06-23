@@ -42,6 +42,7 @@ export default async function ShopPage({
     getCategories(),
     getSettings([
       "shop_hero_image", "shop_hero_position", "shop_hero_overlay_color", "shop_hero_overlay_opacity", "shop_hero_height",
+      "shop_subtitle",
       "vacation_enabled", "vacation_end_date", "vacation_message",
     ]),
   ]);
@@ -52,6 +53,8 @@ export default async function ShopPage({
   const shopOverlayColor = heroSettings.shop_hero_overlay_color || "#2C2825";
   const shopOverlayOpacity = heroSettings.shop_hero_overlay_opacity || "50";
   const overlayBg = hexToRgba(shopOverlayColor, shopOverlayOpacity);
+
+  const shopSubtitle = heroSettings.shop_subtitle || "Każdy przedmiot jest unikalny — tworzony ręcznie z lokalnej gliny.";
 
   const vacationEnabled = heroSettings.vacation_enabled === "true";
   const vacationEndDate = heroSettings.vacation_end_date;
@@ -112,9 +115,9 @@ export default async function ShopPage({
           <div className="bg-cream py-20 px-6 text-center border-b border-sand">
             <p className="text-xs tracking-[0.3em] uppercase text-clay mb-4">Kolekcja</p>
             <h1 className="font-serif text-5xl md:text-6xl text-espresso">Sklep</h1>
-            <p className="mt-4 text-charcoal/55 max-w-md mx-auto text-sm">
-              Każdy przedmiot jest unikalny — tworzony ręcznie z lokalnej gliny.
-            </p>
+            {shopSubtitle && (
+              <p className="mt-4 text-charcoal/55 max-w-md mx-auto text-sm">{shopSubtitle}</p>
+            )}
             <div className="mt-8">
               <Link
                 href="/zamowienie-indywidualne"

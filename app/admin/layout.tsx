@@ -15,7 +15,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <BfcacheGuard />
       <AdminNav />
       {/* Desktop: offset for sidebar. Mobile: offset for top bar */}
-      <main className="md:ml-56 pt-14 md:pt-0 p-5 md:p-8">
+      <main className="md:ml-56 pt-14 md:pt-10 p-5 md:px-8 md:pb-8">
         {children}
       </main>
     </div>

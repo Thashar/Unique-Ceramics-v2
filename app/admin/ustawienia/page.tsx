@@ -23,6 +23,7 @@ export default async function AdminSettingsPage({
     "shop_hero_overlay_color",
     "shop_hero_overlay_opacity",
     "shop_hero_height",
+    "shop_subtitle",
     "about_hero_image",
     "about_hero_position",
     "about_hero_overlay_color",

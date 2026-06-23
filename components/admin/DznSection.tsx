@@ -6,8 +6,9 @@ import { Scale, AlertTriangle, Edit2, Check, Loader2 } from "lucide-react";
 // Od 2026-01-01: limit = 225% minimalnego wynagrodzenia za kwartał
 // (ustawa z 25.07.2025 r. o ograniczeniu biurokracji i wsparciu przedsiębiorczości,
 //  zmieniająca art. 5 ustawy Prawo przedsiębiorców)
-const DZN_RATIO = 2.25;
-const DZN_WARN  = 0.8; // 80% → kolor czerwony
+const DZN_RATIO     = 2.25;
+const DZN_WARN_AMB  = 0.75; // 75% → pomarańczowy
+const DZN_WARN_RED  = 0.90; // 90% → czerwony
 
 type QuarterData = { rev: number; cnt: number };
 
@@ -151,14 +152,15 @@ export default function DznSection({
       {/* Paski kwartalne */}
       <div className="space-y-5">
         {QUARTERS.map(({ q, label, months }) => {
-          const data      = quarterMap[q] ?? { rev: 0, cnt: 0 };
-          const pctVal    = quarterly > 0 ? (data.rev / quarterly) * 100 : 0;
-          const isOver80  = pctVal >= DZN_WARN * 100;
-          const isCurrent = q === currentQuarter;
+          const data       = quarterMap[q] ?? { rev: 0, cnt: 0 };
+          const pctVal     = quarterly > 0 ? (data.rev / quarterly) * 100 : 0;
+          const isOverRed  = pctVal >= DZN_WARN_RED  * 100;
+          const isOverAmb  = pctVal >= DZN_WARN_AMB  * 100;
+          const isCurrent  = q === currentQuarter;
 
-          const barColor = isOver80
+          const barColor = isOverRed
             ? "bg-red-400"
-            : pctVal >= 60
+            : isOverAmb
             ? "bg-amber-400"
             : "bg-green-400";
 
@@ -172,7 +174,7 @@ export default function DznSection({
                 <div className="flex items-center gap-2.5 flex-wrap">
                   <span
                     className={`text-xs font-semibold tabular-nums ${
-                      isOver80 ? "text-red-600" : "text-espresso"
+                      isOverRed ? "text-red-600" : isOverAmb ? "text-amber-700" : "text-espresso"
                     }`}
                   >
                     {label}
@@ -183,14 +185,17 @@ export default function DznSection({
                       Bieżący
                     </span>
                   )}
-                  {isOver80 && (
+                  {isOverRed && (
                     <AlertTriangle size={13} className="text-red-500 shrink-0" />
+                  )}
+                  {!isOverRed && isOverAmb && (
+                    <AlertTriangle size={13} className="text-amber-500 shrink-0" />
                   )}
                 </div>
                 <div className="flex items-baseline gap-1.5 shrink-0 ml-2">
                   <span
                     className={`text-sm font-medium tabular-nums ${
-                      isOver80 ? "text-red-600" : "text-espresso"
+                      isOverRed ? "text-red-600" : isOverAmb ? "text-amber-700" : "text-espresso"
                     }`}
                   >
                     {fmt(data.rev)} zł
@@ -236,7 +241,7 @@ export default function DznSection({
           przedsiębiorczości. Od 1 stycznia 2026 r. limit jest <strong className="font-medium">kwartalny</strong>{" "}
           (225% min. wynagrodzenia za kwartał kalendarzowy) — miesiące w kwartale można rozliczać
           nierównomiernie.{" "}
-          Czerwony = &gt;{Math.round(DZN_WARN * 100)}% limitu.{" "}
+          Pomarańczowy = &gt;{Math.round(DZN_WARN_AMB * 100)}% limitu · Czerwony = &gt;{Math.round(DZN_WARN_RED * 100)}% limitu.{" "}
           Uwaga: przepisy liczą{" "}
           <em>przychód należny</em> (wystawione rachunki/faktury), nie tylko wpływy
           — skonsultuj z księgowym.

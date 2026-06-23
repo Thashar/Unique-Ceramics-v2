@@ -21,6 +21,7 @@ interface Props {
     shop_hero_overlay_color: string;
     shop_hero_overlay_opacity: string;
     shop_hero_height: string;
+    shop_subtitle: string;
     about_hero_image: string;
     about_hero_position: string;
     about_hero_overlay_color: string;
@@ -195,6 +196,7 @@ export default function SettingsForm({ section, initial }: Props) {
   const [shopOverlayColor, setShopOverlayColor] = useState(initial.shop_hero_overlay_color);
   const [shopOverlayOpacity, setShopOverlayOpacity] = useState(initial.shop_hero_overlay_opacity);
   const [shopHeroHeight, setShopHeroHeight] = useState(initial.shop_hero_height);
+  const [shopSubtitle, setShopSubtitle] = useState(initial.shop_subtitle);
 
   // O mnie
   const [aboutImage, setAboutImage] = useState(initial.about_hero_image);
@@ -432,6 +434,21 @@ export default function SettingsForm({ section, initial }: Props) {
         <div className="max-w-2xl space-y-8">
           <h2 className="font-serif text-2xl text-espresso">Sklep</h2>
 
+          <div className="space-y-2">
+            <label className="text-sm font-medium tracking-widest uppercase text-charcoal/70">
+              Podtytuł sklepu
+            </label>
+            <p className="text-xs text-charcoal/40">Widoczny pod nagłówkiem &quot;Sklep&quot; gdy nie ma ustawionego zdjęcia hero.</p>
+            <input
+              type="text"
+              value={shopSubtitle}
+              onChange={(e) => setShopSubtitle(e.target.value)}
+              maxLength={200}
+              placeholder="Każdy przedmiot jest unikalny — tworzony ręcznie z lokalnej gliny."
+              className="w-full bg-warm-white border border-sand focus:border-clay outline-none px-4 py-2.5 text-sm text-espresso"
+            />
+          </div>
+
           <div className="space-y-4">
             <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/70">Zdjęcie nagłówka (hero)</h3>
             <p className="text-xs text-charcoal/40">Tło nagłówka na stronie sklepu. Jeżeli puste — nagłówek ma jednolite kremowe tło.</p>
@@ -462,6 +479,7 @@ export default function SettingsForm({ section, initial }: Props) {
 
           <SaveButton
             onClick={() => save([
+              { key: "shop_subtitle",             value: shopSubtitle },
               { key: "shop_hero_image",           value: shopHeroImage },
               { key: "shop_hero_position",        value: shopHeroPos },
               { key: "shop_hero_overlay_color",   value: shopOverlayColor },
