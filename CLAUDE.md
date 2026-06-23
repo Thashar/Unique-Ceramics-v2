@@ -80,7 +80,9 @@ INPOST_GEOWIDGET_TOKEN="xxxx"               # token widgetu mapy paczkomatów In
 ### Enumy
 - `Role`: USER, ADMIN
 - `OrderStatus`: PENDING, CONFIRMED, IN_PROGRESS, SHIPPED, DELIVERED, CANCELLED
-- `CustomOrderStatus`: NEW, IN_REVIEW, DONE, CANCELLED
+- `CustomOrderStatus`: NEW, IN_REVIEW, PAID, DONE, CANCELLED
+  - `PAID` (Opłacone) — wymaga `paidAmount > 0`; status `PAID` i `DONE` są wliczane do analityki i raportów PDF
+  - `CustomOrder` posiada `orderNumber` (auto-increment, wyświetlany jako `IND-{n}`), `price` (cena admina), `paidAmount` (kwota wpłacona)
 
 > Kwoty (`price`, `total`, `shippingCost`) są typu `Float` — przy obliczeniach **zawsze zaokrąglaj do groszy** (`Math.round(x * 100) / 100`). Docelowo do migracji na `Decimal`.
 
@@ -191,7 +193,7 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 | GET/POST | `/api/admin/products` | Lista/dodaj produkty (ADMIN; mutacje → `revalidateProductPages()`) |
 | PUT/DELETE | `/api/admin/products/[id]` | Edytuj/usuń produkt (ADMIN; mutacje → rewalidacja) |
 | PATCH | `/api/admin/orders/[id]` | Zmień status zamówienia (ADMIN, walidacja enuma) |
-| PATCH | `/api/admin/custom-orders/[id]` | Status/notatki zamówienia indywidualnego (ADMIN, walidacja enuma) |
+| PATCH | `/api/admin/custom-orders/[id]` | Status/notatki/cena/kwotaWpłacona/daneKlienta zamówienia indywidualnego (ADMIN; PAID wymaga paidAmount > 0) |
 | POST | `/api/admin/upload` | Upload zdjęcia do Supabase Storage (ADMIN, magic bytes, maks. 10 MB) |
 | PATCH/POST | `/api/admin/settings` | Zapis ustawień (ADMIN; sanityzacja HTML + `revalidatePath("/", "layout")`) |
 | GET | `/api/admin/settings/[key]` | Pojedyncze ustawienie (ADMIN) |
@@ -251,7 +253,7 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 - **OrderStatusSelect.tsx** — dropdown statusu zamówienia; przyjmuje `shippingMethod` i `hasTracking` — blokuje zmianę na SHIPPED/DELIVERED gdy brak danych listu (kurier/paczkomat)
 - **OrdersTabs.tsx** — zakładki listy zamówień
 - **ProductsSearch.tsx** — wyszukiwarka w liście produktów
-- **CustomOrderActions.tsx** — akcje zamówień indywidualnych (PATCH)
+- **CustomOrderActions.tsx** — formularz zamówień indywidualnych: edycja danych klienta (przycisk odblokowania), pola ceny i kwoty wpłaconej, dropdown statusu (PAID wymaga paidAmount), notatki; każda zmiana statusu wymaga potwierdzenia `window.confirm`
 - **PaymentStatusToggle.tsx** — `"use client"`, dropdown ręcznej zmiany statusu płatności zamówienia (PENDING/PAID) — PATCH `/api/admin/orders/[id]` z `{ paymentStatus }`
 - **TrackingForm.tsx** — `"use client"`, formularz listu przewozowego: wybór dostawcy (DPD/DHL/InPost/Poczta Polska) + pole numeru; PATCH `/api/admin/orders/[id]` z `{ trackingNumber, trackingCarrier }`; pokazuje link śledzenia po wypełnieniu
 

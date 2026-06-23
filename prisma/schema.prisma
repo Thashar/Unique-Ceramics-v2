@@ -150,6 +150,7 @@ enum OrderStatus {
 
 model CustomOrder {
   id            String            @id @default(cuid())
+  orderNumber   Int               @default(autoincrement()) @unique
   customerName  String
   customerEmail String
   customerPhone String?
@@ -157,6 +158,8 @@ model CustomOrder {
   description   String
   deadline      String?
   budget        String?
+  price         Float?
+  paidAmount    Float?
   status        CustomOrderStatus @default(NEW)
   adminNotes    String?
   createdAt     DateTime          @default(now())
@@ -166,6 +169,7 @@ model CustomOrder {
 enum CustomOrderStatus {
   NEW
   IN_REVIEW
+  PAID
   DONE
   CANCELLED
 }

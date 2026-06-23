@@ -34,6 +34,11 @@ type RawQuarterRow = {
   cnt: number;
 };
 
+type RawSimpleAgg = {
+  total: number;
+  cnt:   number;
+};
+
 // ── Pomocnicze ─────────────────────────────────────────────────────────────────
 
 const MONTH_LABELS = ["Sty", "Lut", "Mar", "Kwi", "Maj", "Cze", "Lip", "Sie", "Wrz", "Paź", "Lis", "Gru"];
@@ -68,6 +73,9 @@ const STATUS_COLORS: Record<string, string> = {
   CANCELLED:   "bg-red-400",
 };
 
+// Statusy zamówień indywidualnych zaliczane do przychodu
+const CUSTOM_ORDER_PAID_STATUSES = ["PAID", "DONE"] as const;
+
 function pct(val: number, total: number) {
   return total === 0 ? 0 : Math.round((val / total) * 100);
 }
@@ -80,11 +88,11 @@ function fmt(n: number) {
 
 export default async function AnalitykiPage() {
   const now = new Date();
-  const yearStart = new Date(now.getFullYear(), 0, 1);
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const yearStart       = new Date(now.getFullYear(), 0, 1);
+  const monthStart      = new Date(now.getFullYear(), now.getMonth(), 1);
   const twelveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 11, 1);
 
-  // Dane miesięczne (ostatnie 12 miesięcy)
+  // ── Zamówienia sklepowe — dane miesięczne (ostatnie 12 miesięcy) ──────────
   const monthlyRaw = await db.$queryRaw<RawMonthRow[]>`
     SELECT
       EXTRACT(YEAR  FROM "createdAt")::int AS yr,
@@ -94,6 +102,22 @@ export default async function AnalitykiPage() {
       COALESCE(SUM("shippingCost"), 0)::float AS ship
     FROM "Order"
     WHERE status != 'CANCELLED'
+      AND "createdAt" >= ${twelveMonthsAgo}
+    GROUP BY yr, mo
+    ORDER BY yr, mo
+  `.catch(() => [] as RawMonthRow[]);
+
+  // ── Zamówienia indywidualne — dane miesięczne (ostatnie 12 miesięcy) ──────
+  const customMonthlyRaw = await db.$queryRaw<RawMonthRow[]>`
+    SELECT
+      EXTRACT(YEAR  FROM "createdAt")::int  AS yr,
+      EXTRACT(MONTH FROM "createdAt")::int  AS mo,
+      COUNT(*)::int                         AS cnt,
+      COALESCE(SUM(price), 0)::float        AS rev,
+      0::float                              AS ship
+    FROM "CustomOrder"
+    WHERE status IN ('PAID', 'DONE')
+      AND price IS NOT NULL
       AND "createdAt" >= ${twelveMonthsAgo}
     GROUP BY yr, mo
     ORDER BY yr, mo
@@ -137,7 +161,7 @@ export default async function AnalitykiPage() {
     ORDER BY cnt DESC
   `.catch(() => [] as RawGroupRow[]);
 
-  // Statusy zamówień
+  // Statusy zamówień sklepowych
   const statusRaw = await db.$queryRaw<RawGroupRow[]>`
     SELECT
       status AS key,
@@ -148,7 +172,7 @@ export default async function AnalitykiPage() {
     ORDER BY cnt DESC
   `.catch(() => [] as RawGroupRow[]);
 
-  // Dane kwartalne bieżącego roku (tylko PAID) — działalność nierejestrowana
+  // ── Kwartały — zamówienia sklepowe (tylko PAID) ────────────────────────────
   const quarterlyRaw = await db.$queryRaw<RawQuarterRow[]>`
     SELECT
       EXTRACT(QUARTER FROM "createdAt")::int AS q,
@@ -162,7 +186,21 @@ export default async function AnalitykiPage() {
     ORDER BY q
   `.catch(() => [] as RawQuarterRow[]);
 
-  // Agregaty roczne i bieżący miesiąc
+  // ── Kwartały — zamówienia indywidualne (PAID lub DONE, z ceną) ───────────
+  const customQuarterlyRaw = await db.$queryRaw<RawQuarterRow[]>`
+    SELECT
+      EXTRACT(QUARTER FROM "createdAt")::int AS q,
+      COALESCE(SUM(price), 0)::float         AS rev,
+      COUNT(*)::int                          AS cnt
+    FROM "CustomOrder"
+    WHERE status IN ('PAID', 'DONE')
+      AND price IS NOT NULL
+      AND EXTRACT(YEAR FROM "createdAt") = ${now.getFullYear()}
+    GROUP BY q
+    ORDER BY q
+  `.catch(() => [] as RawQuarterRow[]);
+
+  // ── Agregaty zamówień sklepowych ──────────────────────────────────────────
   const [yearAgg, monthAgg, allTimeAgg] = await Promise.all([
     db.order.aggregate({
       _sum: { total: true, shippingCost: true },
@@ -181,15 +219,57 @@ export default async function AnalitykiPage() {
     }).catch(() => ({ _sum: { total: 0, shippingCost: 0 }, _count: 0 })),
   ]);
 
-  // ── Budujemy oś czasu 12 miesięcy (wypełniamy braki zerami) ──────────────
+  // ── Agregaty zamówień indywidualnych (PAID lub DONE, z ceną) ─────────────
+  const [customYearAgg, customMonthAgg, customAllTimeAgg] = await Promise.all([
+    db.$queryRaw<RawSimpleAgg[]>`
+      SELECT COALESCE(SUM(price), 0)::float AS total, COUNT(*)::int AS cnt
+      FROM "CustomOrder"
+      WHERE status IN ('PAID', 'DONE') AND price IS NOT NULL
+        AND "createdAt" >= ${yearStart}
+    `.catch(() => [{ total: 0, cnt: 0 }] as RawSimpleAgg[]),
+    db.$queryRaw<RawSimpleAgg[]>`
+      SELECT COALESCE(SUM(price), 0)::float AS total, COUNT(*)::int AS cnt
+      FROM "CustomOrder"
+      WHERE status IN ('PAID', 'DONE') AND price IS NOT NULL
+        AND "createdAt" >= ${monthStart}
+    `.catch(() => [{ total: 0, cnt: 0 }] as RawSimpleAgg[]),
+    db.$queryRaw<RawSimpleAgg[]>`
+      SELECT COALESCE(SUM(price), 0)::float AS total, COUNT(*)::int AS cnt
+      FROM "CustomOrder"
+      WHERE status IN ('PAID', 'DONE') AND price IS NOT NULL
+    `.catch(() => [{ total: 0, cnt: 0 }] as RawSimpleAgg[]),
+  ]);
+
+  const customYearRevenue  = Number(customYearAgg[0]?.total  ?? 0);
+  const customYearOrders   = Number(customYearAgg[0]?.cnt    ?? 0);
+  const customMonthRevenue = Number(customMonthAgg[0]?.total ?? 0);
+  const customMonthOrders  = Number(customMonthAgg[0]?.cnt   ?? 0);
+  const customAllRevenue   = Number(customAllTimeAgg[0]?.total ?? 0);
+  const customAllOrders    = Number(customAllTimeAgg[0]?.cnt   ?? 0);
+
+  // ── Budujemy oś czasu 12 miesięcy ─────────────────────────────────────────
   const monthMap = new Map<string, RawMonthRow>();
   for (const r of monthlyRaw) {
     monthMap.set(`${r.yr}-${r.mo}`, r);
   }
+  // Dodajemy zamówienia indywidualne do tej samej mapy
+  for (const r of customMonthlyRaw) {
+    const key = `${Number(r.yr)}-${Number(r.mo)}`;
+    const existing = monthMap.get(key);
+    if (existing) {
+      monthMap.set(key, {
+        ...existing,
+        cnt: existing.cnt + Number(r.cnt),
+        rev: existing.rev + Number(r.rev),
+      });
+    } else {
+      monthMap.set(key, { yr: Number(r.yr), mo: Number(r.mo), cnt: Number(r.cnt), rev: Number(r.rev), ship: 0 });
+    }
+  }
 
   const timeline: { label: string; yr: number; mo: number; cnt: number; rev: number; ship: number }[] = [];
   for (let i = 11; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const d  = new Date(now.getFullYear(), now.getMonth() - i, 1);
     const yr = d.getFullYear();
     const mo = d.getMonth() + 1;
     const found = monthMap.get(`${yr}-${mo}`);
@@ -205,29 +285,44 @@ export default async function AnalitykiPage() {
   const maxRev = Math.max(...timeline.map((t) => t.rev), 1);
   const maxCnt = Math.max(...timeline.map((t) => t.cnt), 1);
 
-  // ── Sumaryczne wartości ───────────────────────────────────────────────────
-  const yearRevenue  = Number(yearAgg._sum.total      ?? 0);
+  // ── Sumaryczne wartości (sklep + indywidualne) ─────────────────────────────
+  const yearRevenue  = Number(yearAgg._sum.total       ?? 0) + customYearRevenue;
   const yearShipping = Number(yearAgg._sum.shippingCost ?? 0);
-  const yearOrders   = Number(yearAgg._count ?? 0);
+  const yearOrders   = Number(yearAgg._count  ?? 0)         + customYearOrders;
   const avgOrder     = yearOrders > 0 ? yearRevenue / yearOrders : 0;
-  const monthRevenue = Number(monthAgg._sum.total ?? 0);
-  const monthOrders  = Number(monthAgg._count ?? 0);
-  const allRevenue   = Number(allTimeAgg._sum.total ?? 0);
-  const allOrders    = Number(allTimeAgg._count ?? 0);
+  const monthRevenue = Number(monthAgg._sum.total ?? 0)      + customMonthRevenue;
+  const monthOrders  = Number(monthAgg._count ?? 0)          + customMonthOrders;
+  const allRevenue   = Number(allTimeAgg._sum.total ?? 0)    + customAllRevenue;
+  const allOrders    = Number(allTimeAgg._count ?? 0)        + customAllOrders;
 
   const totalShipping = shippingRaw.reduce((s, r) => s + Number(r.total), 0);
   const totalOrders   = statusRaw.reduce((s, r) => s + Number(r.cnt), 0);
 
-  // ── Działalność nierejestrowana ────────────────────────────────────────────
+  // ── Działalność nierejestrowana — kwartały (sklep + indywidualne) ─────────
   const dznMinWageStr = await getSetting("dzn_min_wage").catch(() => "4806");
   const dznMinWage    = Math.max(1000, parseInt(dznMinWageStr || "4806", 10) || 4806);
-  const currentQuarter = Math.ceil((now.getMonth() + 1) / 3); // 1–4
+  const currentQuarter = Math.ceil((now.getMonth() + 1) / 3);
 
-  // Konwertuj Map → zwykły obiekt (JSON-serialisowalny do przekazania do Client Component)
   const quarterData: Record<number, { rev: number; cnt: number }> = {};
   for (const r of quarterlyRaw) {
-    quarterData[Number(r.q)] = { rev: Number(r.rev), cnt: Number(r.cnt) };
+    const q = Number(r.q);
+    quarterData[q] = { rev: Number(r.rev), cnt: Number(r.cnt) };
   }
+  // Dodaj zamówienia indywidualne do kwartałów
+  for (const r of customQuarterlyRaw) {
+    const q = Number(r.q);
+    if (quarterData[q]) {
+      quarterData[q].rev += Number(r.rev);
+      quarterData[q].cnt += Number(r.cnt);
+    } else {
+      quarterData[q] = { rev: Number(r.rev), cnt: Number(r.cnt) };
+    }
+  }
+
+  // Czy są jakieś zamówienia indywidualne uwzględnione w analityce
+  const hasCustomOrders = customAllOrders > 0;
+
+  void CUSTOM_ORDER_PAID_STATUSES; // używane w zapytaniach SQL (suppress unused warning)
 
   return (
     <div className="max-w-5xl space-y-8">
@@ -251,6 +346,12 @@ export default async function AnalitykiPage() {
           Dane aktualne na {now.toLocaleDateString("pl-PL", { day: "numeric", month: "long", year: "numeric" })}
         </p>
       </div>
+
+      {hasCustomOrders && (
+        <div className="bg-purple-50 border border-purple-200 px-4 py-2.5 text-xs text-purple-700">
+          Dane uwzględniają zamówienia indywidualne ze statusem Opłacone lub Zrealizowane.
+        </div>
+      )}
 
       {/* ── Karty podsumowania ─────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -294,7 +395,9 @@ export default async function AnalitykiPage() {
       {/* ── Wykres miesięczny ──────────────────────────────────────────────── */}
       <div className="bg-cream p-6">
         <h2 className="font-serif text-lg text-espresso mb-1">Przychód i zamówienia — ostatnie 12 miesięcy</h2>
-        <p className="text-xs text-charcoal/40 mb-6">Bez anulowanych zamówień</p>
+        <p className="text-xs text-charcoal/40 mb-6">
+          Bez anulowanych · uwzględnia zamówienia indywidualne (Opłacone/Zrealizowane)
+        </p>
 
         {/* Wykres słupkowy */}
         <div className="flex items-end gap-1.5 h-40 mb-2">
@@ -541,7 +644,7 @@ export default async function AnalitykiPage() {
                 </div>
               ))}
               <p className="text-[11px] text-charcoal/35 pt-2 border-t border-sand">
-                Łącznie: {totalOrders} zamówień
+                Łącznie: {totalOrders} zamówień sklepowych
               </p>
             </div>
           )}
@@ -564,6 +667,11 @@ export default async function AnalitykiPage() {
             </div>
           ))}
         </div>
+        {hasCustomOrders && (
+          <p className="text-[10px] text-purple-600 mt-4 pt-3 border-t border-sand">
+            * Przychód zawiera zamówienia indywidualne: {fmt(customYearRevenue)} zł ({customYearOrders} zam.)
+          </p>
+        )}
       </div>
 
       {/* ── Działalność nierejestrowana ───────────────────────────────────── */}

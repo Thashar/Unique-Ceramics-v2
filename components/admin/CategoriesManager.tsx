@@ -331,7 +331,7 @@ export default function CategoriesManager({ initialCategories }: Props) {
 
           {!isEmpty && (
             <p className="mt-8 text-xs text-charcoal/35">
-              Slug kategorii musi odpowiadać wartości pola „Kategoria" w produktach. Zmiana sluga nie aktualizuje automatycznie produktów.
+              Slug kategorii musi odpowiadac wartosci pola Kategoria w produktach. Zmiana sluga nie aktualizuje automatycznie produktow.
             </p>
           )}
         </>

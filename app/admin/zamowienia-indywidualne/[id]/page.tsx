@@ -3,20 +3,22 @@ export const dynamic = "force-dynamic";
 import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, Mail } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import CustomOrderActions from "@/components/admin/CustomOrderActions";
 
 const STATUS_COLORS: Record<string, string> = {
-  NEW: "bg-yellow-100 text-yellow-700",
+  NEW:       "bg-yellow-100 text-yellow-700",
   IN_REVIEW: "bg-blue-100 text-blue-700",
-  DONE: "bg-green-100 text-green-700",
+  PAID:      "bg-purple-100 text-purple-700",
+  DONE:      "bg-green-100 text-green-700",
   CANCELLED: "bg-red-100 text-red-700",
 };
 
 const STATUS_LABELS: Record<string, string> = {
-  NEW: "Nowe",
+  NEW:       "Nowe",
   IN_REVIEW: "W trakcie",
-  DONE: "Zrealizowane",
+  PAID:      "Opłacone",
+  DONE:      "Zrealizowane",
   CANCELLED: "Anulowane",
 };
 
@@ -28,8 +30,6 @@ export default async function AdminCustomOrderDetailPage({
   const { id } = await params;
   const order = await db.customOrder.findUnique({ where: { id } });
   if (!order) notFound();
-
-  const mailSubject = encodeURIComponent(`Odpowiedź na zamówienie indywidualne — ${order.orderType}`);
 
   return (
     <div className="max-w-3xl">
@@ -44,7 +44,8 @@ export default async function AdminCustomOrderDetailPage({
       <div className="flex items-start justify-between mb-8">
         <div>
           <h1 className="font-serif text-3xl text-espresso">Zamówienie indywidualne</h1>
-          <p className="text-xs font-mono text-charcoal/40 mt-1">{order.id}</p>
+          <p className="text-lg font-mono text-clay mt-1">IND-{order.orderNumber}</p>
+          <p className="text-xs font-mono text-charcoal/30 mt-0.5">{order.id}</p>
         </div>
         <span
           className={`text-[10px] tracking-widest uppercase px-3 py-1.5 ${STATUS_COLORS[order.status] ?? "bg-sand text-charcoal"}`}
@@ -53,25 +54,10 @@ export default async function AdminCustomOrderDetailPage({
         </span>
       </div>
 
+      {/* Szczegóły zamówienia */}
       <div className="grid grid-cols-2 gap-6 mb-6">
         <div className="bg-cream p-6">
-          <h2 className="text-xs tracking-widest uppercase text-charcoal/50 mb-4">Klient</h2>
-          <p className="text-sm font-medium text-espresso">{order.customerName}</p>
-          <p className="text-sm text-charcoal/80 mt-1">{order.customerEmail}</p>
-          {order.customerPhone && (
-            <p className="text-sm text-charcoal/80 mt-0.5">{order.customerPhone}</p>
-          )}
-          <a
-            href={`mailto:${order.customerEmail}?subject=${mailSubject}`}
-            className="inline-flex items-center gap-2 mt-4 text-xs tracking-widest uppercase text-clay hover:text-espresso transition-colors"
-          >
-            <Mail size={13} strokeWidth={1.5} />
-            Odpowiedz e-mailem
-          </a>
-        </div>
-
-        <div className="bg-cream p-6">
-          <h2 className="text-xs tracking-widest uppercase text-charcoal/50 mb-4">Szczegóły</h2>
+          <h2 className="text-xs tracking-widest uppercase text-charcoal/50 mb-4">Szczegóły zamówienia</h2>
           <div className="space-y-2 text-sm">
             <div>
               <span className="text-charcoal/50 text-xs">Rodzaj:</span>
@@ -79,8 +65,20 @@ export default async function AdminCustomOrderDetailPage({
             </div>
             {order.budget && (
               <div>
-                <span className="text-charcoal/50 text-xs">Budżet:</span>
+                <span className="text-charcoal/50 text-xs">Budżet klienta:</span>
                 <p className="text-espresso">{order.budget}</p>
+              </div>
+            )}
+            {order.price != null && (
+              <div>
+                <span className="text-charcoal/50 text-xs">Cena zamówienia:</span>
+                <p className="text-espresso font-semibold">{order.price.toFixed(2)} zł</p>
+              </div>
+            )}
+            {order.paidAmount != null && (
+              <div>
+                <span className="text-charcoal/50 text-xs">Kwota wpłacona:</span>
+                <p className="text-espresso font-semibold">{order.paidAmount.toFixed(2)} zł</p>
               </div>
             )}
             {order.deadline && (
@@ -103,17 +101,23 @@ export default async function AdminCustomOrderDetailPage({
             </div>
           </div>
         </div>
+
+        <div className="bg-cream p-6">
+          <h2 className="text-xs tracking-widest uppercase text-charcoal/50 mb-4">Opis zamówienia</h2>
+          <p className="text-sm text-charcoal/80 leading-relaxed whitespace-pre-wrap">{order.description}</p>
+        </div>
       </div>
 
-      <div className="bg-cream p-6 mb-6">
-        <h2 className="text-xs tracking-widest uppercase text-charcoal/50 mb-4">Opis zamówienia</h2>
-        <p className="text-sm text-charcoal/80 leading-relaxed whitespace-pre-wrap">{order.description}</p>
-      </div>
-
+      {/* Formularz klienta + status */}
       <CustomOrderActions
         orderId={order.id}
         currentStatus={order.status}
         currentNotes={order.adminNotes}
+        currentPrice={order.price}
+        currentPaidAmount={order.paidAmount}
+        currentCustomerName={order.customerName}
+        currentCustomerEmail={order.customerEmail}
+        currentCustomerPhone={order.customerPhone}
       />
     </div>
   );
