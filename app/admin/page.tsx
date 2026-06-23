@@ -112,7 +112,7 @@ export default async function AdminDashboard() {
                   href="/admin/zamowienia?status=PENDING"
                   className="text-xs sm:text-sm text-amber-700 hover:underline"
                 >
-                  {pendingCount} zamówieni{pendingCount === 1 ? "e" : "a"} czeka{pendingCount === 1 ? "" : "ją"} →
+                  {pendingCount} nowe zamówienia →
                 </Link>
               )}
               {newCustomOrderCount > 0 && (
@@ -120,7 +120,7 @@ export default async function AdminDashboard() {
                   href="/admin/zamowienia-indywidualne"
                   className="text-xs sm:text-sm text-amber-700 hover:underline"
                 >
-                  {newCustomOrderCount} zam. indywidualne →
+                  {newCustomOrderCount} nowe indywidualne →
                 </Link>
               )}
             </div>
