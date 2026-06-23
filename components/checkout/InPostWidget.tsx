@@ -109,25 +109,34 @@ function filterByQuery(items: Point[], q: string): Point[] {
   );
 }
 
-// Buduje URL do API InPost:
+// Zwraca listę strategii API dla zapytania (uruchamiane równolegle):
 // - litery + cyfry (WAR010, GLI11Z) → bezpośredni endpoint /points/{code}
-// - cyfry z opcjonalnym myślnikiem (44, 44-, 44-100, 113, 44113) → zip_code
-// - wszystko inne (miasto, ulica, fragment kodu) → city
-function buildApiUrl(q: string): { url: string; direct: boolean } {
+// - cyfry z opcjonalnym myślnikiem (44, 44-, 44-100, 113) → zip_code
+// - 2–4 litery (np. "Gli", "War") → city=... ORAZ name=... (prefiks kodu paczkomatu)
+// - dłuższy tekst → city=...
+function buildApiStrategies(q: string): Array<{ url: string; direct: boolean }> {
   const t = q.trim();
   if (/^[A-Za-z]{2,5}\d{1,5}[A-Za-z]?$/.test(t)) {
-    return { url: `${API}/${t.toUpperCase()}`, direct: true };
+    return [{ url: `${API}/${t.toUpperCase()}`, direct: true }];
   }
   if (/^\d{2,5}(-\d{0,3})?$/.test(t)) {
-    return {
+    return [{
       url: `${API}?per_page=100&type=parcel_locker&zip_code=${encodeURIComponent(t)}`,
       direct: false,
-    };
+    }];
   }
-  return {
+  // Krótkie zapytanie literowe: może być prefiks kodu (Gli→GLI11Z) lub skrót miasta.
+  // Próbujemy obu podejść równolegle — city=... i name=... (jeśli API to obsługuje).
+  if (/^[A-Za-z]{2,4}$/.test(t)) {
+    return [
+      { url: `${API}?per_page=100&type=parcel_locker&city=${encodeURIComponent(t)}`, direct: false },
+      { url: `${API}?per_page=100&type=parcel_locker&name=${encodeURIComponent(t.toUpperCase())}`, direct: false },
+    ];
+  }
+  return [{
     url: `${API}?per_page=100&type=parcel_locker&city=${encodeURIComponent(t)}`,
     direct: false,
-  };
+  }];
 }
 
 // --- Wyszukiwarka (bez tokenu) ---
@@ -165,49 +174,49 @@ function InPostSearch({ value, onChange }: { value: string; onChange: (code: str
       setLoading(false);
     }
 
-    // 2. Wyznacz URL do API
-    const { url, direct } = buildApiUrl(t);
+    // 2. Wyznacz strategie API i odfiltruj już pobrane URLe
+    const strategies = buildApiStrategies(t);
+    const pending = strategies.filter((s) => !cacheRef.current.fetchedUrls.has(s.url));
+    if (pending.length === 0) return;
 
-    // Jeśli ten URL był już fetchowany — nie ma potrzeby odpytywać API ponownie.
-    // Wyniki z cache (krok 1) są aktualne.
-    if (cacheRef.current.fetchedUrls.has(url)) return;
-
-    // 3. Anuluj poprzedni request w locie
+    // 3. Anuluj poprzednie requesty w locie
     abortRef.current?.abort();
     abortRef.current = new AbortController();
+    const signal = abortRef.current.signal;
 
-    // Spinner tylko gdy nie mamy nic do pokazania z cache
     if (fromCache.length === 0) setLoading(true);
     setFetchError("");
 
     try {
-      const res = await fetch(url, {
-        headers: { Accept: "application/json" },
-        signal: abortRef.current.signal,
-      });
+      // 4. Wszystkie strategie równolegle
+      const allItems = (
+        await Promise.all(
+          pending.map(async ({ url, direct }) => {
+            const res = await fetch(url, {
+              headers: { Accept: "application/json" },
+              signal,
+            });
+            // Oznacz jako pobrane nawet gdy 0 wyników, żeby nie ponawiać
+            cacheRef.current.fetchedUrls.add(url);
+            if (!res.ok) return [] as Point[];
+            if (direct) {
+              const item = (await res.json()) as Point;
+              return item?.name ? [item] : ([] as Point[]);
+            }
+            const data = await res.json();
+            return (data.items ?? []) as Point[];
+          }),
+        )
+      ).flat();
 
-      if (!res.ok) throw new Error("http");
-
-      let items: Point[];
-      if (direct) {
-        const item = (await res.json()) as Point;
-        items = item?.name ? [item] : [];
-      } else {
-        const data = await res.json();
-        items = (data.items ?? []) as Point[];
-      }
-
-      // Oznacz URL jako pobrany (nawet gdy zwrócił 0 wyników — nie próbujemy ponownie)
-      cacheRef.current.fetchedUrls.add(url);
-
-      // 4. Scalaj nowe wyniki z cache (deduplikacja po nazwie kodu)
-      if (items.length > 0) {
+      // 5. Scalaj z cache (deduplikacja po nazwie kodu)
+      if (allItems.length > 0) {
         const existing = new Set(cacheRef.current.items.map((i: Point) => i.name));
-        const fresh = items.filter((i: Point) => !existing.has(i.name));
+        const fresh = allItems.filter((i: Point) => !existing.has(i.name));
         cacheRef.current.items = [...cacheRef.current.items, ...fresh];
       }
 
-      // 5. Filtruj pełen (scalony) cache po aktualnym zapytaniu
+      // 6. Filtruj pełen (scalony) cache po aktualnym zapytaniu
       const filtered = filterByQuery(cacheRef.current.items, t);
       setResults(filtered);
 
@@ -216,7 +225,6 @@ function InPostSearch({ value, onChange }: { value: string; onChange: (code: str
       }
     } catch (e: unknown) {
       if ((e as Error)?.name === "AbortError") return;
-      // Jeśli mamy wyniki z cache — nie nadpisuj błędem, tylko zgaś spinner
       if (fromCache.length === 0) {
         setFetchError("Nie udało się pobrać listy paczkomatów. Sprawdź połączenie.");
         setResults([]);
