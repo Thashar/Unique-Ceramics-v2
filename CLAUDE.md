@@ -238,7 +238,7 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 - **InstagramIcon.tsx** — SVG ikona Instagram
 
 ### `components/checkout/`
-- **InPostWidget.tsx** — `"use client"`, widget wyboru paczkomatu InPost; gdy `INPOST_GEOWIDGET_TOKEN` ustawiony: mapa CDN geowidget.inpost.pl; bez tokenu: wyszukiwarka przez publiczne API `api-shipx-pl.easypack24.net` — obsługuje wyszukiwanie po nazwie miasta (`city`), kodzie pocztowym XX-XXX (`zip_code`) i kodzie paczkomatu (indywidualny endpoint `/points/{code}`). Zwraca wybrany kod przez `onChange`.
+- **InPostWidget.tsx** — `"use client"`, widget wyboru paczkomatu InPost; gdy `INPOST_GEOWIDGET_TOKEN` ustawiony: mapa CDN geowidget.inpost.pl; bez tokenu: wyszukiwarka przez publiczne API `api-shipx-pl.easypack24.net` — obsługuje wyszukiwanie po nazwie miasta (`city`), kodzie pocztowym XX-XXX lub fragmencie cyfr (`zip_code`) i kodzie paczkomatu (indywidualny endpoint `/points/{code}`). Cache akumuluje wyniki ze wszystkich zapytań — po wyszukaniu miasta filtrowanie po dowolnym podciągu (fragment kodu, ulicy, kodu pocztowego) działa bez kolejnych requestów. Puste odpowiedzi API nie nadpisują wyników z cache. Zwraca wybrany kod przez `onChange`.
 
 ### `components/admin/`
 - **AdminNav.tsx** — sidebar + mobilny drawer
