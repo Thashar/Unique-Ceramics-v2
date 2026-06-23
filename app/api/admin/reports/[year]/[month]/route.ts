@@ -121,13 +121,14 @@ export async function GET(
 
   // ── Sumy indywidualnych ───────────────────────────────────────────────────────
 
-  const customRevenue = customOrders.reduce((s, o) => s + (o.price ?? 0), 0);
+  const customRevenue  = customOrders.reduce((s, o) => s + (o.price        ?? 0), 0);
+  const customShipping = customOrders.reduce((s, o) => s + (o.shippingCost ?? 0), 0);
 
   // ── Łącznie ───────────────────────────────────────────────────────────────────
 
   const totalCount    = orders.length + customOrders.length;
-  const totalRevenue  = shopRevenue  + customRevenue;
-  const totalShipping = shopShipping;
+  const totalRevenue  = shopRevenue  + customRevenue + customShipping;
+  const totalShipping = shopShipping + customShipping;
   const totalProducts = shopProducts + customRevenue;
   const avgOrder      = totalCount > 0 ? totalRevenue / totalCount : 0;
 
@@ -177,15 +178,17 @@ export async function GET(
 
   // Kolumny tabeli zamówień indywidualnych (suma = 772)
   const CUSTOM_COLS = [
-    { label: "Nr",         w:  48, align: "left"  as const },
-    { label: "Data",       w:  58, align: "left"  as const },
-    { label: "Klient",     w: 160, align: "left"  as const },
-    { label: "Rodzaj",     w: 180, align: "left"  as const },
-    { label: "Opis",       w: 218, align: "left"  as const },
-    { label: "Wplacono",   w:  80, align: "right" as const },
-    { label: "Cena",       w:  28, align: "right" as const },
+    { label: "Nr",       w:  40, align: "left"  as const },
+    { label: "Data",     w:  52, align: "left"  as const },
+    { label: "Klient",   w: 115, align: "left"  as const },
+    { label: "Rodzaj",   w: 100, align: "left"  as const },
+    { label: "Opis",     w: 155, align: "left"  as const },
+    { label: "Adres",    w: 105, align: "left"  as const },
+    { label: "Wysylka",  w:  55, align: "right" as const },
+    { label: "Wplacono", w:  65, align: "right" as const },
+    { label: "Cena",     w:  85, align: "right" as const },
   ];
-  // 48+58+160+180+218+80+28 = 772 ✓
+  // 40+52+115+100+155+105+55+65+85 = 772 ✓
 
   const FS      = 7;
   const FS_HDR  = 6.5;
@@ -467,13 +470,20 @@ export async function GET(
       const STATUS_LABEL_MAP: Record<string, string> = { PAID: "Oplacone", DONE: "Zrealizowane" };
       const statusLabel = STATUS_LABEL_MAP[co.status] ?? co.status;
 
+      const addressText = [
+        co.street ?? "",
+        [co.postcode, co.city].filter(Boolean).join(" "),
+      ].filter(Boolean).join("\n") || "—";
+
       const cells = [
         `IND-${co.orderNumber}\n${statusLabel}`,
         fmtDate(new Date(co.createdAt)),
         clientText,
         co.orderType,
         descText,
-        co.paidAmount != null ? fmtMoney(co.paidAmount) : "—",
+        addressText,
+        co.shippingCost != null ? fmtMoney(co.shippingCost) : "—",
+        co.paidAmount   != null ? fmtMoney(co.paidAmount)   : "—",
         fmtMoney(co.price ?? 0),
       ];
 
@@ -526,7 +536,9 @@ export async function GET(
 
     doc.font(B).fontSize(8).fillColor("#6B21A8")
        .text(
-         `Lacznie ${customOrders.length} zamowien indywidualnych   |   Przychod: ${fmtMoney(customRevenue)}`,
+         `Lacznie ${customOrders.length} zamowien indywidualnych   |   ` +
+         `Przychod z produktow: ${fmtMoney(customRevenue)}   |   ` +
+         `Koszty wysylki: ${fmtMoney(customShipping)}`,
          ML, posY, { width: TW, align: "right", lineBreak: false }
        );
 

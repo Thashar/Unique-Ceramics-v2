@@ -34,11 +34,6 @@ type RawQuarterRow = {
   cnt: number;
 };
 
-type RawSimpleAgg = {
-  total: number;
-  cnt:   number;
-};
-
 // ── Pomocnicze ─────────────────────────────────────────────────────────────────
 
 const MONTH_LABELS = ["Sty", "Lut", "Mar", "Kwi", "Maj", "Cze", "Lip", "Sie", "Wrz", "Paź", "Lis", "Gru"];
@@ -110,11 +105,11 @@ export default async function AnalitykiPage() {
   // ── Zamówienia indywidualne — dane miesięczne (ostatnie 12 miesięcy) ──────
   const customMonthlyRaw = await db.$queryRaw<RawMonthRow[]>`
     SELECT
-      EXTRACT(YEAR  FROM "createdAt")::int  AS yr,
-      EXTRACT(MONTH FROM "createdAt")::int  AS mo,
-      COUNT(*)::int                         AS cnt,
-      COALESCE(SUM(price), 0)::float        AS rev,
-      0::float                              AS ship
+      EXTRACT(YEAR  FROM "createdAt")::int          AS yr,
+      EXTRACT(MONTH FROM "createdAt")::int          AS mo,
+      COUNT(*)::int                                 AS cnt,
+      COALESCE(SUM(price), 0)::float                AS rev,
+      COALESCE(SUM("shippingCost"), 0)::float       AS ship
     FROM "CustomOrder"
     WHERE status IN ('PAID', 'DONE')
       AND price IS NOT NULL
@@ -219,33 +214,41 @@ export default async function AnalitykiPage() {
     }).catch(() => ({ _sum: { total: 0, shippingCost: 0 }, _count: 0 })),
   ]);
 
-  // ── Agregaty zamówień indywidualnych (PAID lub DONE, z ceną) ─────────────
+  // ── Agregaty zamówień indywidualnych (PAID lub DONE, z ceną + wysyłką) ────
+  type RawCustomAgg = { total: number; ship: number; cnt: number };
   const [customYearAgg, customMonthAgg, customAllTimeAgg] = await Promise.all([
-    db.$queryRaw<RawSimpleAgg[]>`
-      SELECT COALESCE(SUM(price), 0)::float AS total, COUNT(*)::int AS cnt
+    db.$queryRaw<RawCustomAgg[]>`
+      SELECT COALESCE(SUM(price), 0)::float AS total,
+             COALESCE(SUM("shippingCost"), 0)::float AS ship,
+             COUNT(*)::int AS cnt
       FROM "CustomOrder"
       WHERE status IN ('PAID', 'DONE') AND price IS NOT NULL
         AND "createdAt" >= ${yearStart}
-    `.catch(() => [{ total: 0, cnt: 0 }] as RawSimpleAgg[]),
-    db.$queryRaw<RawSimpleAgg[]>`
-      SELECT COALESCE(SUM(price), 0)::float AS total, COUNT(*)::int AS cnt
+    `.catch(() => [{ total: 0, ship: 0, cnt: 0 }] as RawCustomAgg[]),
+    db.$queryRaw<RawCustomAgg[]>`
+      SELECT COALESCE(SUM(price), 0)::float AS total,
+             COALESCE(SUM("shippingCost"), 0)::float AS ship,
+             COUNT(*)::int AS cnt
       FROM "CustomOrder"
       WHERE status IN ('PAID', 'DONE') AND price IS NOT NULL
         AND "createdAt" >= ${monthStart}
-    `.catch(() => [{ total: 0, cnt: 0 }] as RawSimpleAgg[]),
-    db.$queryRaw<RawSimpleAgg[]>`
-      SELECT COALESCE(SUM(price), 0)::float AS total, COUNT(*)::int AS cnt
+    `.catch(() => [{ total: 0, ship: 0, cnt: 0 }] as RawCustomAgg[]),
+    db.$queryRaw<RawCustomAgg[]>`
+      SELECT COALESCE(SUM(price), 0)::float AS total,
+             COALESCE(SUM("shippingCost"), 0)::float AS ship,
+             COUNT(*)::int AS cnt
       FROM "CustomOrder"
       WHERE status IN ('PAID', 'DONE') AND price IS NOT NULL
-    `.catch(() => [{ total: 0, cnt: 0 }] as RawSimpleAgg[]),
+    `.catch(() => [{ total: 0, ship: 0, cnt: 0 }] as RawCustomAgg[]),
   ]);
 
-  const customYearRevenue  = Number(customYearAgg[0]?.total  ?? 0);
-  const customYearOrders   = Number(customYearAgg[0]?.cnt    ?? 0);
-  const customMonthRevenue = Number(customMonthAgg[0]?.total ?? 0);
-  const customMonthOrders  = Number(customMonthAgg[0]?.cnt   ?? 0);
-  const customAllRevenue   = Number(customAllTimeAgg[0]?.total ?? 0);
-  const customAllOrders    = Number(customAllTimeAgg[0]?.cnt   ?? 0);
+  const customYearRevenue   = Number(customYearAgg[0]?.total    ?? 0);
+  const customYearShipping  = Number(customYearAgg[0]?.ship     ?? 0);
+  const customYearOrders    = Number(customYearAgg[0]?.cnt      ?? 0);
+  const customMonthRevenue  = Number(customMonthAgg[0]?.total   ?? 0);
+  const customMonthOrders   = Number(customMonthAgg[0]?.cnt     ?? 0);
+  const customAllRevenue    = Number(customAllTimeAgg[0]?.total ?? 0);
+  const customAllOrders     = Number(customAllTimeAgg[0]?.cnt   ?? 0);
 
   // ── Budujemy oś czasu 12 miesięcy ─────────────────────────────────────────
   const monthMap = new Map<string, RawMonthRow>();
@@ -287,7 +290,7 @@ export default async function AnalitykiPage() {
 
   // ── Sumaryczne wartości (sklep + indywidualne) ─────────────────────────────
   const yearRevenue  = Number(yearAgg._sum.total       ?? 0) + customYearRevenue;
-  const yearShipping = Number(yearAgg._sum.shippingCost ?? 0);
+  const yearShipping = Number(yearAgg._sum.shippingCost ?? 0) + customYearShipping;
   const yearOrders   = Number(yearAgg._count  ?? 0)         + customYearOrders;
   const avgOrder     = yearOrders > 0 ? yearRevenue / yearOrders : 0;
   const monthRevenue = Number(monthAgg._sum.total ?? 0)      + customMonthRevenue;
