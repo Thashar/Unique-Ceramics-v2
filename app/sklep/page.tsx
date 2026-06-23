@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { ShoppingBag, PenLine } from "lucide-react";
 import Header from "@/components/layout/Header";
 import VacationBanner from "@/components/layout/VacationBanner";
@@ -8,7 +7,6 @@ import ProductCard from "@/components/ui/ProductCard";
 import { getShopProducts } from "@/lib/products";
 import { getCategories } from "@/lib/categories";
 import { getSettings } from "@/lib/settings";
-import { hexToRgba } from "@/lib/overlay";
 
 export const metadata = {
   title: "Sklep",
@@ -38,27 +36,14 @@ export default async function ShopPage({
 }) {
   const { kategoria } = await searchParams;
 
-  const [dbCategories, heroSettings] = await Promise.all([
+  const [dbCategories, settings] = await Promise.all([
     getCategories(),
-    getSettings([
-      "shop_hero_image", "shop_hero_position", "shop_hero_overlay_color", "shop_hero_overlay_opacity", "shop_hero_height",
-      "shop_subtitle",
-      "vacation_enabled", "vacation_end_date", "vacation_message",
-    ]),
+    getSettings(["vacation_enabled", "vacation_end_date", "vacation_message"]),
   ]);
 
-  const shopHeroImage = heroSettings.shop_hero_image;
-  const shopHeroPos = heroSettings.shop_hero_position || "50% 50%";
-  const shopHeroHeight = parseInt(heroSettings.shop_hero_height) || 50;
-  const shopOverlayColor = heroSettings.shop_hero_overlay_color || "#2C2825";
-  const shopOverlayOpacity = heroSettings.shop_hero_overlay_opacity || "50";
-  const overlayBg = hexToRgba(shopOverlayColor, shopOverlayOpacity);
-
-  const shopSubtitle = heroSettings.shop_subtitle || "Każdy przedmiot jest unikalny — tworzony ręcznie z lokalnej gliny.";
-
-  const vacationEnabled = heroSettings.vacation_enabled === "true";
-  const vacationEndDate = heroSettings.vacation_end_date;
-  const vacationMessage = vacationEnabled ? heroSettings.vacation_message : "";
+  const vacationEnabled = settings.vacation_enabled === "true";
+  const vacationEndDate = settings.vacation_end_date;
+  const vacationMessage = vacationEnabled ? settings.vacation_message : "";
 
   const CATEGORIES = [
     { value: "wszystkie", label: "Wszystkie" },
@@ -87,36 +72,6 @@ export default async function ShopPage({
       <VacationBanner message={vacationMessage} returnDate={vacationEnabled ? vacationEndDate : undefined} />
       <Header topOffset={vacationEnabled} />
       <div className={`min-h-[100svh] bg-warm-white ${vacationEnabled ? "pt-[100px]" : "pt-20"}`}>
-        {/* Hero nagłówek — ukryty na mobile */}
-        <div className="hidden md:block">
-          {shopHeroImage ? (
-            <div className="relative overflow-hidden" style={{ height: `${shopHeroHeight}vh` }}>
-              <Image
-                src={shopHeroImage}
-                alt="Sklep"
-                fill
-                priority
-                className="object-cover"
-                style={{ objectPosition: shopHeroPos }}
-                sizes="100vw"
-              />
-              <div className="absolute inset-0" style={{ backgroundColor: overlayBg }} />
-              <div className="absolute inset-0 flex flex-col items-center justify-end pb-14 px-6 text-center">
-                <p className="text-xs tracking-[0.3em] uppercase text-terracotta mb-3">Kolekcja</p>
-                <h1 className="font-serif text-5xl md:text-6xl text-cream">Sklep</h1>
-              </div>
-            </div>
-          ) : (
-            <div className="bg-cream py-20 px-6 text-center border-b border-sand">
-              <p className="text-xs tracking-[0.3em] uppercase text-clay mb-4">Kolekcja</p>
-              <h1 className="font-serif text-5xl md:text-6xl text-espresso">Sklep</h1>
-              {shopSubtitle && (
-                <p className="mt-4 text-charcoal/55 max-w-md mx-auto text-sm">{shopSubtitle}</p>
-              )}
-            </div>
-          )}
-        </div>
-
         {/* Filtry kategorii */}
         <div className={`border-b border-sand bg-warm-white sticky ${vacationEnabled ? "top-[100px]" : "top-20"} z-30 shadow-sm`}>
           <div className="max-w-7xl mx-auto px-6 lg:px-10 flex gap-2 overflow-x-auto py-4 no-scrollbar">
