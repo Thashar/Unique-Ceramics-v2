@@ -82,7 +82,7 @@ export default function OrderStatusSelect({
       </div>
       {trackingError && (
         <p className="text-xs text-red-600 text-right max-w-48">
-          Uzupełnij numer listu i dostawcę przed zmianą na „Wysłane".
+          Uzupelnij numer listu i dostawce przed zmiana na Wyslane.
         </p>
       )}
     </div>

@@ -229,7 +229,7 @@ export default function CustomOrderActions({
             className="w-full bg-warm-white border border-sand focus:border-clay outline-none px-4 py-2.5 text-sm text-espresso"
           />
           <p className="text-[10px] text-charcoal/40 mt-1">
-            Wymagane do ustawienia statusu „Opłacone"
+            Wymagane do ustawienia statusu Oplacone
           </p>
         </div>
 

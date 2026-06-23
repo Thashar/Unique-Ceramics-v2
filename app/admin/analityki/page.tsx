@@ -349,7 +349,7 @@ export default async function AnalitykiPage() {
 
       {hasCustomOrders && (
         <div className="bg-purple-50 border border-purple-200 px-4 py-2.5 text-xs text-purple-700">
-          Dane uwzględniają zamówienia indywidualne ze statusem „Opłacone" lub „Zrealizowane".
+          Dane uwzględniają zamówienia indywidualne ze statusem Opłacone lub Zrealizowane.
         </div>
       )}
 
