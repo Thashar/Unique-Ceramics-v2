@@ -124,7 +124,7 @@ export default function CategoriesManager({ initialCategories }: Props) {
     setSavingOrder(true);
     setError("");
     try {
-      await Promise.all(
+      const results = await Promise.all(
         categories.map((cat) =>
           fetch(`/api/admin/categories/${cat.id}`, {
             method: "PUT",
@@ -133,10 +133,15 @@ export default function CategoriesManager({ initialCategories }: Props) {
           })
         )
       );
-      setOrderDirty(false);
-      showToast("Kolejność zapisana");
+      const failed = results.filter((r) => !r.ok);
+      if (failed.length > 0) {
+        setError(`Błąd zapisu kolejności (${failed.length} kategorii)`);
+      } else {
+        setOrderDirty(false);
+        showToast("Kolejność zapisana");
+      }
     } catch {
-      setError("Błąd zapisu kolejności");
+      setError("Błąd sieci — spróbuj ponownie");
     } finally {
       setSavingOrder(false);
     }
@@ -276,9 +281,9 @@ export default function CategoriesManager({ initialCategories }: Props) {
                   onDragOver={(e) => handleDragOver(e, idx)}
                   onDrop={() => handleDrop(idx)}
                   onDragEnd={handleDragEnd}
-                  className={`flex items-center gap-2 px-3 py-3 bg-warm-white transition-colors select-none
-                    ${isBeingDragged ? "opacity-40" : ""}
-                    ${isDropTarget ? "bg-sand/40" : ""}
+                  className={`flex items-center gap-2 px-3 py-3 transition-all select-none
+                    ${isBeingDragged ? "bg-terracotta/10 ring-2 ring-terracotta/40 shadow-md z-10 relative scale-[1.01]" : "bg-warm-white"}
+                    ${isDropTarget ? "bg-sand/50 border-l-2 border-clay" : ""}
                   `}
                 >
                   {/* Uchwyt drag & drop */}

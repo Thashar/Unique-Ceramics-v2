@@ -20,8 +20,20 @@ export async function PUT(
 
   const existing = await db.category.findUnique({ where: { id } });
   if (!existing) return NextResponse.json({ error: "Nie znaleziono kategorii" }, { status: 404 });
+
+  // Kategoria domyślna — zezwól tylko na zmianę kolejności
   if (existing.slug === PERMANENT_SLUG) {
-    return NextResponse.json({ error: "Kategoria domyślna nie może być edytowana" }, { status: 409 });
+    try {
+      const cat = await db.category.update({
+        where: { id },
+        data: { order: typeof order === "number" ? order : existing.order },
+      });
+      revalidateCategories();
+      return NextResponse.json(cat);
+    } catch (e) {
+      console.error("PUT /api/admin/categories/[id] (permanent):", e);
+      return NextResponse.json({ error: "Błąd serwera" }, { status: 500 });
+    }
   }
 
   if (!slug || typeof slug !== "string" || slug.length > 60) {
