@@ -19,7 +19,7 @@ export default async function PolitykaPrywatnosci() {
     <>
       <Header />
       <main className="flex-1 pt-[100px]">
-        <div className="bg-cream px-6 lg:px-10 py-20">
+        <div className="bg-cream px-6 lg:px-10 py-10">
           <div className="max-w-7xl mx-auto">
             <p className="text-xs tracking-[0.3em] uppercase text-clay mb-3">
               Sklep

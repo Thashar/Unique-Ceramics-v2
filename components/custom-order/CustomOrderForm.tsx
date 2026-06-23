@@ -63,7 +63,7 @@ export default function CustomOrderForm({ topOffset = false }: { topOffset?: boo
 
   return (
     <main className={`flex-1 ${topOffset ? "pt-[100px]" : "pt-20"}`}>
-      <div className="bg-cream px-6 lg:px-10 py-20">
+      <div className="bg-cream px-6 lg:px-10 py-10">
         <div className="max-w-7xl mx-auto max-w-2xl">
           <p className="text-xs tracking-[0.3em] uppercase text-clay mb-3">Na zamówienie</p>
           <h1 className="font-serif text-5xl text-espresso mb-6">Zamówienie indywidualne</h1>

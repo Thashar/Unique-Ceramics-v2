@@ -55,7 +55,7 @@ export default async function ContactPage() {
       <Header />
       <main className="flex-1 pt-[100px]">
         {/* Nagłówek */}
-        <div className="bg-cream px-6 lg:px-10 py-20">
+        <div className="bg-cream px-6 lg:px-10 py-10">
           <div className="max-w-7xl mx-auto">
             <p className="text-xs tracking-[0.3em] uppercase text-clay mb-3">Napisz do mnie</p>
             <h1 className="font-serif text-5xl md:text-6xl text-espresso">Kontakt</h1>
