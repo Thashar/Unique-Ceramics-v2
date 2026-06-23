@@ -50,7 +50,7 @@ export default async function AdminDashboard() {
       },
     }),
     db.order.findMany({
-      take: 6,
+      take: 5,
       orderBy: { createdAt: "desc" },
       include: { items: true },
     }),
