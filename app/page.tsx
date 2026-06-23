@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 
 export const revalidate = 3600;
 
@@ -28,7 +28,7 @@ import FeaturedProducts from "@/components/home/FeaturedProducts";
 import AboutTeaser from "@/components/home/AboutTeaser";
 import WorkshopsTeaser from "@/components/home/WorkshopsTeaser";
 import HomeScrollSnap from "@/components/home/HomeScrollSnap";
-import Header from "@/components/layout/Header";
+import Header from "@/components/layout/HeaderWrapper";
 import FooterWithInstagram from "@/components/layout/FooterWithInstagram";
 import { getSettings } from "@/lib/settings";
 

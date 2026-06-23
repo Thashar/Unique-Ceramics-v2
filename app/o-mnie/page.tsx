@@ -1,11 +1,11 @@
-// Treść zmienia się rzadko — ISR; zapis ustawień w adminie odświeża cache
+﻿// Treść zmienia się rzadko — ISR; zapis ustawień w adminie odświeża cache
 export const revalidate = 300;
 
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import Header from "@/components/layout/Header";
+import Header from "@/components/layout/HeaderWrapper";
 import Footer from "@/components/layout/Footer";
 import { getSettings } from "@/lib/settings";
 import { sanitizeRichHtml } from "@/lib/sanitize-html";
@@ -37,7 +37,7 @@ export default async function AboutPage() {
   return (
     <>
       <Header />
-      <main className="flex-1 pt-20">
+      <main className="flex-1 pt-[100px]">
         {/* Hero */}
         {heroImage ? (
           <div className="relative overflow-hidden" style={{ height: `${heroHeight}vh` }}>

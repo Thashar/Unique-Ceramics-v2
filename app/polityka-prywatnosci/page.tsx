@@ -1,10 +1,10 @@
-// Treść zmienia się rzadko — ISR; zapis ustawień w adminie odświeża cache
+﻿// Treść zmienia się rzadko — ISR; zapis ustawień w adminie odświeża cache
 export const revalidate = 300;
 
 import type { Metadata } from "next";
 import { getSetting } from "@/lib/settings";
 import { sanitizeRichHtml } from "@/lib/sanitize-html";
-import Header from "@/components/layout/Header";
+import Header from "@/components/layout/HeaderWrapper";
 import Footer from "@/components/layout/Footer";
 
 export const metadata: Metadata = {
@@ -18,7 +18,7 @@ export default async function PolitykaPrywatnosci() {
   return (
     <>
       <Header />
-      <main className="flex-1 pt-20">
+      <main className="flex-1 pt-[100px]">
         <div className="bg-cream px-6 lg:px-10 py-20">
           <div className="max-w-7xl mx-auto">
             <p className="text-xs tracking-[0.3em] uppercase text-clay mb-3">

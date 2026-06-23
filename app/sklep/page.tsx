@@ -1,12 +1,10 @@
 import Link from "next/link";
 import { ShoppingBag, PenLine } from "lucide-react";
-import Header from "@/components/layout/Header";
-import VacationBanner from "@/components/layout/VacationBanner";
+import Header from "@/components/layout/HeaderWrapper";
 import Footer from "@/components/layout/Footer";
 import ProductCard from "@/components/ui/ProductCard";
 import { getShopProducts } from "@/lib/products";
 import { getCategories } from "@/lib/categories";
-import { getSettings } from "@/lib/settings";
 
 export const metadata = {
   title: "Sklep",
@@ -36,14 +34,7 @@ export default async function ShopPage({
 }) {
   const { kategoria } = await searchParams;
 
-  const [dbCategories, settings] = await Promise.all([
-    getCategories(),
-    getSettings(["vacation_enabled", "vacation_end_date", "vacation_message"]),
-  ]);
-
-  const vacationEnabled = settings.vacation_enabled === "true";
-  const vacationEndDate = settings.vacation_end_date;
-  const vacationMessage = vacationEnabled ? settings.vacation_message : "";
+  const dbCategories = await getCategories();
 
   const CATEGORIES = [
     { value: "wszystkie", label: "Wszystkie" },
@@ -69,11 +60,10 @@ export default async function ShopPage({
 
   return (
     <>
-      <VacationBanner message={vacationMessage} returnDate={vacationEnabled ? vacationEndDate : undefined} />
-      <Header topOffset={vacationEnabled} />
-      <div className={`min-h-[100svh] bg-warm-white ${vacationEnabled ? "pt-[100px]" : "pt-20"}`}>
+      <Header />
+      <div className="min-h-[100svh] bg-warm-white pt-[100px]">
         {/* Filtry kategorii */}
-        <div className={`border-b border-sand bg-cream sticky ${vacationEnabled ? "top-[100px]" : "top-20"} z-30 shadow-sm`}>
+        <div className="border-b border-sand bg-cream sticky top-[100px] z-30 shadow-sm">
           <div className="max-w-7xl mx-auto px-6 lg:px-10 flex gap-2 overflow-x-auto py-4 no-scrollbar">
             {CATEGORIES.map((cat) => (
               <Link
@@ -82,7 +72,7 @@ export default async function ShopPage({
                 className={`shrink-0 px-5 py-2 text-xs tracking-widest uppercase transition-all duration-200 ${
                   activeCategory === cat.value
                     ? "bg-espresso text-warm-white"
-                    : "bg-warm-white text-charcoal hover:bg-sand border border-transparent hover:border-sand"
+                    : "bg-cream text-charcoal border border-terracotta/40 hover:border-terracotta/70"
                 }`}
               >
                 {cat.label}
@@ -109,7 +99,7 @@ export default async function ShopPage({
             </div>
           ) : (
             <>
-              <p className="text-xs text-charcoal/40 tracking-widest uppercase mb-8">
+              <p className="text-xs text-charcoal/40 tracking-widests uppercase mb-8">
                 {products.length} {products.length === 1 ? "produkt" : products.length < 5 ? "produkty" : "produktów"}
               </p>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">

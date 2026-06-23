@@ -1,4 +1,4 @@
-// Treść zmienia się rzadko — ISR; zapis ustawień w adminie odświeża cache
+﻿// Treść zmienia się rzadko — ISR; zapis ustawień w adminie odświeża cache
 export const revalidate = 300;
 
 import type { Metadata } from "next";
@@ -10,7 +10,7 @@ import {
   Package, GraduationCap, Flame, Camera, Coffee, CheckCircle,
   Star, Heart, Palette, Globe, Music, Award, Scissors,
 } from "lucide-react";
-import Header from "@/components/layout/Header";
+import Header from "@/components/layout/HeaderWrapper";
 import Footer from "@/components/layout/Footer";
 import { getSettings } from "@/lib/settings";
 import { sanitizeRichHtml } from "@/lib/sanitize-html";
@@ -85,7 +85,7 @@ export default async function WorkshopsPage() {
   return (
     <>
       <Header />
-      <main className="flex-1 pt-20">
+      <main className="flex-1 pt-[100px]">
         {/* Hero */}
         {heroImage ? (
           <div className="relative overflow-hidden" style={{ height: `${heroHeight}vh` }}>

@@ -8,12 +8,12 @@ import { useSession, signOut } from "next-auth/react";
 import { ShoppingBag, Menu, X, User, Package, LogOut, ChevronDown } from "lucide-react";
 import { useCart } from "@/lib/cart";
 
-const navLinks = [
-  { href: "/sklep",         label: "Sklep" },
-  { href: "/o-mnie",        label: "O mnie" },
-  { href: "/moje-projekty", label: "Moje projekty" },
-  { href: "/warsztaty",     label: "Warsztaty" },
-  { href: "/kontakt",       label: "Kontakt" },
+const ALL_NAV_LINKS = [
+  { href: "/sklep",         label: "Sklep",          always: true  },
+  { href: "/o-mnie",        label: "O mnie",          always: true  },
+  { href: "/moje-projekty", label: "Moje projekty",   always: false },
+  { href: "/warsztaty",     label: "Warsztaty",       always: true  },
+  { href: "/kontakt",       label: "Kontakt",         always: true  },
 ];
 
 function AccountDropdown({ scrolled }: { scrolled: boolean }) {
@@ -96,7 +96,7 @@ function AccountDropdown({ scrolled }: { scrolled: boolean }) {
   );
 }
 
-export default function Header({ topOffset = false }: { topOffset?: boolean }) {
+export default function Header({ topOffset = false, showProjects = true }: { topOffset?: boolean; showProjects?: boolean }) {
   // Na homepage header jest przezroczysty gdy widoczna sekcja z ciemnym tłem
   // (Hero, O mnie, Warsztaty). W pozostałych sekcjach i na innych stronach — solid.
   const [transparentVisible, setTransparentVisible] = useState(true);
@@ -105,6 +105,7 @@ export default function Header({ topOffset = false }: { topOffset?: boolean }) {
   const pathname = usePathname();
   const isHome = pathname === "/";
 
+  const navLinks = ALL_NAV_LINKS.filter((l) => l.always || showProjects);
   const dark = !isHome || !transparentVisible;
 
   // Zamknij menu mobilne klawiszem Escape
