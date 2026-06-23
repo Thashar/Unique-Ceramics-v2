@@ -109,9 +109,11 @@ function filterByQuery(items: Point[], q: string): Point[] {
   );
 }
 
-// Kapitalizuje każde słowo nazwy miasta (API wymaga dokładnej formy, np. "Gliwice")
+// Normalizuje nazwę miasta: pierwsza litera każdego słowa wielka, reszta mała.
+// Obsługuje spacje i myślniki (np. "bielsko-biała" → "Bielsko-Biała").
+// API InPost wymaga dokładnej wielkości liter (gliwice → 0 wyników, Gliwice → 153).
 function capitalizeCity(s: string): string {
-  return s.replace(/\b\w/g, (c) => c.toUpperCase());
+  return s.toLowerCase().replace(/(^|[\s-])(\S)/g, (_, sep, char) => sep + char.toUpperCase());
 }
 
 // Zwraca strategię API dla zapytania.
