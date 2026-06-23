@@ -129,18 +129,20 @@ export default async function AdminDashboard() {
       )}
 
       {/* Statystyki */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map(({ label, value, icon: Icon, href, sub }) => (
           <Link
             key={label}
             href={href}
-            className="bg-cream p-5 hover:shadow-md transition-all group border border-transparent hover:border-sand"
+            className="bg-cream border border-sand/60 p-5 hover:border-clay/40 hover:shadow-sm transition-all group"
           >
-            <div className="w-9 h-9 bg-warm-white rounded-full flex items-center justify-center mb-4">
-              <Icon size={17} strokeWidth={1.5} className="text-clay" />
+            <div className="flex items-start justify-between mb-4">
+              <div className="w-9 h-9 bg-warm-white border border-sand/60 rounded-full flex items-center justify-center">
+                <Icon size={17} strokeWidth={1.5} className="text-clay" />
+              </div>
             </div>
             <p className="font-serif text-2xl text-espresso leading-none tabular-nums">{value}</p>
-            {sub && <p className="text-[11px] text-terracotta mt-1">{sub}</p>}
+            {sub && <p className="text-[11px] text-terracotta mt-1.5">{sub}</p>}
             <p className="text-[11px] tracking-widest uppercase text-charcoal/45 mt-1.5">{label}</p>
           </Link>
         ))}
@@ -150,7 +152,7 @@ export default async function AdminDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
 
         {/* Ostatnie zamówienia */}
-        <div className="lg:col-span-2 bg-cream p-6">
+        <div className="lg:col-span-2 bg-cream border border-sand/60 p-6">
           <div className="flex items-center justify-between mb-5">
             <h2 className="font-serif text-lg text-espresso">Ostatnie zamówienia</h2>
             <Link
@@ -164,12 +166,12 @@ export default async function AdminDashboard() {
           {recentOrders.length === 0 ? (
             <p className="text-sm text-charcoal/40 text-center py-10">Brak zamówień</p>
           ) : (
-            <div className="space-y-1.5">
+            <div className="divide-y divide-sand/50">
               {recentOrders.map((order) => (
                 <Link
                   key={order.id}
                   href={`/admin/zamowienia/${order.id}`}
-                  className="flex items-center gap-3 px-3 py-2.5 bg-warm-white hover:bg-sand/30 transition-colors rounded-sm"
+                  className="flex items-center gap-3 py-3 hover:bg-warm-white/60 transition-colors -mx-2 px-2 rounded-sm"
                 >
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-espresso truncate">
@@ -185,7 +187,7 @@ export default async function AdminDashboard() {
                     }`}>
                       {STATUS_LABELS[order.status] ?? order.status}
                     </span>
-                    <span className="text-sm text-espresso tabular-nums w-20 text-right">
+                    <span className="text-sm font-medium text-espresso tabular-nums w-20 text-right">
                       {order.total.toFixed(2).replace(".", ",")} zł
                     </span>
                   </div>
@@ -198,19 +200,19 @@ export default async function AdminDashboard() {
         {/* Panel boczny */}
         <div className="space-y-4">
           {/* Szybkie akcje */}
-          <div className="bg-cream p-5">
+          <div className="bg-cream border border-sand/60 p-5">
             <h2 className="font-serif text-base text-espresso mb-3">Szybkie akcje</h2>
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               <Link
                 href="/admin/produkty/nowy"
-                className="flex items-center gap-2.5 px-3 py-2.5 bg-warm-white hover:bg-sand/30 transition-colors rounded-sm text-sm text-charcoal/70 hover:text-espresso"
+                className="flex items-center gap-2.5 px-3 py-2.5 hover:bg-sand/30 transition-colors rounded-sm text-sm text-charcoal/70 hover:text-espresso"
               >
                 <Plus size={15} className="text-clay shrink-0" />
                 Dodaj produkt
               </Link>
               <Link
                 href="/admin/zamowienia?status=PENDING"
-                className="flex items-center gap-2.5 px-3 py-2.5 bg-warm-white hover:bg-sand/30 transition-colors rounded-sm text-sm text-charcoal/70 hover:text-espresso"
+                className="flex items-center gap-2.5 px-3 py-2.5 hover:bg-sand/30 transition-colors rounded-sm text-sm text-charcoal/70 hover:text-espresso"
               >
                 <ShoppingBag size={15} className="text-clay shrink-0" />
                 <span className="flex-1">Nowe zamówienia</span>
@@ -222,7 +224,7 @@ export default async function AdminDashboard() {
               </Link>
               <Link
                 href="/admin/zamowienia-indywidualne"
-                className="flex items-center gap-2.5 px-3 py-2.5 bg-warm-white hover:bg-sand/30 transition-colors rounded-sm text-sm text-charcoal/70 hover:text-espresso"
+                className="flex items-center gap-2.5 px-3 py-2.5 hover:bg-sand/30 transition-colors rounded-sm text-sm text-charcoal/70 hover:text-espresso"
               >
                 <ClipboardList size={15} className="text-clay shrink-0" />
                 <span className="flex-1">Zam. indywidualne</span>
@@ -234,7 +236,7 @@ export default async function AdminDashboard() {
               </Link>
               <Link
                 href="/admin/ustawienia?s=wysylka"
-                className="flex items-center gap-2.5 px-3 py-2.5 bg-warm-white hover:bg-sand/30 transition-colors rounded-sm text-sm text-charcoal/70 hover:text-espresso"
+                className="flex items-center gap-2.5 px-3 py-2.5 hover:bg-sand/30 transition-colors rounded-sm text-sm text-charcoal/70 hover:text-espresso"
               >
                 <Settings size={15} className="text-clay shrink-0" />
                 Ustawienia wysyłki
@@ -243,7 +245,7 @@ export default async function AdminDashboard() {
           </div>
 
           {/* Przychód w tym miesiącu */}
-          <div className="bg-cream p-5">
+          <div className="bg-cream border border-sand/60 p-5">
             <p className="text-[11px] tracking-widest uppercase text-charcoal/45 mb-1">Ten miesiąc</p>
             <p className="font-serif text-2xl text-espresso tabular-nums">
               {(revenueMonth._sum.total ?? 0).toFixed(0)} zł

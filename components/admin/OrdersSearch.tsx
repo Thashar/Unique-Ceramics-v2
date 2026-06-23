@@ -2,26 +2,30 @@
 
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Search, X } from "lucide-react";
-import { useTransition } from "react";
+import { useRef, useTransition } from "react";
 
 export default function OrdersSearch() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [, startTransition] = useTransition();
+  const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const currentQuery = searchParams.get("q") ?? "";
 
   function updateQuery(value: string) {
-    const params = new URLSearchParams(searchParams.toString());
-    if (value) {
-      params.set("q", value);
-    } else {
-      params.delete("q");
-    }
-    startTransition(() => {
-      router.replace(`${pathname}?${params.toString()}`);
-    });
+    clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (value) {
+        params.set("q", value);
+      } else {
+        params.delete("q");
+      }
+      startTransition(() => {
+        router.replace(`${pathname}?${params.toString()}`);
+      });
+    }, 300);
   }
 
   return (

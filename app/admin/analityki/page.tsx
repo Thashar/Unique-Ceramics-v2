@@ -253,7 +253,7 @@ export default async function AnalitykiPage() {
       </div>
 
       {/* ── Karty podsumowania ─────────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           {
             label: "Przychód w tym roku",
@@ -280,19 +280,19 @@ export default async function AnalitykiPage() {
             icon:  Package,
           },
         ].map(({ label, value, sub, icon: Icon }) => (
-          <div key={label} className="bg-cream p-5 border border-transparent">
-            <div className="w-9 h-9 bg-warm-white rounded-full flex items-center justify-center mb-4">
+          <div key={label} className="bg-cream border border-sand/60 p-5">
+            <div className="w-9 h-9 bg-warm-white border border-sand/60 rounded-full flex items-center justify-center mb-4">
               <Icon size={17} strokeWidth={1.5} className="text-clay" />
             </div>
             <p className="font-serif text-2xl text-espresso leading-none tabular-nums">{value}</p>
-            <p className="text-[11px] text-terracotta mt-1">{sub}</p>
+            <p className="text-[11px] text-terracotta mt-1.5">{sub}</p>
             <p className="text-[11px] tracking-widest uppercase text-charcoal/45 mt-1.5">{label}</p>
           </div>
         ))}
       </div>
 
       {/* ── Wykres miesięczny ──────────────────────────────────────────────── */}
-      <div className="bg-cream p-6">
+      <div className="bg-cream border border-sand/60 p-6">
         <h2 className="font-serif text-lg text-espresso mb-1">Przychód i zamówienia — ostatnie 12 miesięcy</h2>
         <p className="text-xs text-charcoal/40 mb-6">Bez anulowanych zamówień</p>
 
@@ -391,7 +391,7 @@ export default async function AnalitykiPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
         {/* Bestsellery */}
-        <div className="bg-cream p-6">
+        <div className="bg-cream border border-sand/60 p-6">
           <div className="flex items-center gap-2 mb-5">
             <Package size={15} strokeWidth={1.5} className="text-clay" />
             <h2 className="font-serif text-lg text-espresso">Bestsellery</h2>
@@ -427,7 +427,7 @@ export default async function AnalitykiPage() {
         </div>
 
         {/* Metody wysyłki */}
-        <div className="bg-cream p-6">
+        <div className="bg-cream border border-sand/60 p-6">
           <div className="flex items-center gap-2 mb-5">
             <Truck size={15} strokeWidth={1.5} className="text-clay" />
             <h2 className="font-serif text-lg text-espresso">Metody wysyłki</h2>
@@ -481,7 +481,7 @@ export default async function AnalitykiPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
         {/* Metody płatności */}
-        <div className="bg-cream p-6">
+        <div className="bg-cream border border-sand/60 p-6">
           <div className="flex items-center gap-2 mb-5">
             <CreditCard size={15} strokeWidth={1.5} className="text-clay" />
             <h2 className="font-serif text-lg text-espresso">Metody płatności</h2>
@@ -512,7 +512,7 @@ export default async function AnalitykiPage() {
         </div>
 
         {/* Statusy zamówień */}
-        <div className="bg-cream p-6">
+        <div className="bg-cream border border-sand/60 p-6">
           <div className="flex items-center gap-2 mb-5">
             <ShoppingBag size={15} strokeWidth={1.5} className="text-clay" />
             <h2 className="font-serif text-lg text-espresso">Statusy zamówień</h2>
@@ -549,9 +549,9 @@ export default async function AnalitykiPage() {
       </div>
 
       {/* ── Roczne podsumowanie finansowe ─────────────────────────────────── */}
-      <div className="bg-cream p-6">
+      <div className="bg-cream border border-sand/60 p-6">
         <h2 className="font-serif text-lg text-espresso mb-5">Podsumowanie finansowe — {now.getFullYear()}</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-5">
           {[
             { label: "Przychód brutto",         value: `${fmt(yearRevenue)} zł` },
             { label: "w tym koszty wysyłki",    value: `${fmt(yearShipping)} zł` },

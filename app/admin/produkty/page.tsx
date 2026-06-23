@@ -47,7 +47,7 @@ export default async function AdminProductsPage({
       </Suspense>
 
       {products.length === 0 ? (
-        <div className="bg-cream text-center py-16 text-charcoal/50">
+        <div className="bg-cream border border-sand/60 text-center py-16 text-charcoal/50">
           <ShoppingBag size={36} strokeWidth={1} className="mx-auto mb-4 text-sand" />
           <p className="text-sm">
             {q || kat || status
@@ -57,7 +57,7 @@ export default async function AdminProductsPage({
           </p>
         </div>
       ) : (
-        <div className="bg-cream">
+        <div className="bg-cream border border-sand/60">
           {/* Nagłówek tabeli — tylko desktop */}
           <div className="hidden md:grid md:grid-cols-[72px_1fr_120px_96px_100px_72px] text-[11px] tracking-widest uppercase text-charcoal/45 px-4 py-3 border-b border-sand">
             <span>Zdjęcie</span>

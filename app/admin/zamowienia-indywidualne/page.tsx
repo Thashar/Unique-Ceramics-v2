@@ -27,11 +27,11 @@ export default async function AdminCustomOrdersPage() {
       <h1 className="font-serif text-3xl text-espresso mb-6">Zamówienia indywidualne</h1>
 
       {orders.length === 0 ? (
-        <div className="bg-cream p-16 text-center text-charcoal/50 text-sm">Brak zamówień indywidualnych</div>
+        <div className="bg-cream border border-sand/60 p-16 text-center text-charcoal/50 text-sm">Brak zamówień indywidualnych</div>
       ) : (
         <div className="space-y-2">
           {/* Nagłówek — tylko desktop */}
-          <div className="hidden md:grid md:grid-cols-[1fr_auto_auto_auto_auto] text-xs tracking-widest uppercase text-charcoal/50 bg-cream px-4 py-3 border-b border-sand">
+          <div className="hidden md:grid md:grid-cols-[1fr_auto_auto_auto_auto] text-xs tracking-widest uppercase text-charcoal/50 bg-cream border border-sand/60 px-4 py-3">
             <span>Klient</span>
             <span className="w-36 pl-4">Rodzaj</span>
             <span className="w-28 text-center">Data</span>
@@ -41,7 +41,7 @@ export default async function AdminCustomOrdersPage() {
 
           {orders.map((order) => (
             <Link key={order.id} href={`/admin/zamowienia-indywidualne/${order.id}`}
-              className="block bg-cream hover:bg-warm-white transition-colors border-b border-sand last:border-0">
+              className="block bg-cream border border-sand/60 hover:bg-warm-white transition-colors">
 
               {/* Mobile */}
               <div className="md:hidden px-4 py-3 space-y-1.5">

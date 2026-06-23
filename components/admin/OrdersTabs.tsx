@@ -31,31 +31,35 @@ export default function OrdersTabs({ counts }: { counts: Record<string, number> 
   }
 
   return (
-    <div className="flex flex-wrap gap-1 mb-5 bg-cream p-1.5">
-      {STATUSES.map(({ value, label }) => {
-        const count = value ? (counts[value] ?? 0) : total;
-        const active = current === value;
-        return (
-          <button
-            key={value}
-            onClick={() => navigate(value)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs tracking-wide transition-colors rounded-sm ${
-              active
-                ? "bg-espresso text-cream"
-                : "text-charcoal/55 hover:text-espresso hover:bg-sand/40"
-            }`}
-          >
-            {label}
-            {count > 0 && (
-              <span className={`text-[10px] tabular-nums px-1.5 py-0.5 rounded-sm ${
-                active ? "bg-white/15 text-cream" : "bg-sand text-charcoal/50"
-              }`}>
-                {count}
-              </span>
-            )}
-          </button>
-        );
-      })}
+    <div className="mb-5 -mx-5 px-5 md:mx-0 md:px-0">
+      <div className="overflow-x-auto pb-0.5">
+        <div className="flex gap-1 bg-cream border border-sand/60 p-1.5 w-max min-w-full">
+          {STATUSES.map(({ value, label }) => {
+            const count = value ? (counts[value] ?? 0) : total;
+            const active = current === value;
+            return (
+              <button
+                key={value}
+                onClick={() => navigate(value)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs tracking-wide transition-colors rounded-sm whitespace-nowrap ${
+                  active
+                    ? "bg-espresso text-cream"
+                    : "text-charcoal/55 hover:text-espresso hover:bg-sand/40"
+                }`}
+              >
+                {label}
+                {count > 0 && (
+                  <span className={`text-[10px] tabular-nums px-1.5 py-0.5 rounded-sm ${
+                    active ? "bg-white/15 text-cream" : "bg-sand text-charcoal/50"
+                  }`}>
+                    {count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }

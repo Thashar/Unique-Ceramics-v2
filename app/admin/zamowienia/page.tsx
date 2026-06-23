@@ -75,14 +75,14 @@ export default async function AdminOrdersPage({
       </Suspense>
 
       {filteredOrders.length === 0 ? (
-        <div className="bg-cream p-16 text-center">
+        <div className="bg-cream border border-sand/60 p-16 text-center">
           <ShoppingBag size={36} strokeWidth={1} className="mx-auto mb-4 text-sand" />
           <p className="text-sm text-charcoal/45">
             {q ? `Brak wyników dla „${q}"` : "Brak zamówień w tej kategorii"}
           </p>
         </div>
       ) : (
-        <div className="bg-cream">
+        <div className="bg-cream border border-sand/60">
           {/* Nagłówek tabeli — tylko desktop */}
           <div className="hidden md:grid md:grid-cols-[96px_1fr_120px_110px_140px_80px] text-[11px] tracking-widest uppercase text-charcoal/45 px-4 py-3 border-b border-sand">
             <span>Nr</span>
