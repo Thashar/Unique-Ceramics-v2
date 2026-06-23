@@ -228,20 +228,10 @@ export default function CategoriesManager({ initialCategories }: Props) {
 
       {!isDefaultFallback && (
         <>
-          <div className="flex items-center justify-between mb-4">
+          <div className="mb-4">
             <p className="text-xs text-charcoal/40 tracking-widest uppercase">
               {categories.length} {categories.length === 1 ? "kategoria" : categories.length < 5 ? "kategorie" : "kategorii"}
             </p>
-            {orderDirty && (
-              <button
-                onClick={saveOrder}
-                disabled={savingOrder}
-                className="flex items-center gap-2 bg-clay hover:bg-espresso disabled:opacity-50 text-cream text-xs tracking-widest uppercase px-4 py-2 transition-colors"
-              >
-                <Check size={13} />
-                {savingOrder ? "Zapisuję..." : "Zatwierdź kolejność"}
-              </button>
-            )}
           </div>
 
           <div className="border border-sand divide-y divide-sand mb-4">
