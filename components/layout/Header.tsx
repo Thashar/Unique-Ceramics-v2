@@ -132,7 +132,12 @@ export default function Header({ topOffset = false, showProjects = true }: { top
 
     update();
     window.addEventListener("scroll", update, { passive: true });
-    return () => window.removeEventListener("scroll", update);
+    // pageshow odpala się przy przywróceniu z bfcache — naprawia stale state transparentności
+    window.addEventListener("pageshow", update);
+    return () => {
+      window.removeEventListener("scroll", update);
+      window.removeEventListener("pageshow", update);
+    };
   }, [isHome]);
 
   return (
