@@ -3,10 +3,9 @@
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Search } from "lucide-react";
 import { useRef, useTransition } from "react";
+import type { Category } from "@/lib/categories";
 
-const CATEGORIES = ["kubki", "miski", "wazy", "talerze", "inne"];
-
-export default function ProductsSearch() {
+export default function ProductsSearch({ categories = [] }: { categories?: Category[] }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -59,8 +58,8 @@ export default function ProductsSearch() {
           className="flex-1 sm:flex-none bg-cream border border-sand focus:border-clay outline-none px-4 py-2.5 text-sm text-espresso transition-colors"
         >
           <option value="">Wszystkie kategorie</option>
-          {CATEGORIES.map((c) => (
-            <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>
+          {categories.map((c) => (
+            <option key={c.slug} value={c.slug}>{c.label}</option>
           ))}
         </select>
         <select

@@ -6,6 +6,7 @@ import Image from "next/image";
 import { Suspense } from "react";
 import { Plus, Pencil, ShoppingBag, Star } from "lucide-react";
 import ProductsSearch from "@/components/admin/ProductsSearch";
+import { getCategories } from "@/lib/categories";
 
 export default async function AdminProductsPage({
   searchParams,
@@ -14,7 +15,9 @@ export default async function AdminProductsPage({
 }) {
   const { q, kat, status } = await searchParams;
 
-  const products = await db.product.findMany({
+  const [categories, products] = await Promise.all([
+    getCategories(),
+    db.product.findMany({
     where: {
       ...(q ? { name: { contains: q, mode: "insensitive" } } : {}),
       ...(kat ? { category: kat } : {}),
@@ -23,7 +26,8 @@ export default async function AdminProductsPage({
       ...(status === "outofstock" ? { active: true, stock: 0 } : {}),
     },
     orderBy: { createdAt: "desc" },
-  });
+  }),
+  ]);
 
   return (
     <div>
@@ -43,7 +47,7 @@ export default async function AdminProductsPage({
       </div>
 
       <Suspense fallback={null}>
-        <ProductsSearch />
+        <ProductsSearch categories={categories} />
       </Suspense>
 
       {products.length === 0 ? (
