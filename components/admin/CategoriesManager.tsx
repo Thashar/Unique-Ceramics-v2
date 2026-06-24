@@ -32,6 +32,7 @@ export default function CategoriesManager({ initialCategories }: Props) {
 
   // ── Desktop drag & drop ────────────────────────────────────────────────────
   const dragIdxRef = useRef<number | null>(null);
+  const [dragIdx, setDragIdx] = useState<number | null>(null); // tylko do renderu — .current nie wolno czytać w JSX
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
 
   // ── Touch drag & drop (mobile) ─────────────────────────────────────────────
@@ -90,6 +91,7 @@ export default function CategoriesManager({ initialCategories }: Props) {
 
   function handleDragStart(idx: number) {
     dragIdxRef.current = idx;
+    setDragIdx(idx);
   }
 
   function handleDragOver(e: React.DragEvent, idx: number) {
@@ -101,6 +103,7 @@ export default function CategoriesManager({ initialCategories }: Props) {
     const from = dragIdxRef.current;
     if (from === null || from === idx) {
       dragIdxRef.current = null;
+      setDragIdx(null);
       setDragOverIdx(null);
       return;
     }
@@ -110,11 +113,13 @@ export default function CategoriesManager({ initialCategories }: Props) {
     setCategories(updated.map((c, i) => ({ ...c, order: i })));
     setOrderDirty(true);
     dragIdxRef.current = null;
+    setDragIdx(null);
     setDragOverIdx(null);
   }
 
   function handleDragEnd() {
     dragIdxRef.current = null;
+    setDragIdx(null);
     setDragOverIdx(null);
   }
 
@@ -270,7 +275,7 @@ export default function CategoriesManager({ initialCategories }: Props) {
 
             {categories.map((cat, idx) => {
               const isBeingDragged = touchDraggingIdx === idx;
-              const isDropTarget = (dragOverIdx === idx || touchDragOverIdx === idx) && touchDraggingIdx !== idx && dragIdxRef.current !== idx;
+              const isDropTarget = (dragOverIdx === idx || touchDragOverIdx === idx) && touchDraggingIdx !== idx && dragIdx !== idx;
 
               return (
                 <div
