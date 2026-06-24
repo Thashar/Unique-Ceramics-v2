@@ -373,7 +373,7 @@ export default function SettingsForm({ section, initial }: Props) {
 
           <div className="space-y-4">
             <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/70">Podtytuł strony</h3>
-            <p className="text-xs text-charcoal/40">Tekst widoczny pod nagłówkiem „Sklep" gdy brak zdjęcia hero.</p>
+            <p className="text-xs text-charcoal/40">Tekst widoczny pod nagłówkiem &bdquo;Sklep&rdquo; gdy brak zdjęcia hero.</p>
             <Field
               label="Podtytuł"
               value={shopSubtitle}
