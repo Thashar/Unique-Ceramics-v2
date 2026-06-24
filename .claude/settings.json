@@ -35,7 +35,10 @@
       "Bash(node -e 'const {PrismaClient} = require\\('\\\\''@prisma/client'\\\\''\\); const db = new PrismaClient\\(\\); db.customOrder.findFirst\\(\\).then\\(r => console.log\\(r\\)\\).catch\\(e => console.log\\('\\\\''ERR:'\\\\'', e.message\\)\\).finally\\(\\(\\) => db.$disconnect\\(\\)\\)')",
       "Bash(node -e 'const {PrismaClient} = require\\('\\\\''@prisma/client'\\\\''\\); const db = new PrismaClient\\(\\); db.customOrder.findFirst\\({select:{id:true,orderNumber:true}}\\).then\\(r=>console.log\\(r\\)\\).catch\\(e=>console.log\\('\\\\''ERR:'\\\\'',e.message\\)\\).finally\\(\\(\\)=>db.$disconnect\\(\\)\\)')",
       "Bash(node -e 'const {PrismaClient} = require\\('\\\\''@prisma/client'\\\\''\\); const db = new PrismaClient\\(\\); db.customOrder.findFirst\\({select:{id:true,orderNumber:true,price:true}}\\).then\\(r=>console.log\\(r\\)\\).catch\\(e=>console.log\\('\\\\''ERR:'\\\\'',e.message\\)\\).finally\\(\\(\\)=>db.$disconnect\\(\\)\\)')",
-      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\('scripts',{}\\), indent=2\\)\\)\")"
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\('scripts',{}\\), indent=2\\)\\)\")",
+      "Read(//c/Users/Thash/Desktop/Bots/Unique Ceramics v2/app/sklep/**)",
+      "PowerShell($path = \"c:\\\\Users\\\\Thash\\\\Desktop\\\\Bots\\\\Unique Ceramics v2\\\\app\\\\sklep\\\\[slug]\\\\page.tsx\"; [System.IO.File]::ReadAllText\\($path\\))",
+      "PowerShell($path = \"c:\\\\Users\\\\Thash\\\\Desktop\\\\Bots\\\\Unique Ceramics v2\\\\app\\\\sklep\\\\[slug]\\\\ProductGallery.tsx\"; [System.IO.File]::ReadAllText\\($path\\))"
     ],
     "additionalDirectories": [
       "c:\\Users\\Thash\\Desktop\\Bots\\Unique Ceramics v2\\app\\api\\admin\\categories"

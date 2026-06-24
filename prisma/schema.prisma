@@ -120,9 +120,10 @@ model Product {
   images      String[]
   category    String   @default("inne")
   stock       Int      @default(0)
-  featured    Boolean  @default(false)
-  active      Boolean  @default(true)
-  createdAt   DateTime @default(now())
+  featured        Boolean  @default(false)
+  active          Boolean  @default(true)
+  variesFromPhoto Boolean  @default(false)
+  createdAt       DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@index([active, featured])

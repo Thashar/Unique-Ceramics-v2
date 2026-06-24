@@ -13,13 +13,13 @@ export async function POST(req: Request) {
   if (!await requireAdmin()) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const body = await req.json();
-  const { name, slug, description, price, images, category, stock, featured, active } = body;
+  const { name, slug, description, price, images, category, stock, featured, active, variesFromPhoto } = body;
 
   const existing = await db.product.findUnique({ where: { slug } });
   if (existing) return NextResponse.json({ error: "Slug już istnieje" }, { status: 409 });
 
   const product = await db.product.create({
-    data: { name, slug, description, price, images, category, stock, featured, active },
+    data: { name, slug, description, price, images, category, stock, featured, active, variesFromPhoto: variesFromPhoto ?? false },
   });
 
   revalidateProductPages();

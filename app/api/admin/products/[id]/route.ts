@@ -10,11 +10,11 @@ export async function PUT(
   if (!await requireAdmin()) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const { id } = await params;
   const body = await req.json();
-  const { name, slug, description, price, images, category, stock, featured, active } = body;
+  const { name, slug, description, price, images, category, stock, featured, active, variesFromPhoto } = body;
 
   const product = await db.product.update({
     where: { id },
-    data: { name, slug, description, price, images, category, stock, featured, active },
+    data: { name, slug, description, price, images, category, stock, featured, active, variesFromPhoto: variesFromPhoto ?? false },
   });
 
   revalidateProductPages();

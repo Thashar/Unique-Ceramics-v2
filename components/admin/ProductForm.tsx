@@ -16,6 +16,7 @@ type Product = {
   stock: number;
   featured: boolean;
   active: boolean;
+  variesFromPhoto: boolean;
 };
 
 type Category = { slug: string; label: string };
@@ -31,6 +32,7 @@ export default function ProductForm({ product, categories }: { product?: Product
     stock: product?.stock?.toString() ?? "0",
     featured: product?.featured ?? false,
     active: product?.active ?? true,
+    variesFromPhoto: product?.variesFromPhoto ?? false,
   });
   const [images, setImages] = useState<string[]>(product?.images ?? []);
   const [uploading, setUploading] = useState(false);
@@ -182,16 +184,26 @@ export default function ProductForm({ product, categories }: { product?: Product
       </div>
 
       {/* Opcje */}
-      <div className="flex gap-8">
-        <label className="flex items-center gap-3 cursor-pointer">
-          <input type="checkbox" checked={form.featured}
-            onChange={(e) => set("featured", e.target.checked)} className="accent-clay w-4 h-4" />
-          <span className="text-sm text-espresso">Wyróżniony na stronie głównej</span>
-        </label>
-        <label className="flex items-center gap-3 cursor-pointer">
-          <input type="checkbox" checked={form.active}
-            onChange={(e) => set("active", e.target.checked)} className="accent-clay w-4 h-4" />
-          <span className="text-sm text-espresso">Aktywny (widoczny w sklepie)</span>
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-wrap gap-8">
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input type="checkbox" checked={form.featured}
+              onChange={(e) => set("featured", e.target.checked)} className="accent-clay w-4 h-4" />
+            <span className="text-sm text-espresso">Wyróżniony na stronie głównej</span>
+          </label>
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input type="checkbox" checked={form.active}
+              onChange={(e) => set("active", e.target.checked)} className="accent-clay w-4 h-4" />
+            <span className="text-sm text-espresso">Aktywny (widoczny w sklepie)</span>
+          </label>
+        </div>
+        <label className="flex items-start gap-3 cursor-pointer">
+          <input type="checkbox" checked={form.variesFromPhoto}
+            onChange={(e) => set("variesFromPhoto", e.target.checked)} className="accent-clay w-4 h-4 mt-0.5 shrink-0" />
+          <div>
+            <span className="text-sm text-espresso">Produkt może różnić się od zdjęcia</span>
+            <p className="text-xs text-charcoal/45 mt-0.5">Wyświetla informację o naturalnej unikalności ceramiki na stronie produktu.</p>
+          </div>
         </label>
       </div>
 
