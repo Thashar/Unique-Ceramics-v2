@@ -86,6 +86,10 @@ INPOST_GEOWIDGET_TOKEN="xxxx"               # token widgetu mapy paczkomatów In
 
 > Kwoty (`price`, `total`, `shippingCost`) są typu `Float` — przy obliczeniach **zawsze zaokrąglaj do groszy** (`Math.round(x * 100) / 100`). Docelowo do migracji na `Decimal`.
 
+### Indeksy bazy danych
+
+`Product` ma indeksy: `[active, featured]`, `[active, category]`, `[active, stock]`, `[active, featured, createdAt DESC]`, `[slug, active]`. `CustomOrder` ma indeksy: `[status]`, `[customerEmail]`. Migracje w `prisma/migrations/`; plik `manual_add_performance_indexes.sql` wymaga ręcznego wykonania na Supabase (DIRECT_URL niedostępny lokalnie).
+
 ---
 
 ## Ustawienia dynamiczne (`lib/settings.ts`)
@@ -144,8 +148,8 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 | Route | Cache | Opis |
 |-------|-------|------|
 | `/` | ISR 3600 s | Strona główna (scroll-snap, hero, wybrane prace, stopka z IG) |
-| `/sklep` | dynamic + dane z cache 60 s | Katalog produktów (searchParams `kategoria`) |
-| `/sklep/[slug]` | ISR 60 s (on-demand) | Szczegóły produktu (**server component**, JSON-LD Product) |
+| `/sklep` | dynamic + dane z cache 60 s | Katalog produktów (searchParams `kategoria`); kategorie renderują się natychmiast, siatka produktów streamuje przez `<Suspense>` z `ProductGrid` + `ProductGridSkeleton` |
+| `/sklep/[slug]` | ISR 60 s (pre-generated) | Szczegóły produktu (**server component**, JSON-LD Product); `generateStaticParams` pre-generuje wszystkie aktywne produkty przy budowaniu |
 | `/koszyk` | static (client) | Koszyk |
 | `/zamowienie` | force-dynamic | Formularz zamówienia (server) → `CheckoutForm` (client) |
 | `/zamowienie/potwierdzenie` | force-dynamic | Potwierdzenie + dane do przelewu |
@@ -207,7 +211,7 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 
 - **db.ts** — singleton PrismaClient (`connection_limit=1` pod serverless)
 - **settings.ts** — `getSetting`/`getSettings` z defaultami i retry
-- **products.ts** — `getShopProducts()` (unstable_cache 60 s, tag `products`) + `revalidateProductPages()`
+- **products.ts** — `getShopProducts()` (unstable_cache 60 s, tag `products`; jedno zapytanie do DB, podział inStock/soldOut w JS) + `getFeaturedProducts()` (unstable_cache 3600 s, tag `products`) + `revalidateProductPages()`
 - **categories.ts** — `getCategories()` (unstable_cache, tag `categories`; fallback do DEFAULT_CATEGORIES gdy DB pusta/niedostępna) + `revalidateCategories()`
 - **admin-auth.ts** — `requireAdmin()`: sesja + **aktualna rola z DB** (nie z JWT — odebranie uprawnień działa natychmiast)
 - **rate-limit.ts** — in-memory limiter (`isRateLimited`, `getClientIp`); per-instancja na serverless
@@ -230,9 +234,13 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 
 ### `components/home/`
 - **Hero.tsx**, **FeaturedProducts.tsx**, **AboutTeaser.tsx**, **WorkshopsTeaser.tsx**
-- **HomeScrollSnap.tsx** — `"use client"`, scroll-snap sekcji strony głównej
+- **HomeScrollSnap.tsx** — `"use client"`, scroll-snap sekcji strony głównej; sekcje materializowane raz przy mount (brak DOM query w handlerach zdarzeń)
 - **ProductCarousel.tsx** — `"use client"`, mobilna karuzela wybranych prac
 - **InstagramCta.tsx** — przyjmuje prop `instagram` (nieużywany na stronie głównej od scalenia ze stopką)
+
+### `app/sklep/` (server components)
+- **ProductGrid.tsx** — siatka produktów (async server component); woła `getShopProducts()`, filtruje po kategorii, obsługuje błąd DB i empty state
+- **ProductGridSkeleton.tsx** — placeholder `animate-pulse` dla `<Suspense fallback>` w `/sklep`
 
 ### `components/ui/`
 - **ProductCard.tsx** — karta produktu (next/image + framer-motion)
@@ -293,7 +301,7 @@ Fonty: `font-serif` → Playfair Display, `font-sans` → Inter (oba przez `next
 
 ## Bezpieczeństwo — zasady
 
-- **Nagłówki** (`next.config.ts`): CSP, X-Frame-Options DENY, nosniff, Referrer-Policy, HSTS, Permissions-Policy. Nowe zewnętrzne źródła (skrypty, iframy, obrazy) wymagają aktualizacji CSP.
+- **Nagłówki** (`next.config.ts`): CSP, X-Frame-Options DENY, nosniff, Referrer-Policy, HSTS, Permissions-Policy. Nowe zewnętrzne źródła (skrypty, iframy, obrazy) wymagają aktualizacji CSP. `optimizePackageImports` dla framer-motion i lucide-react; `compiler.removeConsole` usuwa `console.log` z bundle klienta (zachowane `error`/`warn`).
 - **Nie ładuj skryptów z CDN** — zależności tylko przez npm (CSP je zablokuje).
 - **Kwoty i stany magazynowe** liczone wyłącznie po stronie serwera; checkout dekrementuje stock w transakcji z utworzeniem zamówienia.
 - **Nigdy nie pokazuj `e.message` użytkownikowi** — szczegóły błędów tylko do `console.error`, na stronie komunikat ogólny.

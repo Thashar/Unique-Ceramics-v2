@@ -1,16 +1,13 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { db } from "@/lib/db";
+import { getFeaturedProducts } from "@/lib/products";
 import ProductCarousel from "@/components/home/ProductCarousel";
 import DesktopCarousel from "@/components/home/DesktopCarousel";
 
 export default async function FeaturedProducts() {
-  let products: Awaited<ReturnType<typeof db.product.findMany>> = [];
+  let products: Awaited<ReturnType<typeof getFeaturedProducts>> = [];
   try {
-    products = await db.product.findMany({
-      where: { featured: true, active: true, stock: { gt: 0 } },
-      orderBy: { createdAt: "desc" },
-    });
+    products = await getFeaturedProducts();
   } catch {
     // Baza niedostępna — sekcja nie wyświetla produktów
   }

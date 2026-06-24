@@ -1,10 +1,11 @@
+import { Suspense } from "react";
 import Link from "next/link";
-import { ShoppingBag, PenLine } from "lucide-react";
+import { PenLine } from "lucide-react";
 import Header from "@/components/layout/HeaderWrapper";
 import Footer from "@/components/layout/Footer";
-import ProductCard from "@/components/ui/ProductCard";
-import { getShopProducts } from "@/lib/products";
 import { getCategories } from "@/lib/categories";
+import ProductGrid from "./ProductGrid";
+import ProductGridSkeleton from "./ProductGridSkeleton";
 
 export const metadata = {
   title: "Sklep",
@@ -34,27 +35,14 @@ export default async function ShopPage({
 }) {
   const { kategoria } = await searchParams;
 
+  // Kategorie renderują się natychmiast (unstable_cache).
+  // Siatka produktów streamuje się osobno przez <Suspense>.
   const dbCategories = await getCategories();
 
   const CATEGORIES = [
     { value: "wszystkie", label: "Wszystkie" },
     ...dbCategories.map((c) => ({ value: c.slug, label: c.label })),
   ];
-
-  let products: Awaited<ReturnType<typeof getShopProducts>>["inStock"] = [];
-  let dbError = false;
-  try {
-    const { inStock, soldOut } = await getShopProducts();
-
-    const filterFn = kategoria && kategoria !== "wszystkie"
-      ? (p: (typeof inStock)[0]) => p.category === kategoria
-      : () => true;
-
-    products = [...inStock.filter(filterFn), ...soldOut.filter(filterFn)];
-  } catch (e) {
-    dbError = true;
-    console.error("DB error in /sklep:", e);
-  }
 
   const activeCategory = kategoria ?? "wszystkie";
 
@@ -81,36 +69,14 @@ export default async function ShopPage({
           </div>
         </div>
 
-        {/* Siatka produktów */}
+        {/* Siatka produktów — streamuje przez Suspense */}
         <div className="max-w-7xl mx-auto px-6 lg:px-10 pt-8 pb-16 md:py-16">
-          {dbError ? (
-            <div className="text-center py-24">
-              <ShoppingBag size={48} strokeWidth={1} className="mx-auto text-sand mb-6" />
-              <p className="font-serif text-2xl text-espresso mb-2">Sklep chwilowo niedostępny</p>
-              <p className="text-charcoal/50 text-sm">Spróbuj ponownie za chwilę.</p>
-            </div>
-          ) : products.length === 0 ? (
-            <div className="text-center py-24">
-              <ShoppingBag size={48} strokeWidth={1} className="mx-auto text-sand mb-6" />
-              <p className="font-serif text-2xl text-espresso mb-2">Brak produktów</p>
-              <p className="text-charcoal/50 text-sm">
-                {kategoria ? "Brak produktów w tej kategorii." : "Sklep jest w przygotowaniu."}
-              </p>
-            </div>
-          ) : (
-            <>
-              <p className="text-xs text-charcoal/40 tracking-widests uppercase mb-8">
-                {products.length} {products.length === 1 ? "produkt" : products.length < 5 ? "produkty" : "produktów"}
-              </p>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
-                {products.map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </div>
-            </>
-          )}
+          <Suspense fallback={<ProductGridSkeleton />}>
+            <ProductGrid kategoria={kategoria} />
+          </Suspense>
         </div>
       </div>
+
       {/* Pływający przycisk zamówień indywidualnych */}
       <Link
         href="/zamowienie-indywidualne"

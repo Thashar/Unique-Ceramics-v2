@@ -129,6 +129,8 @@ model Product {
   @@index([active, featured])
   @@index([active, category])
   @@index([active, stock])
+  @@index([active, featured, createdAt(sort: Desc)])
+  @@index([slug, active])
 }
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
@@ -169,6 +171,9 @@ model CustomOrder {
   adminNotes    String?
   createdAt     DateTime          @default(now())
   updatedAt     DateTime          @updatedAt
+
+  @@index([status])
+  @@index([customerEmail])
 }
 
 enum CustomOrderStatus {

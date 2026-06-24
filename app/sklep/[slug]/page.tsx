@@ -13,7 +13,15 @@ import { getSettings } from "@/lib/settings";
 export const revalidate = 60;
 
 export async function generateStaticParams() {
-  return [];
+  try {
+    const products = await db.product.findMany({
+      where: { active: true },
+      select: { slug: true },
+    });
+    return products.map((p) => ({ slug: p.slug }));
+  } catch {
+    return [];
+  }
 }
 
 const getProduct = cache(async (slug: string) => {

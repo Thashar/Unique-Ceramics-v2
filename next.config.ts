@@ -30,6 +30,12 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   serverExternalPackages: ["pdfkit"],
+  experimental: {
+    optimizePackageImports: ["framer-motion", "lucide-react"],
+  },
+  compiler: {
+    removeConsole: { exclude: ["error", "warn"] },
+  },
   images: {
     remotePatterns: [
       {

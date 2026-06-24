@@ -27,15 +27,14 @@ export default function HomeScrollSnap() {
     let touchStartScrollY = 0;
     let touchIsVertical: boolean | null = null;
 
-    function getSnapSections(): HTMLElement[] {
-      return Array.from(document.querySelectorAll<HTMLElement>("[data-snap]"));
-    }
+    // Sekcje są statyczne po zamontowaniu — materializujemy raz, bez DOM query na każdy event.
+    let sections: HTMLElement[] = Array.from(document.querySelectorAll<HTMLElement>("[data-snap]"));
 
     function getSectionTop(section: HTMLElement): number {
       return section.getBoundingClientRect().top + window.scrollY;
     }
 
-    function getIndexByScrollY(sections: HTMLElement[], scrollY: number): number {
+    function getIndexByScrollY(scrollY: number): number {
       let closest = 0;
       let minDist = Infinity;
       sections.forEach((s, i) => {
@@ -71,8 +70,7 @@ export default function HomeScrollSnap() {
     }
 
     function handleWheel(e: WheelEvent) {
-      const sections = getSnapSections();
-      const idx = getIndexByScrollY(sections, window.scrollY);
+      const idx = getIndexByScrollY(window.scrollY);
       const section = sections[idx];
       const sectionTop = getSectionTop(section);
 
@@ -103,8 +101,7 @@ export default function HomeScrollSnap() {
       if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
       e.preventDefault();
       if (isScrolling) return;
-      const sections = getSnapSections();
-      const idx = getIndexByScrollY(sections, window.scrollY);
+      const idx = getIndexByScrollY(window.scrollY);
       const dir = e.key === "ArrowDown" ? 1 : -1;
       const next = Math.max(0, Math.min(sections.length - 1, idx + dir));
       animateTo(getSectionTop(sections[next]));
@@ -129,8 +126,7 @@ export default function HomeScrollSnap() {
 
       // Blokuj natywne pionowe przewijanie tylko na sekcjach pełnoekranowych
       if (touchIsVertical === true) {
-        const sections = getSnapSections();
-        const idx = getIndexByScrollY(sections, touchStartScrollY);
+        const idx = getIndexByScrollY(touchStartScrollY);
         if (!isTall(sections[idx])) {
           e.preventDefault();
         }
@@ -145,8 +141,7 @@ export default function HomeScrollSnap() {
       if (diffX > Math.abs(diffY) * 1.5) return;
       if (Math.abs(diffY) < 40) return;
 
-      const sections = getSnapSections();
-      const startIdx = getIndexByScrollY(sections, touchStartScrollY);
+      const startIdx = getIndexByScrollY(touchStartScrollY);
       const section = sections[startIdx];
       const sectionTop = getSectionTop(section);
 
@@ -171,9 +166,10 @@ export default function HomeScrollSnap() {
     }
 
     function handleResize() {
+      // Przy resize odświeżamy tablicę sekcji (mogły się zmienić z CSS)
+      sections = Array.from(document.querySelectorAll<HTMLElement>("[data-snap]"));
       if (isScrolling) return;
-      const sections = getSnapSections();
-      const idx = getIndexByScrollY(sections, window.scrollY);
+      const idx = getIndexByScrollY(window.scrollY);
       window.scrollTo({ top: getSectionTop(sections[idx]), behavior: "instant" });
     }
 
