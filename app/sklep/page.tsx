@@ -1,11 +1,10 @@
-import { Suspense } from "react";
 import Link from "next/link";
 import { PenLine } from "lucide-react";
 import Header from "@/components/layout/HeaderWrapper";
 import Footer from "@/components/layout/Footer";
 import { getCategories } from "@/lib/categories";
+import { getShopProducts } from "@/lib/products";
 import ProductGrid from "./ProductGrid";
-import ProductGridSkeleton from "./ProductGridSkeleton";
 
 export const metadata = {
   title: "Sklep",
@@ -35,9 +34,23 @@ export default async function ShopPage({
 }) {
   const { kategoria } = await searchParams;
 
-  // Kategorie renderują się natychmiast (unstable_cache).
-  // Siatka produktów streamuje się osobno przez <Suspense>.
+  // Zapytania sekwencyjne — każde zwalnia połączenie przed kolejnym,
+  // co chroni przed wyczerpaniem puli (Supabase: 15 połączeń w trybie sesji).
   const dbCategories = await getCategories();
+
+  let products: Awaited<ReturnType<typeof getShopProducts>>["inStock"] = [];
+  let dbError = false;
+  try {
+    const { inStock, soldOut } = await getShopProducts();
+    const filterFn =
+      kategoria && kategoria !== "wszystkie"
+        ? (p: (typeof inStock)[0]) => p.category === kategoria
+        : () => true;
+    products = [...inStock.filter(filterFn), ...soldOut.filter(filterFn)];
+  } catch (e) {
+    dbError = true;
+    console.error("DB error in /sklep:", e);
+  }
 
   const CATEGORIES = [
     { value: "wszystkie", label: "Wszystkie" },
@@ -69,11 +82,9 @@ export default async function ShopPage({
           </div>
         </div>
 
-        {/* Siatka produktów — streamuje przez Suspense */}
+        {/* Siatka produktów */}
         <div className="max-w-7xl mx-auto px-6 lg:px-10 pt-8 pb-16 md:py-16">
-          <Suspense fallback={<ProductGridSkeleton />}>
-            <ProductGrid kategoria={kategoria} />
-          </Suspense>
+          <ProductGrid products={products} kategoria={kategoria} dbError={dbError} />
         </div>
       </div>
 

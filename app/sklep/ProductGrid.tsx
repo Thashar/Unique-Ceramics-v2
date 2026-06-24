@@ -1,19 +1,16 @@
 import { ShoppingBag } from "lucide-react";
 import ProductCard from "@/components/ui/ProductCard";
-import { getShopProducts } from "@/lib/products";
+import type { getShopProducts } from "@/lib/products";
 
-export default async function ProductGrid({ kategoria }: { kategoria?: string }) {
-  let inStock: Awaited<ReturnType<typeof getShopProducts>>["inStock"] = [];
-  let soldOut: Awaited<ReturnType<typeof getShopProducts>>["soldOut"] = [];
-  let dbError = false;
+type Product = Awaited<ReturnType<typeof getShopProducts>>["inStock"][0];
 
-  try {
-    ({ inStock, soldOut } = await getShopProducts());
-  } catch (e) {
-    dbError = true;
-    console.error("DB error in /sklep ProductGrid:", e);
-  }
+interface Props {
+  products: Product[];
+  kategoria?: string;
+  dbError: boolean;
+}
 
+export default function ProductGrid({ products, kategoria, dbError }: Props) {
   if (dbError) {
     return (
       <div className="text-center py-24">
@@ -23,13 +20,6 @@ export default async function ProductGrid({ kategoria }: { kategoria?: string })
       </div>
     );
   }
-
-  const filterFn =
-    kategoria && kategoria !== "wszystkie"
-      ? (p: (typeof inStock)[0]) => p.category === kategoria
-      : () => true;
-
-  const products = [...inStock.filter(filterFn), ...soldOut.filter(filterFn)];
 
   if (products.length === 0) {
     return (
