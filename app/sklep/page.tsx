@@ -46,11 +46,11 @@ export default async function ShopPage({
   try {
     const { inStock, soldOut } = await getShopProducts();
 
-    const filtered = kategoria && kategoria !== "wszystkie"
-      ? inStock.filter((p) => p.category === kategoria)
-      : inStock;
+    const filterFn = kategoria && kategoria !== "wszystkie"
+      ? (p: (typeof inStock)[0]) => p.category === kategoria
+      : () => true;
 
-    products = [...filtered, ...soldOut];
+    products = [...inStock.filter(filterFn), ...soldOut.filter(filterFn)];
   } catch (e) {
     dbError = true;
     console.error("DB error in /sklep:", e);
