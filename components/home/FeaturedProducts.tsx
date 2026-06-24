@@ -19,7 +19,7 @@ export default async function FeaturedProducts() {
 
   return (
     <section
-      className="bg-warm-white overflow-hidden flex flex-col pt-20"
+      className="bg-warm-white overflow-hidden flex flex-col pt-14 md:pt-20"
       style={{ height: "100svh" }}
       data-snap
     >
