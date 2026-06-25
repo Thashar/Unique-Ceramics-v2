@@ -63,13 +63,7 @@ export default async function ShopPage({
     <>
       <Header />
       <div className="min-h-[100svh] bg-warm-white pt-[100px]">
-        {/* Nagłówek strony */}
-        <div className="bg-cream px-6 lg:px-10 py-8 border-b border-sand">
-          <div className="max-w-7xl mx-auto">
-            <p className="text-xs tracking-[0.3em] uppercase text-clay mb-2">Ceramika</p>
-            <h1 className="font-serif text-4xl md:text-5xl text-espresso">Sklep</h1>
-          </div>
-        </div>
+        <h1 className="sr-only">Sklep ceramiczny — ręcznie robiona ceramika Gliwice</h1>
         {/* Filtry kategorii */}
         <div className="border-b border-sand bg-cream sticky top-[100px] z-30 shadow-sm">
           <div className="max-w-7xl mx-auto px-6 lg:px-10 flex gap-2 overflow-x-auto py-4 no-scrollbar">
