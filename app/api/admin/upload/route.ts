@@ -1,12 +1,9 @@
+import sharp from "sharp";
 import { createClient } from "@supabase/supabase-js";
 import { requireAdmin } from "@/lib/admin-auth";
 import { NextResponse } from "next/server";
 
-const ALLOWED_TYPES: Record<string, string> = {
-  "image/jpeg": "jpg",
-  "image/png": "png",
-  "image/webp": "webp",
-};
+const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 
 export async function POST(req: Request) {
@@ -23,8 +20,7 @@ export async function POST(req: Request) {
   const file = formData.get("file") as File;
   if (!file) return NextResponse.json({ error: "Brak pliku" }, { status: 400 });
 
-  const ext = ALLOWED_TYPES[file.type];
-  if (!ext) {
+  if (!ALLOWED_TYPES.has(file.type)) {
     return NextResponse.json(
       { error: "Niedozwolony typ pliku. Dozwolone: JPG, PNG, WebP." },
       { status: 400 }
@@ -36,8 +32,6 @@ export async function POST(req: Request) {
       { status: 400 }
     );
   }
-
-  const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
   const bytes = await file.arrayBuffer();
   const buffer = Buffer.from(bytes);
@@ -53,9 +47,25 @@ export async function POST(req: Request) {
     );
   }
 
+  // Konwersja do WebP (jakość 82, maks. szerokość 1920 px)
+  let webpBuffer: Buffer;
+  try {
+    webpBuffer = await sharp(buffer)
+      .resize({ width: 1920, withoutEnlargement: true })
+      .webp({ quality: 82 })
+      .toBuffer();
+  } catch {
+    return NextResponse.json(
+      { error: "Nie udało się przetworzyć obrazu." },
+      { status: 400 }
+    );
+  }
+
+  const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.webp`;
+
   const { error } = await supabase.storage
     .from("products")
-    .upload(filename, buffer, { contentType: file.type, upsert: false });
+    .upload(filename, webpBuffer, { contentType: "image/webp", upsert: false });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
