@@ -31,9 +31,10 @@ export async function POST(req: Request) {
     const orderId = session.metadata?.orderId;
     // completed nie zawsze oznacza opłacone (asynchroniczne metody płatności)
     if (orderId && session.payment_status === "paid") {
-      await db.order.update({
-        where: { id: orderId },
-        data: { paymentStatus: "PAID" },
+      // Ustaw paidAt tylko przy pierwszym opłaceniu — przychód rozpoznawany wg tej daty
+      await db.order.updateMany({
+        where: { id: orderId, paymentStatus: { not: "PAID" } },
+        data: { paymentStatus: "PAID", paidAt: new Date() },
       });
     }
   }

@@ -72,7 +72,8 @@ INPOST_GEOWIDGET_TOKEN="xxxx"               # token widgetu mapy paczkomatów In
 ### Sklep
 - **Category** — `id`, `slug` (unique, używany w URL i w `Product.category`), `label` (nazwa wyświetlana), `order` (kolejność filtrów)
 - **Product** — `id`, `slug` (unique), `name`, `description`, `price`, `images[]`, `category`, `stock`, `featured`, `active`
-- **Order** — `id`, `userId` (nullable), `status`, `total`, `shippingCost`, pola adresowe, `paymentMethod` (`transfer`/`stripe`), `paymentStatus` (`pending`/`PAID`/`expired`), `shippingMethod` (`courier`/`parcel_locker`/`pickup`), `parcelLockerCode` (nullable), `trackingNumber` (nullable), `trackingCarrier` (nullable — `dpd`/`dhl`/`inpost`/`poczta`)
+- **Order** — `id`, `userId` (nullable), `status`, `total`, `shippingCost`, pola adresowe, `paymentMethod` (`transfer`/`stripe`), `paymentStatus` (`pending`/`PAID`/`expired`), `shippingMethod` (`courier`/`parcel_locker`/`pickup`), `parcelLockerCode` (nullable), `trackingNumber` (nullable), `trackingCarrier` (nullable — `dpd`/`dhl`/`inpost`/`poczta`), `paidAt` (nullable — moment oznaczenia jako opłacone), `settlementDate` (nullable — nadpisanie miesiąca rozliczenia; przychód rozpoznawany wg daty wpłaty)
+  - **Rozpoznanie przychodu wg daty wpłaty:** raporty i analityki (sklep) liczą tylko opłacone (`paymentStatus='PAID'`) wg `COALESCE(settlementDate, paidAt, createdAt)` — zamówienie opłacone w nowym miesiącu trafia do tego miesiąca. `paidAt` ustawiane automatycznie przy przejściu na status/płatność PAID (admin + webhook Stripe). Admin może cofnąć miesiąc rozliczenia max o 3 miesiące (dropdown w karcie zamówienia → `settlementDate`).
 - **OrderItem** — referencja do Order, `productId`, `name`, `price`, `quantity`
 - **CustomOrder** — `id`, `orderNumber` (auto-increment, wyświetlany jako `IND-{n}`), `customerName`, `customerEmail`, `customerPhone`, `street`, `city`, `postcode`, `orderType`, `description`, `deadline`, `budget`, `price` (cena zamówienia admina), `shippingCost` (koszt wysyłki), `paidAmount` (kwota wpłacona), `status`, `adminNotes`
 - **Setting** — `key` (unique), `value` — magazyn key-value dla dynamicznych ustawień (także adresy użytkowników: `user_address_{userId}`)
@@ -90,7 +91,7 @@ INPOST_GEOWIDGET_TOKEN="xxxx"               # token widgetu mapy paczkomatów In
 
 ### Indeksy bazy danych
 
-`Product` ma indeksy: `[active, featured]`, `[active, category]`, `[active, stock]`, `[active, featured, createdAt DESC]`, `[slug, active]`. `CustomOrder` ma indeksy: `[status]`, `[customerEmail]`. Migracje w `prisma/migrations/`; pliki `manual_*.sql` wymagają ręcznego wykonania na Supabase (DIRECT_URL niedostępny lokalnie) — m.in. `manual_add_performance_indexes.sql` oraz `manual_add_paid_order_status.sql` (dodaje wartość `PAID` do enuma `OrderStatus`; `ALTER TYPE ... ADD VALUE` musi działać poza transakcją).
+`Product` ma indeksy: `[active, featured]`, `[active, category]`, `[active, stock]`, `[active, featured, createdAt DESC]`, `[slug, active]`. `CustomOrder` ma indeksy: `[status]`, `[customerEmail]`. Migracje w `prisma/migrations/`; pliki `manual_*.sql` wymagają ręcznego wykonania na Supabase (DIRECT_URL niedostępny lokalnie) — m.in. `manual_add_performance_indexes.sql`, `manual_add_paid_order_status.sql` (dodaje wartość `PAID` do enuma `OrderStatus`; `ALTER TYPE ... ADD VALUE` musi działać poza transakcją) oraz `manual_add_order_paidat_settlement.sql` (kolumny `paidAt`, `settlementDate`).
 
 ---
 
@@ -201,12 +202,12 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 | PUT/DELETE | `/api/admin/categories/[id]` | Edytuj/usuń kategorię (ADMIN; usuwanie blokowane gdy istnieją produkty w kategorii) |
 | GET/POST | `/api/admin/products` | Lista/dodaj produkty (ADMIN; mutacje → `revalidateProductPages()`) |
 | PUT/DELETE | `/api/admin/products/[id]` | Edytuj/usuń produkt (ADMIN; mutacje → rewalidacja) |
-| PATCH | `/api/admin/orders/[id]` | Zmień status zamówienia / dane listu przewozowego (ADMIN; walidacja enuma + dozwolonego przejścia: 1 krok do przodu lub anulowanie; status `PAID` auto-ustawia `paymentStatus=PAID` + e-mail) |
+| PATCH | `/api/admin/orders/[id]` | Zmień status zamówienia / dane listu przewozowego / miesiąc rozliczenia (ADMIN; walidacja przejścia: 1 krok do przodu lub anulowanie; status `PAID` auto-ustawia `paymentStatus=PAID`+`paidAt`+e-mail; `settlementDate` = nadpisanie miesiąca rozliczenia, max 3 mies. wstecz) |
 | PATCH | `/api/admin/custom-orders/[id]` | Status/notatki/cena/kwotaWpłacona/daneKlienta zamówienia indywidualnego (ADMIN; PAID wymaga paidAmount > 0) |
 | POST | `/api/admin/upload` | Upload zdjęcia do Supabase Storage (ADMIN, magic bytes, maks. 10 MB) |
 | PATCH/POST | `/api/admin/settings` | Zapis ustawień (ADMIN; sanityzacja HTML + `revalidatePath("/", "layout")`) |
 | GET | `/api/admin/settings/[key]` | Pojedyncze ustawienie (ADMIN) |
-| GET | `/api/admin/reports/[year]/[month]` | Generuje i pobiera raport PDF za dany miesiąc (ADMIN; pdfkit; czcionka Lato z Google Fonts CDN z cachem; fallback Helvetica). Liczy podatek PIT od przychodu z produktów (bez wysyłki — koszt uzyskania przychodu); stawka 12% lub 32% wg ustawienia `tax_high_{rok}_{miesiac}` |
+| GET | `/api/admin/reports/[year]/[month]` | Generuje i pobiera raport PDF za dany miesiąc (ADMIN; pdfkit; czcionka Lato z Google Fonts CDN z cachem; fallback Helvetica). Tylko opłacone zamówienia rozpoznane wg daty wpłaty (`settlementDate`/`paidAt`/`createdAt`). Liczy podatek PIT od przychodu z produktów (bez wysyłki — koszt uzyskania przychodu); stawka 12% lub 32% wg ustawienia `tax_high_{rok}_{miesiac}` |
 | GET | `/api/ping` | Health check (wymaga `Authorization: Bearer CRON_SECRET`; cron Vercel 8:00) |
 
 ---
@@ -268,6 +269,7 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 - **ProductsSearch.tsx** — wyszukiwarka w liście produktów
 - **CustomOrderActions.tsx** — formularz zamówień indywidualnych: edycja danych klienta (przycisk odblokowania), pola ceny i kwoty wpłaconej, dropdown statusu (PAID wymaga paidAmount), notatki; każda zmiana statusu wymaga potwierdzenia `window.confirm`
 - **TrackingForm.tsx** — `"use client"`, formularz listu przewozowego: wybór dostawcy (DPD/DHL/InPost/Poczta Polska) + pole numeru; PATCH `/api/admin/orders/[id]` z `{ trackingNumber, trackingCarrier }`; pokazuje link śledzenia po wypełnieniu (edycja tylko przy statusie W realizacji)
+- **SettlementMonthSelect.tsx** — `"use client"`, dropdown miesiąca rozliczenia w karcie zamówienia (widoczny dla opłaconych): miesiąc wpłaty + do 3 wstecz; PATCH `/api/admin/orders/[id]` z `{ settlementDate }` (null = miesiąc wpłaty). Obok wyświetlana data i godzina opłacenia (`paidAt`)
 - **DznSection.tsx** — `"use client"`, sekcja działalności nierejestrowanej: edytowalne minimalne wynagrodzenie (zapis `dzn_min_wage`), paski limitu kwartalnego (225% min. wynagrodzenia) z ostrzeżeniami 75%/90%
 - **MonthlyReportsTable.tsx** — `"use client"`, tabela 12 miesięcy w /admin/analityki: przychód, wysyłka, podstawa opodatkowania (przychód − wysyłka), checkbox podwyższonej stawki PIT 32% (zapis `tax_high_{rok}_{miesiac}` przez PATCH `/api/admin/settings`), wyliczony podatek (12%/32%), link do raportu PDF; w stopce suma podatku do odprowadzenia za bieżący rok
 

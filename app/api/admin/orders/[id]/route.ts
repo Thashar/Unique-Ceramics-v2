@@ -292,6 +292,51 @@ export async function PATCH(
     return NextResponse.json(order);
   }
 
+  // Nadpisanie miesiąca rozliczenia (przychód rozpoznawany wg daty wpłaty).
+  // Dozwolone cofnięcie maksymalnie o 3 miesiące względem miesiąca opłacenia
+  // (na wypadek, gdy admin zapomniał w porę zmienić status na „Opłacone").
+  if (body.settlementDate !== undefined) {
+    const existing = await db.order.findUnique({
+      where: { id },
+      select: { paidAt: true, createdAt: true, paymentStatus: true },
+    });
+    if (!existing) {
+      return NextResponse.json({ error: "Nie znaleziono zamówienia" }, { status: 404 });
+    }
+    if (existing.paymentStatus !== "PAID") {
+      return NextResponse.json(
+        { error: "Miesiąc rozliczenia dotyczy tylko opłaconych zamówień." },
+        { status: 400 }
+      );
+    }
+
+    if (body.settlementDate === null) {
+      const order = await db.order.update({ where: { id }, data: { settlementDate: null } });
+      return NextResponse.json(order);
+    }
+
+    const d = new Date(body.settlementDate);
+    if (isNaN(d.getTime())) {
+      return NextResponse.json({ error: "Nieprawidłowa data" }, { status: 400 });
+    }
+
+    const base    = existing.paidAt ?? existing.createdAt;
+    const baseIdx = base.getFullYear() * 12 + base.getMonth();
+    const selIdx  = d.getFullYear() * 12 + d.getMonth();
+    if (selIdx > baseIdx || selIdx < baseIdx - 3) {
+      return NextResponse.json(
+        { error: "Miesiąc rozliczenia można cofnąć maksymalnie o 3 miesiące." },
+        { status: 400 }
+      );
+    }
+
+    // Wybór miesiąca opłacenia = brak nadpisania (null). Inaczej zapisz 15. dzień
+    // miesiąca w południe — bezpiecznie od stref czasowych przy EXTRACT(MONTH).
+    const settlement = selIdx === baseIdx ? null : new Date(d.getFullYear(), d.getMonth(), 15, 12, 0, 0);
+    const order = await db.order.update({ where: { id }, data: { settlementDate: settlement } });
+    return NextResponse.json(order);
+  }
+
   // Zmiana statusu płatności
   if (body.paymentStatus !== undefined) {
     if (!PAYMENT_STATUSES.includes(body.paymentStatus)) {
@@ -300,15 +345,21 @@ export async function PATCH(
 
     const existing = await db.order.findUnique({
       where: { id },
-      select: { paymentStatus: true, email: true, firstName: true, lastName: true, total: true },
+      select: { paymentStatus: true, paidAt: true, email: true, firstName: true, lastName: true, total: true },
     });
+
+    const becomesPaid = body.paymentStatus === "PAID" && existing?.paymentStatus !== "PAID";
 
     const order = await db.order.update({
       where: { id },
-      data: { paymentStatus: body.paymentStatus },
+      data: {
+        paymentStatus: body.paymentStatus,
+        // Ustaw znacznik wpłaty przy pierwszym oznaczeniu jako opłacone
+        ...(becomesPaid && !existing?.paidAt ? { paidAt: new Date() } : {}),
+      },
     });
 
-    if (body.paymentStatus === "PAID" && existing?.paymentStatus !== "PAID") {
+    if (becomesPaid) {
       void sendPaymentConfirmationEmail({
         id: order.id,
         email: order.email,
@@ -329,7 +380,7 @@ export async function PATCH(
   // Walidacja przejścia statusu (tylko 1 krok do przodu lub anulowanie)
   const existingOrder = await db.order.findUnique({
     where: { id },
-    select: { status: true, paymentStatus: true, email: true, firstName: true, lastName: true, total: true },
+    select: { status: true, paymentStatus: true, paidAt: true, email: true, firstName: true, lastName: true, total: true },
   });
   if (!existingOrder) {
     return NextResponse.json({ error: "Nie znaleziono zamówienia" }, { status: 404 });
@@ -406,7 +457,14 @@ export async function PATCH(
 
     order = await db.order.update({
       where: { id },
-      data: setPaid ? { status: body.status, paymentStatus: "PAID" } : { status: body.status },
+      data: setPaid
+        ? {
+            status: body.status,
+            paymentStatus: "PAID",
+            // Znacznik wpłaty — przychód rozpoznawany wg tej daty (jeśli jeszcze nie ustawiony)
+            ...(existingOrder.paidAt ? {} : { paidAt: new Date() }),
+          }
+        : { status: body.status },
       select: {
         id: true, status: true, paymentStatus: true,
         email: true, firstName: true,

@@ -91,16 +91,22 @@ export default async function AnalitykiPage() {
   const twelveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 11, 1);
 
   // ── Zamówienia sklepowe — dane miesięczne (ostatnie 12 miesięcy) ──────────
+  // Tylko opłacone (PAID). Przychód rozpoznawany wg daty wpłaty:
+  // settlementDate (nadpisanie) → paidAt → createdAt (fallback dla starych zamówień).
   const monthlyRaw = await db.$queryRaw<RawMonthRow[]>`
     SELECT
-      EXTRACT(YEAR  FROM "createdAt")::int AS yr,
-      EXTRACT(MONTH FROM "createdAt")::int AS mo,
-      COUNT(*)::int                        AS cnt,
-      COALESCE(SUM(total), 0)::float       AS rev,
-      COALESCE(SUM("shippingCost"), 0)::float AS ship
-    FROM "Order"
-    WHERE status != 'CANCELLED'
-      AND "createdAt" >= ${twelveMonthsAgo}
+      EXTRACT(YEAR  FROM rec)::int          AS yr,
+      EXTRACT(MONTH FROM rec)::int          AS mo,
+      COUNT(*)::int                         AS cnt,
+      COALESCE(SUM(total), 0)::float        AS rev,
+      COALESCE(SUM(ship), 0)::float         AS ship
+    FROM (
+      SELECT total, "shippingCost" AS ship,
+             COALESCE("settlementDate", "paidAt", "createdAt") AS rec
+      FROM "Order"
+      WHERE status != 'CANCELLED' AND "paymentStatus" = 'PAID'
+    ) t
+    WHERE rec >= ${twelveMonthsAgo}
     GROUP BY yr, mo
     ORDER BY yr, mo
   `.catch(() => [] as RawMonthRow[]);
@@ -170,16 +176,18 @@ export default async function AnalitykiPage() {
     ORDER BY cnt DESC
   `.catch(() => [] as RawGroupRow[]);
 
-  // ── Kwartały — zamówienia sklepowe (tylko PAID) ────────────────────────────
+  // ── Kwartały — zamówienia sklepowe (tylko PAID, wg daty wpłaty) ────────────
   const quarterlyRaw = await db.$queryRaw<RawQuarterRow[]>`
     SELECT
-      EXTRACT(QUARTER FROM "createdAt")::int AS q,
-      COALESCE(SUM(total), 0)::float         AS rev,
-      COUNT(*)::int                          AS cnt
-    FROM "Order"
-    WHERE status != 'CANCELLED'
-      AND "paymentStatus" = 'PAID'
-      AND EXTRACT(YEAR FROM "createdAt") = ${now.getFullYear()}
+      EXTRACT(QUARTER FROM rec)::int AS q,
+      COALESCE(SUM(total), 0)::float AS rev,
+      COUNT(*)::int                  AS cnt
+    FROM (
+      SELECT total, COALESCE("settlementDate", "paidAt", "createdAt") AS rec
+      FROM "Order"
+      WHERE status != 'CANCELLED' AND "paymentStatus" = 'PAID'
+    ) t
+    WHERE EXTRACT(YEAR FROM rec) = ${now.getFullYear()}
     GROUP BY q
     ORDER BY q
   `.catch(() => [] as RawQuarterRow[]);
@@ -412,7 +420,7 @@ export default async function AnalitykiPage() {
       <div className="bg-cream border border-sand/60 p-6">
         <h2 className="font-serif text-lg text-espresso mb-1">Przychód i zamówienia — ostatnie 12 miesięcy</h2>
         <p className="text-xs text-charcoal/40 mb-6">
-          Bez anulowanych · uwzględnia zamówienia indywidualne (Opłacone/Zrealizowane)
+          Tylko opłacone · przychód rozpoznawany wg daty wpłaty · uwzględnia zamówienia indywidualne (Opłacone/Zrealizowane)
         </p>
 
         {/* Wykres słupkowy */}

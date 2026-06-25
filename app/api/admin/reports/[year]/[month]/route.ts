@@ -85,15 +85,15 @@ export async function GET(
   const periodStart = new Date(yr, mo - 1, 1);
   const periodEnd   = new Date(yr, mo,     1);
 
-  // Zamówienia sklepowe — tylko opłacone (PAID) — do rozliczenia podatkowego
+  // Zamówienia sklepowe — tylko opłacone (PAID). Przychód rozpoznawany wg daty
+  // wpłaty: settlementDate (nadpisanie) → paidAt → createdAt (fallback dla starych).
+  // COALESCE niewyrażalny w Prisma where — filtrujemy po stronie aplikacji.
   const ordersQuery = db.order.findMany({
     where: {
       status:        { not: "CANCELLED" },
       paymentStatus: "PAID",
-      createdAt:     { gte: periodStart, lt: periodEnd },
     },
     include: { items: true },
-    orderBy: { createdAt: "asc" },
   });
 
   // Zamówienia indywidualne — statusy PAID lub DONE, z podaną ceną
@@ -106,13 +106,24 @@ export async function GET(
     orderBy: { createdAt: "asc" },
   });
 
-  let orders: Awaited<typeof ordersQuery>;
+  let allPaidOrders: Awaited<typeof ordersQuery>;
   let customOrders: Awaited<typeof customOrdersQuery>;
   try {
-    [orders, customOrders] = await Promise.all([ordersQuery, customOrdersQuery]);
+    [allPaidOrders, customOrders] = await Promise.all([ordersQuery, customOrdersQuery]);
   } catch {
     return new Response("Błąd bazy danych", { status: 500 });
   }
+
+  // Data rozpoznania przychodu i filtr do bieżącego miesiąca
+  const recognitionDate = (o: { settlementDate: Date | null; paidAt: Date | null; createdAt: Date }) =>
+    o.settlementDate ?? o.paidAt ?? o.createdAt;
+
+  const orders = allPaidOrders
+    .filter((o) => {
+      const r = recognitionDate(o);
+      return r >= periodStart && r < periodEnd;
+    })
+    .sort((a, b) => recognitionDate(a).getTime() - recognitionDate(b).getTime());
 
   // ── Sumy sklepowych ───────────────────────────────────────────────────────────
 
@@ -400,7 +411,7 @@ export async function GET(
 
     const cells = [
       String(idx + 1),
-      fmtDate(new Date(order.createdAt)),
+      fmtDate(recognitionDate(order)),
       customerText,
       productsText,
       addressText,

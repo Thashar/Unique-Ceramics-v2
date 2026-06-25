@@ -89,6 +89,9 @@ model Order {
   trackingNumber   String?
   trackingCarrier  String?                        // DPD | DHL | InPost | PocztaPolska
 
+  paidAt         DateTime?   // moment zarejestrowania płatności (status/paymentStatus → PAID)
+  settlementDate DateTime?   // nadpisanie miesiąca rozliczenia (przychód wg daty wpłaty); null = użyj paidAt
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
