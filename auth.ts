@@ -56,9 +56,29 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   callbacks: {
     async jwt({ token, user }) {
+      // Logowanie — zapisz id, rolę i bieżącą wersję tokenu
       if (user) {
         token.id = user.id;
         token.role = user.role ?? "USER";
+        token.tokenVersion = user.tokenVersion ?? 0;
+        return token;
+      }
+
+      // Kolejne żądania — zweryfikuj wersję tokenu względem DB.
+      // Pozwala natychmiast unieważnić sesje po zmianie hasła (bump tokenVersion)
+      // oraz wylogować z usuniętego konta. Odświeża też rolę.
+      if (token.id) {
+        try {
+          const dbUser = await db.user.findUnique({
+            where: { id: token.id as string },
+            select: { tokenVersion: true, role: true },
+          });
+          if (!dbUser) return null; // konto usunięte → wyloguj
+          if ((token.tokenVersion ?? 0) !== dbUser.tokenVersion) return null; // hasło zmienione → wyloguj
+          token.role = dbUser.role;
+        } catch {
+          // Błąd DB — nie wylogowuj (fail-open na problem infrastruktury)
+        }
       }
       return token;
     },

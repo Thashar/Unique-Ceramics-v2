@@ -68,7 +68,7 @@ UPSTASH_REDIS_REST_TOKEN="xxxx"                   # token Upstash REST; bez obu 
 ## Modele Prisma (`prisma/schema.prisma`)
 
 ### NextAuth (standardowe)
-- **User** — `id`, `email`, `name`, `image`, `password`, `role` (USER/ADMIN)
+- **User** — `id`, `email`, `name`, `image`, `password`, `role` (USER/ADMIN), `tokenVersion` (inkrementacja unieważnia wszystkie aktywne JWT — np. po zmianie hasła)
 - **Account**, **Session**, **VerificationToken** — OAuth / JWT
 
 ### Sklep
@@ -94,7 +94,7 @@ UPSTASH_REDIS_REST_TOKEN="xxxx"                   # token Upstash REST; bez obu 
 
 ### Indeksy bazy danych
 
-`Product` ma indeksy: `[active, featured]`, `[active, category]`, `[active, stock]`, `[active, featured, createdAt DESC]`, `[slug, active]`. `CustomOrder` ma indeksy: `[status]`, `[customerEmail]`. Migracje w `prisma/migrations/`; pliki `manual_*.sql` wymagają ręcznego wykonania na Supabase (DIRECT_URL niedostępny lokalnie) — m.in. `manual_add_performance_indexes.sql`, `manual_add_paid_order_status.sql` (dodaje wartość `PAID` do enuma `OrderStatus`; `ALTER TYPE ... ADD VALUE` musi działać poza transakcją) oraz `manual_add_order_paidat.sql` (kolumna `paidAt`).
+`Product` ma indeksy: `[active, featured]`, `[active, category]`, `[active, stock]`, `[active, featured, createdAt DESC]`, `[slug, active]`. `CustomOrder` ma indeksy: `[status]`, `[customerEmail]`. Migracje w `prisma/migrations/`; pliki `manual_*.sql` wymagają ręcznego wykonania na Supabase (DIRECT_URL niedostępny lokalnie) — m.in. `manual_add_performance_indexes.sql`, `manual_add_paid_order_status.sql` (dodaje wartość `PAID` do enuma `OrderStatus`; `ALTER TYPE ... ADD VALUE` musi działać poza transakcją) , `manual_add_order_paidat.sql` (kolumna `paidAt`) oraz `manual_add_user_tokenversion.sql` (kolumna `tokenVersion` w `User` — rewokacja sesji).
 
 ---
 
@@ -170,7 +170,7 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 | Route | Opis |
 |-------|------|
 | `/konto` | Dashboard klienta |
-| `/konto/profil` | Edycja imienia i hasła |
+| `/konto/profil` | Edycja imienia i hasła; eksport danych (RODO) i usunięcie konta (strefa niebezpieczna) |
 | `/konto/adres` | Adres dostawy (auto-uzupełnia checkout) |
 | `/konto/zamowienia` | Historia zamówień |
 | `/konto/zamowienia/[id]` | Szczegóły zamówienia (weryfikacja własności) + wznowienie płatności Stripe |
@@ -201,8 +201,10 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 | POST | `/api/stripe/resume` | Wznowienie nieopłaconej płatności Stripe (własność + blokada CANCELLED) |
 | POST | `/api/stripe/webhook` | Webhook Stripe: `completed`→PAID (gdy `payment_status=paid`), `expired`→anulacja + zwrot stocku |
 | POST | `/api/account/update-name` | Zmiana imienia (maks. 100 znaków) |
-| PATCH | `/api/account/change-password` | Zmiana hasła (rate limit 5/15 min, 8–128 znaków) |
+| PATCH | `/api/account/change-password` | Zmiana hasła (rate limit 5/15 min, 8–128 znaków; bumpuje `tokenVersion` → wylogowuje wszystkie sesje, także bieżącą) |
 | GET/PUT | `/api/account/address` | Pobierz/zapisz adres dostawy (Setting: `user_address_{userId}`) |
+| GET | `/api/account/export` | Eksport danych konta jako JSON (RODO art. 15/20 — profil, adres, zamówienia; rate limit) |
+| DELETE | `/api/account/delete` | Usunięcie konta (RODO art. 17; re-auth hasłem dla kont Credentials; zamówienia odłączane `userId→null`, adres + sesje + OAuth kasowane; rate limit) |
 | GET/POST | `/api/admin/categories` | Lista/dodaj kategorie (ADMIN; mutacje → `revalidateCategories()`) |
 | PUT/DELETE | `/api/admin/categories/[id]` | Edytuj/usuń kategorię (ADMIN; usuwanie blokowane gdy istnieją produkty w kategorii) |
 | GET/POST | `/api/admin/products` | Lista/dodaj produkty (ADMIN; mutacje → `revalidateProductPages()`) |
@@ -312,7 +314,7 @@ Fonty: `font-serif` → Playfair Display, `font-sans` → Inter (oba przez `next
 
 ## Autoryzacja
 
-- **auth.ts** — NextAuth v5 beta, strategia JWT; providery: Google OAuth + Credentials (bcryptjs); rate limit logowania (5/min na konto + 30/min globalnie); `callbacks` dołączają `id` i `role` do tokena/sesji
+- **auth.ts** — NextAuth v5 beta, strategia JWT; providery: Google OAuth + Credentials (bcryptjs); rate limit logowania (5/min na konto + 30/min globalnie); `callbacks` dołączają `id`/`role` do tokena/sesji. Callback `jwt` przy każdym żądaniu weryfikuje `tokenVersion` i istnienie konta w DB — zwrócenie `null` unieważnia sesję (rewokacja po zmianie hasła, wylogowanie z usuniętego konta); odświeża też rolę. Błąd DB = fail-open (nie wylogowuje)
 - **middleware.ts** — wymaga sesji na `/konto`, `/zamowienie`, `/admin` (redirect na `/logowanie?callbackUrl=...`) oraz na `/api/admin/*` (zwraca `401 JSON` — druga warstwa obok `requireAdmin` w handlerach)
 - **Admin:** rola sprawdzana przez `requireAdmin()` z `lib/admin-auth.ts` — **zawsze z bazy**, nie z JWT. Używaj go w każdej nowej trasie/stronie admina.
 
