@@ -45,7 +45,7 @@ function FieldError({ msg }: { msg?: string }) {
 const SHIPPING_METHODS = [
   { value: "courier",       label: "Kurier",            icon: Truck,   desc: "Dostawa pod wskazany adres. Czas dostawy: 1–3 dni robocze." },
   { value: "parcel_locker", label: "Paczkomat InPost",  icon: Package, desc: "Odbiór z wybranego paczkomatu. Czas dostawy: 1–2 dni robocze." },
-  { value: "pickup",        label: "Odbiór osobisty",   icon: MapPin,  desc: "Odbiór osobisty w pracowni — Kleszczów k. Gliwic. Bezpłatny." },
+  { value: "pickup",        label: "Odbiór osobisty",   icon: MapPin,  desc: "Odbiór osobisty w pracowni — Familijna 23, 44-164 Kleszczów. Bezpłatny." },
 ] as const;
 
 export default function CheckoutForm({

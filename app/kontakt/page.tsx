@@ -4,6 +4,7 @@ export const revalidate = 300;
 import type { Metadata } from "next";
 import { Phone, Mail, Clock, MapPin } from "lucide-react";
 import InstagramIcon from "@/components/ui/InstagramIcon";
+import WhatsAppIcon from "@/components/ui/WhatsAppIcon";
 import Header from "@/components/layout/HeaderWrapper";
 import Footer from "@/components/layout/Footer";
 import { getSettings } from "@/lib/settings";
@@ -12,7 +13,7 @@ import ContactForm from "@/components/contact/ContactForm";
 export const metadata: Metadata = {
   title: "Kontakt",
   description:
-    "Skontaktuj się z pracownią ceramiczną Unique Ceramics — Kleszczów, okolice Gliwic. Telefon, e-mail, Instagram.",
+    "Skontaktuj się z pracownią ceramiczną Unique Ceramics — Familijna 23, 44-164 Kleszczów (k. Gliwic). Telefon, e-mail, Instagram.",
   alternates: { canonical: "https://uniqueceramics.pl/kontakt" },
   openGraph: {
     title: "Kontakt — Unique Ceramics",
@@ -47,13 +48,18 @@ export default async function ContactPage() {
     "contact_phone",
     "contact_email",
     "contact_instagram",
+    "contact_whatsapp",
     "workshops_offers",
   ]);
 
   const phone = settings.contact_phone;
   const email = settings.contact_email;
   const instagram = settings.contact_instagram;
+  const whatsapp = settings.contact_whatsapp;
   const workshopOptions = parseWorkshopTitles(settings.workshops_offers);
+
+  // Link wa.me wymaga samych cyfr (bez spacji, +, myślników)
+  const whatsappNumber = whatsapp.replace(/[^\d]/g, "");
 
   // Derive href from instagram handle (strip leading @)
   const instagramHandle = instagram.startsWith("@")
@@ -81,7 +87,7 @@ export default async function ContactPage() {
           <div className="max-w-7xl mx-auto">
             <p className="text-xs tracking-[0.3em] uppercase text-clay mb-3">Obszar obsługi</p>
             <p className="text-charcoal/70 text-sm leading-relaxed max-w-3xl">
-              Pracownia mieści się w <strong className="text-espresso">Kleszczowie k. Gliwic</strong> (woj. śląskie).
+              Pracownia mieści się przy <strong className="text-espresso">ul. Familijna 23, 44-164 Kleszczów</strong> (k. Gliwic, woj. śląskie).
               Wysyłka w całej Polsce — odbiór osobisty dostępny lokalnie.
               Obsługujemy zamówienia z całego <strong className="text-espresso">Śląska</strong>:{" "}
               <span className="text-espresso">
@@ -142,6 +148,23 @@ export default async function ContactPage() {
                   </div>
                 </a>
 
+                {whatsapp && (
+                  <a
+                    href={`https://wa.me/${whatsappNumber}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-start gap-4 text-charcoal/80 hover:text-clay transition-colors group"
+                  >
+                    <div className="w-10 h-10 bg-cream rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-terracotta/10 transition-colors">
+                      <WhatsAppIcon size={18} className="text-clay" />
+                    </div>
+                    <div>
+                      <p className="text-xs tracking-widest uppercase text-clay mb-1">WhatsApp</p>
+                      <p className="text-lg">{whatsapp}</p>
+                    </div>
+                  </a>
+                )}
+
                 <div className="flex items-start gap-4">
                   <div className="w-10 h-10 bg-cream rounded-full flex items-center justify-center flex-shrink-0">
                     <MapPin size={18} strokeWidth={1.5} className="text-clay" />
@@ -149,7 +172,8 @@ export default async function ContactPage() {
                   <div>
                     <p className="text-xs tracking-widest uppercase text-clay mb-1">Lokalizacja</p>
                     <address className="not-italic text-charcoal/80 leading-relaxed text-sm">
-                      Kleszczów, okolice Gliwic<br />
+                      ul. Familijna 23<br />
+                      44-164 Kleszczów (k. Gliwic)<br />
                       woj. śląskie
                     </address>
                   </div>

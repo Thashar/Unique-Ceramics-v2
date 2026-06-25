@@ -128,6 +128,9 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 | `contact_phone` | Numer telefonu (default: +48 668 443 706) |
 | `contact_email` | E-mail (default: kontakt@uniqueceramics.pl) |
 | `contact_instagram` | Handle Instagram (default: @unique.ceramics) |
+| `contact_whatsapp` | Numer WhatsApp (opcjonalny; pusty = ukryty). Link `wa.me/{cyfry}` w stopce i na /kontakt |
+| `contact_facebook` | URL profilu Facebook (opcjonalny; pusty = ukryty w stopce) |
+| `contact_youtube` | URL kanału YouTube (opcjonalny; pusty = ukryty w stopce) |
 | `contact_hours` | Godziny otwarcia (default: Pon–Pt 9:00–17:00) |
 | `shipping_cost` | Koszt wysyłki kurierem w zł (default: 18) |
 | `shipping_cost_parcel_locker` | Koszt wysyłki paczkomatem InPost w zł (default: 18) |
@@ -155,7 +158,7 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 ### Strony publiczne
 | Route | Cache | Opis |
 |-------|-------|------|
-| `/` | ISR 3600 s | Strona główna (scroll-snap, hero, wybrane prace, stopka z IG) |
+| `/` | ISR 3600 s | Strona główna (scroll-snap, hero, wybrane prace, stopka z IG) + ukryta sekcja SEO „Obszar obsługi" (`sr-only` — indeksowalna, niewidoczna wizualnie; uzupełnia `areaServed` w JSON-LD) |
 | `/sklep` | dynamic + dane z cache 60 s | Katalog produktów (searchParams `kategoria`); kategorie renderują się natychmiast, siatka produktów streamuje przez `<Suspense>` z `ProductGrid` + `ProductGridSkeleton` |
 | `/sklep/[slug]` | ISR 60 s (pre-generated) | Szczegóły produktu (**server component**, JSON-LD Product); `generateStaticParams` pre-generuje wszystkie aktywne produkty przy budowaniu |
 | `/koszyk` | static (client) | Koszyk |

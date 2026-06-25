@@ -192,6 +192,13 @@ export default async function WorkshopsPage() {
           )}
         </div>
 
+        {/* Separator między wprowadzeniem a pierwszą ofertą — taka sama kreska jak między warsztatami */}
+        {workshops.length > 0 && (
+          <div className="bg-warm-white px-6 lg:px-10">
+            <div className="max-w-7xl mx-auto border-t border-sand" />
+          </div>
+        )}
+
         {/* Lista warsztatów */}
         {workshops.length > 0 && (
           <div className="bg-warm-white py-20 px-6 lg:px-10">

@@ -219,7 +219,7 @@ export default async function OrderDetailPage({
             </h3>
             <p className="text-xs text-clay font-medium mb-2">{SHIPPING_LABELS[order.shippingMethod] ?? order.shippingMethod}</p>
             {order.shippingMethod === "pickup" ? (
-              <p className="text-sm text-charcoal/70">Odbiór osobisty w pracowni — Kleszczów k. Gliwic</p>
+              <p className="text-sm text-charcoal/70">Odbiór osobisty w pracowni — Familijna 23, 44-164 Kleszczów</p>
             ) : order.shippingMethod === "parcel_locker" ? (
               <>
                 <p className="text-sm text-espresso font-mono font-medium">{order.parcelLockerCode ?? "—"}</p>
