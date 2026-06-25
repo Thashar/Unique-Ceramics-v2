@@ -197,7 +197,13 @@ export async function GET(
   let   pageNum = 1;
 
   // ── Stopka ────────────────────────────────────────────────────────────────────
+  // Tekst stopki ląduje poniżej dolnego marginesu strony (page.maxY()), co w pdfkit
+  // wywołałoby automatyczne dodanie nowej strony. Na czas rysowania zerujemy dolny
+  // margines, żeby uniknąć rozbicia dokumentu na kolejne strony.
   function drawFooter() {
+    const prevBottom = doc.page.margins.bottom;
+    doc.page.margins.bottom = 0;
+
     const yf = PH - MBT + 9;
     doc.font(R).fontSize(6.5).fillColor("#9A7A6A")
        .text(
@@ -206,6 +212,8 @@ export async function GET(
        );
     doc.font(R).fontSize(6.5).fillColor("#9A7A6A")
        .text(`Strona ${pageNum}`, ML, yf, { width: TW, align: "right", lineBreak: false });
+
+    doc.page.margins.bottom = prevBottom;
   }
 
   // ── Nagłówek tabeli sklepowej ─────────────────────────────────────────────────
