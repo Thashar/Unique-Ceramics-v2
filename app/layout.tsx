@@ -162,6 +162,14 @@ const websiteSchema = {
   description: "Sklep z ręcznie robioną ceramiką artystyczną",
   inLanguage: "pl-PL",
   publisher: { "@id": `${BASE}/#business` },
+  potentialAction: {
+    "@type": "SearchAction",
+    target: {
+      "@type": "EntryPoint",
+      urlTemplate: `${BASE}/sklep?kategoria={search_term_string}`,
+    },
+    "query-input": "required name=search_term_string",
+  },
 };
 
 export default function RootLayout({

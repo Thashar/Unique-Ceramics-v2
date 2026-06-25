@@ -10,6 +10,8 @@ import Footer from "@/components/layout/Footer";
 export const metadata: Metadata = {
   title: "Regulamin",
   description: "Regulamin sklepu internetowego Unique Ceramics.",
+  alternates: { canonical: "https://uniqueceramics.pl/regulamin" },
+  robots: { index: false, follow: false },
 };
 
 export default async function RegulaminPage() {

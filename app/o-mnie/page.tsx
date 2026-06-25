@@ -16,6 +16,20 @@ export const metadata: Metadata = {
   description:
     "Poznaj historię Unique Ceramics — pracowni ceramicznej z okolic Gliwic. Ręcznie robiona ceramika tworzona z pasji do gliny na Śląsku.",
   alternates: { canonical: "https://uniqueceramics.pl/o-mnie" },
+  openGraph: {
+    title: "O mnie — Unique Ceramics",
+    description:
+      "Poznaj historię pracowni ceramicznej Unique Ceramics z okolic Gliwic. Ręcznie robiona ceramika tworzona z pasji do gliny.",
+    url: "https://uniqueceramics.pl/o-mnie",
+    images: [
+      {
+        url: "/images/hero.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Pracownia ceramiczna Unique Ceramics — Gliwice",
+      },
+    ],
+  },
 };
 
 export default async function AboutPage() {

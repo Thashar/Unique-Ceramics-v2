@@ -10,6 +10,8 @@ import Footer from "@/components/layout/Footer";
 export const metadata: Metadata = {
   title: "Polityka prywatności",
   description: "Polityka prywatności sklepu internetowego Unique Ceramics.",
+  alternates: { canonical: "https://uniqueceramics.pl/polityka-prywatnosci" },
+  robots: { index: false, follow: false },
 };
 
 export default async function PolitykaPrywatnosci() {

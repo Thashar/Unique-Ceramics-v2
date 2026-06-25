@@ -17,8 +17,24 @@ import { sanitizeRichHtml } from "@/lib/sanitize-html";
 import { hexToRgba } from "@/lib/overlay";
 
 export const metadata: Metadata = {
-  title: "Warsztaty",
-  description: "Warsztaty ceramiczne w małych grupach — dla początkujących i zaawansowanych.",
+  title: "Warsztaty ceramiczne",
+  description:
+    "Warsztaty ceramiczne w małych grupach w okolicach Gliwic — dla początkujących i zaawansowanych. Lepienie z gliny, toczenie, szkliwienie.",
+  alternates: { canonical: "https://uniqueceramics.pl/warsztaty" },
+  openGraph: {
+    title: "Warsztaty ceramiczne — Unique Ceramics",
+    description:
+      "Warsztaty ceramiczne w małych grupach w okolicach Gliwic. Lepienie z gliny, toczenie na kole, szkliwienie — dla każdego poziomu.",
+    url: "https://uniqueceramics.pl/warsztaty",
+    images: [
+      {
+        url: "/images/hero.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Warsztaty ceramiczne — Unique Ceramics Gliwice",
+      },
+    ],
+  },
 };
 
 // Mapa ikon (nazwa → komponent)
@@ -82,8 +98,50 @@ export default async function WorkshopsPage() {
   const includes = parseJson<WorkshopInclude>(s.workshops_includes);
   const faq = parseJson<WorkshopFaq>(s.workshops_faq);
 
+  const BASE = "https://uniqueceramics.pl";
+  const courseSchemas = workshops.map((w) => ({
+    "@context": "https://schema.org",
+    "@type": "Course",
+    name: w.title,
+    description: w.description,
+    provider: {
+      "@type": "Organization",
+      name: "Unique Ceramics",
+      url: BASE,
+    },
+    url: `${BASE}/warsztaty`,
+    inLanguage: "pl-PL",
+    offers: {
+      "@type": "Offer",
+      price: w.priceLabel,
+      priceCurrency: "PLN",
+    },
+    courseMode: "in-person",
+    hasCourseInstance: {
+      "@type": "CourseInstance",
+      courseMode: "in-person",
+      location: {
+        "@type": "Place",
+        name: "Unique Ceramics — pracownia",
+        address: {
+          "@type": "PostalAddress",
+          streetAddress: "Familijna 23",
+          postalCode: "44-164",
+          addressLocality: "Kleszczów",
+          addressCountry: "PL",
+        },
+      },
+    },
+  }));
+
   return (
     <>
+      {courseSchemas.length > 0 && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(courseSchemas) }}
+        />
+      )}
       <Header />
       <main className="flex-1 pt-[100px]">
         {/* Hero */}

@@ -62,20 +62,60 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const freeEnabled = settings.shipping_free_enabled === "true";
   const freeFrom = parseFloat(settings.shipping_free_from) || 300;
 
+  const BASE = "https://uniqueceramics.pl";
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
     name: product.name,
-    description: product.description ?? undefined,
+    description: product.description
+      ?? `${product.name} — ręcznie robiona ceramika artystyczna. Każdy egzemplarz jest unikalny.`,
     image: product.images,
+    sku: product.slug,
+    brand: {
+      "@type": "Brand",
+      name: "Unique Ceramics",
+    },
     offers: {
       "@type": "Offer",
+      url: `${BASE}/sklep/${product.slug}`,
       price: product.price.toFixed(2),
       priceCurrency: "PLN",
       availability: product.stock > 0
         ? "https://schema.org/InStock"
         : "https://schema.org/OutOfStock",
+      seller: {
+        "@type": "Organization",
+        name: "Unique Ceramics",
+        url: BASE,
+      },
+      shippingDetails: {
+        "@type": "OfferShippingDetails",
+        shippingRate: {
+          "@type": "MonetaryAmount",
+          value: shippingCost.toFixed(2),
+          currency: "PLN",
+        },
+        deliveryTime: {
+          "@type": "ShippingDeliveryTime",
+          handlingTime: { "@type": "QuantitativeValue", minValue: 1, maxValue: 2, unitCode: "DAY" },
+          transitTime: { "@type": "QuantitativeValue", minValue: 1, maxValue: 3, unitCode: "DAY" },
+        },
+        shippingDestination: {
+          "@type": "DefinedRegion",
+          addressCountry: "PL",
+        },
+      },
     },
+  };
+
+  const breadcrumbLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Strona główna", item: BASE },
+      { "@type": "ListItem", position: 2, name: "Sklep", item: `${BASE}/sklep` },
+      { "@type": "ListItem", position: 3, name: product.name, item: `${BASE}/sklep/${product.slug}` },
+    ],
   };
 
   return (
@@ -83,6 +123,10 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }}
       />
       <Header />
       <main className="min-h-[100svh] bg-warm-white pt-[100px]">

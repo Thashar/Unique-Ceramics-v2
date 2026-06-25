@@ -14,6 +14,20 @@ export const metadata: Metadata = {
   description:
     "Skontaktuj się z pracownią ceramiczną Unique Ceramics — Kleszczów, okolice Gliwic. Telefon, e-mail, Instagram.",
   alternates: { canonical: "https://uniqueceramics.pl/kontakt" },
+  openGraph: {
+    title: "Kontakt — Unique Ceramics",
+    description:
+      "Skontaktuj się z pracownią ceramiczną Unique Ceramics z okolic Gliwic. Telefon, e-mail, formularz kontaktowy.",
+    url: "https://uniqueceramics.pl/kontakt",
+    images: [
+      {
+        url: "/images/hero.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Kontakt — pracownia ceramiczna Unique Ceramics",
+      },
+    ],
+  },
 };
 
 function parseWorkshopTitles(json: string): string[] {
