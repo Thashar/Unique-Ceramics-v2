@@ -16,12 +16,6 @@ interface Props {
     home_about_position: string;
     home_workshops_image: string;
     home_workshops_position: string;
-    shop_hero_image: string;
-    shop_hero_position: string;
-    shop_hero_overlay_color: string;
-    shop_hero_overlay_opacity: string;
-    shop_hero_height: string;
-    shop_subtitle: string;
     about_hero_image: string;
     about_hero_position: string;
     about_hero_overlay_color: string;
@@ -190,14 +184,6 @@ export default function SettingsForm({ section, initial }: Props) {
   const [homeWorkshopsImage, setHomeWorkshopsImage] = useState(initial.home_workshops_image);
   const [homeWorkshopsPos, setHomeWorkshopsPos] = useState(initial.home_workshops_position);
 
-  // Sklep
-  const [shopHeroImage, setShopHeroImage] = useState(initial.shop_hero_image);
-  const [shopHeroPos, setShopHeroPos] = useState(initial.shop_hero_position);
-  const [shopOverlayColor, setShopOverlayColor] = useState(initial.shop_hero_overlay_color);
-  const [shopOverlayOpacity, setShopOverlayOpacity] = useState(initial.shop_hero_overlay_opacity);
-  const [shopHeroHeight, setShopHeroHeight] = useState(initial.shop_hero_height);
-  const [shopSubtitle, setShopSubtitle] = useState(initial.shop_subtitle);
-
   // O mnie
   const [aboutImage, setAboutImage] = useState(initial.about_hero_image);
   const [aboutHeroPos, setAboutHeroPos] = useState(initial.about_hero_position);
@@ -363,74 +349,6 @@ export default function SettingsForm({ section, initial }: Props) {
               { key: "home_workshops_position",   value: homeWorkshopsPos },
             ])}
             label="Zapisz zdjęcia strony głównej"
-          />
-        </div>
-      )}
-
-      {section === "sklep" && (
-        <div className="max-w-2xl space-y-8">
-          <h2 className="font-serif text-2xl text-espresso">Sklep</h2>
-
-          <div className="space-y-4">
-            <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/70">Podtytuł strony</h3>
-            <p className="text-xs text-charcoal/40">Tekst widoczny pod nagłówkiem &bdquo;Sklep&rdquo; gdy brak zdjęcia hero.</p>
-            <Field
-              label="Podtytuł"
-              value={shopSubtitle}
-              setter={setShopSubtitle}
-              placeholder="Każdy przedmiot jest unikalny — tworzony ręcznie z lokalnej gliny."
-            />
-          </div>
-
-          <div className="border-t border-sand pt-6 space-y-4">
-            <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/70">Zdjęcie nagłówka (hero) — opcjonalne</h3>
-            <p className="text-xs text-charcoal/40">Jeśli ustawione — zastępuje podtytuł i wypełnia nagłówek strony sklepu.</p>
-            <ImageUploader
-              currentUrl={shopHeroImage}
-              onUploaded={(url) => setShopHeroImage(url)}
-              label="Zdjęcie hero"
-            />
-            {shopHeroImage && (
-              <>
-                <FocalPointPicker imageUrl={shopHeroImage} value={shopHeroPos} onChange={setShopHeroPos} aspectRatio="3/1" />
-                <OverlayControl
-                  imageUrl={shopHeroImage}
-                  position={shopHeroPos}
-                  color={shopOverlayColor}
-                  opacity={shopOverlayOpacity}
-                  onColorChange={setShopOverlayColor}
-                  onOpacityChange={setShopOverlayOpacity}
-                  aspectRatio="3/1"
-                />
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs tracking-widest uppercase text-charcoal/80">Wysokość nagłówka z obrazem</label>
-                    <span className="text-sm font-medium text-espresso tabular-nums">{shopHeroHeight}vh</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="20"
-                    max="80"
-                    step="5"
-                    value={shopHeroHeight}
-                    onChange={(e) => setShopHeroHeight(e.target.value)}
-                    className="w-full accent-clay"
-                  />
-                </div>
-              </>
-            )}
-          </div>
-
-          <SaveButton
-            onClick={() => save([
-              { key: "shop_subtitle",             value: shopSubtitle },
-              { key: "shop_hero_image",            value: shopHeroImage },
-              { key: "shop_hero_position",         value: shopHeroPos },
-              { key: "shop_hero_overlay_color",    value: shopOverlayColor },
-              { key: "shop_hero_overlay_opacity",  value: shopOverlayOpacity },
-              { key: "shop_hero_height",           value: shopHeroHeight },
-            ])}
-            label="Zapisz ustawienia sklepu"
           />
         </div>
       )}

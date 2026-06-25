@@ -113,11 +113,7 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 | `about_hero_overlay_color` | Kolor maski na hero /o-mnie (hex, default: #2C2825) |
 | `about_hero_overlay_opacity` | Przezroczystość maski /o-mnie (0–100, default: 50) |
 | `about_story` | HTML treści strony o mnie |
-| `shop_subtitle` | Podtytuł pod nagłówkiem „Sklep" na /sklep (widoczny bez zdjęcia hero; default: „Każdy przedmiot jest unikalny — tworzony ręcznie z lokalnej gliny.") |
-| `shop_hero_image` | Ścieżka do zdjęcia hero na /sklep (opcjonalne) |
-| `shop_hero_position` | Punkt kadrowania hero na /sklep |
-| `shop_hero_overlay_color` | Kolor maski na hero /sklep (hex, default: #2C2825) |
-| `shop_hero_overlay_opacity` | Przezroczystość maski /sklep (0–100, default: 50) |
+| `shop_*` (`shop_subtitle`, `shop_hero_image`, `shop_hero_position`, `shop_hero_overlay_color`, `shop_hero_overlay_opacity`, `shop_hero_height`) | **Nieużywane / przestarzałe** — zakładka „Sklep" w ustawieniach została usunięta, a publiczna strona /sklep nie czyta tych kluczy. Pozostają tylko jako defaulty w `lib/settings.ts`; do ewentualnego usunięcia |
 | `workshops_hero_image` | Ścieżka do zdjęcia hero na /warsztaty |
 | `workshops_hero_overlay_color` | Kolor maski na hero /warsztaty (hex, default: #2C2825) |
 | `workshops_hero_overlay_opacity` | Przezroczystość maski /warsztaty (0–100, default: 60) |
@@ -185,7 +181,7 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 | `/admin/produkty`, `/admin/produkty/nowy`, `/admin/produkty/[id]` | Zarządzanie produktami |
 | `/admin/zamowienia`, `/admin/zamowienia/[id]` | Zamówienia sklepowe |
 | `/admin/zamowienia-indywidualne`, `/admin/zamowienia-indywidualne/[id]` | Zamówienia indywidualne |
-| `/admin/ustawienia` | Ustawienia sklepu (strona główna, o mnie, **sklep**, warsztaty, regulamin, polityka, kontakt, wysyłka, płatności) |
+| `/admin/ustawienia` | Ustawienia sklepu (strona główna, o mnie, warsztaty, regulamin, polityka, kontakt, wysyłka, płatności) |
 | `/admin/kategorie` | Zarządzanie kategoriami produktów (CRUD + kolejność) |
 | `/admin/projekty`, `/admin/projekty/nowy`, `/admin/projekty/[id]` | Portfolio prac (CRUD projektów; chronione layoutem admina + `requireAdmin`) |
 | `/admin/analityki` | Panel analityczny — przychód miesięczny (wykres + tabela z podatkiem PIT i checkboxem stawki 32% + pobranie raportu PDF), bestsellery, metody wysyłki, płatności, statusy zamówień, podsumowanie roczne, działalność nierejestrowana (limit kwartalny — przychód należny z wysyłką) |
@@ -277,7 +273,7 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 - **FocalPointPicker.tsx** — wybór punktu kadrowania zdjęć (`object-position`)
 - **RichEditor.tsx** — edytor HTML oparty o **Jodit z npm** (dynamiczny `import("jodit")` w useEffect — biblioteka tylko przeglądarkowa, nie może wykonać się przy SSR)
 - **CategoriesManager.tsx** — `"use client"`, CRUD kategorii: lista z edycją inline, zmiana kolejności strzałkami, dodawanie, usuwanie (blokada przy produktach); seed domyślnych gdy DB pusta
-- **SettingsForm.tsx** — formularz ustawień (taby: Strona główna / O mnie / Sklep / Warsztaty / Regulamin / Polityka / Kontakt / Wysyłka / Płatności); zawiera `OverlayControl` — podgląd maski na żywo dla zdjęć hero (kolor + przezroczystość)
+- **SettingsForm.tsx** — formularz ustawień (taby: Strona główna / O mnie / Warsztaty / Regulamin / Polityka / Kontakt / Wysyłka / Płatności); zawiera `OverlayControl` — podgląd maski na żywo dla zdjęć hero (kolor + przezroczystość)
 - **WorkshopsOffersEditor.tsx** — `"use client"`, edytor ofert warsztatów: karty z akordeonem (tytuł, opis, czas, cena, ikona, widoczność), lista „Co zawiera?" i FAQ; każda sekcja obsługuje dodawanie, usuwanie i zmianę kolejności; zwraca dane jako JSON string przez `onChange`
 - **OrderStatusSelect.tsx** — dropdown statusu zamówienia: pozwala przejść tylko o 1 krok do przodu (pozostałe opcje wyłączone) lub anulować z każdego statusu; przyjmuje `shippingMethod` i `hasTracking` — blokuje zmianę na SHIPPED/DELIVERED gdy brak danych listu (kurier/paczkomat). Przejście na „Opłacone" otwiera **modal z datą i godziną wpłaty** (`datetime-local`, domyślnie teraz) → PATCH `{ status:"PAID", paidAt }`. Status płatności w stronie zamówienia to badge tylko do odczytu (zmienia się sam przy statusie „Opłacone")
 - **OrdersTabs.tsx** — zakładki listy zamówień (z „Opłacone")
