@@ -153,6 +153,7 @@ const localBusinessSchema = {
     { "@type": "City", name: "Mysłowice" },
     { "@type": "City", name: "Sosnowiec" },
     { "@type": "City", name: "Dąbrowa Górnicza" },
+    { "@type": "AdministrativeArea", name: "Śląsk" },
     { "@type": "Country", name: "Polska" },
   ],
   sameAs: ["https://www.instagram.com/unique.ceramics"],

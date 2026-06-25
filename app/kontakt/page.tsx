@@ -83,7 +83,7 @@ export default async function ContactPage() {
             <p className="text-charcoal/70 text-sm leading-relaxed max-w-3xl">
               Pracownia mieści się w <strong className="text-espresso">Kleszczowie k. Gliwic</strong> (woj. śląskie).
               Wysyłka w całej Polsce — odbiór osobisty dostępny lokalnie.
-              Obsługujemy zamówienia z całego Górnego Śląska:{" "}
+              Obsługujemy zamówienia z całego <strong className="text-espresso">Śląska</strong>:{" "}
               <span className="text-espresso">
                 Gliwice, Zabrze, Knurów, Pyskowice, Tarnowskie Góry, Bytom, Piekary Śląskie,
                 Chorzów, Ruda Śląska, Świętochłowice, Siemianowice Śląskie, Katowice,
