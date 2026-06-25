@@ -12,9 +12,7 @@ export default async function EditProjectPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  try {
-    await requireAdmin();
-  } catch {
+  if (!await requireAdmin()) {
     redirect("/logowanie");
   }
 

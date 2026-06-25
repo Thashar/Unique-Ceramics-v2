@@ -68,9 +68,15 @@ export async function GET(
   _req: Request,
   { params }: { params: Promise<{ year: string; month: string }> },
 ) {
+  // requireAdmin() zwraca null (nie rzuca) dla nie-admina — MUSIMY sprawdzić
+  // wartość zwracaną. try/catch łapie tylko nieoczekiwany błąd (fail closed).
+  let adminSession;
   try {
-    await requireAdmin();
+    adminSession = await requireAdmin();
   } catch {
+    adminSession = null;
+  }
+  if (!adminSession) {
     return new Response("Brak dostępu", { status: 403 });
   }
 

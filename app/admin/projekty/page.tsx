@@ -8,9 +8,7 @@ import { redirect } from "next/navigation";
 import { Plus, Pencil } from "lucide-react";
 
 export default async function AdminProjectsPage() {
-  try {
-    await requireAdmin();
-  } catch {
+  if (!await requireAdmin()) {
     redirect("/logowanie");
   }
 

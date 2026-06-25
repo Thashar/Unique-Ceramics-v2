@@ -7,9 +7,7 @@ import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 
 export default async function NewProjectPage() {
-  try {
-    await requireAdmin();
-  } catch {
+  if (!await requireAdmin()) {
     redirect("/logowanie");
   }
 
