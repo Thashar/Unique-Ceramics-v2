@@ -18,7 +18,7 @@ export const metadata = {
     url: "https://uniqueceramics.pl/sklep",
     images: [
       {
-        url: "/images/hero.jpg",
+        url: "/images/OpenGraph.jpg",
         width: 1200,
         height: 630,
         alt: "Ceramika ręcznie robiona — sklep Unique Ceramics",

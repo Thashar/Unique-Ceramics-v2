@@ -12,7 +12,7 @@ export const metadata: Metadata = {
     url: "https://uniqueceramics.pl/zamowienie-indywidualne",
     images: [
       {
-        url: "/images/hero.jpg",
+        url: "/images/OpenGraph.jpg",
         width: 1200,
         height: 630,
         alt: "Zamówienie indywidualne ceramiki — Unique Ceramics",

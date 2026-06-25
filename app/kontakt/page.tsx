@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     url: "https://uniqueceramics.pl/kontakt",
     images: [
       {
-        url: "/images/hero.jpg",
+        url: "/images/OpenGraph.jpg",
         width: 1200,
         height: 630,
         alt: "Kontakt — pracownia ceramiczna Unique Ceramics",
