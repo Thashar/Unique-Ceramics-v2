@@ -2,9 +2,10 @@ export const dynamic = "force-dynamic";
 
 import { db } from "@/lib/db";
 import Link from "next/link";
-import { ChevronLeft, TrendingUp, ShoppingBag, Package, Truck, CreditCard, BarChart2, Download } from "lucide-react";
+import { ChevronLeft, TrendingUp, ShoppingBag, Package, Truck, CreditCard, BarChart2 } from "lucide-react";
 import DznSection from "@/components/admin/DznSection";
-import { getSetting } from "@/lib/settings";
+import MonthlyReportsTable from "@/components/admin/MonthlyReportsTable";
+import { getSetting, getSettings } from "@/lib/settings";
 
 // ── Typy dla raw queries ───────────────────────────────────────────────────────
 
@@ -182,11 +183,13 @@ export default async function AnalitykiPage() {
   `.catch(() => [] as RawQuarterRow[]);
 
   // ── Kwartały — zamówienia indywidualne (PAID lub DONE, z ceną) ───────────
+  // Do limitu działalności nierejestrowanej liczy się przychód należny — wraz z
+  // wysyłką pobraną od klienta (zamówienia sklepowe mają ją już w "total").
   const customQuarterlyRaw = await db.$queryRaw<RawQuarterRow[]>`
     SELECT
-      EXTRACT(QUARTER FROM "createdAt")::int AS q,
-      COALESCE(SUM(price), 0)::float         AS rev,
-      COUNT(*)::int                          AS cnt
+      EXTRACT(QUARTER FROM "createdAt")::int            AS q,
+      (COALESCE(SUM(price), 0) + COALESCE(SUM("shippingCost"), 0))::float AS rev,
+      COUNT(*)::int                                     AS cnt
     FROM "CustomOrder"
     WHERE status IN ('PAID', 'DONE')
       AND price IS NOT NULL
@@ -287,6 +290,14 @@ export default async function AnalitykiPage() {
 
   const maxRev = Math.max(...timeline.map((t) => t.rev), 1);
   const maxCnt = Math.max(...timeline.map((t) => t.cnt), 1);
+
+  // ── Flagi podwyższonej stawki podatku (32%) dla każdego miesiąca osi czasu ──
+  const taxKeys     = timeline.map((m) => `tax_high_${m.yr}_${m.mo}`);
+  const taxSettings = await getSettings(taxKeys).catch(() => ({} as Record<string, string>));
+  const taxFlags: Record<string, boolean> = {};
+  for (const m of timeline) {
+    taxFlags[`${m.yr}-${m.mo}`] = taxSettings[`tax_high_${m.yr}_${m.mo}`] === "true";
+  }
 
   // ── Sumaryczne wartości (sklep + indywidualne) ─────────────────────────────
   const yearRevenue  = Number(yearAgg._sum.total       ?? 0) + customYearRevenue;
@@ -449,48 +460,12 @@ export default async function AnalitykiPage() {
           </div>
         </div>
 
-        {/* Tabela miesięczna */}
-        <div className="mt-6 pt-5 border-t border-sand overflow-x-auto">
-          <table className="w-full text-xs">
-            <thead>
-              <tr className="text-left text-charcoal/40 tracking-widest uppercase">
-                <th className="pb-2 font-normal">Miesiąc</th>
-                <th className="pb-2 font-normal text-right">Zamówień</th>
-                <th className="pb-2 font-normal text-right">Przychód</th>
-                <th className="pb-2 font-normal text-right">Wysyłka</th>
-                <th className="pb-2 font-normal text-right">Śr. zam.</th>
-                <th className="pb-2 font-normal text-right">Raport</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-sand">
-              {[...timeline].reverse().map((m) => (
-                <tr key={`tbl-${m.yr}-${m.mo}`} className="text-charcoal/70">
-                  <td className="py-2 text-espresso font-medium">{m.label || `${m.mo}/${m.yr}`}</td>
-                  <td className="py-2 text-right tabular-nums">{m.cnt}</td>
-                  <td className="py-2 text-right tabular-nums">{fmt(m.rev)} zł</td>
-                  <td className="py-2 text-right tabular-nums">{fmt(m.ship)} zł</td>
-                  <td className="py-2 text-right tabular-nums">
-                    {m.cnt > 0 ? `${(m.rev / m.cnt).toFixed(0)} zł` : "—"}
-                  </td>
-                  <td className="py-2 text-right">
-                    {m.cnt > 0 ? (
-                      <a
-                        href={`/api/admin/reports/${m.yr}/${m.mo}`}
-                        className="inline-flex items-center gap-1 text-clay hover:text-espresso transition-colors"
-                        title={`Pobierz raport PDF — ${m.label || `${m.mo}/${m.yr}`}`}
-                      >
-                        <Download size={12} />
-                        <span>PDF</span>
-                      </a>
-                    ) : (
-                      <span className="text-charcoal/20">—</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        {/* Tabela miesięczna + podatek (klient: checkbox 32% + PDF) */}
+        <MonthlyReportsTable
+          rows={[...timeline].reverse()}
+          highFlags={taxFlags}
+          currentYear={now.getFullYear()}
+        />
       </div>
 
       {/* ── Bestsellery + Wysyłka ──────────────────────────────────────────── */}

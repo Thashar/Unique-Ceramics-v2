@@ -144,7 +144,7 @@ export default function DznSection({
           <p className="text-xs text-charcoal/45 mt-1">
             Limit kwartalny:{" "}
             <span className="font-medium text-charcoal/70 tabular-nums">{fmt(quarterly)} zł</span>
-            {" "}· 225% min. wynagrodzenia / kwartał · tylko opłacone zamówienia
+            {" "}· 225% min. wynagrodzenia / kwartał · tylko opłacone zamówienia (z wysyłką)
           </p>
         </div>
       </div>
@@ -244,7 +244,8 @@ export default function DznSection({
           Pomarańczowy = &gt;{Math.round(DZN_WARN_AMB * 100)}% limitu · Czerwony = &gt;{Math.round(DZN_WARN_RED * 100)}% limitu.{" "}
           Uwaga: przepisy liczą{" "}
           <em>przychód należny</em> (wystawione rachunki/faktury), nie tylko wpływy
-          — skonsultuj z księgowym.
+          — i obejmuje on <strong className="font-medium">pełną kwotę pobraną od klienta wraz z kosztem
+          wysyłki</strong>. Skonsultuj z księgowym.
         </p>
       </div>
     </div>

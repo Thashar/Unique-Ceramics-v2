@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { requireAdmin } from "@/lib/admin-auth";
 import { db } from "@/lib/db";
+import { getSetting } from "@/lib/settings";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const PDFDocument = require("pdfkit") as typeof import("pdfkit");
 
@@ -130,7 +131,16 @@ export async function GET(
   const totalRevenue  = shopRevenue  + customRevenue + customShipping;
   const totalShipping = shopShipping + customShipping;
   const totalProducts = shopProducts + customRevenue;
-  const avgOrder      = totalCount > 0 ? totalRevenue / totalCount : 0;
+
+  // ── Podatek dochodowy (PIT) ─────────────────────────────────────────────────
+  // Podstawa opodatkowania = przychód z produktów. Wysyłka jest kosztem uzyskania
+  // przychodu (przychód z wysyłki ≈ koszt nadania), więc nie podlega opodatkowaniu.
+  // Stawka 12% (domyślnie) lub 32% — gdy w panelu analityki zaznaczono podwyższoną
+  // stawkę dla danego miesiąca (klucz Setting: tax_high_{rok}_{miesiac}).
+  const taxHigh = (await getSetting(`tax_high_${yr}_${mo}`).catch(() => "false")) === "true";
+  const taxRate = taxHigh ? 0.32 : 0.12;
+  const taxBase = Math.round(totalProducts * 100) / 100;
+  const taxDue  = Math.round(taxBase * taxRate * 100) / 100;
 
   // ── PDF ───────────────────────────────────────────────────────────────────────
 
@@ -298,7 +308,7 @@ export async function GET(
     ["PRZYCHOD BRUTTO",         fmtMoney(totalRevenue)],
     ["KOSZTY WYSYLKI",          fmtMoney(totalShipping)],
     ["PRZYCHOD Z PRODUKTOW",    fmtMoney(totalProducts)],
-    ["SR. WARTOSC ZAMOWIENIA",  fmtMoney(avgOrder)],
+    [`PODATEK PIT (${taxHigh ? "32" : "12"}%)`, fmtMoney(taxDue)],
   ];
 
   const SW  = TW / summary.length;
@@ -321,7 +331,17 @@ export async function GET(
     sx += SW;
   }
 
-  posY += SBH + 10;
+  posY += SBH + 6;
+
+  // Nota o podstawie opodatkowania
+  doc.font(R).fontSize(6.5).fillColor("#9A7A6A")
+     .text(
+       `Podstawa opodatkowania PIT = przychod z produktow (wysylka jest kosztem uzyskania przychodu i nie podlega opodatkowaniu)  ·  ` +
+       `Stawka ${taxHigh ? "32" : "12"}%  ·  Podatek do odprowadzenia: ${fmtMoney(taxDue)}`,
+       ML, posY, { width: TW, align: "left", lineBreak: false }
+     );
+
+  posY += 12;
 
   // ── Tabela zamówień sklepowych ────────────────────────────────────────────────
   posY = drawTableHeader(posY);

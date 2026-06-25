@@ -139,6 +139,8 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 | `vacation_end_date` | Data powrotu z urlopu (YYYY-MM-DD) — używana w automatycznym komunikacie |
 | `vacation_message` | Własny komunikat urlopowy; jeśli pusty — generowany z daty |
 | `custom_order_notify_email_enabled` | "true"/"false" — czy wysyłać e-mail do właściciela przy nowym zamówieniu indywidualnym (default: true) |
+| `dzn_min_wage` | Minimalne wynagrodzenie (zł) — podstawa limitu działalności nierejestrowanej (225%/kwartał); edytowalne w /admin/analityki (default: 4806) |
+| `tax_high_{rok}_{miesiac}` | "true"/"false" — podwyższona stawka PIT 32% dla danego miesiąca (np. `tax_high_2026_5`); zaznaczane checkboxem w /admin/analityki, czytane przy generowaniu raportu PDF. Brak/„false" = stawka 12% |
 
 ---
 
@@ -175,7 +177,7 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 | `/admin/zamowienia-indywidualne`, `/admin/zamowienia-indywidualne/[id]` | Zamówienia indywidualne |
 | `/admin/ustawienia` | Ustawienia sklepu (strona główna, o mnie, **sklep**, warsztaty, regulamin, polityka, kontakt, wysyłka, płatności) |
 | `/admin/kategorie` | Zarządzanie kategoriami produktów (CRUD + kolejność) |
-| `/admin/analityki` | Panel analityczny — przychód miesięczny (wykres + tabela), bestsellery, metody wysyłki, płatności, statusy zamówień, podsumowanie roczne |
+| `/admin/analityki` | Panel analityczny — przychód miesięczny (wykres + tabela z podatkiem PIT i checkboxem stawki 32% + pobranie raportu PDF), bestsellery, metody wysyłki, płatności, statusy zamówień, podsumowanie roczne, działalność nierejestrowana (limit kwartalny — przychód należny z wysyłką) |
 
 ### API Routes
 | Metoda | Endpoint | Opis |
@@ -202,7 +204,7 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 | POST | `/api/admin/upload` | Upload zdjęcia do Supabase Storage (ADMIN, magic bytes, maks. 10 MB) |
 | PATCH/POST | `/api/admin/settings` | Zapis ustawień (ADMIN; sanityzacja HTML + `revalidatePath("/", "layout")`) |
 | GET | `/api/admin/settings/[key]` | Pojedyncze ustawienie (ADMIN) |
-| GET | `/api/admin/reports/[year]/[month]` | Generuje i pobiera raport PDF za dany miesiąc (ADMIN; pdfkit; czcionka Lato z Google Fonts CDN z cachem; fallback Helvetica) |
+| GET | `/api/admin/reports/[year]/[month]` | Generuje i pobiera raport PDF za dany miesiąc (ADMIN; pdfkit; czcionka Lato z Google Fonts CDN z cachem; fallback Helvetica). Liczy podatek PIT od przychodu z produktów (bez wysyłki — koszt uzyskania przychodu); stawka 12% lub 32% wg ustawienia `tax_high_{rok}_{miesiac}` |
 | GET | `/api/ping` | Health check (wymaga `Authorization: Bearer CRON_SECRET`; cron Vercel 8:00) |
 
 ---
@@ -265,6 +267,8 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 - **CustomOrderActions.tsx** — formularz zamówień indywidualnych: edycja danych klienta (przycisk odblokowania), pola ceny i kwoty wpłaconej, dropdown statusu (PAID wymaga paidAmount), notatki; każda zmiana statusu wymaga potwierdzenia `window.confirm`
 - **PaymentStatusToggle.tsx** — `"use client"`, dropdown ręcznej zmiany statusu płatności zamówienia (PENDING/PAID) — PATCH `/api/admin/orders/[id]` z `{ paymentStatus }`
 - **TrackingForm.tsx** — `"use client"`, formularz listu przewozowego: wybór dostawcy (DPD/DHL/InPost/Poczta Polska) + pole numeru; PATCH `/api/admin/orders/[id]` z `{ trackingNumber, trackingCarrier }`; pokazuje link śledzenia po wypełnieniu
+- **DznSection.tsx** — `"use client"`, sekcja działalności nierejestrowanej: edytowalne minimalne wynagrodzenie (zapis `dzn_min_wage`), paski limitu kwartalnego (225% min. wynagrodzenia) z ostrzeżeniami 75%/90%
+- **MonthlyReportsTable.tsx** — `"use client"`, tabela 12 miesięcy w /admin/analityki: przychód, wysyłka, podstawa opodatkowania (przychód − wysyłka), checkbox podwyższonej stawki PIT 32% (zapis `tax_high_{rok}_{miesiac}` przez PATCH `/api/admin/settings`), wyliczony podatek (12%/32%), link do raportu PDF; w stopce suma podatku do odprowadzenia za bieżący rok
 
 ### `components/account/`
 - **AccountNav.tsx** — nawigacja konta (Profil / Adres dostawy / Zamówienia)
