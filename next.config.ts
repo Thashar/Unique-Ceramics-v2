@@ -45,6 +45,37 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async redirects() {
+    // Stare ścieżki JPG/PNG → WebP (po konwersji statycznych plików)
+    const renamedImages = [
+      "hero", "about-photo", "warsztaty-photo",
+      "logo",
+      "products/filizanka-karmelowa-z-podstawka",
+      "products/filizanka-kopernik-niebieskie-wnetrze",
+      "products/filizanka-rozowa-serce-widok-gory",
+      "products/filizanka-szaro-niebieska-z-podstawka",
+      "products/filizanki-espresso-kwiatek-serce-komplet",
+      "products/kolekcja-rozne-wyroby",
+      "products/kubek-kopernik-niebieskie-wnetrze",
+      "products/kubek-rozowy-z-sercem",
+      "products/kubek-zielony-z-kwiatkiem",
+      "products/kubki-szaro-niebieskie-komplet",
+      "products/kubki-zielone-z-kwiatkiem-komplet",
+      "products/latarenki-tealight",
+      "products/miseczka-niebieskie-wnetrze",
+      "products/miska-granatowa",
+      "products/podstawki-liscie-komplet",
+      "products/swieczniki-motyw-slonca",
+      "products/talerze-owalne-z-miseczkami",
+      "products/ulotka-marketingowa",
+      "products/zestaw-kopernik-komplet",
+    ];
+    return renamedImages.flatMap((name) => [
+      { source: `/images/${name}.jpg`,  destination: `/images/${name}.webp`, permanent: true },
+      { source: `/images/${name}.jpeg`, destination: `/images/${name}.webp`, permanent: true },
+      { source: `/images/${name}.png`,  destination: `/images/${name}.webp`, permanent: true },
+    ]);
+  },
   async headers() {
     return [
       {
