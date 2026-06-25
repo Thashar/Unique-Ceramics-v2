@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     url: "https://uniqueceramics.pl/o-mnie",
     images: [
       {
-        url: "/images/OpenGraph.jpg",
+        url: "/images/OpenGraph.webp",
         width: 1200,
         height: 630,
         alt: "Pracownia ceramiczna Unique Ceramics — Gliwice",

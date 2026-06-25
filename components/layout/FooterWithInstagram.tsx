@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import Image from "next/image";
 import FooterInstagramPanel from "./FooterInstagramPanel";
 import FooterContactsClient from "./FooterContactsClient";
@@ -63,7 +63,7 @@ export default function FooterWithInstagram({ instagram }: { instagram: string }
         <div className="max-w-7xl mx-auto flex items-center justify-center gap-4">
           <div className="flex items-center gap-2.5 shrink-0">
             <Image
-              src="/images/logo.png"
+              src="/images/logo.webp"
               alt="Unique Ceramics"
               width={24}
               height={24}

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Zamówienie indywidualne",
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
     url: "https://uniqueceramics.pl/zamowienie-indywidualne",
     images: [
       {
-        url: "/images/OpenGraph.jpg",
+        url: "/images/OpenGraph.webp",
         width: 1200,
         height: 630,
         alt: "Zamówienie indywidualne ceramiki — Unique Ceramics",

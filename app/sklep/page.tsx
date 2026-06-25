@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { PenLine } from "lucide-react";
 import Header from "@/components/layout/HeaderWrapper";
 import Footer from "@/components/layout/Footer";
@@ -18,7 +18,7 @@ export const metadata = {
     url: "https://uniqueceramics.pl/sklep",
     images: [
       {
-        url: "/images/OpenGraph.jpg",
+        url: "/images/OpenGraph.webp",
         width: 1200,
         height: 630,
         alt: "Ceramika ręcznie robiona — sklep Unique Ceramics",

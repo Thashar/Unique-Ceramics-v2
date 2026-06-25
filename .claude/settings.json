@@ -38,7 +38,11 @@
       "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\('scripts',{}\\), indent=2\\)\\)\")",
       "Read(//c/Users/Thash/Desktop/Bots/Unique Ceramics v2/app/sklep/**)",
       "PowerShell($path = \"c:\\\\Users\\\\Thash\\\\Desktop\\\\Bots\\\\Unique Ceramics v2\\\\app\\\\sklep\\\\[slug]\\\\page.tsx\"; [System.IO.File]::ReadAllText\\($path\\))",
-      "PowerShell($path = \"c:\\\\Users\\\\Thash\\\\Desktop\\\\Bots\\\\Unique Ceramics v2\\\\app\\\\sklep\\\\[slug]\\\\ProductGallery.tsx\"; [System.IO.File]::ReadAllText\\($path\\))"
+      "PowerShell($path = \"c:\\\\Users\\\\Thash\\\\Desktop\\\\Bots\\\\Unique Ceramics v2\\\\app\\\\sklep\\\\[slug]\\\\ProductGallery.tsx\"; [System.IO.File]::ReadAllText\\($path\\))",
+      "Bash(ls scripts *)",
+      "Bash(mkdir scripts *)",
+      "Bash(node scripts/convert-images-to-webp.mjs --dry-run)",
+      "Bash(node --input-type=module)"
     ],
     "additionalDirectories": [
       "c:\\Users\\Thash\\Desktop\\Bots\\Unique Ceramics v2\\app\\api\\admin\\categories"

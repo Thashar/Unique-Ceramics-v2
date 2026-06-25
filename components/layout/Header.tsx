@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import Image from "next/image";
@@ -153,7 +153,7 @@ export default function Header({ topOffset = false, showProjects = true }: { top
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3 group" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
           <Image
-            src="/images/logo.png"
+            src="/images/logo.webp"
             alt="Unique Ceramics"
             width={40}
             height={40}

@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import Image from "next/image";
 import FooterContactsClient from "./FooterContactsClient";
 import FooterMap from "./FooterMap";
@@ -14,7 +14,7 @@ export default function Footer({ compact = false }: { compact?: boolean }) {
             {/* Logo — pełna szerokość */}
             <div className="flex items-center gap-3 mb-6">
               <Image
-                src="/images/logo.png"
+                src="/images/logo.webp"
                 alt="Unique Ceramics"
                 width={32}
                 height={32}
@@ -84,7 +84,7 @@ export default function Footer({ compact = false }: { compact?: boolean }) {
         <div>
           <div className="flex items-center gap-3 mb-4">
             <Image
-              src="/images/logo.png"
+              src="/images/logo.webp"
               alt="Unique Ceramics"
               width={36}
               height={36}

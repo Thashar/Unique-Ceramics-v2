@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import { Playfair_Display, Inter } from "next/font/google";
 import Providers from "@/components/layout/Providers";
 import "./globals.css";
@@ -69,7 +69,7 @@ export const metadata: Metadata = {
       "Ceramika użytkowa ręcznie robiona w Gliwicach — kubki, filiżanki, miski i naczynia. Każdy egzemplarz jest niepowtarzalny. Zamów z dostawą w całej Polsce.",
     images: [
       {
-        url: "/images/OpenGraph.jpg",
+        url: "/images/OpenGraph.webp",
         width: 1200,
         height: 630,
         alt: "Unique Ceramics — ręcznie robiona ceramika",
@@ -81,7 +81,7 @@ export const metadata: Metadata = {
     title: "Unique Ceramics — Ceramika Gliwice | ręcznie robiona",
     description:
       "Ceramika użytkowa ręcznie robiona w Gliwicach. Kubki, filiżanki, miski i naczynia — każdy egzemplarz niepowtarzalny.",
-    images: ["/images/OpenGraph.jpg"],
+    images: ["/images/OpenGraph.webp"],
   },
   robots: {
     index: true,
@@ -101,8 +101,8 @@ const localBusinessSchema = {
   description:
     "Pracownia ceramiki artystycznej tworząca ręcznie robione naczynia użytkowe i dekoracyjne. Kubki, filiżanki, miski, talerze i świeczniki wykonywane z pasją — każdy egzemplarz jest niepowtarzalny.",
   url: BASE,
-  logo: `${BASE}/images/logo.png`,
-  image: `${BASE}/images/OpenGraph.jpg`,
+  logo: `${BASE}/images/logo.webp`,
+  image: `${BASE}/images/OpenGraph.webp`,
   telephone: "+48668443706",
   email: "kontakt@uniqueceramics.pl",
   address: {
