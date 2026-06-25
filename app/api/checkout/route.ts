@@ -172,7 +172,7 @@ function buildTransferEmail(params: {
         ${bankAccountNumber ? `<p style="margin:4px 0;font-size:14px;color:#3d2b1f;"><strong>Numer konta:</strong> <span style="font-family:monospace;">${bankAccountNumber}</span></p>` : ""}
         ${bankName ? `<p style="margin:4px 0;font-size:14px;color:#3d2b1f;"><strong>Bank:</strong> ${bankName}</p>` : ""}
         <p style="margin:4px 0;font-size:14px;color:#3d2b1f;"><strong>Kwota:</strong> ${total.toFixed(2).replace(".", ",")} zł</p>
-        <p style="margin:4px 0;font-size:14px;color:#3d2b1f;"><strong>Tytuł:</strong> ${transferTitle} #${orderNumber}</p>
+        <p style="margin:4px 0;font-size:14px;color:#3d2b1f;"><strong>Tytuł przelewu:</strong> ${transferTitle} #${orderNumber}</p>
       </div>
       ${blikPhone ? `
       <div style="background:#f5f0eb;border-left:3px solid #c87941;padding:20px 24px;margin:0 0 28px;">

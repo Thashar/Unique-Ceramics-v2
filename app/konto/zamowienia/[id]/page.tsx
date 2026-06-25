@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ChevronLeft, Package, MapPin, CreditCard, Clock, Truck, ExternalLink } from "lucide-react";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { getSetting } from "@/lib/settings";
 import OrderStatusBadge from "@/components/account/OrderStatusBadge";
 import StripeResumeButton from "@/components/account/StripeResumeButton";
 
@@ -56,11 +57,17 @@ export default async function OrderDetailPage({
   const statusSteps = [
     { key: "PENDING",     label: "Przyjęte" },
     { key: "CONFIRMED",   label: "Potwierdzone" },
+    { key: "PAID",        label: "Opłacone" },
     { key: "IN_PROGRESS", label: "W realizacji" },
     { key: "SHIPPED",     label: "Wysłane" },
     { key: "DELIVERED",   label: "Dostarczone" },
   ];
   const currentStep = statusSteps.findIndex((s) => s.key === order.status);
+
+  // Tytuł przelewu (dla zamówień przelewem oczekujących na płatność)
+  const orderNumber = order.id.slice(-8).toUpperCase();
+  const transferTitlePrefix = await getSetting("payment_bank_transfer_title").catch(() => "Zamówienie");
+  const transferTitle = `${transferTitlePrefix || "Zamówienie"} #${orderNumber}`;
 
   const trackingUrl = order.trackingNumber && order.trackingCarrier
     ? carrierTrackUrl(order.trackingCarrier, order.trackingNumber)
@@ -244,6 +251,12 @@ export default async function OrderDetailPage({
             <p className={`text-xs mt-1 ${order.paymentStatus === "PAID" ? "text-green-600" : "text-amber-600"}`}>
               {order.paymentStatus === "PAID" ? "Opłacone" : "Oczekuje na płatność"}
             </p>
+            {order.paymentMethod === "transfer" && order.paymentStatus !== "PAID" && (
+              <div className="mt-3 pt-3 border-t border-sand">
+                <p className="text-[11px] tracking-widest uppercase text-charcoal/45 mb-1">Tytuł przelewu</p>
+                <p className="text-sm text-espresso font-medium select-all">{transferTitle}</p>
+              </div>
+            )}
             {order.paymentMethod === "stripe" && order.paymentStatus !== "PAID" && (
               <StripeResumeButton orderId={order.id} />
             )}
