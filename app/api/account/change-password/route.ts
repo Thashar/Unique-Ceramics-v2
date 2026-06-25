@@ -9,7 +9,7 @@ export async function PATCH(req: Request) {
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   // Ochrona przed brute-force obecnego hasła przy przejętej sesji
-  if (isRateLimited(`pwchange:${session.user.id}`, 5, 15 * 60_000)) {
+  if (await isRateLimited(`pwchange:${session.user.id}`, 5, 15 * 60_000)) {
     return NextResponse.json({ error: "Zbyt wiele prób. Spróbuj za 15 minut." }, { status: 429 });
   }
 

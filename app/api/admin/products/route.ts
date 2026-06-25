@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-auth";
 import { revalidateProductPages } from "@/lib/products";
+import { validateProduct } from "@/lib/product-validation";
 import { NextResponse } from "next/server";
 
 export async function GET() {
@@ -12,15 +13,16 @@ export async function GET() {
 export async function POST(req: Request) {
   if (!await requireAdmin()) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const body = await req.json();
-  const { name, slug, description, price, images, category, stock, featured, active, variesFromPhoto } = body;
+  const validation = validateProduct(await req.json());
+  if (!validation.ok) {
+    return NextResponse.json({ error: validation.error }, { status: 400 });
+  }
+  const data = validation.data;
 
-  const existing = await db.product.findUnique({ where: { slug } });
+  const existing = await db.product.findUnique({ where: { slug: data.slug } });
   if (existing) return NextResponse.json({ error: "Slug już istnieje" }, { status: 409 });
 
-  const product = await db.product.create({
-    data: { name, slug, description, price, images, category, stock, featured, active, variesFromPhoto: variesFromPhoto ?? false },
-  });
+  const product = await db.product.create({ data });
 
   revalidateProductPages();
   return NextResponse.json(product, { status: 201 });

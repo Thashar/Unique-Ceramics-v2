@@ -304,8 +304,25 @@ export async function PATCH(
     }
 
     const updateData: { trackingNumber?: string; trackingCarrier?: string } = {};
-    if (body.trackingNumber !== undefined) updateData.trackingNumber = String(body.trackingNumber).trim();
-    if (body.trackingCarrier !== undefined) updateData.trackingCarrier = String(body.trackingCarrier).trim();
+    if (body.trackingNumber !== undefined) {
+      // Numer listu trafia do URL śledzenia i maila — ogranicz do bezpiecznych znaków
+      const num = String(body.trackingNumber).trim().slice(0, 64);
+      if (num && !/^[A-Za-z0-9-]+$/.test(num)) {
+        return NextResponse.json(
+          { error: "Numer listu może zawierać tylko litery, cyfry i myślniki." },
+          { status: 400 }
+        );
+      }
+      updateData.trackingNumber = num;
+    }
+    if (body.trackingCarrier !== undefined) {
+      const carrier = String(body.trackingCarrier).trim();
+      // Allowlista przewoźników — chroni budowanie URL śledzenia
+      if (carrier && !Object.prototype.hasOwnProperty.call(CARRIER_LABELS, carrier)) {
+        return NextResponse.json({ error: "Nieprawidłowy dostawca." }, { status: 400 });
+      }
+      updateData.trackingCarrier = carrier;
+    }
 
     const order = await db.order.update({ where: { id }, data: updateData });
     return NextResponse.json(order);

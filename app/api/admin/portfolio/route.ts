@@ -2,11 +2,10 @@ import { requireAdmin } from "@/lib/admin-auth";
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 import { revalidatePortfolioPages } from "@/lib/portfolio";
+import { validateProjectInput } from "@/lib/portfolio-validation";
 
 export async function GET() {
-  try {
-    await requireAdmin();
-  } catch {
+  if (!await requireAdmin()) {
     return NextResponse.json({ error: "Brak uprawnień" }, { status: 403 });
   }
 
@@ -22,23 +21,17 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  try {
-    await requireAdmin();
-  } catch {
+  if (!await requireAdmin()) {
     return NextResponse.json({ error: "Brak uprawnień" }, { status: 403 });
   }
 
-  const body = await req.json();
-  const { title, description = "", images = [], order = 0, active = true } = body;
-
-  if (!title?.trim()) {
-    return NextResponse.json({ error: "Tytuł jest wymagany" }, { status: 400 });
+  const validation = validateProjectInput(await req.json());
+  if (!validation.ok) {
+    return NextResponse.json({ error: validation.error }, { status: 400 });
   }
 
   try {
-    const project = await db.project.create({
-      data: { title: title.trim(), description, images, order: parseInt(order) || 0, active },
-    });
+    const project = await db.project.create({ data: validation.data });
     revalidatePortfolioPages();
     return NextResponse.json(project, { status: 201 });
   } catch (e) {

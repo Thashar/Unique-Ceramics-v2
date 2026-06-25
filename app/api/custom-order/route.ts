@@ -51,7 +51,7 @@ async function sendAdminNotification(params: {
 }
 
 export async function POST(req: Request) {
-  if (isRateLimited(getClientIp(req), 3, 60_000)) {
+  if (await isRateLimited(getClientIp(req), 3, 60_000)) {
     return NextResponse.json({ error: "Zbyt wiele żądań. Spróbuj za chwilę." }, { status: 429 });
   }
   try {

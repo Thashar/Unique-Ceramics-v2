@@ -57,6 +57,8 @@ STRIPE_SECRET_KEY="sk_live_xxxx"            # płatności kartą
 STRIPE_WEBHOOK_SECRET="whsec_xxxx"          # weryfikacja webhooków Stripe
 CRON_SECRET="min-32-znaki"                  # autoryzacja /api/ping (cron Vercel)
 INPOST_GEOWIDGET_TOKEN="xxxx"               # token widgetu mapy paczkomatów InPost (opcjonalne — bez niego wyświetla pole tekstowe)
+UPSTASH_REDIS_REST_URL="https://xxx.upstash.io"   # trwały rate limiting (opcjonalne, ale ZALECANE na produkcji)
+UPSTASH_REDIS_REST_TOKEN="xxxx"                   # token Upstash REST; bez obu zmiennych limiter degraduje się do in-memory
 ```
 
 > `DATABASE_URL` używa pgbouncer (Transaction Pooler). `DIRECT_URL` wymagany przez Prisma do migracji. `SUPABASE_SERVICE_ROLE_KEY` nigdy nie może trafić do klienta.
@@ -77,6 +79,7 @@ INPOST_GEOWIDGET_TOKEN="xxxx"               # token widgetu mapy paczkomatów In
 - **OrderItem** — referencja do Order, `productId`, `name`, `price`, `quantity`
 - **CustomOrder** — `id`, `orderNumber` (auto-increment, wyświetlany jako `IND-{n}`), `customerName`, `customerEmail`, `customerPhone`, `street`, `city`, `postcode`, `orderType`, `description`, `deadline`, `budget`, `price` (cena zamówienia admina), `shippingCost` (koszt wysyłki), `paidAmount` (kwota wpłacona), `status`, `adminNotes`
 - **Setting** — `key` (unique), `value` — magazyn key-value dla dynamicznych ustawień (także adresy użytkowników: `user_address_{userId}`)
+- **Project** — portfolio prac: `id`, `title`, `description`, `images[]`, `order`, `active`, `createdAt`, `updatedAt`; indeks `[active, order]`. Wyświetlane publicznie na `/moje-projekty`, zarządzane w `/admin/projekty`
 
 ### Enumy
 - `Role`: USER, ADMIN
@@ -161,6 +164,7 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 | `/zamowienie-indywidualne` | static (client) | Zamówienie na miarę |
 | `/logowanie`, `/rejestracja` | static (client) | Auth |
 | `/o-mnie`, `/warsztaty`, `/kontakt`, `/regulamin`, `/polityka-prywatnosci` | ISR 300 s | Strony treściowe (treść z ustawień; zapis w adminie robi `revalidatePath`) |
+| `/moje-projekty` | ISR | Publiczne portfolio prac (model `Project`, dane z `getProjects()`) |
 
 ### Strony chronione — konto klienta (`/konto`) — wymaga sesji (middleware + layout)
 | Route | Opis |
@@ -180,6 +184,7 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 | `/admin/zamowienia-indywidualne`, `/admin/zamowienia-indywidualne/[id]` | Zamówienia indywidualne |
 | `/admin/ustawienia` | Ustawienia sklepu (strona główna, o mnie, **sklep**, warsztaty, regulamin, polityka, kontakt, wysyłka, płatności) |
 | `/admin/kategorie` | Zarządzanie kategoriami produktów (CRUD + kolejność) |
+| `/admin/projekty`, `/admin/projekty/nowy`, `/admin/projekty/[id]` | Portfolio prac (CRUD projektów; chronione layoutem admina + `requireAdmin`) |
 | `/admin/analityki` | Panel analityczny — przychód miesięczny (wykres + tabela z podatkiem PIT i checkboxem stawki 32% + pobranie raportu PDF), bestsellery, metody wysyłki, płatności, statusy zamówień, podsumowanie roczne, działalność nierejestrowana (limit kwartalny — przychód należny z wysyłką) |
 
 ### API Routes
@@ -201,8 +206,10 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 | GET/POST | `/api/admin/categories` | Lista/dodaj kategorie (ADMIN; mutacje → `revalidateCategories()`) |
 | PUT/DELETE | `/api/admin/categories/[id]` | Edytuj/usuń kategorię (ADMIN; usuwanie blokowane gdy istnieją produkty w kategorii) |
 | GET/POST | `/api/admin/products` | Lista/dodaj produkty (ADMIN; mutacje → `revalidateProductPages()`) |
-| PUT/DELETE | `/api/admin/products/[id]` | Edytuj/usuń produkt (ADMIN; mutacje → rewalidacja) |
-| PATCH | `/api/admin/orders/[id]` | Zmień status zamówienia / dane listu przewozowego / datę wpłaty (ADMIN; walidacja przejścia: 1 krok do przodu lub anulowanie; status `PAID` auto-ustawia `paymentStatus=PAID`+`paidAt` z modalu+e-mail; osobne `{ paidAt }` edytuje datę wpłaty — walidacja: nie z przyszłości, nie przed złożeniem) |
+| PUT/DELETE | `/api/admin/products/[id]` | Edytuj/usuń produkt (ADMIN; walidacja `validateProduct`; mutacje → rewalidacja) |
+| GET/POST | `/api/admin/portfolio` | Lista/dodaj projekty portfolio (ADMIN; `validateProjectInput`; mutacje → `revalidatePortfolioPages()`) |
+| PUT/DELETE | `/api/admin/portfolio/[id]` | Edytuj/usuń projekt portfolio (ADMIN; `validateProjectInput`) |
+| PATCH | `/api/admin/orders/[id]` | Zmień status zamówienia / dane listu przewozowego / datę wpłaty (ADMIN; walidacja przejścia: 1 krok do przodu lub anulowanie; status `PAID` auto-ustawia `paymentStatus=PAID`+`paidAt` z modalu+e-mail; osobne `{ paidAt }` edytuje datę wpłaty — walidacja: nie z przyszłości, nie przed złożeniem; dane listu: `trackingCarrier` z allowlisty (dpd/dhl/inpost/poczta), `trackingNumber` tylko `[A-Za-z0-9-]` ≤64 zn.) |
 | PATCH | `/api/admin/custom-orders/[id]` | Status/notatki/cena/kwotaWpłacona/daneKlienta zamówienia indywidualnego (ADMIN; PAID wymaga paidAmount > 0) |
 | POST | `/api/admin/upload` | Upload zdjęcia do Supabase Storage (ADMIN, magic bytes, maks. 10 MB) |
 | PATCH/POST | `/api/admin/settings` | Zapis ustawień (ADMIN; sanityzacja HTML + `revalidatePath("/", "layout")`) |
@@ -218,8 +225,11 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 - **settings.ts** — `getSetting`/`getSettings` z defaultami i retry
 - **products.ts** — `getShopProducts()` (unstable_cache 60 s, tag `products`; jedno zapytanie do DB, podział inStock/soldOut w JS) + `getFeaturedProducts()` (unstable_cache 3600 s, tag `products`) + `revalidateProductPages()`
 - **categories.ts** — `getCategories()` (unstable_cache, tag `categories`; fallback do DEFAULT_CATEGORIES gdy DB pusta/niedostępna) + `revalidateCategories()`
-- **admin-auth.ts** — `requireAdmin()`: sesja + **aktualna rola z DB** (nie z JWT — odebranie uprawnień działa natychmiast)
-- **rate-limit.ts** — in-memory limiter (`isRateLimited`, `getClientIp`); per-instancja na serverless
+- **admin-auth.ts** — `requireAdmin()`: sesja + **aktualna rola z DB** (nie z JWT — odebranie uprawnień działa natychmiast). **UWAGA: zwraca `null` przy braku uprawnień, NIE rzuca wyjątku** — zawsze sprawdzaj wartość: `if (!await requireAdmin()) return 403`. Nigdy `try/catch` wokół niego (catch nigdy się nie wykona)
+- **rate-limit.ts** — **async** `isRateLimited(key, limit, windowMs)` + `getClientIp`. Domyślnie trwały magazyn Upstash Redis (REST, okno stałe) — poprawny na serverless; gdy brak `UPSTASH_*` lub Redis niedostępny → fallback in-memory (per-instancja). **Wszyscy wywołujący muszą `await`.**
+- **product-validation.ts** — `validateProduct(body)`: walidacja/normalizacja danych produktu (name, slug `[a-z0-9-]`, price 0–1e6, stock int ≥0, images: tablica stringów ≤30, booleany). Używana w POST i PUT `/api/admin/products`
+- **portfolio-validation.ts** — `validateProjectInput(body)`: walidacja projektu portfolio (title ≤200, description ≤20000, images ≤30, order int, active). Używana w POST/PUT `/api/admin/portfolio`
+- **portfolio.ts** — `getProjects()` (unstable_cache, tag `projects`; fallback `[]` gdy DB niedostępna) + `revalidatePortfolioPages()`
 - **sanitize-html.ts** — `sanitizeRichHtml()` z allowlistą tagów/atrybutów
 - **address-validation.ts** — wspólna walidacja adresu (klient + serwer)
 - **cart.tsx** — koszyk jako **store modułowy** (`useSyncExternalStore` + localStorage); hook `useCart()`, bez providera
@@ -303,7 +313,7 @@ Fonty: `font-serif` → Playfair Display, `font-sans` → Inter (oba przez `next
 ## Autoryzacja
 
 - **auth.ts** — NextAuth v5 beta, strategia JWT; providery: Google OAuth + Credentials (bcryptjs); rate limit logowania (5/min na konto + 30/min globalnie); `callbacks` dołączają `id` i `role` do tokena/sesji
-- **middleware.ts** — wymaga sesji na `/konto`, `/zamowienie`, `/admin` (redirect na `/logowanie?callbackUrl=...`)
+- **middleware.ts** — wymaga sesji na `/konto`, `/zamowienie`, `/admin` (redirect na `/logowanie?callbackUrl=...`) oraz na `/api/admin/*` (zwraca `401 JSON` — druga warstwa obok `requireAdmin` w handlerach)
 - **Admin:** rola sprawdzana przez `requireAdmin()` z `lib/admin-auth.ts` — **zawsze z bazy**, nie z JWT. Używaj go w każdej nowej trasie/stronie admina.
 
 ## Bezpieczeństwo — zasady
@@ -315,6 +325,9 @@ Fonty: `font-serif` → Playfair Display, `font-sans` → Inter (oba przez `next
 - **HTML z ustawień** sanityzowany przy zapisie i renderze (`sanitizeRichHtml`).
 - **Endpointy publiczne przyjmujące dane** mają rate limit (`lib/rate-limit.ts`) i walidację długości pól.
 - Webhook Stripe: zawsze `constructEvent` z `STRIPE_WEBHOOK_SECRET`.
+- **Autoryzacja admina**: `requireAdmin()` **zwraca `null`** (nie rzuca) — używaj `if (!await requireAdmin()) return 403`. Wzorzec `try { await requireAdmin() } catch {}` jest błędny (catch nigdy nie zadziała → trasa odsłonięta). Dodatkowo middleware blokuje `/api/admin/*` bez sesji.
+- **Walidacja wejścia mutacji**: trasy admina zapisujące dane (produkty, portfolio) walidują wejście (`validateProduct`/`validateProjectInput`) — nie ufaj typom/zakresom z body nawet od admina.
+- **Rate limiting** na produkcji wymaga `UPSTASH_*` (trwały, międzyinstancyjny); bez nich limiter jest tylko per-instancja i łatwy do obejścia na serverless.
 
 ---
 

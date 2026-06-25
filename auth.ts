@@ -31,8 +31,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         // Ochrona przed brute-force: 5 prób/min na konto + globalny bezpiecznik
         if (
-          isRateLimited(`login:${email.toLowerCase().trim()}`, 5, 60_000) ||
-          isRateLimited("login:global", 30, 60_000)
+          (await isRateLimited(`login:${email.toLowerCase().trim()}`, 5, 60_000)) ||
+          (await isRateLimited("login:global", 30, 60_000))
         ) {
           return null;
         }
