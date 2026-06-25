@@ -25,6 +25,25 @@ function isAllowedTransition(from: OrderStatus, to: OrderStatus): boolean {
   return i !== -1 && STATUS_FLOW[i + 1] === to;
 }
 
+// Walidacja daty/godziny wpłaty (paidAt) podanej przez admina.
+// Musi być poprawna, nie z przyszłości i nie wcześniejsza niż złożenie zamówienia.
+function parsePaidAt(
+  value: unknown,
+  createdAt: Date,
+): { ok: true; date: Date } | { ok: false; error: string } {
+  if (typeof value !== "string") return { ok: false, error: "Nieprawidłowa data wpłaty." };
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return { ok: false, error: "Nieprawidłowa data wpłaty." };
+  const now = Date.now();
+  if (d.getTime() > now + 60_000) {
+    return { ok: false, error: "Data wpłaty nie może być z przyszłości." };
+  }
+  if (d.getTime() < createdAt.getTime() - 60_000) {
+    return { ok: false, error: "Data wpłaty nie może być wcześniejsza niż złożenie zamówienia." };
+  }
+  return { ok: true, date: d };
+}
+
 const CARRIER_LABELS: Record<string, string> = {
   dpd:    "DPD",
   dhl:    "DHL",
@@ -292,48 +311,27 @@ export async function PATCH(
     return NextResponse.json(order);
   }
 
-  // Nadpisanie miesiąca rozliczenia (przychód rozpoznawany wg daty wpłaty).
-  // Dozwolone cofnięcie maksymalnie o 3 miesiące względem miesiąca opłacenia
-  // (na wypadek, gdy admin zapomniał w porę zmienić status na „Opłacone").
-  if (body.settlementDate !== undefined) {
+  // Zmiana samej daty/godziny wpłaty (paidAt) — rozliczenie wg tej daty.
+  // (Status zmienia ją w modalu; tutaj edycja w panelu już opłaconego zamówienia.)
+  if (body.paidAt !== undefined && body.status === undefined) {
     const existing = await db.order.findUnique({
       where: { id },
-      select: { paidAt: true, createdAt: true, paymentStatus: true },
+      select: { paymentStatus: true, createdAt: true },
     });
     if (!existing) {
       return NextResponse.json({ error: "Nie znaleziono zamówienia" }, { status: 404 });
     }
     if (existing.paymentStatus !== "PAID") {
       return NextResponse.json(
-        { error: "Miesiąc rozliczenia dotyczy tylko opłaconych zamówień." },
+        { error: "Datę wpłaty można ustawić tylko dla opłaconych zamówień." },
         { status: 400 }
       );
     }
-
-    if (body.settlementDate === null) {
-      const order = await db.order.update({ where: { id }, data: { settlementDate: null } });
-      return NextResponse.json(order);
+    const parsed = parsePaidAt(body.paidAt, existing.createdAt);
+    if (!parsed.ok) {
+      return NextResponse.json({ error: parsed.error }, { status: 400 });
     }
-
-    const d = new Date(body.settlementDate);
-    if (isNaN(d.getTime())) {
-      return NextResponse.json({ error: "Nieprawidłowa data" }, { status: 400 });
-    }
-
-    const base    = existing.paidAt ?? existing.createdAt;
-    const baseIdx = base.getFullYear() * 12 + base.getMonth();
-    const selIdx  = d.getFullYear() * 12 + d.getMonth();
-    if (selIdx > baseIdx || selIdx < baseIdx - 3) {
-      return NextResponse.json(
-        { error: "Miesiąc rozliczenia można cofnąć maksymalnie o 3 miesiące." },
-        { status: 400 }
-      );
-    }
-
-    // Wybór miesiąca opłacenia = brak nadpisania (null). Inaczej zapisz 15. dzień
-    // miesiąca w południe — bezpiecznie od stref czasowych przy EXTRACT(MONTH).
-    const settlement = selIdx === baseIdx ? null : new Date(d.getFullYear(), d.getMonth(), 15, 12, 0, 0);
-    const order = await db.order.update({ where: { id }, data: { settlementDate: settlement } });
+    const order = await db.order.update({ where: { id }, data: { paidAt: parsed.date } });
     return NextResponse.json(order);
   }
 
@@ -380,7 +378,7 @@ export async function PATCH(
   // Walidacja przejścia statusu (tylko 1 krok do przodu lub anulowanie)
   const existingOrder = await db.order.findUnique({
     where: { id },
-    select: { status: true, paymentStatus: true, paidAt: true, email: true, firstName: true, lastName: true, total: true },
+    select: { status: true, paymentStatus: true, paidAt: true, createdAt: true, email: true, firstName: true, lastName: true, total: true },
   });
   if (!existingOrder) {
     return NextResponse.json({ error: "Nie znaleziono zamówienia" }, { status: 404 });
@@ -452,8 +450,22 @@ export async function PATCH(
       cancelledOrderForEmail = { id, email: existing.email, firstName: existing.firstName };
     }
   } else {
-    // Status „Opłacone" automatycznie oznacza płatność jako PAID
+    // Status „Opłacone" automatycznie oznacza płatność jako PAID.
+    // Datę wpłaty admin podaje w modalu (body.paidAt); brak → bieżąca chwila.
     const setPaid = body.status === OrderStatus.PAID;
+
+    let paidAtValue: Date | undefined;
+    if (setPaid) {
+      if (body.paidAt !== undefined) {
+        const parsed = parsePaidAt(body.paidAt, existingOrder.createdAt);
+        if (!parsed.ok) {
+          return NextResponse.json({ error: parsed.error }, { status: 400 });
+        }
+        paidAtValue = parsed.date;
+      } else if (!existingOrder.paidAt) {
+        paidAtValue = new Date();
+      }
+    }
 
     order = await db.order.update({
       where: { id },
@@ -461,8 +473,7 @@ export async function PATCH(
         ? {
             status: body.status,
             paymentStatus: "PAID",
-            // Znacznik wpłaty — przychód rozpoznawany wg tej daty (jeśli jeszcze nie ustawiony)
-            ...(existingOrder.paidAt ? {} : { paidAt: new Date() }),
+            ...(paidAtValue ? { paidAt: paidAtValue } : {}),
           }
         : { status: body.status },
       select: {

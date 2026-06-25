@@ -86,7 +86,7 @@ export async function GET(
   const periodEnd   = new Date(yr, mo,     1);
 
   // Zamówienia sklepowe — tylko opłacone (PAID). Przychód rozpoznawany wg daty
-  // wpłaty: settlementDate (nadpisanie) → paidAt → createdAt (fallback dla starych).
+  // wpłaty (paidAt → createdAt jako fallback dla starych zamówień bez paidAt).
   // COALESCE niewyrażalny w Prisma where — filtrujemy po stronie aplikacji.
   const ordersQuery = db.order.findMany({
     where: {
@@ -115,8 +115,8 @@ export async function GET(
   }
 
   // Data rozpoznania przychodu i filtr do bieżącego miesiąca
-  const recognitionDate = (o: { settlementDate: Date | null; paidAt: Date | null; createdAt: Date }) =>
-    o.settlementDate ?? o.paidAt ?? o.createdAt;
+  const recognitionDate = (o: { paidAt: Date | null; createdAt: Date }) =>
+    o.paidAt ?? o.createdAt;
 
   const orders = allPaidOrders
     .filter((o) => {

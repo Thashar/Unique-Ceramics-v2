@@ -19,6 +19,15 @@ const FLOW = ["PENDING", "CONFIRMED", "PAID", "IN_PROGRESS", "SHIPPED", "DELIVER
 
 const SHIPPED_OR_LATER = ["SHIPPED", "DELIVERED"];
 
+function pad(n: number): string {
+  return String(n).padStart(2, "0");
+}
+
+// Date → wartość pola <input type="datetime-local"> (czas lokalny)
+function toLocalInput(d: Date): string {
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 // Czy przejście z `from` na `to` jest dozwolone:
 // - ten sam status (no-op),
 // - dokładnie 1 krok do przodu w FLOW,
@@ -46,12 +55,36 @@ export default function OrderStatusSelect({
   const [saving, setSaving] = useState(false);
   const [trackingError, setTrackingError] = useState(false);
 
+  // Modal daty wpłaty (przy przejściu na „Opłacone")
+  const [paidModalOpen, setPaidModalOpen] = useState(false);
+  const [paidValue, setPaidValue]         = useState("");
+  const [paidError, setPaidError]         = useState("");
+
   const current = STATUSES.find((s) => s.value === status);
 
   const requiresTracking = shippingMethod !== "pickup";
 
+  async function patchStatus(newStatus: string, paidAtIso?: string): Promise<boolean> {
+    setSaving(true);
+    const res = await fetch(`/api/admin/orders/${orderId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(paidAtIso ? { status: newStatus, paidAt: paidAtIso } : { status: newStatus }),
+    });
+    setSaving(false);
+    return res.ok;
+  }
+
   async function handleChange(newStatus: string) {
     if (!isAllowedTransition(status, newStatus)) return;
+
+    // Przejście na „Opłacone" → modal z datą i godziną wpłaty
+    if (newStatus === "PAID") {
+      setPaidValue(toLocalInput(new Date()));
+      setPaidError("");
+      setPaidModalOpen(true);
+      return;
+    }
 
     if (SHIPPED_OR_LATER.includes(newStatus) && requiresTracking && !hasTracking) {
       setTrackingError(true);
@@ -63,18 +96,26 @@ export default function OrderStatusSelect({
     const currentLabel = STATUSES.find((s) => s.value === status)?.label ?? status;
     if (!window.confirm(`Zmienić status z „${currentLabel}" na „${targetLabel}"?`)) return;
 
-    setSaving(true);
     setStatus(newStatus);
-    const res = await fetch(`/api/admin/orders/${orderId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: newStatus }),
-    });
-    setSaving(false);
-    if (!res.ok) {
-      setStatus(currentStatus);
-    }
+    const ok = await patchStatus(newStatus);
+    if (!ok) setStatus(currentStatus);
     router.refresh();
+  }
+
+  async function confirmPaid() {
+    const d = new Date(paidValue);
+    if (isNaN(d.getTime())) {
+      setPaidError("Podaj poprawną datę i godzinę.");
+      return;
+    }
+    const ok = await patchStatus("PAID", d.toISOString());
+    if (ok) {
+      setStatus("PAID");
+      setPaidModalOpen(false);
+      router.refresh();
+    } else {
+      setPaidError("Nie udało się zapisać. Sprawdź datę (nie z przyszłości, nie przed złożeniem zamówienia).");
+    }
   }
 
   return (
@@ -103,6 +144,43 @@ export default function OrderStatusSelect({
         <p className="text-xs text-red-600 text-right max-w-48">
           Uzupelnij numer listu i dostawce przed zmiana na Wyslane.
         </p>
+      )}
+
+      {/* Modal daty wpłaty */}
+      {paidModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-espresso/40 px-4">
+          <div className="bg-warm-white border border-sand rounded-sm shadow-xl w-full max-w-sm p-6 text-left">
+            <h3 className="font-serif text-lg text-espresso mb-1">Data wpłaty</h3>
+            <p className="text-xs text-charcoal/55 mb-4">
+              Podaj datę i godzinę otrzymania wpłaty. Przychód zostanie rozliczony w miesiącu tej daty.
+            </p>
+            <input
+              type="datetime-local"
+              value={paidValue}
+              onChange={(e) => setPaidValue(e.target.value)}
+              disabled={saving}
+              className="w-full border border-clay bg-warm-white text-espresso text-sm px-3 py-2 rounded-sm outline-none disabled:opacity-60"
+            />
+            {paidError && <p className="text-xs text-red-600 mt-2">{paidError}</p>}
+            <div className="flex items-center justify-end gap-2 mt-5">
+              <button
+                onClick={() => setPaidModalOpen(false)}
+                disabled={saving}
+                className="text-xs text-charcoal/50 hover:text-charcoal px-3 py-2 transition-colors"
+              >
+                Anuluj
+              </button>
+              <button
+                onClick={confirmPaid}
+                disabled={saving}
+                className="inline-flex items-center gap-1.5 text-xs bg-clay text-warm-white px-4 py-2 rounded-sm hover:bg-espresso transition-colors disabled:opacity-50"
+              >
+                {saving && <Loader2 size={12} className="animate-spin" />}
+                {saving ? "Zapis…" : "Oznacz jako opłacone"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

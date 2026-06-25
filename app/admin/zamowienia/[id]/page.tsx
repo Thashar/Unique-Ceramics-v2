@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import OrderStatusSelect from "@/components/admin/OrderStatusSelect";
-import SettlementMonthSelect from "@/components/admin/SettlementMonthSelect";
+import PaidAtEditor from "@/components/admin/PaidAtEditor";
 import TrackingForm from "@/components/admin/TrackingForm";
 import Link from "next/link";
 import { ChevronLeft, User, MapPin, Package, CreditCard, MessageSquare, Truck } from "lucide-react";
@@ -191,23 +191,10 @@ export default async function AdminOrderDetailPage({
           </div>
 
           {order.paymentStatus === "PAID" && (
-            <div className="mt-3 pt-3 border-t border-sand space-y-3">
-              <p className="text-xs text-charcoal/55">
-                Opłacono:{" "}
-                <span className="text-espresso font-medium">
-                  {order.paidAt
-                    ? new Date(order.paidAt).toLocaleString("pl-PL", {
-                        day: "numeric", month: "long", year: "numeric",
-                        hour: "2-digit", minute: "2-digit",
-                      })
-                    : "—"}
-                </span>
-              </p>
-              <SettlementMonthSelect
+            <div className="mt-3 pt-3 border-t border-sand">
+              <PaidAtEditor
                 orderId={order.id}
                 paidAt={order.paidAt ? order.paidAt.toISOString() : null}
-                createdAt={order.createdAt.toISOString()}
-                settlementDate={order.settlementDate ? order.settlementDate.toISOString() : null}
               />
             </div>
           )}

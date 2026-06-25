@@ -91,8 +91,8 @@ export default async function AnalitykiPage() {
   const twelveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 11, 1);
 
   // ── Zamówienia sklepowe — dane miesięczne (ostatnie 12 miesięcy) ──────────
-  // Tylko opłacone (PAID). Przychód rozpoznawany wg daty wpłaty:
-  // settlementDate (nadpisanie) → paidAt → createdAt (fallback dla starych zamówień).
+  // Tylko opłacone (PAID). Przychód rozpoznawany wg daty wpłaty
+  // (paidAt → createdAt jako fallback dla starych zamówień bez paidAt).
   const monthlyRaw = await db.$queryRaw<RawMonthRow[]>`
     SELECT
       EXTRACT(YEAR  FROM rec)::int          AS yr,
@@ -102,7 +102,7 @@ export default async function AnalitykiPage() {
       COALESCE(SUM(ship), 0)::float         AS ship
     FROM (
       SELECT total, "shippingCost" AS ship,
-             COALESCE("settlementDate", "paidAt", "createdAt") AS rec
+             COALESCE("paidAt", "createdAt") AS rec
       FROM "Order"
       WHERE status != 'CANCELLED' AND "paymentStatus" = 'PAID'
     ) t
@@ -183,7 +183,7 @@ export default async function AnalitykiPage() {
       COALESCE(SUM(total), 0)::float AS rev,
       COUNT(*)::int                  AS cnt
     FROM (
-      SELECT total, COALESCE("settlementDate", "paidAt", "createdAt") AS rec
+      SELECT total, COALESCE("paidAt", "createdAt") AS rec
       FROM "Order"
       WHERE status != 'CANCELLED' AND "paymentStatus" = 'PAID'
     ) t
