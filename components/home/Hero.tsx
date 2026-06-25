@@ -45,7 +45,7 @@ export default function Hero({
             transition={{ duration: 0.8, delay: 0.4 }}
             className="text-xs tracking-[0.3em] uppercase text-terracotta mb-6"
           >
-            Ceramika ręcznie robiona
+            Ceramika ręcznie robiona · Gliwice
           </motion.p>
 
           <motion.h1
@@ -65,8 +65,8 @@ export default function Hero({
             transition={{ duration: 0.8, delay: 0.75 }}
             className="text-sand/90 text-lg leading-relaxed mb-10 max-w-md"
           >
-            Unikalna ceramika użytkowa — każdy egzemplarz jest niepowtarzalny.
-            Tworzę z pasją i dbałością o każdy detal.
+            Unikalna ceramika użytkowa z pracowni w okolicach Gliwic — każdy
+            egzemplarz jest niepowtarzalny. Tworzę z pasją i dbałością o każdy detal.
           </motion.p>
 
           <motion.div

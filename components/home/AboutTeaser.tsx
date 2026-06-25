@@ -45,7 +45,7 @@ export default function AboutTeaser({
             transition={{ duration: 0.7 }}
             className="text-xs tracking-[0.3em] uppercase text-terracotta mb-4"
           >
-            O mnie
+            Pracownia ceramiczna · Gliwice
           </motion.p>
 
           <motion.h2
