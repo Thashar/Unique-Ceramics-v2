@@ -76,6 +76,24 @@ export default async function ContactPage() {
           </div>
         </div>
 
+        {/* Obszar obsługi */}
+        <div className="bg-cream border-b border-sand px-6 lg:px-10 py-8">
+          <div className="max-w-7xl mx-auto">
+            <p className="text-xs tracking-[0.3em] uppercase text-clay mb-3">Obszar obsługi</p>
+            <p className="text-charcoal/70 text-sm leading-relaxed max-w-3xl">
+              Pracownia mieści się w <strong className="text-espresso">Kleszczowie k. Gliwic</strong> (woj. śląskie).
+              Wysyłka w całej Polsce — odbiór osobisty dostępny lokalnie.
+              Obsługujemy zamówienia z całego Górnego Śląska:{" "}
+              <span className="text-espresso">
+                Gliwice, Zabrze, Knurów, Pyskowice, Tarnowskie Góry, Bytom, Piekary Śląskie,
+                Chorzów, Ruda Śląska, Świętochłowice, Siemianowice Śląskie, Katowice,
+                Mikołów, Tychy, Mysłowice, Sosnowiec, Dąbrowa Górnicza
+              </span>{" "}
+              i okolice.
+            </p>
+          </div>
+        </div>
+
         {/* Siatka */}
         <div className="bg-warm-white py-20 px-6 lg:px-10">
           <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20">
