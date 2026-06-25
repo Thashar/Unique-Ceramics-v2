@@ -7,21 +7,21 @@ import { getShopProducts } from "@/lib/products";
 import ProductGrid from "./ProductGrid";
 
 export const metadata = {
-  title: "Sklep",
+  title: "Sklep ceramiczny — ceramika ręcznie robiona",
   description:
-    "Ręcznie robiona ceramika użytkowa i dekoracyjna. Miski, kubki, talerze, wazony — każdy przedmiot tworzony jest ręcznie z lokalnej gliny.",
+    "Sklep z ceramiką ręcznie robioną z okolic Gliwic. Miski, kubki, talerze, wazony — każdy przedmiot tworzony jest ręcznie z lokalnej gliny. Sklep ceramiczny Unique Ceramics.",
   alternates: { canonical: "https://uniqueceramics.pl/sklep" },
   openGraph: {
-    title: "Sklep — Unique Ceramics",
+    title: "Sklep ceramiczny — Unique Ceramics",
     description:
-      "Ręcznie robiona ceramika użytkowa i dekoracyjna. Każdy przedmiot jest unikalny.",
+      "Sklep z ceramiką ręcznie robioną. Miski, kubki, talerze, wazony — każdy przedmiot unikalny, tworzony z pasji.",
     url: "https://uniqueceramics.pl/sklep",
     images: [
       {
         url: "/images/OpenGraph.webp",
         width: 1200,
         height: 630,
-        alt: "Ceramika ręcznie robiona — sklep Unique Ceramics",
+        alt: "Sklep ceramiczny — Unique Ceramics Gliwice",
       },
     ],
   },
@@ -63,7 +63,7 @@ export default async function ShopPage({
     <>
       <Header />
       <div className="min-h-[100svh] bg-warm-white pt-[100px]">
-        <h1 className="sr-only">Sklep ceramiczny — ręcznie robiona ceramika Gliwice</h1>
+        <h1 className="sr-only">Sklep ceramiczny — sklep z ceramiką ręcznie robioną, Gliwice</h1>
         {/* Filtry kategorii */}
         <div className="border-b border-sand bg-cream sticky top-[100px] z-30 shadow-sm">
           <div className="max-w-7xl mx-auto px-6 lg:px-10 flex gap-2 overflow-x-auto py-4 no-scrollbar">
