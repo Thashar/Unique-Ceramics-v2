@@ -6,6 +6,25 @@ import { NextResponse } from "next/server";
 const PAYMENT_STATUSES = ["PENDING", "PAID"];
 const SHIPPED_STATUSES = [OrderStatus.SHIPPED, OrderStatus.DELIVERED];
 
+// Liniowy przepływ statusów — każdy można przesunąć tylko o 1 do przodu.
+const STATUS_FLOW: OrderStatus[] = [
+  OrderStatus.PENDING,
+  OrderStatus.CONFIRMED,
+  OrderStatus.PAID,
+  OrderStatus.IN_PROGRESS,
+  OrderStatus.SHIPPED,
+  OrderStatus.DELIVERED,
+];
+
+// Dozwolone przejście: ten sam status (no-op), dokładnie 1 krok do przodu w FLOW,
+// albo anulowanie z dowolnego statusu (poza już anulowanym).
+function isAllowedTransition(from: OrderStatus, to: OrderStatus): boolean {
+  if (to === from) return true;
+  if (to === OrderStatus.CANCELLED) return from !== OrderStatus.CANCELLED;
+  const i = STATUS_FLOW.indexOf(from);
+  return i !== -1 && STATUS_FLOW[i + 1] === to;
+}
+
 const CARRIER_LABELS: Record<string, string> = {
   dpd:    "DPD",
   dhl:    "DHL",
@@ -307,6 +326,21 @@ export async function PATCH(
     return NextResponse.json({ error: "Nieprawidłowy status" }, { status: 400 });
   }
 
+  // Walidacja przejścia statusu (tylko 1 krok do przodu lub anulowanie)
+  const existingOrder = await db.order.findUnique({
+    where: { id },
+    select: { status: true, paymentStatus: true, email: true, firstName: true, lastName: true, total: true },
+  });
+  if (!existingOrder) {
+    return NextResponse.json({ error: "Nie znaleziono zamówienia" }, { status: 404 });
+  }
+  if (!isAllowedTransition(existingOrder.status, body.status)) {
+    return NextResponse.json(
+      { error: "Niedozwolona zmiana statusu — status można przesunąć tylko o jeden krok do przodu lub anulować." },
+      { status: 400 }
+    );
+  }
+
   // Blokada SHIPPED/DELIVERED bez danych listu przewozowego (tylko kurier/paczkomat)
   if (SHIPPED_STATUSES.includes(body.status)) {
     const existing = await db.order.findUnique({
@@ -367,15 +401,29 @@ export async function PATCH(
       cancelledOrderForEmail = { id, email: existing.email, firstName: existing.firstName };
     }
   } else {
+    // Status „Opłacone" automatycznie oznacza płatność jako PAID
+    const setPaid = body.status === OrderStatus.PAID;
+
     order = await db.order.update({
       where: { id },
-      data: { status: body.status },
+      data: setPaid ? { status: body.status, paymentStatus: "PAID" } : { status: body.status },
       select: {
         id: true, status: true, paymentStatus: true,
         email: true, firstName: true,
         trackingNumber: true, trackingCarrier: true, shippingMethod: true,
       },
     });
+
+    // Wyślij potwierdzenie płatności tylko jeśli wcześniej nie była opłacona
+    if (setPaid && existingOrder.paymentStatus !== "PAID") {
+      void sendPaymentConfirmationEmail({
+        id: order.id,
+        email: existingOrder.email,
+        firstName: existingOrder.firstName,
+        lastName: existingOrder.lastName,
+        total: existingOrder.total,
+      });
+    }
   }
 
   // Mail o anulowaniu

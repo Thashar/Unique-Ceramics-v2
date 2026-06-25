@@ -6,6 +6,7 @@ const STATUSES = [
   { value: "",            label: "Wszystkie" },
   { value: "PENDING",     label: "Nowe" },
   { value: "CONFIRMED",   label: "Potwierdzone" },
+  { value: "PAID",        label: "Opłacone" },
   { value: "IN_PROGRESS", label: "W realizacji" },
   { value: "SHIPPED",     label: "Wysłane" },
   { value: "DELIVERED",   label: "Dostarczone" },

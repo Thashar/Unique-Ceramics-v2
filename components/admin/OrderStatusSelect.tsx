@@ -7,13 +7,28 @@ import { ChevronDown, Loader2 } from "lucide-react";
 const STATUSES = [
   { value: "PENDING",     label: "Nowe",         color: "bg-amber-50 text-amber-800 border-amber-300" },
   { value: "CONFIRMED",   label: "Potwierdzone", color: "bg-blue-50 text-blue-800 border-blue-300" },
+  { value: "PAID",        label: "Opłacone",     color: "bg-emerald-50 text-emerald-800 border-emerald-300" },
   { value: "IN_PROGRESS", label: "W realizacji", color: "bg-orange-50 text-orange-800 border-orange-300" },
   { value: "SHIPPED",     label: "Wysłane",      color: "bg-purple-50 text-purple-800 border-purple-300" },
   { value: "DELIVERED",   label: "Dostarczone",  color: "bg-green-50 text-green-800 border-green-300" },
   { value: "CANCELLED",   label: "Anulowane",    color: "bg-red-50 text-red-700 border-red-300" },
 ];
 
+// Liniowy przepływ statusów — każdy można przesunąć tylko o 1 do przodu.
+const FLOW = ["PENDING", "CONFIRMED", "PAID", "IN_PROGRESS", "SHIPPED", "DELIVERED"];
+
 const SHIPPED_OR_LATER = ["SHIPPED", "DELIVERED"];
+
+// Czy przejście z `from` na `to` jest dozwolone:
+// - ten sam status (no-op),
+// - dokładnie 1 krok do przodu w FLOW,
+// - anulowanie z dowolnego statusu (poza już anulowanym).
+function isAllowedTransition(from: string, to: string): boolean {
+  if (to === from) return true;
+  if (to === "CANCELLED") return from !== "CANCELLED";
+  const i = FLOW.indexOf(from);
+  return i !== -1 && FLOW[i + 1] === to;
+}
 
 export default function OrderStatusSelect({
   orderId,
@@ -36,6 +51,8 @@ export default function OrderStatusSelect({
   const requiresTracking = shippingMethod !== "pickup";
 
   async function handleChange(newStatus: string) {
+    if (!isAllowedTransition(status, newStatus)) return;
+
     if (SHIPPED_OR_LATER.includes(newStatus) && requiresTracking && !hasTracking) {
       setTrackingError(true);
       return;
@@ -74,7 +91,9 @@ export default function OrderStatusSelect({
             }`}
           >
             {STATUSES.map((s) => (
-              <option key={s.value} value={s.value}>{s.label}</option>
+              <option key={s.value} value={s.value} disabled={!isAllowedTransition(status, s.value)}>
+                {s.label}
+              </option>
             ))}
           </select>
           <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none opacity-50" />

@@ -79,7 +79,9 @@ INPOST_GEOWIDGET_TOKEN="xxxx"               # token widgetu mapy paczkomatów In
 
 ### Enumy
 - `Role`: USER, ADMIN
-- `OrderStatus`: PENDING, CONFIRMED, IN_PROGRESS, SHIPPED, DELIVERED, CANCELLED
+- `OrderStatus`: PENDING, CONFIRMED, PAID, IN_PROGRESS, SHIPPED, DELIVERED, CANCELLED
+  - Przepływ liniowy: status można przesunąć **tylko o 1 krok do przodu** (Nowe → Potwierdzone → **Opłacone** → W realizacji → Wysłane → Dostarczone). CANCELLED (Anulowane) dostępny z **każdego** statusu. Reguła egzekwowana w UI (`OrderStatusSelect`) i serwerowo (`isAllowedTransition` w PATCH route).
+  - Ustawienie statusu `PAID` (Opłacone) automatycznie ustawia `paymentStatus = "PAID"` i wysyła e-mail potwierdzający płatność. Status płatności w panelu jest **tylko do odczytu** (badge).
 - `CustomOrderStatus`: NEW, IN_REVIEW, PAID, DONE, CANCELLED
   - `PAID` (Opłacone) — wymaga `paidAmount > 0`; status `PAID` i `DONE` są wliczane do analityki i raportów PDF
   - `CustomOrder` posiada `orderNumber` (auto-increment, wyświetlany jako `IND-{n}`), `price` (cena admina), `paidAmount` (kwota wpłacona)
@@ -88,7 +90,7 @@ INPOST_GEOWIDGET_TOKEN="xxxx"               # token widgetu mapy paczkomatów In
 
 ### Indeksy bazy danych
 
-`Product` ma indeksy: `[active, featured]`, `[active, category]`, `[active, stock]`, `[active, featured, createdAt DESC]`, `[slug, active]`. `CustomOrder` ma indeksy: `[status]`, `[customerEmail]`. Migracje w `prisma/migrations/`; plik `manual_add_performance_indexes.sql` wymaga ręcznego wykonania na Supabase (DIRECT_URL niedostępny lokalnie).
+`Product` ma indeksy: `[active, featured]`, `[active, category]`, `[active, stock]`, `[active, featured, createdAt DESC]`, `[slug, active]`. `CustomOrder` ma indeksy: `[status]`, `[customerEmail]`. Migracje w `prisma/migrations/`; pliki `manual_*.sql` wymagają ręcznego wykonania na Supabase (DIRECT_URL niedostępny lokalnie) — m.in. `manual_add_performance_indexes.sql` oraz `manual_add_paid_order_status.sql` (dodaje wartość `PAID` do enuma `OrderStatus`; `ALTER TYPE ... ADD VALUE` musi działać poza transakcją).
 
 ---
 
@@ -199,7 +201,7 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 | PUT/DELETE | `/api/admin/categories/[id]` | Edytuj/usuń kategorię (ADMIN; usuwanie blokowane gdy istnieją produkty w kategorii) |
 | GET/POST | `/api/admin/products` | Lista/dodaj produkty (ADMIN; mutacje → `revalidateProductPages()`) |
 | PUT/DELETE | `/api/admin/products/[id]` | Edytuj/usuń produkt (ADMIN; mutacje → rewalidacja) |
-| PATCH | `/api/admin/orders/[id]` | Zmień status zamówienia (ADMIN, walidacja enuma) |
+| PATCH | `/api/admin/orders/[id]` | Zmień status zamówienia / dane listu przewozowego (ADMIN; walidacja enuma + dozwolonego przejścia: 1 krok do przodu lub anulowanie; status `PAID` auto-ustawia `paymentStatus=PAID` + e-mail) |
 | PATCH | `/api/admin/custom-orders/[id]` | Status/notatki/cena/kwotaWpłacona/daneKlienta zamówienia indywidualnego (ADMIN; PAID wymaga paidAmount > 0) |
 | POST | `/api/admin/upload` | Upload zdjęcia do Supabase Storage (ADMIN, magic bytes, maks. 10 MB) |
 | PATCH/POST | `/api/admin/settings` | Zapis ustawień (ADMIN; sanityzacja HTML + `revalidatePath("/", "layout")`) |
@@ -261,12 +263,11 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 - **CategoriesManager.tsx** — `"use client"`, CRUD kategorii: lista z edycją inline, zmiana kolejności strzałkami, dodawanie, usuwanie (blokada przy produktach); seed domyślnych gdy DB pusta
 - **SettingsForm.tsx** — formularz ustawień (taby: Strona główna / O mnie / Sklep / Warsztaty / Regulamin / Polityka / Kontakt / Wysyłka / Płatności); zawiera `OverlayControl` — podgląd maski na żywo dla zdjęć hero (kolor + przezroczystość)
 - **WorkshopsOffersEditor.tsx** — `"use client"`, edytor ofert warsztatów: karty z akordeonem (tytuł, opis, czas, cena, ikona, widoczność), lista „Co zawiera?" i FAQ; każda sekcja obsługuje dodawanie, usuwanie i zmianę kolejności; zwraca dane jako JSON string przez `onChange`
-- **OrderStatusSelect.tsx** — dropdown statusu zamówienia; przyjmuje `shippingMethod` i `hasTracking` — blokuje zmianę na SHIPPED/DELIVERED gdy brak danych listu (kurier/paczkomat)
-- **OrdersTabs.tsx** — zakładki listy zamówień
+- **OrderStatusSelect.tsx** — dropdown statusu zamówienia: pozwala przejść tylko o 1 krok do przodu (pozostałe opcje wyłączone) lub anulować z każdego statusu; przyjmuje `shippingMethod` i `hasTracking` — blokuje zmianę na SHIPPED/DELIVERED gdy brak danych listu (kurier/paczkomat). Status płatności w stronie zamówienia to badge tylko do odczytu (zmienia się sam przy statusie „Opłacone")
+- **OrdersTabs.tsx** — zakładki listy zamówień (z „Opłacone")
 - **ProductsSearch.tsx** — wyszukiwarka w liście produktów
 - **CustomOrderActions.tsx** — formularz zamówień indywidualnych: edycja danych klienta (przycisk odblokowania), pola ceny i kwoty wpłaconej, dropdown statusu (PAID wymaga paidAmount), notatki; każda zmiana statusu wymaga potwierdzenia `window.confirm`
-- **PaymentStatusToggle.tsx** — `"use client"`, dropdown ręcznej zmiany statusu płatności zamówienia (PENDING/PAID) — PATCH `/api/admin/orders/[id]` z `{ paymentStatus }`
-- **TrackingForm.tsx** — `"use client"`, formularz listu przewozowego: wybór dostawcy (DPD/DHL/InPost/Poczta Polska) + pole numeru; PATCH `/api/admin/orders/[id]` z `{ trackingNumber, trackingCarrier }`; pokazuje link śledzenia po wypełnieniu
+- **TrackingForm.tsx** — `"use client"`, formularz listu przewozowego: wybór dostawcy (DPD/DHL/InPost/Poczta Polska) + pole numeru; PATCH `/api/admin/orders/[id]` z `{ trackingNumber, trackingCarrier }`; pokazuje link śledzenia po wypełnieniu (edycja tylko przy statusie W realizacji)
 - **DznSection.tsx** — `"use client"`, sekcja działalności nierejestrowanej: edytowalne minimalne wynagrodzenie (zapis `dzn_min_wage`), paski limitu kwartalnego (225% min. wynagrodzenia) z ostrzeżeniami 75%/90%
 - **MonthlyReportsTable.tsx** — `"use client"`, tabela 12 miesięcy w /admin/analityki: przychód, wysyłka, podstawa opodatkowania (przychód − wysyłka), checkbox podwyższonej stawki PIT 32% (zapis `tax_high_{rok}_{miesiac}` przez PATCH `/api/admin/settings`), wyliczony podatek (12%/32%), link do raportu PDF; w stopce suma podatku do odprowadzenia za bieżący rok
 

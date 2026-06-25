@@ -3,7 +3,6 @@ export const dynamic = "force-dynamic";
 import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import OrderStatusSelect from "@/components/admin/OrderStatusSelect";
-import PaymentStatusToggle from "@/components/admin/PaymentStatusToggle";
 import TrackingForm from "@/components/admin/TrackingForm";
 import Link from "next/link";
 import { ChevronLeft, User, MapPin, Package, CreditCard, MessageSquare, Truck } from "lucide-react";
@@ -18,6 +17,13 @@ const SHIPPING_LABELS: Record<string, string> = {
   courier:       "Kurier",
   parcel_locker: "Paczkomat InPost",
   pickup:        "Odbiór osobisty",
+};
+
+// Status płatności — tylko do odczytu (zmienia się automatycznie przy statusie „Opłacone")
+const PAYMENT_STATUS_BADGE: Record<string, { label: string; color: string }> = {
+  PENDING: { label: "Oczekuje", color: "bg-amber-50 text-amber-700 border-amber-300" },
+  PAID:    { label: "Opłacone", color: "bg-green-50 text-green-700 border-green-300" },
+  expired: { label: "Wygasła",  color: "bg-charcoal/5 text-charcoal/50 border-sand" },
 };
 
 export default async function AdminOrderDetailPage({
@@ -173,7 +179,15 @@ export default async function AdminOrderDetailPage({
           <p className="text-sm text-espresso">
             {PAYMENT_LABELS[order.paymentMethod] ?? order.paymentMethod}
           </p>
-          <PaymentStatusToggle orderId={order.id} currentStatus={order.paymentStatus} />
+          <div className="mt-2">
+            <span
+              className={`inline-block border px-2 py-0.5 text-xs font-medium rounded-sm ${
+                (PAYMENT_STATUS_BADGE[order.paymentStatus] ?? { color: "bg-sand text-charcoal border-sand" }).color
+              }`}
+            >
+              {(PAYMENT_STATUS_BADGE[order.paymentStatus] ?? { label: order.paymentStatus }).label}
+            </span>
+          </div>
         </div>
 
         {order.note ? (

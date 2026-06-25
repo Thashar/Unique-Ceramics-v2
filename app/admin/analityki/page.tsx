@@ -54,6 +54,7 @@ const PAYMENT_LABELS: Record<string, string> = {
 const STATUS_LABELS: Record<string, string> = {
   PENDING:     "Nowe",
   CONFIRMED:   "Potwierdzone",
+  PAID:        "Opłacone",
   IN_PROGRESS: "W realizacji",
   SHIPPED:     "Wysłane",
   DELIVERED:   "Dostarczone",
@@ -63,6 +64,7 @@ const STATUS_LABELS: Record<string, string> = {
 const STATUS_COLORS: Record<string, string> = {
   PENDING:     "bg-amber-400",
   CONFIRMED:   "bg-blue-400",
+  PAID:        "bg-emerald-400",
   IN_PROGRESS: "bg-orange-400",
   SHIPPED:     "bg-purple-400",
   DELIVERED:   "bg-green-500",

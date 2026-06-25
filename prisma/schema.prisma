@@ -143,6 +143,7 @@ enum Role {
 enum OrderStatus {
   PENDING
   CONFIRMED
+  PAID
   IN_PROGRESS
   SHIPPED
   DELIVERED

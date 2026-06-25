@@ -10,6 +10,7 @@ import {
 const STATUS_LABELS: Record<string, string> = {
   PENDING:     "Nowe",
   CONFIRMED:   "Potwierdzone",
+  PAID:        "Opłacone",
   IN_PROGRESS: "W realizacji",
   SHIPPED:     "Wysłane",
   DELIVERED:   "Dostarczone",
@@ -19,6 +20,7 @@ const STATUS_LABELS: Record<string, string> = {
 const STATUS_COLORS: Record<string, string> = {
   PENDING:     "bg-amber-50 text-amber-700 ring-1 ring-amber-200",
   CONFIRMED:   "bg-blue-50 text-blue-700 ring-1 ring-blue-200",
+  PAID:        "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
   IN_PROGRESS: "bg-orange-50 text-orange-700 ring-1 ring-orange-200",
   SHIPPED:     "bg-purple-50 text-purple-700 ring-1 ring-purple-200",
   DELIVERED:   "bg-green-50 text-green-700 ring-1 ring-green-200",
