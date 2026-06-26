@@ -517,6 +517,7 @@ export async function POST(req: Request) {
           "payment_bank_account_number",
           "payment_bank_name",
           "payment_bank_transfer_title",
+          "payment_blik_enabled",
           "payment_blik_phone",
         ]);
 
@@ -541,7 +542,7 @@ export async function POST(req: Request) {
             bankName: bankSettings.payment_bank_name,
             transferTitle:
               bankSettings.payment_bank_transfer_title || "Zamówienie",
-            blikPhone: bankSettings.payment_blik_phone || undefined,
+            blikPhone: bankSettings.payment_blik_enabled === "true" ? (bankSettings.payment_blik_phone || undefined) : undefined,
             vacationNote,
             shippingMethod: shippingMethod ?? "courier",
             parcelLockerCode: shippingMethod === "parcel_locker" ? String(parcelLockerCode ?? "").trim() : null,

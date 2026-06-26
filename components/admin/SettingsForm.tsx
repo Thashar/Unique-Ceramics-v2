@@ -234,7 +234,8 @@ export default function SettingsForm({ section, initial }: Props) {
   const [bankBankName, setBankBankName] = useState(initial.payment_bank_name);
   const [bankTitle, setBankTitle] = useState(initial.payment_bank_transfer_title);
 
-  // BLIK phone
+  // BLIK
+  const [blikEnabled, setBlikEnabled] = useState(initial.payment_blik_enabled === "true");
   const [blikPhone, setBlikPhone] = useState(initial.payment_blik_phone);
 
   // Stripe
@@ -578,11 +579,18 @@ export default function SettingsForm({ section, initial }: Props) {
           <Field label="Prefiks tytułu przelewu" value={bankTitle} setter={setBankTitle} />
           <p className="text-xs text-charcoal/40">Tytuł wysyłany do kupującego: „[prefiks] #NR_ZAMÓWIENIA&rdquo;</p>
           <div className="border-t border-sand pt-5">
-            <p className="text-xs tracking-widest uppercase text-charcoal/80 mb-3">Przelew BLIK na telefon</p>
-            <p className="text-xs text-charcoal/50 mb-3">
-              Opcjonalnie. Jeśli podasz numer, klient zobaczy go obok danych do przelewu bankowego.
-            </p>
-            <Field label="Numer telefonu do BLIK" value={blikPhone} setter={setBlikPhone} type="tel" placeholder="+48 600 000 000" />
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs tracking-widest uppercase text-charcoal/80">Przelew BLIK na telefon</p>
+              <Toggle checked={blikEnabled} onChange={setBlikEnabled} />
+            </div>
+            {blikEnabled && (
+              <>
+                <p className="text-xs text-charcoal/50 mb-3">
+                  Klient zobaczy numer BLIK obok danych do przelewu bankowego.
+                </p>
+                <Field label="Numer telefonu do BLIK" value={blikPhone} setter={setBlikPhone} type="tel" placeholder="+48 600 000 000" />
+              </>
+            )}
           </div>
           <SaveButton
             onClick={() => save([
@@ -590,6 +598,7 @@ export default function SettingsForm({ section, initial }: Props) {
               { key: "payment_bank_account_number", value: bankNumber },
               { key: "payment_bank_name", value: bankBankName },
               { key: "payment_bank_transfer_title", value: bankTitle },
+              { key: "payment_blik_enabled", value: blikEnabled ? "true" : "false" },
               { key: "payment_blik_phone", value: blikPhone },
             ])}
             label="Zapisz"

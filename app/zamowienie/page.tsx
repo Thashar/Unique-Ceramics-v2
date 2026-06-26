@@ -17,6 +17,7 @@ export default async function CheckoutPage() {
   const session = await auth();
 
   const settings = await getSettings([
+    "payment_blik_enabled",
     "payment_blik_phone",
     "payment_stripe_enabled",
     "shipping_cost",
@@ -57,7 +58,7 @@ export default async function CheckoutPage() {
     {
       value: "transfer",
       label: "Przelew bankowy / BLIK",
-      desc: settings.payment_blik_phone
+      desc: settings.payment_blik_enabled === "true" && settings.payment_blik_phone
         ? `Dane do przelewu bankowego oraz numer do przelewu BLIK otrzymasz e-mailem.`
         : "Dane do przelewu bankowego otrzymasz e-mailem po złożeniu zamówienia.",
     },

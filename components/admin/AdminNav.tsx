@@ -45,7 +45,8 @@ function AdminNavInner({ onClose }: { onClose?: () => void }) {
 
   const onSettings = pathname.startsWith("/admin/ustawienia");
   const onPayments = activeSection.startsWith("platnosci_");
-  const [paymentsOpen, setPaymentsOpen] = useState(onPayments);
+  const [paymentsManualOpen, setPaymentsManualOpen] = useState(false);
+  const paymentsOpen = paymentsManualOpen || onPayments;
 
   return (
     <>
@@ -107,7 +108,7 @@ function AdminNavInner({ onClose }: { onClose?: () => void }) {
 
               {/* Płatności — druga warstwa */}
               <button
-                onClick={() => setPaymentsOpen((v) => !v)}
+                onClick={() => setPaymentsManualOpen((v) => !v)}
                 className={`w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-md transition-colors ${
                   onPayments
                     ? "text-white bg-white/12 font-medium"
