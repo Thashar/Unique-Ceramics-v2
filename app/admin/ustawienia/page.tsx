@@ -1,7 +1,14 @@
 export const dynamic = "force-dynamic";
 
+import { redirect } from "next/navigation";
 import { getSettings } from "@/lib/settings";
 import SettingsForm from "@/components/admin/SettingsForm";
+
+const VALID_SECTIONS = new Set([
+  "strona_glowna", "omnie", "warsztaty", "regulamin", "polityka",
+  "kontakt", "wysylka", "urlop", "zam_indywidualne",
+  "platnosci_przelew", "platnosci_stripe",
+]);
 
 export default async function AdminSettingsPage({
   searchParams,
@@ -9,6 +16,7 @@ export default async function AdminSettingsPage({
   searchParams: Promise<{ s?: string }>;
 }) {
   const { s } = await searchParams;
+  if (s && !VALID_SECTIONS.has(s)) redirect("/admin/ustawienia");
   const section = s ?? "strona_glowna";
 
   const settings = await getSettings([

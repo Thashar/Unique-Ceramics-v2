@@ -137,7 +137,7 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 | `payment_bank_account_number` | Numer konta bankowego |
 | `payment_bank_name` | Nazwa banku |
 | `payment_bank_transfer_title` | Prefiks tytułu przelewu (default: Zamówienie) |
-| `payment_blik_enabled` | "true"/"false" |
+| `payment_blik_enabled` | "true"/"false" — czy BLIK na telefon jest widoczny w zamówieniu i mailu; toggle w /admin/ustawienia zakładka „Przelew / BLIK" |
 | `payment_blik_phone` | Numer do przelewu BLIK na telefon |
 | `payment_stripe_enabled` | "true"/"false" — płatność kartą przez Stripe |
 | `vacation_enabled` | "true"/"false" — tryb urlopu; gdy aktywny pojawia się baner w /sklep i wzmianka w mailach |

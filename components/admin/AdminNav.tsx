@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { signOut } from "next-auth/react";
@@ -46,6 +46,9 @@ function AdminNavInner({ onClose }: { onClose?: () => void }) {
   const onSettings = pathname.startsWith("/admin/ustawienia");
   const onPayments = activeSection.startsWith("platnosci_");
   const [paymentsOpen, setPaymentsOpen] = useState(onPayments);
+  useEffect(() => {
+    if (onPayments) setPaymentsOpen(true);
+  }, [onPayments]);
 
   return (
     <>

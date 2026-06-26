@@ -50,6 +50,7 @@ export default async function ConfirmationPage({
       "payment_bank_account_number",
       "payment_bank_name",
       "payment_bank_transfer_title",
+      "payment_blik_enabled",
       "payment_blik_phone",
     ]);
   }
@@ -108,7 +109,7 @@ export default async function ConfirmationPage({
                   </span>
                 </div>
               )}
-              {bankSettings.payment_blik_phone && (
+              {bankSettings.payment_blik_enabled === "true" && bankSettings.payment_blik_phone && (
                 <div className="flex justify-between gap-4 border-t border-sand pt-2 mt-2">
                   <span className="text-charcoal/50 shrink-0">BLIK na telefon</span>
                   <span className="font-mono text-espresso text-right">
