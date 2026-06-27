@@ -239,13 +239,13 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 ## Komponenty (`components/`)
 
 ### `components/layout/`
-- **Header.tsx** — responsywna nawigacja, ikona koszyka, menu mobilne
+- **Header.tsx** — responsywna nawigacja, ikona koszyka, menu mobilne; gdy `menuOpen` header zawsze przyjmuje `bg-espresso` (niezależnie od sekcji hero)
 - **Footer.tsx** — synchroniczny (ważne!), importuje `FooterContactsClient`; używany na wszystkich stronach poza stroną główną
 - **FooterWithInstagram.tsx** — scalona stopka + Instagram CTA (strona główna); grid: [IG panel | nawigacja | kontakt | mapa]
 - **FooterInstagramPanel.tsx** — `"use client"`, animowany panel Instagram
 - **FooterContactsClient.tsx** — `"use client"`, pobiera kontakty z `/api/public/contacts` po mount
 - **FooterMap.tsx** — `"use client"`, mapa Google w iframe — ładowana dopiero po zgodzie cookies
-- **CookieBanner.tsx** — `"use client"`, baner zgody na cookies
+- **CookieBanner.tsx** — `"use client"`, baner zgody na cookies; na mobile: skrócony tekst, mniejsze pady i czcionka, układ poziomy (wiersz)
 - **Providers.tsx** — opakowuje tylko `SessionProvider` + renderuje `CookieBanner` (koszyk/zgoda nie potrzebują providerów)
 
 ### `components/home/`
@@ -257,6 +257,7 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 ### `app/sklep/` (server components)
 - **ProductGrid.tsx** — `"use client"`, siatka produktów; przyjmuje `products` jako prop (data fetchowana w page.tsx). Zawiera przełącznik layoutu (standardowy: 2/3/4 kolumny, kompaktowy: 3/4/5 kolumn) z ikonami `LayoutGrid`/`Grid3X3`; preferencja persystowana w localStorage (`sklep-layout`)
 - **ProductGridSkeleton.tsx** — placeholder `animate-pulse` dla `<Suspense fallback>` w `/sklep`
+- **FloatingOrderButton.tsx** — `"use client"`, pływający przycisk „Zamów indywidualnie" w prawym dolnym rogu sklepu; animowana ikona dłoni; `md:scale-[2]` (2× powiększony tylko na desktop, na mobile — normalny rozmiar)
 
 ### `components/ui/`
 - **ProductCard.tsx** — karta produktu (next/image + framer-motion); przyjmuje opcjonalny prop `compact?: boolean` — zmniejsza czcionkę tytułu (`text-lg`→`text-sm`), cenę, kategorię, marginesy i badge'y w widoku kompaktowym

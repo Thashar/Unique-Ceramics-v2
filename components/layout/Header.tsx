@@ -6,6 +6,7 @@ import { useState, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { ShoppingBag, Menu, X, User, Package, LogOut, ChevronDown } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import { useCart } from "@/lib/cart";
 
 const ALL_NAV_LINKS = [
@@ -152,7 +153,7 @@ export default function Header({ topOffset = false, showProjects = true }: { top
     <>
     <header
       className={`fixed ${topOffset ? "top-5" : "top-0"} left-0 right-0 z-50 transition-all duration-500 ${
-        dark
+        dark || menuOpen
           ? "bg-espresso shadow-sm"
           : "bg-transparent"
       }`}
@@ -245,39 +246,46 @@ export default function Header({ topOffset = false, showProjects = true }: { top
       </div>
 
       {/* Mobile menu */}
-      {menuOpen && (
-        <div
-          id="mobile-nav"
-          role="dialog"
-          aria-label="Menu nawigacyjne"
-          className="md:hidden bg-espresso border-t border-white/10 px-6 pb-8 pt-4"
-        >
-          <nav className="flex flex-col gap-1 mt-2">
-            {navLinks.map((link) => {
-              const isActive = pathname === link.href || pathname.startsWith(link.href + "/");
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setMenuOpen(false)}
-                  className={`py-3 border-b border-white/10 text-base tracking-widest uppercase transition-colors ${
-                    isActive ? "text-terracotta" : "text-cream/75 hover:text-cream"
-                  }`}
-                >
-                  {link.label}
-                </Link>
-              );
-            })}
-            <Link
-              href="/konto"
-              onClick={() => setMenuOpen(false)}
-              className="py-3 text-base tracking-widest uppercase text-cream/75 hover:text-cream transition-colors"
-            >
-              Moje konto
-            </Link>
-          </nav>
-        </div>
-      )}
+      <AnimatePresence>
+        {menuOpen && (
+          <motion.div
+            key="mobile-nav"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.4 }}
+            id="mobile-nav"
+            role="dialog"
+            aria-label="Menu nawigacyjne"
+            className="md:hidden bg-espresso border-t border-white/10 px-6 pb-8 pt-4"
+          >
+            <nav className="flex flex-col gap-1 mt-2">
+              {navLinks.map((link) => {
+                const isActive = pathname === link.href || pathname.startsWith(link.href + "/");
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setMenuOpen(false)}
+                    className={`py-3 border-b border-white/10 text-base tracking-widest uppercase transition-colors ${
+                      isActive ? "text-terracotta" : "text-cream/75 hover:text-cream"
+                    }`}
+                  >
+                    {link.label}
+                  </Link>
+                );
+              })}
+              <Link
+                href="/konto"
+                onClick={() => setMenuOpen(false)}
+                className="py-3 text-base tracking-widest uppercase text-cream/75 hover:text-cream transition-colors"
+              >
+                Moje konto
+              </Link>
+            </nav>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </header>
     </>
   );
