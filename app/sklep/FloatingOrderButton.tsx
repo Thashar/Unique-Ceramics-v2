@@ -10,51 +10,54 @@ const DUR = 3; // długość pętli w sekundach
 const TIP_LEFT = (8.7 / 24) * 18; // ≈ 6.5 px
 const TIP_TOP = (2 / 24) * 18; //   ≈ 1.5 px
 
-const REACH = 11; // długość kreski = maksymalny zasięg rozejścia (px)
+const REACH = 3.7; // długość smugi = zasięg (px)
 
 // Cienka smuga "rozbryzgu" od czubka wysuniętego palca wskazującego.
-// Najpierw rozchodzi się od palca na zewnątrz (kreska rośnie na pełną długość
-// przy nieruchomym końcu przy palcu), a potem znika OD STRONY PALCA — bliższy
-// koniec odjeżdża do końca dalszego, więc smuga chowa się w miejscu palca.
-// Realizowane animacją długości (scaleX, pivot w czubku palca), bez opacity.
+//
+// Obrót jest STATYCZNY (na wrapperze, pivot w czubku palca) — kierunek smugi
+// jest stały, brak animacji obrotu = brak „przekręcania" i stanów pośrednich.
+// Wewnętrzny pasek animuje tylko wzdłuż własnej (poziomej) osi:
+//   • 0.22→0.31  tworzenie OD PALCA na zewnątrz: lewy (bliższy) koniec stoi przy
+//                palcu, smuga rośnie na pełną długość (scaleX 0→1),
+//   • 0.31→0.50  znikanie OD PALCA na zewnątrz: dalszy koniec stoi w miejscu na
+//                zasięgu (x + scaleX·REACH = REACH), a bliższy koniec odjeżdża
+//                (x 0→REACH, scaleX 1→0).
 function ClickSpark({ angle }: { angle: number }) {
-  const rad = (angle * Math.PI) / 180;
-  const dx = Math.cos(rad);
-  const dy = Math.sin(rad);
-
   return (
-    <motion.span
+    <span
       aria-hidden="true"
       className="absolute pointer-events-none"
       style={{
-        display: "block",
+        left: TIP_LEFT,
+        top: TIP_TOP,
         width: REACH,
         height: 1.25,
-        background: "currentColor",
-        borderRadius: 1,
-        top: TIP_TOP,
-        left: TIP_LEFT,
-        // pivot w czubku palca: scaleX rozciąga/zwija smugę od strony palca
         transformOrigin: "left center",
-        // rotate jako liczba → Framer Motion uwzględnia go w tym samym
-        // pipeline co animowane x/y, bez konfliktu z CSS transform
-        rotate: angle,
+        transform: `rotate(${angle}deg)`,
       }}
-      animate={{
-        // 0.22→0.31: rozejście od palca (scaleX 0→1, koniec przy palcu stoi);
-        // 0.31→0.50: znikanie od palca (bliższy koniec odjeżdża: x 0→REACH, scaleX→0)
-        scaleX: [0, 0,    1,    0],
-        x:      [0, 0,    0,    dx * REACH],
-        y:      [0, 0,    0,    dy * REACH],
-      }}
-      transition={{
-        duration: DUR,
-        repeat: Infinity,
-        // niewidoczne do 0.22 (najniższa pozycja dłoni)
-        times: [0, 0.22, 0.31, 0.50],
-        ease: "easeOut",
-      }}
-    />
+    >
+      <motion.span
+        className="block"
+        style={{
+          width: REACH,
+          height: 1.25,
+          background: "currentColor",
+          borderRadius: 1,
+          transformOrigin: "left center",
+        }}
+        animate={{
+          scaleX: [0, 0,    1,    0],
+          x:      [0, 0,    0,    REACH],
+        }}
+        transition={{
+          duration: DUR,
+          repeat: Infinity,
+          // niewidoczne do 0.22 (dłoń najniżej / palec najmniejszy)
+          times: [0, 0.22, 0.31, 0.50],
+          ease: "easeOut",
+        }}
+      />
+    </span>
   );
 }
 
