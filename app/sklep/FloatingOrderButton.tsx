@@ -46,14 +46,14 @@ function ClickSpark({ angle }: { angle: number }) {
           transformOrigin: "left center",
         }}
         animate={{
-          scaleX: [0, 0,    1,    0,          0],
-          x:      [0, 0,    0,    REACH / 2,  REACH],
+          scaleX: [0, 0,    1,     0],
+          x:      [0, 0,    0, REACH],
         }}
         transition={{
           duration: DUR,
           repeat: Infinity,
           // niewidoczne do 0.22 (dłoń najniżej / palec najmniejszy)
-          times: [0, 0.22, 0.283, 0.39, 0.50],
+          times: [0, 0.22, 0.283, 0.50],
           ease: "easeOut",
         }}
       />
