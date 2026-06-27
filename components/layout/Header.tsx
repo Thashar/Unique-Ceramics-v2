@@ -117,7 +117,11 @@ export default function Header({ topOffset = false, showProjects = true }: { top
   }, [menuOpen]);
 
   useEffect(() => {
-    if (!isHome) return;
+    if (!isHome) {
+      // Reset przy wyjściu ze strony głównej — następne wejście zaczyna od transparentnego
+      setTransparentVisible(true);
+      return;
+    }
 
     function update() {
       const sections = document.querySelectorAll<HTMLElement>('[data-header-theme="transparent"]');
