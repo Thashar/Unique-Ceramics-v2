@@ -12,15 +12,19 @@ export default async function HeaderWrapper({ hideVacation }: { hideVacation?: b
   const vacationEnabled = settings.vacation_enabled === "true";
   const vacationMessage = vacationEnabled ? settings.vacation_message : "";
 
+  const withBanner = !hideVacation && vacationEnabled;
+
   return (
     <>
-      {!hideVacation && (
+      {withBanner && (
         <VacationBanner
           message={vacationMessage}
-          returnDate={vacationEnabled ? settings.vacation_end_date : undefined}
+          returnDate={settings.vacation_end_date}
         />
       )}
-      <Header topOffset={!hideVacation} showProjects={projects.length > 0} />
+      <Header topOffset={withBanner} showProjects={projects.length > 0} />
+      {/* Spacer w normalnym przepływie — zastępuje pt-[...] na stronach */}
+      <div className={withBanner ? "h-[100px]" : "h-20"} aria-hidden="true" />
     </>
   );
 }

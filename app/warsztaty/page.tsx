@@ -143,7 +143,7 @@ export default async function WorkshopsPage() {
         />
       )}
       <Header />
-      <main className="flex-1 pt-[100px]">
+      <main className="flex-1">
         {/* Hero */}
         {heroImage ? (
           <div className="relative overflow-hidden" style={{ height: `${heroHeight}vh` }}>

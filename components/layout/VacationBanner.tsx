@@ -9,9 +9,7 @@ export default function VacationBanner({
   message: string;
   returnDate?: string;
 }) {
-  if (!message && !returnDate) {
-    return <div className="fixed top-0 left-0 right-0 z-[60] h-5" aria-hidden="true" />;
-  }
+  if (!message && !returnDate) return null;
 
   let formattedDate = "";
   if (returnDate) {

@@ -22,7 +22,7 @@ export default async function AccountLayout({
   return (
     <>
       <Header />
-      <main className="flex-1 pt-[100px] bg-warm-white">
+      <main className="flex-1 bg-warm-white">
         {/* Nagłówek konta */}
         <div className="bg-cream px-6 lg:px-10 py-12 border-b border-sand">
           <div className="max-w-7xl mx-auto flex items-center justify-between">

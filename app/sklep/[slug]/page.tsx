@@ -129,7 +129,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }}
       />
       <Header />
-      <main className="min-h-[100svh] bg-warm-white pt-[100px]">
+      <main className="min-h-[100svh] bg-warm-white">
         <div className="max-w-7xl mx-auto px-6 lg:px-10 pt-6 pb-2">
           <Link
             href="/sklep"

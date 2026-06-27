@@ -140,7 +140,7 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 | `payment_blik_enabled` | "true"/"false" — czy BLIK na telefon jest widoczny w zamówieniu i mailu; toggle w /admin/ustawienia zakładka „Przelew / BLIK" |
 | `payment_blik_phone` | Numer do przelewu BLIK na telefon |
 | `payment_stripe_enabled` | "true"/"false" — płatność kartą przez Stripe |
-| `vacation_enabled` | "true"/"false" — tryb urlopu; gdy aktywny pojawia się kolorowy baner `VacationBanner` nad headerem; gdy wyłączony, baner jest przezroczystym placeholderem `h-5` (header zawsze na `top-5`, strony zawsze `pt-[100px]`) |
+| `vacation_enabled` | "true"/"false" — tryb urlopu; gdy aktywny pojawia się kolorowy baner `VacationBanner` (h-5) nad headerem (`top-5`), spacer w `HeaderWrapper` ma `h-[100px]`; gdy wyłączony — brak banera, header na `top-0`, spacer `h-20`. Strony nie używają `pt-[...]` — offset zapewnia spacer. Filtry kategorii `/sklep` używają `sticky top-[100px]` (urlop) lub `sticky top-20` (bez urlopu) |
 | `vacation_end_date` | Data powrotu z urlopu (YYYY-MM-DD) — używana w automatycznym komunikacie |
 | `vacation_message` | Własny komunikat urlopowy; jeśli pusty — generowany z daty |
 | `custom_order_notify_email_enabled` | "true"/"false" — czy wysyłać e-mail do właściciela przy nowym zamówieniu indywidualnym (default: true) |
