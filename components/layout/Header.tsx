@@ -151,6 +151,13 @@ export default function Header({ topOffset = false, showProjects = true }: { top
 
   return (
     <>
+      {menuOpen && (
+        <div
+          className="fixed inset-0 z-40"
+          onClick={() => setMenuOpen(false)}
+          aria-hidden="true"
+        />
+      )}
     <header
       className={`fixed ${topOffset ? "top-5" : "top-0"} left-0 right-0 z-50 transition-all duration-500 ${
         dark || menuOpen
