@@ -53,7 +53,7 @@ function ClickSpark({ angle }: { angle: number }) {
           duration: DUR,
           repeat: Infinity,
           // niewidoczne do 0.22 (dłoń najniżej / palec najmniejszy)
-          times: [0, 0.22, 0.31, 0.50],
+          times: [0, 0.22, 0.283, 0.50],
           ease: "easeOut",
         }}
       />
