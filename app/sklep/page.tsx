@@ -1,11 +1,11 @@
 ﻿import Link from "next/link";
-import { PenLine } from "lucide-react";
 import Header from "@/components/layout/HeaderWrapper";
 import Footer from "@/components/layout/Footer";
 import { getCategories } from "@/lib/categories";
 import { getShopProducts } from "@/lib/products";
 import { getSetting } from "@/lib/settings";
 import ProductGrid from "./ProductGrid";
+import FloatingOrderButton from "./FloatingOrderButton";
 
 export const metadata = {
   title: "Sklep ceramiczny — ceramika ręcznie robiona",
@@ -92,13 +92,7 @@ export default async function ShopPage({
       </div>
 
       {/* Pływający przycisk zamówień indywidualnych */}
-      <Link
-        href="/zamowienie-indywidualne"
-        className="fixed bottom-6 right-5 z-40 flex items-center gap-2 bg-espresso hover:bg-clay text-cream text-[11px] tracking-widest uppercase px-4 py-3 shadow-md hover:shadow-lg transition-colors duration-200"
-      >
-        <PenLine size={13} strokeWidth={1.5} />
-        <span>Zamów indywidualnie</span>
-      </Link>
+      <FloatingOrderButton />
 
       <Footer />
     </>
