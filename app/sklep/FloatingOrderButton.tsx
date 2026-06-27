@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 
-const DUR = 3; // długość pętli w sekundach
+const DUR = 3;
 
-// Kreska lecąca od centrum w kierunku `angle` — pojawia się przy "kliknięciu"
+// Kreska wylatująca z czubka palca wskazującego — efekt kliknięcia
 function ClickSpark({ angle }: { angle: number }) {
   const rad = (angle * Math.PI) / 180;
   const dx = Math.cos(rad);
@@ -17,20 +17,19 @@ function ClickSpark({ angle }: { angle: number }) {
       className="absolute pointer-events-none"
       style={{
         display: "block",
-        width: 6,
-        height: 1.5,
+        width: 9,
+        height: 3,
         background: "currentColor",
-        borderRadius: 1,
-        top: "calc(50% - 0.75px)",
-        left: "calc(50% - 3px)",
-        // rotate jako liczba → Framer Motion uwzględnia go w tym samym
-        // pipeline co animowane x/y, bez konfliktu z CSS transform
+        borderRadius: 1.5,
+        // czubek palca wskazującego po obrocie -45° ≈ (-6.5, -3.5) od środka
+        top: "calc(50% - 5px)",
+        left: "calc(50% - 11px)",
         rotate: angle,
       }}
       animate={{
-        x:       [0,  0,  dx * 3,  dx * 9,  dx * 11],
-        y:       [0,  0,  dy * 3,  dy * 9,  dy * 11],
-        opacity: [0,  0,  1,       0.4,     0],
+        x:       [0,  0,  dx * 4,  dx * 12,  dx * 14],
+        y:       [0,  0,  dy * 4,  dy * 12,  dy * 14],
+        opacity: [0,  0,  1,       0.4,      0],
       }}
       transition={{
         duration: DUR,
@@ -42,19 +41,30 @@ function ClickSpark({ angle }: { angle: number }) {
   );
 }
 
-// Wypełniona ikona wskaźnika-dłoni: palec wskazujący (wyższy prostokąt)
-// + dłoń/pięść (szerszy prostokąt, nakładający się = unia kształtów)
+// Dłoń z 5 palcami (palec wskazujący wysunięty, pozostałe krótsze),
+// obrócona o -45° — palec wskazuje w górę-lewo
 function HandIcon() {
   return (
     <svg
-      width="16"
-      height="16"
+      width="18"
+      height="18"
       viewBox="0 0 24 24"
       fill="currentColor"
       aria-hidden="true"
+      style={{ transform: "rotate(-45deg)" }}
     >
-      <rect x="9" y="1" width="6" height="16" rx="3" />
-      <rect x="3" y="12" width="18" height="11" rx="5" />
+      {/* Kciuk — poziomy, po lewej */}
+      <rect x="0" y="13" width="9" height="5" rx="2.5" />
+      {/* Palec wskazujący — najwyższy */}
+      <rect x="7" y="2" width="5" height="14" rx="2.5" />
+      {/* Palec środkowy */}
+      <rect x="12" y="5" width="5" height="11" rx="2" />
+      {/* Palec serdeczny */}
+      <rect x="17" y="7" width="4" height="9" rx="2" />
+      {/* Mały palec — najkrótszy */}
+      <rect x="21" y="9" width="3" height="7" rx="1.5" />
+      {/* Dłoń */}
+      <rect x="4" y="13" width="19" height="10" rx="4" />
     </svg>
   );
 }
@@ -83,8 +93,8 @@ export default function FloatingOrderButton() {
         }}
       >
         <HandIcon />
-        {/* 4 kreski ukośne — efekt kliknięcia */}
-        {[45, 135, 225, 315].map((angle) => (
+        {/* Wachlarz kresek w kierunku, w którym celuje palec wskazujący (górny-lewy) */}
+        {[180, 205, 225, 250, 275].map((angle) => (
           <ClickSpark key={angle} angle={angle} />
         ))}
       </motion.span>
