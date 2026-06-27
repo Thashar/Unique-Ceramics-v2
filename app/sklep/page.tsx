@@ -86,7 +86,7 @@ export default async function ShopPage({
         </div>
 
         {/* Siatka produktów */}
-        <div className="max-w-7xl mx-auto px-6 lg:px-10 pt-8 pb-16 md:py-16">
+        <div className="max-w-7xl mx-auto px-6 lg:px-10 pt-3 pb-16 md:pt-8 md:pb-16">
           <ProductGrid products={products} kategoria={kategoria} dbError={dbError} />
         </div>
       </div>
