@@ -102,9 +102,9 @@ export default function FloatingOrderButton() {
         // bardzo szybkie trzęsienie (0–0.13s), przyciśnięcie w dół do najniższej
         // pozycji w 0.22, powrót w 0.30, potem długa pauza
         animate={{
-          x:     [0, -3,   3,    -3,    3,    -2,    0,    0,    0,     0,   0],
-          y:     [0,  0,   0,     0,    0,     0,    0,    0,    3,     0,   0],
-          scale: [1,  1,   1,     1,    1,     1,    1,    1,    0.88,  1,   1],
+          x:     [0, -2.1, 2.1, -2.1, 2.1, -1.4, 0, 0,  2.1,  0, 0],
+          y:     [0, -2.1, 2.1, -2.1, 2.1, -1.4, 0, 0,  2.1,  0, 0],
+          scale: [1,  1,   1,    1,   1,    1,   1, 1, 0.88,  1, 1],
         }}
         transition={{
           duration: DUR,
