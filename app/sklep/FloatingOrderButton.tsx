@@ -2,38 +2,60 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Pointer } from "lucide-react";
 
 const DUR = 3; // długość pętli w sekundach
 
-// Pojedyncza kreska rozchodząca się od centrum — pojawia się przy "kliknięciu"
+// Kreska lecąca od centrum w kierunku `angle` — pojawia się przy "kliknięciu"
 function ClickSpark({ angle }: { angle: number }) {
+  const rad = (angle * Math.PI) / 180;
+  const dx = Math.cos(rad);
+  const dy = Math.sin(rad);
+
   return (
     <motion.span
       aria-hidden="true"
-      className="absolute"
+      className="absolute pointer-events-none"
       style={{
         display: "block",
-        width: 7,
+        width: 6,
         height: 1.5,
         background: "currentColor",
         borderRadius: 1,
         top: "calc(50% - 0.75px)",
-        left: "50%",
-        rotate: `${angle}deg`,
-        transformOrigin: "left center",
+        left: "calc(50% - 3px)",
+        // rotate jako liczba → Framer Motion uwzględnia go w tym samym
+        // pipeline co animowane x/y, bez konfliktu z CSS transform
+        rotate: angle,
       }}
       animate={{
-        scaleX: [0, 0, 0.2, 1.5, 0],
-        opacity: [0, 0, 1, 0.4, 0],
+        x:       [0,  0,  dx * 3,  dx * 9,  dx * 11],
+        y:       [0,  0,  dy * 3,  dy * 9,  dy * 11],
+        opacity: [0,  0,  1,       0.4,     0],
       }}
       transition={{
         duration: DUR,
         repeat: Infinity,
-        times: [0, 0.57, 0.66, 0.84, 1.0],
+        times: [0, 0.57, 0.67, 0.84, 1.0],
         ease: "easeOut",
       }}
     />
+  );
+}
+
+// Wypełniona ikona wskaźnika-dłoni: palec wskazujący (wyższy prostokąt)
+// + dłoń/pięść (szerszy prostokąt, nakładający się = unia kształtów)
+function HandIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden="true"
+    >
+      <rect x="9" y="1" width="6" height="16" rx="3" />
+      <rect x="3" y="12" width="18" height="11" rx="5" />
+    </svg>
   );
 }
 
@@ -46,8 +68,8 @@ export default function FloatingOrderButton() {
       <motion.span
         aria-hidden="true"
         className="relative inline-flex items-center justify-center shrink-0"
-        style={{ width: 20, height: 20 }}
-        // 0–0.4s: trzęsienie; 0.6s: przyciśnięcie; 0.75s: powrót; 0.75–3s: pauza
+        style={{ width: 22, height: 22 }}
+        // 0–0.5s: trzęsienie lewo-prawo; 0.6s: przyciśnięcie w dół; 0.75s: powrót; pauza
         animate={{
           x:     [0, -2,  3, -3,  2, -1,  1,  0,  0,     0,  0],
           y:     [0,  0,  0,  0,  0,  0,  0,  0,  3,     0,  0],
@@ -60,9 +82,8 @@ export default function FloatingOrderButton() {
           ease: "easeInOut",
         }}
       >
-        <Pointer size={15} strokeWidth={1.5} />
-
-        {/* 4 kreski w ukos: efekt kliknięcia */}
+        <HandIcon />
+        {/* 4 kreski ukośne — efekt kliknięcia */}
         {[45, 135, 225, 315].map((angle) => (
           <ClickSpark key={angle} angle={angle} />
         ))}
