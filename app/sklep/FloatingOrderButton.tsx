@@ -92,7 +92,8 @@ export default function FloatingOrderButton() {
   return (
     <Link
       href="/zamowienie-indywidualne"
-      className="fixed bottom-6 right-5 z-40 flex items-center gap-2.5 bg-espresso hover:bg-clay text-cream text-[11px] tracking-widest uppercase px-4 py-3 shadow-md hover:shadow-lg transition-colors duration-200"
+      /* smartfony (poniżej sm): przycisk o połowę mniejszy, zakotwiczony w rogu; od sm pełny rozmiar */
+      className="fixed bottom-6 right-5 z-40 origin-bottom-right scale-50 sm:scale-100 flex items-center gap-2.5 bg-espresso hover:bg-clay text-cream text-[11px] tracking-widest uppercase px-4 py-3 shadow-md hover:shadow-lg transition-colors duration-200"
     >
       <motion.span
         aria-hidden="true"
