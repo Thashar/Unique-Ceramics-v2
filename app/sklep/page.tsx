@@ -68,12 +68,12 @@ export default async function ShopPage({
         <h1 className="sr-only">Sklep ceramiczny — sklep z ceramiką ręcznie robioną, Gliwice</h1>
         {/* Filtry kategorii */}
         <div className={`border-b border-sand bg-cream sticky z-30 shadow-sm ${vacationEnabled ? "top-[100px]" : "top-20"}`}>
-          <div className="max-w-7xl mx-auto px-6 lg:px-10 flex gap-2 overflow-x-auto py-4 no-scrollbar">
+          <div className="max-w-7xl mx-auto px-6 lg:px-10 flex gap-1.5 md:gap-2 overflow-x-auto py-2 md:py-4 no-scrollbar">
             {CATEGORIES.map((cat) => (
               <Link
                 key={cat.value}
                 href={cat.value === "wszystkie" ? "/sklep" : `/sklep?kategoria=${cat.value}`}
-                className={`shrink-0 px-5 py-2 text-xs tracking-widest uppercase transition-all duration-200 ${
+                className={`shrink-0 px-3 py-1 md:px-5 md:py-2 text-[10px] md:text-xs tracking-wider md:tracking-widest uppercase transition-all duration-200 ${
                   activeCategory === cat.value
                     ? "bg-espresso text-warm-white"
                     : "bg-cream text-charcoal border border-terracotta/40 hover:border-terracotta/70"

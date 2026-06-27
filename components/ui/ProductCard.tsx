@@ -23,7 +23,13 @@ function formatPrice(price: number) {
   }).format(price);
 }
 
-export default function ProductCard({ product }: { product: ProductCardProduct }) {
+export default function ProductCard({
+  product,
+  compact = false,
+}: {
+  product: ProductCardProduct;
+  compact?: boolean;
+}) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 24 }}
@@ -33,27 +39,43 @@ export default function ProductCard({ product }: { product: ProductCardProduct }
     >
       <Link href={`/sklep/${product.slug}`} className="group block">
         {/* Zdjęcie */}
-        <div className="relative aspect-[4/5] overflow-hidden bg-mist mb-4">
+        <div className={`relative aspect-[4/5] overflow-hidden bg-mist ${compact ? "mb-2" : "mb-4"}`}>
           {product.images[0] ? (
             <Image
               src={product.images[0]}
               alt={product.name}
               fill
               className={`object-cover transition-transform duration-700 ease-out group-hover:scale-105 ${product.stock === 0 ? "opacity-60" : ""}`}
-              sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+              sizes={
+                compact
+                  ? "(max-width: 768px) 33vw, (max-width: 1200px) 25vw, 20vw"
+                  : "(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+              }
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-cream">
-              <ShoppingBag size={40} strokeWidth={1} className="text-sand" />
+              <ShoppingBag size={compact ? 24 : 40} strokeWidth={1} className="text-sand" />
             </div>
           )}
           {product.stock <= 2 && product.stock > 0 && (
-            <span className="absolute top-3 left-3 bg-terracotta text-warm-white text-[11px] tracking-wider uppercase px-2.5 py-1">
+            <span
+              className={`absolute bg-terracotta text-warm-white tracking-wider uppercase ${
+                compact
+                  ? "top-2 left-2 text-[8px] px-1.5 py-0.5"
+                  : "top-3 left-3 text-[11px] px-2.5 py-1"
+              }`}
+            >
               Ostatnie sztuki
             </span>
           )}
           {product.stock === 0 && (
-            <span className="absolute top-3 left-3 bg-charcoal text-warm-white text-[11px] tracking-wider uppercase px-2.5 py-1">
+            <span
+              className={`absolute bg-charcoal text-warm-white tracking-wider uppercase ${
+                compact
+                  ? "top-2 left-2 text-[8px] px-1.5 py-0.5"
+                  : "top-3 left-3 text-[11px] px-2.5 py-1"
+              }`}
+            >
               Wyprzedano
             </span>
           )}
@@ -63,11 +85,25 @@ export default function ProductCard({ product }: { product: ProductCardProduct }
 
         {/* Info */}
         <div>
-          <p className="text-[11px] tracking-widest uppercase text-clay mb-1.5">{product.category}</p>
-          <h3 className="font-serif text-lg text-espresso group-hover:text-clay transition-colors leading-snug mb-1">
+          <p
+            className={`tracking-widest uppercase text-clay ${
+              compact ? "text-[9px] mb-0.5" : "text-[11px] mb-1.5"
+            }`}
+          >
+            {product.category}
+          </p>
+          <h3
+            className={`font-serif text-espresso group-hover:text-clay transition-colors leading-snug mb-1 ${
+              compact ? "text-sm" : "text-lg"
+            }`}
+          >
             {product.name}
           </h3>
-          <p className="text-sm text-charcoal/80 font-medium tabular-nums">
+          <p
+            className={`text-charcoal/80 font-medium tabular-nums ${
+              compact ? "text-xs" : "text-sm"
+            }`}
+          >
             {formatPrice(product.price)}
           </p>
         </div>
