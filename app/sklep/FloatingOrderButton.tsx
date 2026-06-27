@@ -10,8 +10,13 @@ const DUR = 3; // długość pętli w sekundach
 const TIP_LEFT = (8.7 / 24) * 18; // ≈ 6.5 px
 const TIP_TOP = (2 / 24) * 18; //   ≈ 1.5 px
 
-// Cienka kreska "rozbryzgu" wylatująca z czubka wysuniętego palca wskazującego.
-// Pojawia się dopiero w chwili gdy dłoń jest w najniższej pozycji (czas 0.22).
+const REACH = 11; // długość kreski = maksymalny zasięg rozejścia (px)
+
+// Cienka smuga "rozbryzgu" od czubka wysuniętego palca wskazującego.
+// Najpierw rozchodzi się od palca na zewnątrz (kreska rośnie na pełną długość
+// przy nieruchomym końcu przy palcu), a potem znika OD STRONY PALCA — bliższy
+// koniec odjeżdża do końca dalszego, więc smuga chowa się w miejscu palca.
+// Realizowane animacją długości (scaleX, pivot w czubku palca), bez opacity.
 function ClickSpark({ angle }: { angle: number }) {
   const rad = (angle * Math.PI) / 180;
   const dx = Math.cos(rad);
@@ -23,28 +28,30 @@ function ClickSpark({ angle }: { angle: number }) {
       className="absolute pointer-events-none"
       style={{
         display: "block",
-        width: 8,
+        width: REACH,
         height: 1.25,
         background: "currentColor",
         borderRadius: 1,
         top: TIP_TOP,
         left: TIP_LEFT,
-        // kreska rośnie od czubka palca na zewnątrz
+        // pivot w czubku palca: scaleX rozciąga/zwija smugę od strony palca
         transformOrigin: "left center",
         // rotate jako liczba → Framer Motion uwzględnia go w tym samym
         // pipeline co animowane x/y, bez konfliktu z CSS transform
         rotate: angle,
       }}
       animate={{
-        x:       [0,  0,     dx * 4,  dx * 9,  dx * 12],
-        y:       [0,  0,     dy * 4,  dy * 9,  dy * 12],
-        opacity: [0,  0,     1,       0.5,     0],
+        // 0.22→0.31: rozejście od palca (scaleX 0→1, koniec przy palcu stoi);
+        // 0.31→0.50: znikanie od palca (bliższy koniec odjeżdża: x 0→REACH, scaleX→0)
+        scaleX: [0, 0,    1,    0],
+        x:      [0, 0,    0,    dx * REACH],
+        y:      [0, 0,    0,    dy * REACH],
       }}
       transition={{
         duration: DUR,
         repeat: Infinity,
-        // niewidoczne do 0.22 (najniższa pozycja dłoni), potem błysk i zanik
-        times: [0, 0.22, 0.32, 0.45, 0.58],
+        // niewidoczne do 0.22 (najniższa pozycja dłoni)
+        times: [0, 0.22, 0.31, 0.50],
         ease: "easeOut",
       }}
     />
