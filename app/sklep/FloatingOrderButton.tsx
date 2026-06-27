@@ -10,7 +10,8 @@ const DUR = 3; // długość pętli w sekundach
 const TIP_LEFT = (8.7 / 24) * 18; // ≈ 6.5 px
 const TIP_TOP = (2 / 24) * 18; //   ≈ 1.5 px
 
-// Gruba kreska "rozbryzgu" wylatująca z czubka wysuniętego palca wskazującego
+// Cienka kreska "rozbryzgu" wylatująca z czubka wysuniętego palca wskazującego.
+// Pojawia się dopiero w chwili gdy dłoń jest w najniższej pozycji (czas 0.22).
 function ClickSpark({ angle }: { angle: number }) {
   const rad = (angle * Math.PI) / 180;
   const dx = Math.cos(rad);
@@ -22,10 +23,10 @@ function ClickSpark({ angle }: { angle: number }) {
       className="absolute pointer-events-none"
       style={{
         display: "block",
-        width: 9,
-        height: 2.5,
+        width: 8,
+        height: 1.25,
         background: "currentColor",
-        borderRadius: 2,
+        borderRadius: 1,
         top: TIP_TOP,
         left: TIP_LEFT,
         // kreska rośnie od czubka palca na zewnątrz
@@ -35,14 +36,15 @@ function ClickSpark({ angle }: { angle: number }) {
         rotate: angle,
       }}
       animate={{
-        x:       [0,  0,  dx * 4,  dx * 11,  dx * 15],
-        y:       [0,  0,  dy * 4,  dy * 11,  dy * 15],
-        opacity: [0,  0,  1,       0.5,      0],
+        x:       [0,  0,     dx * 4,  dx * 9,  dx * 12],
+        y:       [0,  0,     dy * 4,  dy * 9,  dy * 12],
+        opacity: [0,  0,     1,       0.5,     0],
       }}
       transition={{
         duration: DUR,
         repeat: Infinity,
-        times: [0, 0.57, 0.67, 0.84, 1.0],
+        // niewidoczne do 0.22 (najniższa pozycja dłoni), potem błysk i zanik
+        times: [0, 0.22, 0.32, 0.45, 0.58],
         ease: "easeOut",
       }}
     />
@@ -86,16 +88,17 @@ export default function FloatingOrderButton() {
         aria-hidden="true"
         className="relative inline-flex items-center justify-center shrink-0"
         style={{ width: 24, height: 24 }}
-        // 0–0.5s: trzęsienie lewo-prawo; 0.6s: przyciśnięcie w dół; 0.75s: powrót; pauza
+        // bardzo szybkie trzęsienie (0–0.13s), przyciśnięcie w dół do najniższej
+        // pozycji w 0.22, powrót w 0.30, potem długa pauza
         animate={{
-          x:     [0, -2,  3, -3,  2, -1,  1,  0,  0,     0,  0],
-          y:     [0,  0,  0,  0,  0,  0,  0,  0,  3,     0,  0],
-          scale: [1,  1,  1,  1,  1,  1,  1,  1,  0.88,  1,  1],
+          x:     [0, -3,   3,    -3,    3,    -2,    0,    0,    0,     0,   0],
+          y:     [0,  0,   0,     0,    0,     0,    0,    0,    3,     0,   0],
+          scale: [1,  1,   1,     1,    1,     1,    1,    1,    0.88,  1,   1],
         }}
         transition={{
           duration: DUR,
           repeat: Infinity,
-          times: [0, 0.05, 0.10, 0.16, 0.21, 0.27, 0.32, 0.50, 0.60, 0.75, 1],
+          times: [0, 0.02, 0.04, 0.06, 0.08, 0.10, 0.13, 0.18, 0.22, 0.30, 1],
           ease: "easeInOut",
         }}
       >
@@ -105,8 +108,8 @@ export default function FloatingOrderButton() {
           style={{ width: 18, height: 18, rotate: "-45deg" }}
         >
           <HandIcon />
-          {/* wachlarz grubych kresek wychodzący z czubka palca wskazującego (w górę = -90°) */}
-          {[-130, -110, -90, -70, -50].map((angle) => (
+          {/* 8 cienkich kresek rozchodzących się w każdą stronę z czubka palca */}
+          {[0, 45, 90, 135, 180, 225, 270, 315].map((angle) => (
             <ClickSpark key={angle} angle={angle} />
           ))}
         </span>
