@@ -15,8 +15,8 @@ export default function CookieBanner() {
       aria-label="Zgoda na pliki cookie"
       className="fixed bottom-0 left-0 right-0 z-[200] bg-espresso border-t border-sand/10 shadow-lg"
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-3 sm:py-5 flex flex-row sm:flex-col md:flex-row items-center gap-3 sm:gap-4">
-        <p className="flex-1 text-xs sm:text-sm text-sand/80 leading-snug sm:leading-relaxed">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-3 sm:py-5 flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
+        <p className="text-[10px] sm:text-sm text-sand/80 whitespace-nowrap sm:whitespace-normal sm:leading-relaxed sm:flex-1">
           <span className="sm:hidden">
             Używamy cookies (koszyk, sesja, mapy).{" "}
           </span>
@@ -26,7 +26,7 @@ export default function CookieBanner() {
           </span>
           <Link
             href="/polityka-prywatnosci"
-            className="text-terracotta hover:text-cream underline transition-colors whitespace-nowrap"
+            className="text-terracotta hover:text-cream underline transition-colors"
           >
             Polityka prywatności
           </Link>

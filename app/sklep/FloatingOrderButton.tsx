@@ -10,7 +10,7 @@ const DUR = 3; // długość pętli w sekundach
 const TIP_LEFT = (8.7 / 24) * 18; // ≈ 6.5 px
 const TIP_TOP = (0 / 24) * 18; //   ≈ 0 px (czubek palca po wydłużeniu)
 
-const REACH = 3.7; // długość smugi = zasięg (px)
+const REACH = 4.81; // długość smugi = zasięg (px)
 
 // Cienka smuga "rozbryzgu" od czubka wysuniętego palca wskazującego.
 //
@@ -31,7 +31,7 @@ function ClickSpark({ angle }: { angle: number }) {
         left: TIP_LEFT,
         top: TIP_TOP,
         width: REACH,
-        height: 1.25,
+        height: 0.875,
         transformOrigin: "left center",
         transform: `rotate(${angle}deg)`,
       }}
@@ -40,20 +40,20 @@ function ClickSpark({ angle }: { angle: number }) {
         className="block"
         style={{
           width: REACH,
-          height: 1.25,
+          height: 0.875,
           background: "currentColor",
           borderRadius: 1,
           transformOrigin: "left center",
         }}
         animate={{
-          scaleX: [0, 0,    1,    0],
-          x:      [0, 0,    0,    REACH],
+          scaleX: [0, 0,    1,     0],
+          x:      [0, 0,    0, REACH],
         }}
         transition={{
           duration: DUR,
           repeat: Infinity,
           // niewidoczne do 0.22 (dłoń najniżej / palec najmniejszy)
-          times: [0, 0.22, 0.31, 0.50],
+          times: [0, 0.22, 0.283, 0.50],
           ease: "easeOut",
         }}
       />
@@ -102,9 +102,9 @@ export default function FloatingOrderButton() {
         // bardzo szybkie trzęsienie (0–0.13s), przyciśnięcie w dół do najniższej
         // pozycji w 0.22, powrót w 0.30, potem długa pauza
         animate={{
-          x:     [0, -3,   3,    -3,    3,    -2,    0,    0,    0,     0,   0],
-          y:     [0,  0,   0,     0,    0,     0,    0,    0,    3,     0,   0],
-          scale: [1,  1,   1,     1,    1,     1,    1,    1,    0.88,  1,   1],
+          x:     [0, -2.1,  2.1, -2.1,  2.1, -1.4, 0, 0,  2.1, 0, 0],
+          y:     [0,  2.1, -2.1,  2.1, -2.1,  1.4, 0, 0, -2.1, 0, 0],
+          scale: [1,  1,   1,    1,   1,    1,   1, 1, 0.88,  1, 1],
         }}
         transition={{
           duration: DUR,

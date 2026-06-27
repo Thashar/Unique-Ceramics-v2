@@ -43,7 +43,7 @@ export default function ProductGrid({ products, kategoria, dbError }: Props) {
 
   return (
     <>
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-3 md:mb-8">
         <p className="text-xs text-charcoal/40 tracking-widest uppercase">
           {products.length}{" "}
           {products.length === 1 ? "produkt" : products.length < 5 ? "produkty" : "produktów"}
