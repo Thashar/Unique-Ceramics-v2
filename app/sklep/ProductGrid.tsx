@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { LayoutGrid, Grid3X3, ShoppingBag } from "lucide-react";
 import ProductCard from "@/components/ui/ProductCard";
 import type { getShopProducts } from "@/lib/products";
@@ -16,16 +16,6 @@ interface Props {
 
 export default function ProductGrid({ products, kategoria, dbError }: Props) {
   const [layout, setLayout] = useState<Layout>("standard");
-
-  useEffect(() => {
-    const saved = localStorage.getItem("sklep-layout") as Layout | null;
-    if (saved === "standard" || saved === "compact") setLayout(saved);
-  }, []);
-
-  function changeLayout(l: Layout) {
-    setLayout(l);
-    localStorage.setItem("sklep-layout", l);
-  }
 
   if (dbError) {
     return (
@@ -60,7 +50,7 @@ export default function ProductGrid({ products, kategoria, dbError }: Props) {
         </p>
         <div className="flex items-center gap-0.5">
           <button
-            onClick={() => changeLayout("standard")}
+            onClick={() => setLayout("standard")}
             className={`p-1.5 transition-colors ${
               !compact ? "text-espresso" : "text-charcoal/30 hover:text-charcoal/60"
             }`}
@@ -70,7 +60,7 @@ export default function ProductGrid({ products, kategoria, dbError }: Props) {
             <LayoutGrid size={18} strokeWidth={1.5} />
           </button>
           <button
-            onClick={() => changeLayout("compact")}
+            onClick={() => setLayout("compact")}
             className={`p-1.5 transition-colors ${
               compact ? "text-espresso" : "text-charcoal/30 hover:text-charcoal/60"
             }`}
