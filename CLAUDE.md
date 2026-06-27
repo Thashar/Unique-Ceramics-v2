@@ -255,11 +255,11 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 - **InstagramCta.tsx** — przyjmuje prop `instagram` (nieużywany na stronie głównej od scalenia ze stopką)
 
 ### `app/sklep/` (server components)
-- **ProductGrid.tsx** — siatka produktów (async server component); woła `getShopProducts()`, filtruje po kategorii, obsługuje błąd DB i empty state
+- **ProductGrid.tsx** — `"use client"`, siatka produktów; przyjmuje `products` jako prop (data fetchowana w page.tsx). Zawiera przełącznik layoutu (standardowy: 2/3/4 kolumny, kompaktowy: 3/4/5 kolumn) z ikonami `LayoutGrid`/`Grid3X3`; preferencja persystowana w localStorage (`sklep-layout`)
 - **ProductGridSkeleton.tsx** — placeholder `animate-pulse` dla `<Suspense fallback>` w `/sklep`
 
 ### `components/ui/`
-- **ProductCard.tsx** — karta produktu (next/image + framer-motion)
+- **ProductCard.tsx** — karta produktu (next/image + framer-motion); przyjmuje opcjonalny prop `compact?: boolean` — zmniejsza czcionkę tytułu (`text-lg`→`text-sm`), cenę, kategorię, marginesy i badge'y w widoku kompaktowym
 - **InstagramIcon.tsx** — SVG ikona Instagram
 
 ### `components/checkout/`
