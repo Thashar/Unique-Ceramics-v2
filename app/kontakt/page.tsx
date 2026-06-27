@@ -82,23 +82,15 @@ export default async function ContactPage() {
           </div>
         </div>
 
-        {/* Obszar obsługi */}
-        <div className="bg-cream border-b border-sand px-6 lg:px-10 py-8">
-          <div className="max-w-7xl mx-auto">
-            <p className="text-xs tracking-[0.3em] uppercase text-clay mb-3">Obszar obsługi</p>
-            <p className="text-charcoal/70 text-sm leading-relaxed max-w-3xl">
-              Pracownia mieści się przy <strong className="text-espresso">ul. Familijna 23, 44-164 Kleszczów</strong> (k. Gliwic, woj. śląskie).
-              Wysyłka w całej Polsce — odbiór osobisty dostępny lokalnie.
-              Obsługujemy zamówienia z całego <strong className="text-espresso">Śląska</strong>:{" "}
-              <span className="text-espresso">
-                Gliwice, Zabrze, Knurów, Pyskowice, Tarnowskie Góry, Bytom, Piekary Śląskie,
-                Chorzów, Ruda Śląska, Świętochłowice, Siemianowice Śląskie, Katowice,
-                Mikołów, Tychy, Mysłowice, Sosnowiec, Dąbrowa Górnicza
-              </span>{" "}
-              i okolice.
-            </p>
-          </div>
-        </div>
+        {/* Obszar obsługi — tylko dla robotów/SEO, niewidoczny wizualnie */}
+        <section aria-label="Obszar obsługi" className="sr-only">
+          <p>
+            Pracownia ceramiczna Unique Ceramics mieści się przy ul. Familijna 23, 44-164 Kleszczów (k. Gliwic, woj. śląskie).
+            Wysyłka w całej Polsce — odbiór osobisty dostępny lokalnie.
+            Obsługujemy zamówienia z całego Śląska: Gliwice, Zabrze, Knurów, Pyskowice, Tarnowskie Góry, Bytom, Piekary Śląskie,
+            Chorzów, Ruda Śląska, Świętochłowice, Siemianowice Śląskie, Katowice, Mikołów, Tychy, Mysłowice, Sosnowiec, Dąbrowa Górnicza i okolice.
+          </p>
+        </section>
 
         {/* Siatka */}
         <div className="bg-warm-white py-20 px-6 lg:px-10">

@@ -20,7 +20,7 @@ export default async function HeaderWrapper({ hideVacation }: { hideVacation?: b
           returnDate={vacationEnabled ? settings.vacation_end_date : undefined}
         />
       )}
-      <Header topOffset={!hideVacation && vacationEnabled} showProjects={projects.length > 0} />
+      <Header topOffset={!hideVacation} showProjects={projects.length > 0} />
     </>
   );
 }

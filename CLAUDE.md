@@ -140,7 +140,7 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 | `payment_blik_enabled` | "true"/"false" — czy BLIK na telefon jest widoczny w zamówieniu i mailu; toggle w /admin/ustawienia zakładka „Przelew / BLIK" |
 | `payment_blik_phone` | Numer do przelewu BLIK na telefon |
 | `payment_stripe_enabled` | "true"/"false" — płatność kartą przez Stripe |
-| `vacation_enabled` | "true"/"false" — tryb urlopu; gdy aktywny pojawia się baner w /sklep i wzmianka w mailach |
+| `vacation_enabled` | "true"/"false" — tryb urlopu; gdy aktywny pojawia się kolorowy baner `VacationBanner` nad headerem; gdy wyłączony, baner jest przezroczystym placeholderem `h-5` (header zawsze na `top-5`, strony zawsze `pt-[100px]`) |
 | `vacation_end_date` | Data powrotu z urlopu (YYYY-MM-DD) — używana w automatycznym komunikacie |
 | `vacation_message` | Własny komunikat urlopowy; jeśli pusty — generowany z daty |
 | `custom_order_notify_email_enabled` | "true"/"false" — czy wysyłać e-mail do właściciela przy nowym zamówieniu indywidualnym (default: true) |
@@ -162,7 +162,7 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 | `/zamowienie/potwierdzenie` | force-dynamic | Potwierdzenie + dane do przelewu |
 | `/zamowienie-indywidualne` | static (client) | Zamówienie na miarę |
 | `/logowanie`, `/rejestracja` | static (client) | Auth |
-| `/o-mnie`, `/warsztaty`, `/kontakt`, `/regulamin`, `/polityka-prywatnosci` | ISR 300 s | Strony treściowe (treść z ustawień; zapis w adminie robi `revalidatePath`) |
+| `/o-mnie`, `/warsztaty`, `/kontakt`, `/regulamin`, `/polityka-prywatnosci` | ISR 300 s | Strony treściowe (treść z ustawień; zapis w adminie robi `revalidatePath`); `/kontakt` zawiera ukrytą sekcję SEO „Obszar obsługi" (`sr-only` — lista miast Śląska, indeksowalna, niewidoczna wizualnie) |
 | `/moje-projekty` | ISR | Publiczne portfolio prac (model `Project`, dane z `getProjects()`) |
 
 ### Strony chronione — konto klienta (`/konto`) — wymaga sesji (middleware + layout)
