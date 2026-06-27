@@ -258,9 +258,8 @@ export default function Header({ topOffset = false, showProjects = true }: { top
           <motion.div
             key="mobile-nav"
             initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.4 }}
+            animate={{ opacity: 1, transition: { duration: 0.4 } }}
+            exit={{ opacity: 0, transition: { duration: 0 } }}
             id="mobile-nav"
             role="dialog"
             aria-label="Menu nawigacyjne"
