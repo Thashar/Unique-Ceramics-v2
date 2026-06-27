@@ -4,6 +4,7 @@ import Header from "@/components/layout/HeaderWrapper";
 import Footer from "@/components/layout/Footer";
 import { getCategories } from "@/lib/categories";
 import { getShopProducts } from "@/lib/products";
+import { getSetting } from "@/lib/settings";
 import ProductGrid from "./ProductGrid";
 
 export const metadata = {
@@ -36,6 +37,7 @@ export default async function ShopPage({
 
   // Zapytania sekwencyjne — każde zwalnia połączenie przed kolejnym,
   // co chroni przed wyczerpaniem puli (Supabase: 15 połączeń w trybie sesji).
+  const vacationEnabled = (await getSetting("vacation_enabled")) === "true";
   const dbCategories = await getCategories();
 
   let products: Awaited<ReturnType<typeof getShopProducts>>["inStock"] = [];
@@ -62,10 +64,10 @@ export default async function ShopPage({
   return (
     <>
       <Header />
-      <div className="min-h-[100svh] bg-warm-white pt-[100px]">
+      <div className="min-h-[100svh] bg-warm-white">
         <h1 className="sr-only">Sklep ceramiczny — sklep z ceramiką ręcznie robioną, Gliwice</h1>
         {/* Filtry kategorii */}
-        <div className="border-b border-sand bg-cream sticky top-[100px] z-30 shadow-sm">
+        <div className={`border-b border-sand bg-cream sticky z-30 shadow-sm ${vacationEnabled ? "top-[100px]" : "top-20"}`}>
           <div className="max-w-7xl mx-auto px-6 lg:px-10 flex gap-2 overflow-x-auto py-4 no-scrollbar">
             {CATEGORIES.map((cat) => (
               <Link
