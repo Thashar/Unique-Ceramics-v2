@@ -10,7 +10,7 @@ const DUR = 3; // długość pętli w sekundach
 const TIP_LEFT = (8.7 / 24) * 18; // ≈ 6.5 px
 const TIP_TOP = (0 / 24) * 18; //   ≈ 0 px (czubek palca po wydłużeniu)
 
-const REACH = 3.7; // długość smugi = zasięg (px)
+const REACH = 4.81; // długość smugi = zasięg (px)
 
 // Cienka smuga "rozbryzgu" od czubka wysuniętego palca wskazującego.
 //
@@ -31,7 +31,7 @@ function ClickSpark({ angle }: { angle: number }) {
         left: TIP_LEFT,
         top: TIP_TOP,
         width: REACH,
-        height: 1.25,
+        height: 0.875,
         transformOrigin: "left center",
         transform: `rotate(${angle}deg)`,
       }}
@@ -40,7 +40,7 @@ function ClickSpark({ angle }: { angle: number }) {
         className="block"
         style={{
           width: REACH,
-          height: 1.25,
+          height: 0.875,
           background: "currentColor",
           borderRadius: 1,
           transformOrigin: "left center",
