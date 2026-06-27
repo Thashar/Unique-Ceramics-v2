@@ -105,6 +105,14 @@ export default function Header({ topOffset = false, showProjects = true }: { top
   const pathname = usePathname();
   const isHome = pathname === "/";
 
+  // Wzorzec "reset stanu przy zmianie props/pochodnych" — setState podczas renderowania
+  // (nie w efekcie) jest dozwolony wg React docs i nie triggeruje cascading renders.
+  const [prevIsHome, setPrevIsHome] = useState(isHome);
+  if (prevIsHome !== isHome) {
+    setPrevIsHome(isHome);
+    if (isHome) setTransparentVisible(true);
+  }
+
   const navLinks = ALL_NAV_LINKS.filter((l) => l.always || showProjects);
   const dark = !isHome || !transparentVisible;
 
@@ -117,11 +125,7 @@ export default function Header({ topOffset = false, showProjects = true }: { top
   }, [menuOpen]);
 
   useEffect(() => {
-    if (!isHome) {
-      // Reset przy wyjściu ze strony głównej — następne wejście zaczyna od transparentnego
-      setTransparentVisible(true);
-      return;
-    }
+    if (!isHome) return;
 
     function update() {
       const sections = document.querySelectorAll<HTMLElement>('[data-header-theme="transparent"]');
