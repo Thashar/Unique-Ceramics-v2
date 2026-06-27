@@ -8,7 +8,7 @@ const DUR = 3; // długość pętli w sekundach
 // Czubek palca wskazującego w układzie współrzędnych obróconego wrappera
 // (rozmiar wrappera = 18×18, ikona w viewBox 24, czubek w (8.7, 2))
 const TIP_LEFT = (8.7 / 24) * 18; // ≈ 6.5 px
-const TIP_TOP = (2 / 24) * 18; //   ≈ 1.5 px
+const TIP_TOP = (0 / 24) * 18; //   ≈ 0 px (czubek palca po wydłużeniu)
 
 const REACH = 3.7; // długość smugi = zasięg (px)
 
@@ -77,7 +77,7 @@ function HandIcon() {
       {/* kciuk (odchylony w bok) */}
       <rect x="3" y="9.5" width="3" height="7.5" rx="1.5" transform="rotate(-32 4.5 13)" />
       {/* palec wskazujący — wysunięty */}
-      <rect x="7" y="2" width="3.4" height="12" rx="1.7" />
+      <rect x="7" y="0" width="3.4" height="14" rx="1.7" />
       {/* środkowy */}
       <rect x="10.6" y="5" width="3.4" height="10" rx="1.7" />
       {/* serdeczny */}
