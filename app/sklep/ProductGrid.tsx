@@ -15,7 +15,7 @@ interface Props {
 }
 
 export default function ProductGrid({ products, kategoria, dbError }: Props) {
-  const [layout, setLayout] = useState<Layout>("compact");
+  const [layout, setLayout] = useState<Layout>("standard");
 
   if (dbError) {
     return (
