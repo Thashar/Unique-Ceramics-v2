@@ -59,7 +59,7 @@ export default function ProductCard({
           )}
           {product.stock <= 2 && product.stock > 0 && (
             <span
-              className={`absolute bg-terracotta text-warm-white tracking-wider uppercase ${
+              className={`absolute bg-clay text-warm-white tracking-wider uppercase ${
                 compact
                   ? "top-2 left-2 text-[8px] px-1.5 py-0.5"
                   : "top-3 left-3 text-[11px] px-2.5 py-1"
