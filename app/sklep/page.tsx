@@ -76,7 +76,7 @@ export default async function ShopPage({
                 className={`shrink-0 px-3 py-1 md:px-5 md:py-2 text-[10px] md:text-xs tracking-wider md:tracking-widest uppercase transition-all duration-200 ${
                   activeCategory === cat.value
                     ? "bg-espresso text-warm-white"
-                    : "bg-espresso text-cream hover:bg-clay"
+                    : "bg-clay text-cream hover:bg-espresso"
                 }`}
               >
                 {cat.label}
