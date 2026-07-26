@@ -63,11 +63,34 @@ export async function POST(req: Request) {
 
   const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.webp`;
 
+  // WAŻNE: nie przekazuj Buffera bezpośrednio do `upload()` — supabase-js wysyła go
+  // wtedy jako surowe ciało żądania i w środowisku serverless bajty potrafią przejść
+  // przez konwersję na tekst UTF-8 (każdy bajt spoza ASCII → U+FFFD), przez co plik
+  // w Storage jest uszkodzony. Blob wymusza multipart/form-data — binarnie bezpieczny.
+  const blob = new Blob([new Uint8Array(webpBuffer)], { type: "image/webp" });
+
   const { error } = await supabase.storage
     .from("products")
-    .upload(filename, webpBuffer, { contentType: "image/webp", upsert: false });
+    .upload(filename, blob, { contentType: "image/webp", upsert: false });
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    console.error("[admin/upload] supabase upload error:", error);
+    return NextResponse.json({ error: "Nie udało się zapisać pliku." }, { status: 500 });
+  }
+
+  // Kontrola spójności — gdyby transport znów uszkodził bajty, rozmiar się nie zgodzi.
+  // Lepiej odrzucić upload niż zapisać w ustawieniach link do zepsutego zdjęcia.
+  const { data: info } = await supabase.storage.from("products").info(filename);
+  if (info && typeof info.size === "number" && info.size !== webpBuffer.byteLength) {
+    console.error(
+      `[admin/upload] uszkodzony zapis: oczekiwano ${webpBuffer.byteLength} B, zapisano ${info.size} B`
+    );
+    await supabase.storage.from("products").remove([filename]);
+    return NextResponse.json(
+      { error: "Plik zapisał się uszkodzony — spróbuj ponownie." },
+      { status: 500 }
+    );
+  }
 
   const { data } = supabase.storage.from("products").getPublicUrl(filename);
 

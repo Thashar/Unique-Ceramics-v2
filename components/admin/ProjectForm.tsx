@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Upload, X, Trash2 } from "lucide-react";
 import dynamic from "next/dynamic";
+import { uploadErrorMessage } from "@/lib/upload-error";
 
 const RichEditor = dynamic(() => import("@/components/admin/RichEditor"), { ssr: false });
 
@@ -32,13 +33,17 @@ export default function ProjectForm({ project }: { project?: Project }) {
     const files = e.target.files;
     if (!files?.length) return;
     setUploading(true);
+    setError("");
     for (const file of Array.from(files)) {
       const formData = new FormData();
       formData.append("file", file);
       const res = await fetch("/api/admin/upload", { method: "POST", body: formData });
-      if (res.ok) {
-        const { url } = await res.json();
-        setImages((prev) => [...prev, url]);
+      const data = await res.json().catch(() => null);
+      if (res.ok && data?.url) {
+        setImages((prev) => [...prev, data.url]);
+      } else {
+        setError(uploadErrorMessage(res.status, data?.error, file.name));
+        break;
       }
     }
     setUploading(false);

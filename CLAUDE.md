@@ -212,7 +212,7 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 | PUT/DELETE | `/api/admin/portfolio/[id]` | Edytuj/usuń projekt portfolio (ADMIN; `validateProjectInput`) |
 | PATCH | `/api/admin/orders/[id]` | Zmień status zamówienia / dane listu przewozowego / datę wpłaty (ADMIN; walidacja przejścia: 1 krok do przodu lub anulowanie; status `PAID` auto-ustawia `paymentStatus=PAID`+`paidAt` z modalu+e-mail; osobne `{ paidAt }` edytuje datę wpłaty — walidacja: nie z przyszłości, nie przed złożeniem; dane listu: `trackingCarrier` z allowlisty (dpd/dhl/inpost/poczta), `trackingNumber` tylko `[A-Za-z0-9-]` ≤64 zn.) |
 | PATCH | `/api/admin/custom-orders/[id]` | Status/notatki/cena/kwotaWpłacona/daneKlienta zamówienia indywidualnego (ADMIN; PAID wymaga paidAmount > 0) |
-| POST | `/api/admin/upload` | Upload zdjęcia do Supabase Storage (ADMIN, magic bytes, maks. 10 MB) |
+| POST | `/api/admin/upload` | Upload zdjęcia do Supabase Storage (ADMIN, magic bytes, maks. 10 MB; konwersja do WebP przez `sharp`, wysyłka jako `Blob` = multipart + kontrola rozmiaru zapisanego pliku) |
 | PATCH/POST | `/api/admin/settings` | Zapis ustawień (ADMIN; sanityzacja HTML + `revalidatePath("/", "layout")`) |
 | GET | `/api/admin/settings/[key]` | Pojedyncze ustawienie (ADMIN) |
 | GET | `/api/admin/reports/[year]/[month]` | Generuje i pobiera raport PDF za dany miesiąc (ADMIN; pdfkit; czcionka Lato z Google Fonts CDN z cachem; fallback Helvetica). Tylko opłacone zamówienia rozpoznane wg daty wpłaty (`paidAt`/`createdAt`). Liczy podatek PIT od przychodu z produktów (bez wysyłki — koszt uzyskania przychodu); stawka 12% lub 32% wg ustawienia `tax_high_{rok}_{miesiac}` |
@@ -231,6 +231,7 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 - **product-validation.ts** — `validateProduct(body)`: walidacja/normalizacja danych produktu (name, slug `[a-z0-9-]`, price 0–1e6, stock int ≥0, images: tablica stringów ≤30, booleany). Używana w POST i PUT `/api/admin/products`
 - **portfolio-validation.ts** — `validateProjectInput(body)`: walidacja projektu portfolio (title ≤200, description ≤20000, images ≤30, order int, active). Używana w POST/PUT `/api/admin/portfolio`
 - **portfolio.ts** — `getProjects()` (unstable_cache, tag `projects`; fallback `[]` gdy DB niedostępna) + `revalidatePortfolioPages()`
+- **upload-error.ts** — `uploadErrorMessage(status, serverError?, fileName?)`: wspólny komunikat błędu uploadu (obsługuje 413 z platformy, gdzie odpowiedź nie jest JSON-em). Używany w `ImageUploader`, `ProductForm`, `ProjectForm`
 - **sanitize-html.ts** — `sanitizeRichHtml()` z allowlistą tagów/atrybutów
 - **address-validation.ts** — wspólna walidacja adresu (klient + serwer)
 - **cart.tsx** — koszyk jako **store modułowy** (`useSyncExternalStore` + localStorage); hook `useCart()`, bez providera
@@ -270,7 +271,7 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 - **AdminNav.tsx** — sidebar + mobilny drawer
 - **BfcacheGuard.tsx** — `"use client"`, wykrywa przywrócenie strony z bfcache (`pageshow` + `event.persisted`) i wywołuje `router.refresh()` by middleware sprawdził sesję (używany w `app/admin/layout.tsx`)
 - **ProductForm.tsx** — formularz produktu (z ImageUploader)
-- **ImageUploader.tsx** — upload na Supabase Storage przez `/api/admin/upload`
+- **ImageUploader.tsx** — upload na Supabase Storage przez `/api/admin/upload`; pokazuje komunikat błędu (`uploadErrorMessage`) zamiast cicho ignorować niepowodzenie oraz informuje, gdy podgląd zapisanego zdjęcia się nie wczytuje
 - **FocalPointPicker.tsx** — wybór punktu kadrowania zdjęć (`object-position`)
 - **RichEditor.tsx** — edytor HTML oparty o **Jodit z npm** (dynamiczny `import("jodit")` w useEffect — biblioteka tylko przeglądarkowa, nie może wykonać się przy SSR)
 - **CategoriesManager.tsx** — `"use client"`, CRUD kategorii: lista z edycją inline, zmiana kolejności strzałkami, dodawanie, usuwanie (blokada przy produktach); seed domyślnych gdy DB pusta
@@ -351,6 +352,11 @@ Fonty: `font-serif` → Playfair Display, `font-sans` → Inter (oba przez `next
 
 ### Koszyk i zgoda cookies (client state)
 - Store'y modułowe czytane przez `useSyncExternalStore` — **nie** dodawaj setState w `useEffect` do hydratacji localStorage (reguła `react-hooks/set-state-in-effect`)
+
+### Upload plików binarnych (Supabase Storage)
+- **Nigdy nie przekazuj `Buffer`a bezpośrednio do `supabase.storage.upload()`** — trafia wtedy jako surowe ciało żądania i w środowisku serverless bajty potrafią przejść przez konwersję na tekst UTF-8 (każdy bajt spoza ASCII → `EF BF BD`), przez co plik w Storage jest uszkodzony i optymalizator obrazów Next zwraca `INVALID_IMAGE_OPTIMIZE_REQUEST`. Wysyłaj `new Blob([new Uint8Array(buf)], { type })` — supabase-js użyje wtedy multipart/form-data
+- Po uploadzie route porównuje rozmiar zapisanego obiektu (`storage.info()`) z rozmiarem wysłanego bufora; przy rozbieżności kasuje plik i zwraca błąd
+- Paczki natywne (`sharp`, `pdfkit`) muszą być w `serverExternalPackages` w `next.config.ts`
 
 ### Adresy dostawy użytkownika
 - Tabela `Setting`, klucz `user_address_{userId}`, JSON; GET/PUT `/api/account/address`; auto-uzupełniają checkout
