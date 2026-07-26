@@ -29,7 +29,8 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
-  serverExternalPackages: ["pdfkit"],
+  // pdfkit i sharp to paczki natywne — nie mogą przechodzić przez bundler
+  serverExternalPackages: ["pdfkit", "sharp"],
   experimental: {
     optimizePackageImports: ["framer-motion", "lucide-react"],
   },
