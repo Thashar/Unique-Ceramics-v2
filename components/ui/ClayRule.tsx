@@ -33,10 +33,23 @@ const TILES = [
   "bg-clay",
 ];
 
-export default function ClayRule({ className = "" }: { className?: string }) {
+/**
+ * `align="left"` – otwiera blok treści wyrównany do lewej (wprowadzenia, kolumny tekstu).
+ * `align="center"` – mozaika pośrodku, z kreskami po obu stronach; do sekcji
+ * z wyśrodkowanym nagłówkiem. Szerokość kresek ogranicz przez `className`
+ * (np. `max-w-[220px] mx-auto`), inaczej ciągną się przez całą sekcję.
+ */
+export default function ClayRule({
+  className = "",
+  align = "left",
+}: {
+  className?: string;
+  align?: "left" | "center";
+}) {
+  const centered = align === "center";
   return (
     <div className={`flex items-center gap-3.5 ${className}`} aria-hidden="true">
-      <span className="h-px w-7 shrink-0 bg-sand" />
+      <span className={`h-px bg-sand ${centered ? "flex-1" : "w-7 shrink-0"}`} />
       <span
         className="grid grid-rows-2 gap-[3px] shrink-0"
         style={{ gridTemplateColumns: `repeat(${COLUMNS}, 0.625rem)` }}

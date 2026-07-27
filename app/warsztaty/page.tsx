@@ -260,7 +260,8 @@ export default async function WorkshopsPage() {
         {includes.length > 0 && (
           <div className="bg-cream py-20 px-6 lg:px-10">
             <div className="max-w-7xl mx-auto">
-              <h2 className="font-serif text-3xl text-espresso mb-12 text-center">Co zawiera warsztat?</h2>
+              <h2 className="font-serif text-3xl text-espresso mb-5 text-center">Co zawiera warsztat?</h2>
+              <ClayRule align="center" className="max-w-[220px] mx-auto mb-12" />
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-3xl mx-auto">
                 {includes.map((inc) => {
                   const Icon = ICON_MAP[inc.iconName] ?? CheckCircle;
@@ -282,7 +283,8 @@ export default async function WorkshopsPage() {
         {faq.length > 0 && (
           <div className="bg-mist py-20 px-6 lg:px-10">
             <div className="max-w-3xl mx-auto">
-              <h2 className="font-serif text-3xl text-espresso mb-12 text-center">Często zadawane pytania</h2>
+              <h2 className="font-serif text-3xl text-espresso mb-5 text-center">Często zadawane pytania</h2>
+              <ClayRule align="center" className="max-w-[220px] mx-auto mb-12" />
               <div className="space-y-8">
                 {faq.map((item) => (
                   <div key={item.id} className="border-b border-sand pb-8 last:border-0 last:pb-0">

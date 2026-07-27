@@ -3,6 +3,7 @@ export const revalidate = 300;
 
 import type { Metadata } from "next";
 import { Phone, Mail, Clock, MapPin } from "lucide-react";
+import ClayRule from "@/components/ui/ClayRule";
 import InstagramIcon from "@/components/ui/InstagramIcon";
 import WhatsAppIcon from "@/components/ui/WhatsAppIcon";
 import Header from "@/components/layout/HeaderWrapper";
@@ -106,6 +107,7 @@ export default async function ContactPage() {
           <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20">
             {/* Dane kontaktowe */}
             <div>
+              <ClayRule className="mb-7" />
               <h2 className="font-serif text-2xl text-espresso mb-8">Dane kontaktowe</h2>
               <div className="space-y-6">
                 <a
@@ -222,6 +224,7 @@ export default async function ContactPage() {
 
             {/* Formularz */}
             <div>
+              <ClayRule className="mb-7" />
               <h2 className="font-serif text-2xl text-espresso mb-8">Napisz wiadomość</h2>
               <ContactForm workshopOptions={workshopOptions} />
             </div>

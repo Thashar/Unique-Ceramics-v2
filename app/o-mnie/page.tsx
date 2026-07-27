@@ -7,6 +7,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import Header from "@/components/layout/HeaderWrapper";
 import Footer from "@/components/layout/Footer";
+import ClayRule from "@/components/ui/ClayRule";
 import ImageGallery from "@/components/ui/ImageGallery";
 import { getSettings } from "@/lib/settings";
 import { sanitizeRichHtml } from "@/lib/sanitize-html";
@@ -90,9 +91,7 @@ export default async function AboutPage() {
           <div className={`max-w-7xl mx-auto grid grid-cols-1 gap-16 ${hasGallery ? "lg:grid-cols-12" : ""}`}>
             {/* Tekst główny */}
             <div className={hasGallery ? "lg:col-span-7" : ""}>
-              <h2 className="font-serif text-3xl text-espresso mb-8 leading-snug">
-                „Ręcznie tworzone z sercem&rdquo;
-              </h2>
+              <ClayRule className="mb-7" />
               <div
                 className="space-y-5 text-charcoal/80 leading-relaxed [&_p]:mb-4 [&_h2]:font-serif [&_h2]:text-2xl [&_h2]:text-espresso [&_h2]:mb-4 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:mb-4 [&_strong]:text-espresso"
                 dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(story) }}
@@ -132,7 +131,8 @@ export default async function AboutPage() {
         {/* Wartości */}
         <div className="bg-cream py-20 px-6 lg:px-10">
           <div className="max-w-7xl mx-auto">
-            <h2 className="font-serif text-3xl text-espresso mb-12 text-center">Jak pracuję</h2>
+            <h2 className="font-serif text-3xl text-espresso mb-5 text-center">Jak pracuję</h2>
+            <ClayRule align="center" className="max-w-[220px] mx-auto mb-12" />
             <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
               {[
                 { title: "Ręcznie", text: "Każdy przedmiot tworzę osobiście. Nie korzystam z produkcji seryjnej ani odlewów." },

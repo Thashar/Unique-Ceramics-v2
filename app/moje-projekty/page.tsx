@@ -1,5 +1,6 @@
 ﻿import Header from "@/components/layout/HeaderWrapper";
 import Footer from "@/components/layout/Footer";
+import ClayRule from "@/components/ui/ClayRule";
 import { getProjects } from "@/lib/portfolio";
 import Image from "next/image";
 import { sanitizeRichHtml } from "@/lib/sanitize-html";
@@ -36,6 +37,7 @@ export default async function ProjectsPage() {
 
         {/* Lista projektów */}
         <div className="max-w-7xl mx-auto px-6 lg:px-10 py-16">
+          <ClayRule className="mb-10" />
           {projects.length === 0 ? (
             <div className="text-center py-24">
               <p className="font-serif text-2xl text-espresso mb-2">Brak projektów</p>
