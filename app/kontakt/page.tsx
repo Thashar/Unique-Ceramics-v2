@@ -8,6 +8,7 @@ import WhatsAppIcon from "@/components/ui/WhatsAppIcon";
 import Header from "@/components/layout/HeaderWrapper";
 import Footer from "@/components/layout/Footer";
 import { getSettings } from "@/lib/settings";
+import { normalizeHours } from "@/lib/opening-hours";
 import ContactForm from "@/components/contact/ContactForm";
 
 export const metadata: Metadata = {
@@ -60,7 +61,7 @@ export default async function ContactPage() {
   const email = settings.contact_email;
   const instagram = settings.contact_instagram;
   const whatsapp = settings.contact_whatsapp;
-  const hours = settings.contact_hours;
+  const hours = normalizeHours(settings.contact_hours);
   const addrStreet = settings.contact_address_street;
   const addrCity = settings.contact_address_city;
   const addrRegion = settings.contact_address_region;
@@ -186,7 +187,7 @@ export default async function ContactPage() {
                     </div>
                     <div>
                       <p className="text-xs tracking-widest uppercase text-clay mb-1">Godziny otwarcia</p>
-                      <p className="text-charcoal/80 text-sm leading-relaxed">{hours}</p>
+                      <p className="text-charcoal/80 text-sm leading-relaxed whitespace-pre-line">{hours}</p>
                     </div>
                   </div>
                 )}

@@ -79,11 +79,23 @@ function parseDays(raw: string): string[] {
   return [];
 }
 
+/**
+ * Sprowadza godziny do postaci z prawdziwymi znakami nowego wiersza.
+ * Pole w panelu jest wieloliniowe (Enter), ale wcześniej dało się tam wpisać
+ * `<br>` — taki zapis honorujemy jako złamanie wiersza zamiast pokazywać
+ * użytkownikowi surowy znacznik. HTML NIE jest renderowany.
+ */
+export function normalizeHours(text: string): string {
+  return text.replace(/<br\s*\/?>/gi, "\n").replace(/\r\n?/g, "\n").trim();
+}
+
 export function parseOpeningHours(text: string): OpeningHoursSpec[] {
   if (!text) return [];
   const out: OpeningHoursSpec[] = [];
 
-  for (const chunk of text.split(/[,;]/)) {
+  // Wpisy rozdziela przecinek, średnik albo nowy wiersz (pole w panelu
+  // admina jest wieloliniowe — Enter łamie wiersz także w stopce)
+  for (const chunk of normalizeHours(text).split(/[,;\n]/)) {
     const m = chunk
       .trim()
       .match(/^(.+?)\s+(\d{1,2}(?:[:.]\d{2})?)\s*[–—-]\s*(\d{1,2}(?:[:.]\d{2})?)$/);

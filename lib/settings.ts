@@ -205,7 +205,7 @@ const DEFAULTS: Record<string, string> = {
   contact_facebook: "",
   contact_youtube: "",
   contact_whatsapp: "",
-  contact_hours: "Wt–Czw 17:00–19:00, So 15:00–17:00",
+  contact_hours: "Wt–Czw 17:00–19:00\nSo 15:00–17:00",
   contact_address_street: "ul. Familijna 23",
   contact_address_city: "44-164 Kleszczów (k. Gliwic)",
   contact_address_region: "woj. śląskie",

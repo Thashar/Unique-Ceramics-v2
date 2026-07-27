@@ -112,6 +112,28 @@ function Field({ label, value, setter, type = "text", placeholder, mono }: {
   );
 }
 
+/** Pole wieloliniowe — Enter wstawia nowy wiersz zachowywany przy renderze. */
+function MultilineField({ label, value, setter, placeholder, rows = 3 }: {
+  label: string;
+  value: string;
+  setter: (v: string) => void;
+  placeholder?: string;
+  rows?: number;
+}) {
+  return (
+    <div>
+      <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">{label}</label>
+      <textarea
+        value={value}
+        onChange={(e) => setter(e.target.value)}
+        placeholder={placeholder}
+        rows={rows}
+        className="w-full bg-warm-white border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors resize-y"
+      />
+    </div>
+  );
+}
+
 function SaveButton({ onClick, label }: { onClick: () => void; label: string }) {
   return (
     <button
@@ -542,11 +564,20 @@ export default function SettingsForm({ section, initial }: Props) {
           <Field label="Województwo (opcjonalnie)" value={addrRegion} setter={setAddrRegion} placeholder="woj. śląskie" />
 
           <h2 className="font-serif text-2xl text-espresso pt-4">Godziny otwarcia</h2>
-          <Field label="Godziny otwarcia" value={hours} setter={setHours} placeholder="Wt–Czw 17:00–19:00, So 15:00–17:00" />
+          <MultilineField
+            label="Godziny otwarcia (Enter = nowy wiersz)"
+            value={hours}
+            setter={setHours}
+            rows={3}
+            placeholder={"Wt–Czw 17:00–19:00\nSo 15:00–17:00"}
+          />
           <p className="text-xs text-charcoal/50">
             Adres i godziny wyświetlają się w kolumnie &bdquo;Kontakt&rdquo; w stopce oraz na stronie /kontakt.
-            Godziny trafiają też do danych strukturalnych (SEO) — zachowaj format
-            <span className="font-mono"> Skrót dni HH:MM–HH:MM</span>, np. <span className="font-mono">Wt–Czw 17:00–19:00, So 15:00–17:00</span>.
+            Każdy <strong>Enter</strong> łamie wiersz dokładnie w tym miejscu — przecinek też rozdziela wpisy,
+            ale wtedy o złamaniu decyduje szerokość ekranu.
+            Godziny trafiają do danych strukturalnych (SEO), więc zachowaj format
+            <span className="font-mono"> Skrót dni HH:MM–HH:MM</span> w każdym wierszu,
+            np. <span className="font-mono">Wt–Czw 17:00–19:00</span>.
           </p>
 
           <SaveButton

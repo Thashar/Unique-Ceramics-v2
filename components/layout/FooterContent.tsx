@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import FooterInstagramPanel from "./FooterInstagramPanel";
 import FooterContactsClient from "./FooterContactsClient";
+import FooterAddressClient from "./FooterAddressClient";
 import FooterMap from "./FooterMap";
 import ThasharWordmark from "./ThasharWordmark";
 
@@ -58,9 +59,10 @@ export default function FooterContent({ instagram }: { instagram?: string }) {
             </div>
           </div>
 
-          {/* Mapa */}
+          {/* Adres pracowni + mapa */}
           <div className="lg:pl-8">
             <p className="text-xs tracking-widest uppercase text-terracotta mb-5">Gdzie mnie znajdziesz</p>
+            <FooterAddressClient />
             <div className="w-full aspect-square overflow-hidden rounded-sm">
               <FooterMap />
             </div>
