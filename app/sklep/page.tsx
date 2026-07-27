@@ -8,21 +8,21 @@ import ProductGrid from "./ProductGrid";
 import FloatingOrderButton from "./FloatingOrderButton";
 
 export const metadata = {
-  title: "Sklep ceramiczny — ceramika ręcznie robiona",
+  title: "Sklep ceramiczny – ceramika ręcznie robiona",
   description:
-    "Sklep z ceramiką ręcznie robioną z okolic Gliwic. Miski, kubki, talerze, wazony — każdy przedmiot tworzony jest ręcznie z lokalnej gliny. Sklep ceramiczny Unique Ceramics.",
+    "Sklep z ceramiką ręcznie robioną z okolic Gliwic. Miski, kubki, talerze, wazony – każdy przedmiot tworzony jest ręcznie z lokalnej gliny. Sklep ceramiczny Unique Ceramics.",
   alternates: { canonical: "https://uniqueceramics.pl/sklep" },
   openGraph: {
-    title: "Sklep ceramiczny — Unique Ceramics",
+    title: "Sklep ceramiczny – Unique Ceramics",
     description:
-      "Sklep z ceramiką ręcznie robioną. Miski, kubki, talerze, wazony — każdy przedmiot unikalny, tworzony z pasji.",
+      "Sklep z ceramiką ręcznie robioną. Miski, kubki, talerze, wazony – każdy przedmiot unikalny, tworzony z pasji.",
     url: "https://uniqueceramics.pl/sklep",
     images: [
       {
         url: "/images/OpenGraph.webp",
         width: 1200,
         height: 630,
-        alt: "Sklep ceramiczny — Unique Ceramics Gliwice",
+        alt: "Sklep ceramiczny – Unique Ceramics Gliwice",
       },
     ],
   },
@@ -35,7 +35,7 @@ export default async function ShopPage({
 }) {
   const { kategoria } = await searchParams;
 
-  // Zapytania sekwencyjne — każde zwalnia połączenie przed kolejnym,
+  // Zapytania sekwencyjne – każde zwalnia połączenie przed kolejnym,
   // co chroni przed wyczerpaniem puli (Supabase: 15 połączeń w trybie sesji).
   const vacationEnabled = (await getSetting("vacation_enabled")) === "true";
   const dbCategories = await getCategories();
@@ -65,7 +65,7 @@ export default async function ShopPage({
     <>
       <Header />
       <div className="min-h-[100svh] bg-warm-white">
-        <h1 className="sr-only">Sklep ceramiczny — sklep z ceramiką ręcznie robioną, Gliwice</h1>
+        <h1 className="sr-only">Sklep ceramiczny – sklep z ceramiką ręcznie robioną, Gliwice</h1>
         {/* Filtry kategorii */}
         {/* Pasek przykleja się pod headerem. --header-offset ustawia Header:
             gdy na mobile chowa się przy przewijaniu w dół, pasek podjeżdża pod

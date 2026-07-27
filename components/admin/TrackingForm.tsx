@@ -66,7 +66,7 @@ export default function TrackingForm({ orderId, orderStatus, initialTrackingNumb
 
       <div className={`grid grid-cols-2 gap-3 ${!editable ? "opacity-50 pointer-events-none select-none" : ""}`}>
         <div>
-          <label className="block text-xs text-gray-500 uppercase tracking-wide mb-1">Dostawca</label>
+          <label className="block text-xs text-charcoal/80 uppercase tracking-wide mb-1">Dostawca</label>
           <select
             value={carrier}
             onChange={(e) => setCarrier(e.target.value as Carrier | "")}
@@ -80,7 +80,7 @@ export default function TrackingForm({ orderId, orderStatus, initialTrackingNumb
           </select>
         </div>
         <div>
-          <label className="block text-xs text-gray-500 uppercase tracking-wide mb-1">Numer listu przewozowego</label>
+          <label className="block text-xs text-charcoal/80 uppercase tracking-wide mb-1">Numer listu przewozowego</label>
           <input
             type="text"
             value={trackingNumber}
@@ -92,7 +92,7 @@ export default function TrackingForm({ orderId, orderStatus, initialTrackingNumb
         </div>
       </div>
 
-      {error && <p className="text-xs text-red-600">{error}</p>}
+      {error && <p className="text-xs text-red-700">{error}</p>}
 
       {editable && (
         <div className="flex items-center gap-3">
@@ -104,7 +104,7 @@ export default function TrackingForm({ orderId, orderStatus, initialTrackingNumb
             <Truck size={14} />
             {saving ? "Zapisywanie…" : "Zapisz dane wysyłki"}
           </button>
-          {saved && <span className="text-xs text-green-600 font-medium">Zapisano</span>}
+          {saved && <span className="text-xs text-green-700 font-medium">Zapisano</span>}
         </div>
       )}
 

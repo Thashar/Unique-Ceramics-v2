@@ -9,7 +9,7 @@ export default async function FeaturedProducts() {
   try {
     products = await getFeaturedProducts();
   } catch {
-    // Baza niedostępna — sekcja nie wyświetla produktów
+    // Baza niedostępna – sekcja nie wyświetla produktów
   }
 
   if (products.length === 0) return null;
@@ -48,7 +48,7 @@ export default async function FeaturedProducts() {
           <ProductCarousel products={products} />
         </div>
 
-        {/* Desktop: 4 kolumny, gdy >4 produktów — carousel z nawigacją */}
+        {/* Desktop: 4 kolumny, gdy >4 produktów – carousel z nawigacją */}
         <div className="hidden lg:block max-w-7xl mx-auto w-full px-16">
           <DesktopCarousel products={products} />
         </div>

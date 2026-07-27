@@ -5,7 +5,7 @@ import { useContacts } from "@/lib/public-contacts";
 
 /**
  * Adres pracowni i godziny otwarcia pod nagłówkiem „Gdzie mnie znajdziesz"
- * (nad mapą) — bez osobnych nagłówków. Gdy dane nie są uzupełnione w panelu,
+ * (nad mapą) – bez osobnych nagłówków. Gdy dane nie są uzupełnione w panelu,
  * dany blok w ogóle się nie renderuje.
  */
 export default function FooterAddressClient() {

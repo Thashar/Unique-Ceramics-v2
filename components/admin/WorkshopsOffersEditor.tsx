@@ -141,7 +141,7 @@ function OffersEditor({ json, onChange }: { json: string; onChange: (v: string) 
   return (
     <div className="space-y-2">
       {items.map((w, idx) => (
-        <div key={w.id} className={`border ${w.active ? "border-sand" : "border-sand/40 opacity-60"} bg-warm-white`}>
+        <div key={w.id} className={`border ${w.active ? "border-sand bg-warm-white" : "border-sand/40 bg-mist"}`}>
           {/* Nagłówek karty */}
           <div
             className="flex items-center gap-3 px-4 py-3 cursor-pointer select-none hover:bg-cream/60 transition-colors"
@@ -173,7 +173,7 @@ function OffersEditor({ json, onChange }: { json: string; onChange: (v: string) 
               <button
                 title="Usuń"
                 onClick={() => remove(w.id)}
-                className="p-1.5 text-red-400 hover:text-red-600 transition-colors"
+                className="p-1.5 text-red-600 hover:text-red-800 transition-colors"
               >
                 <Trash2 size={14} />
               </button>
@@ -355,7 +355,7 @@ function IncludesEditor({ json, onChange }: { json: string; onChange: (v: string
           />
           <button
             onClick={() => remove(inc.id)}
-            className="p-1.5 text-red-400 hover:text-red-600 shrink-0 transition-colors"
+            className="p-1.5 text-red-600 hover:text-red-800 shrink-0 transition-colors"
           >
             <Trash2 size={14} />
           </button>
@@ -430,7 +430,7 @@ function FaqEditor({ json, onChange }: { json: string; onChange: (v: string) => 
               </button>
               <button
                 onClick={() => remove(faq.id)}
-                className="p-1 text-red-400 hover:text-red-600 transition-colors"
+                className="p-1 text-red-600 hover:text-red-800 transition-colors"
               >
                 <Trash2 size={14} />
               </button>

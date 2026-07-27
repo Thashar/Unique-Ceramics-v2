@@ -68,7 +68,7 @@ export function validateProduct(
     return { ok: false, error: "Kategoria jest wymagana." };
   }
 
-  // Obrazy — tablica niepustych stringów
+  // Obrazy – tablica niepustych stringów
   if (!Array.isArray(b.images)) {
     return { ok: false, error: "Pole obrazów ma nieprawidłowy format." };
   }

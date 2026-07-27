@@ -34,7 +34,7 @@ export async function PATCH(req: Request) {
   }
 
   const hashed = await bcrypt.hash(newPassword, 12);
-  // Bump tokenVersion — unieważnia wszystkie aktywne sesje (także bieżącą):
+  // Bump tokenVersion – unieważnia wszystkie aktywne sesje (także bieżącą):
   // po zmianie hasła trzeba zalogować się ponownie.
   await db.user.update({
     where: { id: user.id },

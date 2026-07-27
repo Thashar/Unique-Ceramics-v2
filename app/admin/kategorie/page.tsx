@@ -14,7 +14,7 @@ export default async function CategoriesPage() {
     });
     categories = rows.length > 0 ? rows : (DEFAULT_CATEGORIES as Category[]);
   } catch {
-    // Tabela Category nie istnieje w bazie — migracja nie została uruchomiona
+    // Tabela Category nie istnieje w bazie – migracja nie została uruchomiona
     migrationNeeded = true;
   }
 
@@ -28,11 +28,11 @@ export default async function CategoriesPage() {
       {migrationNeeded ? (
         <div className="max-w-xl p-5 bg-red-50 border border-red-200 text-sm space-y-3">
           <p className="font-medium text-red-700">Brakuje tabeli w bazie danych</p>
-          <p className="text-red-600">
+          <p className="text-red-700">
             Tabela <code className="font-mono bg-red-100 px-1">Category</code> nie istnieje w Supabase.
             Uruchom poniższe zapytanie w <strong>Supabase → SQL Editor</strong>:
           </p>
-          <pre className="bg-white border border-red-200 text-xs font-mono p-4 overflow-x-auto text-gray-800 leading-5 whitespace-pre">{`CREATE TABLE "Category" (
+          <pre className="bg-white border border-red-200 text-xs font-mono p-4 overflow-x-auto text-charcoal leading-5 whitespace-pre">{`CREATE TABLE "Category" (
     "id"        TEXT NOT NULL,
     "slug"      TEXT NOT NULL,
     "label"     TEXT NOT NULL,
@@ -42,7 +42,7 @@ export default async function CategoriesPage() {
     CONSTRAINT "Category_pkey" PRIMARY KEY ("id")
 );
 CREATE UNIQUE INDEX "Category_slug_key" ON "Category"("slug");`}</pre>
-          <p className="text-red-600 text-xs">Po wykonaniu odśwież tę stronę.</p>
+          <p className="text-red-700 text-xs">Po wykonaniu odśwież tę stronę.</p>
         </div>
       ) : (
         <CategoriesManager initialCategories={categories} />

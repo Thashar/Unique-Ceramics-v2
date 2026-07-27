@@ -4,7 +4,7 @@ import { sanitizeRichHtml } from "@/lib/sanitize-html";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
 
-// Klucze przechowujące HTML — sanityzowane już przy zapisie (defense in depth,
+// Klucze przechowujące HTML – sanityzowane już przy zapisie (defense in depth,
 // strony i tak sanityzują przy renderze)
 const HTML_KEYS = new Set([
   "regulamin",
@@ -38,9 +38,9 @@ async function saveSettings(body: { key: string; value: string }[]) {
       });
     })
   );
-  // Strony treściowe są cachowane (ISR) — po zapisie ustawień odśwież wszystko
+  // Strony treściowe są cachowane (ISR) – po zapisie ustawień odśwież wszystko
   revalidatePath("/", "layout");
-  // Dane kontaktowe idą przez unstable_cache (JSON-LD w layoucie) — revalidatePath
+  // Dane kontaktowe idą przez unstable_cache (JSON-LD w layoucie) – revalidatePath
   // ich nie czyści, potrzebny jest tag
   revalidateTag("settings", "max");
 }

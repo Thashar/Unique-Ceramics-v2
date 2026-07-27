@@ -50,3 +50,7 @@ next-env.d.ts
 # SQLite local dev
 *.db
 *.db-journal
+
+# Lokalne pliki narzędzi Claude Code (nie trafiają do repozytorium)
+.claude/
+skills-lock.json

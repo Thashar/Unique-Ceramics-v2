@@ -14,7 +14,7 @@ const STATUSES = [
   { value: "CANCELLED",   label: "Anulowane",    color: "bg-red-50 text-red-700 border-red-300" },
 ];
 
-// Liniowy przepływ statusów — każdy można przesunąć tylko o 1 do przodu.
+// Liniowy przepływ statusów – każdy można przesunąć tylko o 1 do przodu.
 const FLOW = ["PENDING", "CONFIRMED", "PAID", "IN_PROGRESS", "SHIPPED", "DELIVERED"];
 
 const SHIPPED_OR_LATER = ["SHIPPED", "DELIVERED"];
@@ -137,11 +137,11 @@ export default function OrderStatusSelect({
               </option>
             ))}
           </select>
-          <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none opacity-50" />
+          <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none opacity-70" />
         </div>
       </div>
       {trackingError && (
-        <p className="text-xs text-red-600 text-right max-w-48">
+        <p className="text-xs text-red-700 text-right max-w-48">
           Uzupelnij numer listu i dostawce przed zmiana na Wyslane.
         </p>
       )}
@@ -161,7 +161,7 @@ export default function OrderStatusSelect({
               disabled={saving}
               className="w-full border border-clay bg-warm-white text-espresso text-sm px-3 py-2 rounded-sm outline-none disabled:opacity-60"
             />
-            {paidError && <p className="text-xs text-red-600 mt-2">{paidError}</p>}
+            {paidError && <p className="text-xs text-red-700 mt-2">{paidError}</p>}
             <div className="flex items-center justify-end gap-2 mt-5">
               <button
                 onClick={() => setPaidModalOpen(false)}

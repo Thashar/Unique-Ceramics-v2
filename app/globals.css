@@ -6,7 +6,7 @@
   --color-warm-white:  #FAF8F5;
   --color-sand:        #E8DFD0;
   --color-terracotta:  #C4A882;
-  /* clay przyciemniony z #8B7355 — zapewnia ≥4,5:1 dla tekstu na jasnych tłach
+  /* clay przyciemniony z #8B7355 – zapewnia ≥4,5:1 dla tekstu na jasnych tłach
      (cream 5,32:1, mist 5,09:1) oraz dla jasnego tekstu na przyciskach bg-clay (5,70:1) */
   --color-clay:        #755F44;
   --color-espresso:    #2C2825;

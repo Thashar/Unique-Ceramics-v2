@@ -29,7 +29,7 @@ export async function PUT(req: Request) {
 
   const body = await req.json();
 
-  // Whitelist pól — do bazy trafiają wyłącznie zwalidowane dane
+  // Whitelist pól – do bazy trafiają wyłącznie zwalidowane dane
   const address = {
     firstName: String(body.firstName ?? "").trim(),
     lastName:  String(body.lastName  ?? "").trim(),

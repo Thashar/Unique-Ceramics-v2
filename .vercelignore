@@ -1,0 +1,19 @@
+# Pliki niepotrzebne przy wdrożeniu na Vercel (nie trafiają do builda)
+
+# Lokalne narzędzia agentów / Claude Code
+.claude/
+skills-lock.json
+CLAUDE.md
+AGENTS.md
+
+# Dokumentacja i CI
+README.md
+.github/
+
+# Skrypty pomocnicze uruchamiane lokalnie
+scripts/
+
+# Lokalne artefakty
+*.tsbuildinfo
+*.db
+*.db-journal

@@ -31,7 +31,7 @@ export async function POST(req: Request) {
     const orderId = session.metadata?.orderId;
     // completed nie zawsze oznacza opłacone (asynchroniczne metody płatności)
     if (orderId && session.payment_status === "paid") {
-      // Ustaw paidAt tylko przy pierwszym opłaceniu — przychód rozpoznawany wg tej daty
+      // Ustaw paidAt tylko przy pierwszym opłaceniu – przychód rozpoznawany wg tej daty
       await db.order.updateMany({
         where: { id: orderId, paymentStatus: { not: "PAID" } },
         data: { paymentStatus: "PAID", paidAt: new Date() },
@@ -39,8 +39,8 @@ export async function POST(req: Request) {
     }
   }
 
-  // Porzucona płatność — sesja Stripe wygasa po 24h. Anuluj zamówienie
-  // i zwróć zarezerwowany stan magazynowy (raz — updateMany jest idempotentne).
+  // Porzucona płatność – sesja Stripe wygasa po 24h. Anuluj zamówienie
+  // i zwróć zarezerwowany stan magazynowy (raz – updateMany jest idempotentne).
   if (event.type === "checkout.session.expired") {
     const session = event.data.object as Stripe.Checkout.Session;
     const orderId = session.metadata?.orderId;
@@ -56,7 +56,7 @@ export async function POST(req: Request) {
             where: { id: item.productId },
             data: { stock: { increment: item.quantity } },
           }).catch(() => {
-            // Produkt mógł zostać usunięty — nie blokuj webhooka
+            // Produkt mógł zostać usunięty – nie blokuj webhooka
           });
         }
         revalidateProductPages();

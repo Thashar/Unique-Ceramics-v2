@@ -65,7 +65,7 @@ export default function Hero({
             transition={{ duration: 0.8, delay: 0.75 }}
             className="text-sand/90 text-lg leading-relaxed mb-10 max-w-md"
           >
-            Unikalna ceramika użytkowa z pracowni w okolicach Gliwic — każdy
+            Unikalna ceramika użytkowa z pracowni w okolicach Gliwic – każdy
             egzemplarz jest niepowtarzalny. Tworzę z pasją i dbałością o każdy detal.
           </motion.p>
 
@@ -99,7 +99,7 @@ export default function Hero({
         transition={{ delay: 1.5, duration: 1 }}
         className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
       >
-        <span className="text-[10px] tracking-[0.25em] uppercase text-cream/50">Przewiń</span>
+        <span className="text-[10px] tracking-[0.25em] uppercase text-cream/70">Przewiń</span>
         <motion.div
           animate={{ y: [0, 8, 0] }}
           transition={{ repeat: Infinity, duration: 1.8, ease: "easeInOut" }}

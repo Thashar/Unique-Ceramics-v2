@@ -26,11 +26,11 @@ const BASE = "https://uniqueceramics.pl";
 export const metadata: Metadata = {
   metadataBase: new URL(BASE),
   title: {
-    default: "Unique Ceramics — Ceramika Gliwice | ręcznie robiona",
+    default: "Unique Ceramics – Ceramika Gliwice | ręcznie robiona",
     template: "%s | Unique Ceramics",
   },
   description:
-    "Ceramika użytkowa ręcznie robiona w Gliwicach — kubki, filiżanki, miski i naczynia. Każdy egzemplarz jest niepowtarzalny. Zamów online, wysyłka w całej Polsce.",
+    "Ceramika użytkowa ręcznie robiona w Gliwicach – kubki, filiżanki, miski i naczynia. Każdy egzemplarz jest niepowtarzalny. Zamów online, wysyłka w całej Polsce.",
   keywords: [
     "ceramika Gliwice",
     "ceramika ręcznie robiona Gliwice",
@@ -69,23 +69,23 @@ export const metadata: Metadata = {
     locale: "pl_PL",
     type: "website",
     url: BASE,
-    title: "Unique Ceramics — Ceramika Gliwice | ręcznie robiona",
+    title: "Unique Ceramics – Ceramika Gliwice | ręcznie robiona",
     description:
-      "Ceramika użytkowa ręcznie robiona w Gliwicach — kubki, filiżanki, miski i naczynia. Każdy egzemplarz jest niepowtarzalny. Zamów z dostawą w całej Polsce.",
+      "Ceramika użytkowa ręcznie robiona w Gliwicach – kubki, filiżanki, miski i naczynia. Każdy egzemplarz jest niepowtarzalny. Zamów z dostawą w całej Polsce.",
     images: [
       {
         url: "/images/OpenGraph.webp",
         width: 1200,
         height: 630,
-        alt: "Unique Ceramics — ręcznie robiona ceramika",
+        alt: "Unique Ceramics – ręcznie robiona ceramika",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Unique Ceramics — Ceramika Gliwice | ręcznie robiona",
+    title: "Unique Ceramics – Ceramika Gliwice | ręcznie robiona",
     description:
-      "Ceramika użytkowa ręcznie robiona w Gliwicach. Kubki, filiżanki, miski i naczynia — każdy egzemplarz niepowtarzalny.",
+      "Ceramika użytkowa ręcznie robiona w Gliwicach. Kubki, filiżanki, miski i naczynia – każdy egzemplarz niepowtarzalny.",
     images: ["/images/OpenGraph.webp"],
   },
   robots: {
@@ -105,13 +105,13 @@ export default function RootLayout({
     <html lang="pl" className={`${playfair.variable} ${inter.variable} h-full`}>
       <head>
         {/* Blokuj przywracanie pozycji scrolla przez przeglądarkę na stronie głównej.
-            Musi działać przed DOMContentLoaded, zanim Chrome zdąży przywrócić scroll —
+            Musi działać przed DOMContentLoaded, zanim Chrome zdąży przywrócić scroll –
             ustawienie tego w useEffect jest za późno i powoduje biały header przy odświeżeniu. */}
         <script dangerouslySetInnerHTML={{ __html: `if(location.pathname==='/')history.scrollRestoration='manual';` }} />
       </head>
       <body className="min-h-[100svh] flex flex-col">
         <Providers>{children}</Providers>
-        {/* Dane strukturalne (LocalBusiness + WebSite) — adres, telefon i godziny
+        {/* Dane strukturalne (LocalBusiness + WebSite) – adres, telefon i godziny
             otwarcia czytane z ustawień panelu admina */}
         <LocalBusinessSchema />
       </body>

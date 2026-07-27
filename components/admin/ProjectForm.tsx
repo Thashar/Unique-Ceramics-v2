@@ -134,7 +134,7 @@ export default function ProjectForm({ project }: { project?: Project }) {
           </div>
         )}
         <label
-          className={`flex items-center gap-2 border border-dashed border-sand px-4 py-3 cursor-pointer text-sm text-charcoal/80 hover:border-terracotta hover:text-terracotta transition-colors ${
+          className={`flex items-center gap-2 border border-dashed border-sand px-4 py-3 cursor-pointer text-sm text-charcoal/80 hover:border-terracotta hover:text-clay transition-colors ${
             uploading ? "opacity-50 pointer-events-none" : ""
           }`}
         >
@@ -188,7 +188,7 @@ export default function ProjectForm({ project }: { project?: Project }) {
         </label>
       </div>
 
-      {error && <p className="text-red-600 text-sm">{error}</p>}
+      {error && <p className="text-red-700 text-sm">{error}</p>}
 
       <div className="flex items-center gap-4 pt-4 border-t border-sand">
         <button
@@ -202,7 +202,7 @@ export default function ProjectForm({ project }: { project?: Project }) {
           <button
             type="button"
             onClick={handleDelete}
-            className="flex items-center gap-2 px-6 py-3 border border-red-200 text-red-600 text-sm hover:bg-red-50 transition-colors"
+            className="flex items-center gap-2 px-6 py-3 border border-red-200 text-red-700 text-sm hover:bg-red-50 transition-colors"
           >
             <Trash2 size={14} />
             Usuń projekt

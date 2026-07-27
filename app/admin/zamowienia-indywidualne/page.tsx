@@ -32,7 +32,7 @@ export default async function AdminCustomOrdersPage() {
         <div className="bg-cream border border-sand/60 p-16 text-center text-charcoal/80 text-sm">Brak zamówień indywidualnych</div>
       ) : (
         <div className="space-y-2">
-          {/* Nagłówek — tylko desktop */}
+          {/* Nagłówek – tylko desktop */}
           <div className="hidden md:grid md:grid-cols-[auto_1fr_auto_auto_auto_auto] text-xs tracking-widest uppercase text-charcoal/80 bg-cream border border-sand/60 px-4 py-3">
             <span className="w-24 pr-4">Nr</span>
             <span>Klient</span>

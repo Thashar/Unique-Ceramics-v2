@@ -72,7 +72,7 @@ function InPostMapWidget({ token, value, onChange }: Props & { token: string }) 
     <div className="space-y-3">
       {value && (
         <div className="flex items-center gap-2 bg-green-50 border border-green-200 px-3 py-2 text-sm">
-          <MapPin size={14} className="text-green-600 shrink-0" />
+          <MapPin size={14} className="text-green-700 shrink-0" />
           <span className="text-green-800">Wybrany paczkomat: <strong className="font-mono">{value}</strong></span>
         </div>
       )}
@@ -118,10 +118,10 @@ function capitalizeCity(s: string): string {
 
 // Zwraca strategię API dla zapytania.
 // Obsługiwane parametry InPost API (zweryfikowane):
-//   city=<Nazwa>        — dokładna nazwa miasta (wymaga wielkiej litery)
-//   post_code=<XX-XXX>  — dokładny kod pocztowy (też format XXXXX bez myślnika)
-//   /points/<KOD>       — bezpośredni endpoint po kodzie paczkomatu
-// UWAGA: zip_code, name, street — ignorowane przez API, zwracają wszystkie wyniki.
+//   city=<Nazwa>        – dokładna nazwa miasta (wymaga wielkiej litery)
+//   post_code=<XX-XXX>  – dokładny kod pocztowy (też format XXXXX bez myślnika)
+//   /points/<KOD>       – bezpośredni endpoint po kodzie paczkomatu
+// UWAGA: zip_code, name, street – ignorowane przez API, zwracają wszystkie wyniki.
 function buildApiStrategies(q: string): Array<{ url: string; direct: boolean }> {
   const t = q.trim();
 
@@ -138,7 +138,7 @@ function buildApiStrategies(q: string): Array<{ url: string; direct: boolean }> 
     }];
   }
 
-  // Nazwa miasta (API wymaga dokładnej, z wielką literą) — auto-kapitalizacja
+  // Nazwa miasta (API wymaga dokładnej, z wielką literą) – auto-kapitalizacja
   return [{
     url: `${API}?per_page=500&type=parcel_locker&city=${encodeURIComponent(capitalizeCity(t))}`,
     direct: false,
@@ -154,7 +154,7 @@ function InPostSearch({ value, onChange }: { value: string; onChange: (code: str
   const [fetchError, setFetchError] = useState("");
   const [selectedPoint, setSelectedPoint] = useState<Point | null>(null);
 
-  // Akumulowany cache — zbiera wyniki ze WSZYSTKICH dotychczasowych zapytań API.
+  // Akumulowany cache – zbiera wyniki ze WSZYSTKICH dotychczasowych zapytań API.
   // Dzięki temu po wyszukaniu "Gliwice" filtrowanie po "gli", "Poe", "113", "i11" itp.
   // działa natychmiast bez kolejnych requestów sieciowych.
   const cacheRef = useRef<{ fetchedUrls: Set<string>; items: Point[] }>({
@@ -172,7 +172,7 @@ function InPostSearch({ value, onChange }: { value: string; onChange: (code: str
       return;
     }
 
-    // 1. Natychmiastowy wynik z akumulowanego cache — filtr po WSZYSTKICH polach
+    // 1. Natychmiastowy wynik z akumulowanego cache – filtr po WSZYSTKICH polach
     //    (kod, ulica, miasto, kod pocztowy, każdy podciąg).
     const fromCache = filterByQuery(cacheRef.current.items, t);
     if (fromCache.length > 0) {
@@ -243,7 +243,7 @@ function InPostSearch({ value, onChange }: { value: string; onChange: (code: str
     }
   }, []);
 
-  // Debounce 150 ms — krótki bo cache sprawdzany natychmiast
+  // Debounce 150 ms – krótki bo cache sprawdzany natychmiast
   useEffect(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => runSearch(query), 150);
@@ -265,13 +265,13 @@ function InPostSearch({ value, onChange }: { value: string; onChange: (code: str
     setSelectedPoint(null);
   }
 
-  // Wybrany paczkomat — pokaż szczegóły i opcję zmiany
+  // Wybrany paczkomat – pokaż szczegóły i opcję zmiany
   if (value) {
     return (
       <div className="bg-green-50 border border-green-200 p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-start gap-2.5">
-            <Check size={16} className="text-green-600 shrink-0 mt-0.5" />
+            <Check size={16} className="text-green-700 shrink-0 mt-0.5" />
             <div>
               <p className="text-sm font-semibold text-green-800 font-mono">{value}</p>
               {selectedPoint && (
@@ -297,7 +297,7 @@ function InPostSearch({ value, onChange }: { value: string; onChange: (code: str
   return (
     <div className="space-y-2">
       <label className="block text-xs text-charcoal/80 mb-1">
-        Wpisz pełną nazwę miasta lub kod pocztowy (XX-XXX), aby załadować listę — potem możesz zawęzić wyniki wpisując fragment kodu, ulicy lub adresu
+        Wpisz pełną nazwę miasta lub kod pocztowy (XX-XXX), aby załadować listę – potem możesz zawęzić wyniki wpisując fragment kodu, ulicy lub adresu
       </label>
 
       <div className="relative">

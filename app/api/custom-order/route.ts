@@ -29,13 +29,13 @@ async function sendAdminNotification(params: {
     await resend.emails.send({
       from: fromEmail,
       to,
-      subject: `Nowe zamówienie indywidualne — ${params.customerName}`,
+      subject: `Nowe zamówienie indywidualne – ${params.customerName}`,
       text: [
         `Nowe zamówienie indywidualne`,
         ``,
         `Klient: ${params.customerName}`,
         `E-mail: ${params.customerEmail}`,
-        `Telefon: ${params.customerPhone || "—"}`,
+        `Telefon: ${params.customerPhone || "–"}`,
         `Rodzaj: ${params.orderType}`,
         ...(params.deadline ? [`Termin: ${params.deadline}`] : []),
         ``,
@@ -93,7 +93,7 @@ export async function POST(req: Request) {
       },
     });
 
-    // Powiadomienie e-mail — nie blokuje odpowiedzi
+    // Powiadomienie e-mail – nie blokuje odpowiedzi
     void sendAdminNotification({
       orderId: order.id,
       customerName: String(customerName).trim(),

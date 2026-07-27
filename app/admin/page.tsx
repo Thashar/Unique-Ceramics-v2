@@ -24,7 +24,7 @@ const STATUS_COLORS: Record<string, string> = {
   IN_PROGRESS: "bg-orange-50 text-orange-700 ring-1 ring-orange-200",
   SHIPPED:     "bg-purple-50 text-purple-700 ring-1 ring-purple-200",
   DELIVERED:   "bg-green-50 text-green-700 ring-1 ring-green-200",
-  CANCELLED:   "bg-red-50 text-red-600 ring-1 ring-red-200",
+  CANCELLED:   "bg-red-50 text-red-700 ring-1 ring-red-200",
 };
 
 export default async function AdminDashboard() {
@@ -105,7 +105,7 @@ export default async function AdminDashboard() {
       {/* Wymaga uwagi */}
       {needsAttention && (
         <div className="bg-amber-50 border border-amber-200 px-3 py-2.5 sm:p-4 flex items-center sm:items-start gap-2 sm:gap-3">
-          <AlertCircle size={15} className="text-amber-600 shrink-0" />
+          <AlertCircle size={15} className="text-amber-700 shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="hidden sm:block text-sm font-medium text-amber-800 mb-1">Wymaga uwagi</p>
             <div className="flex flex-wrap gap-x-4 gap-y-0.5">
@@ -144,7 +144,7 @@ export default async function AdminDashboard() {
               </div>
             </div>
             <p className="font-serif text-xl sm:text-2xl text-espresso leading-none tabular-nums">{value}</p>
-            {sub && <p className="text-[10px] sm:text-[11px] text-terracotta mt-1 sm:mt-1.5 leading-tight">{sub}</p>}
+            {sub && <p className="text-[10px] sm:text-[11px] text-clay mt-1 sm:mt-1.5 leading-tight">{sub}</p>}
             <p className="text-[10px] sm:text-[11px] tracking-widest uppercase text-charcoal/80 mt-1 sm:mt-1.5 leading-tight">{label}</p>
           </Link>
         ))}
@@ -219,7 +219,7 @@ export default async function AdminDashboard() {
                 <ShoppingBag size={15} className="text-clay shrink-0" />
                 <span className="flex-1">Nowe zamówienia</span>
                 {pendingCount > 0 && (
-                  <span className="bg-terracotta text-white text-[10px] font-medium w-5 h-5 rounded-full flex items-center justify-center shrink-0">
+                  <span className="bg-terracotta text-espresso text-[10px] font-medium w-5 h-5 rounded-full flex items-center justify-center shrink-0">
                     {pendingCount}
                   </span>
                 )}
@@ -231,7 +231,7 @@ export default async function AdminDashboard() {
                 <ClipboardList size={15} className="text-clay shrink-0" />
                 <span className="flex-1">Zam. indywidualne</span>
                 {newCustomOrderCount > 0 && (
-                  <span className="bg-terracotta text-white text-[10px] font-medium w-5 h-5 rounded-full flex items-center justify-center shrink-0">
+                  <span className="bg-terracotta text-espresso text-[10px] font-medium w-5 h-5 rounded-full flex items-center justify-center shrink-0">
                     {newCustomOrderCount}
                   </span>
                 )}

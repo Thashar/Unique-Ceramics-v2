@@ -23,7 +23,7 @@ export default async function HeaderWrapper({ hideVacation }: { hideVacation?: b
         />
       )}
       <Header topOffset={withBanner} showProjects={projects.length > 0} />
-      {/* Spacer w normalnym przepływie — zastępuje pt-[...] na stronach.
+      {/* Spacer w normalnym przepływie – zastępuje pt-[...] na stronach.
           Nie renderowany gdy hideVacation (strona główna ma hero od samej góry). */}
       {!hideVacation && <div className={withBanner ? "h-[100px]" : "h-20"} aria-hidden="true" />}
     </>

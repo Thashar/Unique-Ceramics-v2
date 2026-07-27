@@ -7,7 +7,7 @@ import AccountNav from "@/components/account/AccountNav";
 
 export const metadata: Metadata = {
   title: "Moje konto",
-  description: "Panel klienta Unique Ceramics — zamówienia, profil, adres dostawy.",
+  description: "Panel klienta Unique Ceramics – zamówienia, profil, adres dostawy.",
   robots: { index: false, follow: false },
 };
 

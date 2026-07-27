@@ -34,7 +34,7 @@ export default function ImageUploader({ currentUrl, onUploaded, label = "Zdjęci
         setError(uploadErrorMessage(res.status, data?.error));
       }
     } catch {
-      setError("Brak połączenia z serwerem — spróbuj ponownie.");
+      setError("Brak połączenia z serwerem – spróbuj ponownie.");
     } finally {
       setUploading(false);
     }
@@ -55,7 +55,7 @@ export default function ImageUploader({ currentUrl, onUploaded, label = "Zdjęci
       )}
       {preview && previewBroken && (
         <p className="mb-3 bg-sand text-charcoal/80 text-xs px-4 py-6 text-center">
-          Nie udało się wczytać podglądu tego zdjęcia — wgraj je ponownie.
+          Nie udało się wczytać podglądu tego zdjęcia – wgraj je ponownie.
         </p>
       )}
       <input

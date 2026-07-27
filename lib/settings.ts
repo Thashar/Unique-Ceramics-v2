@@ -19,7 +19,7 @@ const REGULAMIN_DEFAULT = `<h2>I. Postanowienia ogólne</h2>
 <ol>
 <li>Sklep internetowy dostępny pod adresem <strong>uniqueceramics.pl</strong> prowadzony jest przez osobę fizyczną działającą pod marką <strong>Unique Ceramics</strong>.</li>
 <li>Kontakt ze sprzedawcą: e-mail <a href="mailto:kontakt@uniqueceramics.pl">kontakt@uniqueceramics.pl</a>, telefon <a href="tel:+48668443706">+48 668 443 706</a>.</li>
-<li>Wszystkie produkty oferowane w sklepie są wykonywane ręcznie. Każdy egzemplarz jest niepowtarzalny i może nieznacznie różnić się od zdjęcia prezentowanego w sklepie — jest to naturalna cecha ceramiki rzemieślniczej, a nie wada towaru.</li>
+<li>Wszystkie produkty oferowane w sklepie są wykonywane ręcznie. Każdy egzemplarz jest niepowtarzalny i może nieznacznie różnić się od zdjęcia prezentowanego w sklepie – jest to naturalna cecha ceramiki rzemieślniczej, a nie wada towaru.</li>
 <li>Pęknięcia szkliwa (crackle) są naturalnym efektem wypalania ceramiki i nie stanowią wady fizycznej produktu.</li>
 <li>Klientem może być wyłącznie osoba pełnoletnia, posiadająca pełną zdolność do czynności prawnych.</li>
 <li>Ceny podane w sklepie są cenami brutto (zawierają podatek VAT) i nie obejmują kosztów dostawy.</li>
@@ -30,8 +30,8 @@ const REGULAMIN_DEFAULT = `<h2>I. Postanowienia ogólne</h2>
 <li>Zamówienia można składać poprzez formularz na stronie lub drogą e-mailową pod adresem kontakt@uniqueceramics.pl.</li>
 <li>Po złożeniu zamówienia Klient otrzymuje e-mail z potwierdzeniem przyjęcia zamówienia do realizacji.</li>
 <li>Umowa sprzedaży zostaje zawarta z chwilą potwierdzenia zamówienia przez sprzedawcę.</li>
-<li>Realizacja zamówienia na produkty dostępne od ręki rozpoczyna się po zaksięgowaniu płatności — zazwyczaj w ciągu 3–5 dni roboczych.</li>
-<li>Zamówienia indywidualne (na specjalne zamówienie) mogą wymagać czasu realizacji do 4 tygodni — termin ustalany jest indywidualnie.</li>
+<li>Realizacja zamówienia na produkty dostępne od ręki rozpoczyna się po zaksięgowaniu płatności – zazwyczaj w ciągu 3–5 dni roboczych.</li>
+<li>Zamówienia indywidualne (na specjalne zamówienie) mogą wymagać czasu realizacji do 4 tygodni – termin ustalany jest indywidualnie.</li>
 <li>Sprzedawca zastrzega sobie prawo do odmowy realizacji zamówienia w uzasadnionych przypadkach, informując Klienta e-mailem.</li>
 </ol>
 <h2>III. Płatność i dostawa</h2>
@@ -97,16 +97,16 @@ const POLITYKA_DEFAULT = `<p>Niniejsza Polityka Prywatności określa zasady prz
 <h2>III. Cel i podstawa prawna przetwarzania danych</h2>
 <p>Dane osobowe przetwarzane są w następujących celach:</p>
 <ul>
-<li><strong>Realizacja zamówienia</strong> — podstawa prawna: art. 6 ust. 1 lit. b RODO (wykonanie umowy)</li>
-<li><strong>Kontakt z Klientem</strong> w sprawie zamówienia — podstawa prawna: art. 6 ust. 1 lit. b RODO</li>
-<li><strong>Wystawienie dokumentu sprzedaży</strong> (paragon, faktura) — podstawa prawna: art. 6 ust. 1 lit. c RODO (obowiązek prawny)</li>
-<li><strong>Rozpatrzenie reklamacji lub zwrotu</strong> — podstawa prawna: art. 6 ust. 1 lit. c RODO</li>
+<li><strong>Realizacja zamówienia</strong> – podstawa prawna: art. 6 ust. 1 lit. b RODO (wykonanie umowy)</li>
+<li><strong>Kontakt z Klientem</strong> w sprawie zamówienia – podstawa prawna: art. 6 ust. 1 lit. b RODO</li>
+<li><strong>Wystawienie dokumentu sprzedaży</strong> (paragon, faktura) – podstawa prawna: art. 6 ust. 1 lit. c RODO (obowiązek prawny)</li>
+<li><strong>Rozpatrzenie reklamacji lub zwrotu</strong> – podstawa prawna: art. 6 ust. 1 lit. c RODO</li>
 </ul>
 <h2>IV. Udostępnianie danych</h2>
 <p>Dane osobowe mogą być przekazywane:</p>
 <ul>
-<li><strong>Firmie kurierskiej / Poczcie Polskiej</strong> — w zakresie niezbędnym do realizacji dostawy (imię, nazwisko, adres, numer telefonu)</li>
-<li><strong>Dostawcy platformy sklepowej</strong> — w ramach niezbędnej obsługi technicznej systemu</li>
+<li><strong>Firmie kurierskiej / Poczcie Polskiej</strong> – w zakresie niezbędnym do realizacji dostawy (imię, nazwisko, adres, numer telefonu)</li>
+<li><strong>Dostawcy platformy sklepowej</strong> – w ramach niezbędnej obsługi technicznej systemu</li>
 </ul>
 <p>Dane nie są przekazywane do państw trzecich ani organizacji międzynarodowych.</p>
 <h2>V. Okres przechowywania danych</h2>
@@ -130,8 +130,8 @@ const POLITYKA_DEFAULT = `<p>Niniejsza Polityka Prywatności określa zasady prz
 <h2>VII. Pliki cookie</h2>
 <p>Strona wykorzystuje pliki cookie (ciasteczka) w następujących celach:</p>
 <ul>
-<li><strong>Niezbędne</strong> — zapewnienie prawidłowego działania koszyka i sesji użytkownika</li>
-<li><strong>Analityczne</strong> — analiza ruchu na stronie w celu jej ulepszania</li>
+<li><strong>Niezbędne</strong> – zapewnienie prawidłowego działania koszyka i sesji użytkownika</li>
+<li><strong>Analityczne</strong> – analiza ruchu na stronie w celu jej ulepszania</li>
 </ul>
 <p>Korzystanie ze strony bez zmiany ustawień przeglądarki oznacza zgodę na stosowanie plików cookie. Ustawienia plików cookie można zmienić w dowolnym momencie w ustawieniach przeglądarki.</p>
 <h2>VIII. Zmiany Polityki Prywatności</h2>
@@ -142,14 +142,14 @@ const ABOUT_STORY_DEFAULT = `<p>Od 20 lat zajmuję się ceramiką w obszarze prz
 <p>Każdą pracę wykonuję samodzielnie, dbając o detale, estetykę i niepowtarzalny charakter wyrobów. Ceramika daje mi ogromną satysfakcję oraz pozwala odnaleźć wewnętrzny spokój i chwilę wyciszenia w tym jakże zabieganym świecie.</p>
 <p>Daje mi to też motywację do ciągłego rozwijania swoich umiejętności oraz poszukiwania nowych pomysłów i technik.</p>`;
 
-const WORKSHOPS_INTRO_DEFAULT = `<p>Organizuję warsztaty ceramiczne dla grup i indywidualnych uczestników. Idealne na urodziny, wieczory panieńskie, imprezy firmowe czy po prostu wyjątkowy wieczór z przyjaciółmi. Nie potrzebujesz żadnego doświadczenia — wszystkiego nauczę Cię od podstaw.</p>
+const WORKSHOPS_INTRO_DEFAULT = `<p>Organizuję warsztaty ceramiczne dla grup i indywidualnych uczestników. Idealne na urodziny, wieczory panieńskie, imprezy firmowe czy po prostu wyjątkowy wieczór z przyjaciółmi. Nie potrzebujesz żadnego doświadczenia – wszystkiego nauczę Cię od podstaw.</p>
 <p>W trakcie warsztatów uformujecie własne wyroby z gliny, które po wypaleniu możecie odebrać lub wysłać pocztą. Każdy uczestnik wychodzi z wyjątkowym, własnoręcznie wykonanym dziełem.</p>`;
 
 const WORKSHOPS_OFFERS_DEFAULT = JSON.stringify([
   { id: 1, iconName: "Cake",      title: "Warsztaty urodzinowe",  description: "Wyjątkowe urodziny w towarzystwie gliny! Idealne dla grup od 4 osób. W trakcie warsztatu uformujecie własne wyroby z gliny, które po wypaleniu możecie odebrać lub wysłać pocztą.", duration: "3–4 godziny", maxPeople: "od 4 osób",           priceLabel: "od 80 zł / os.",      level: "Każdy poziom",    active: true },
   { id: 2, iconName: "Gem",       title: "Wieczory panieńskie",   description: "Niezapomniane wieczory panieńskie z ceramiką. Możliwość degustacji wina. Każda uczestniczka wychodzi z własnoręcznie wykonanym, unikatowym dziełem.",                                         duration: "3–4 godziny", maxPeople: "od 4 osób",           priceLabel: "od 100 zł / os.",     level: "Każdy poziom",    active: true },
-  { id: 3, iconName: "Building2", title: "Team Building",         description: "Integracja przez ceramikę dla firm i grup zawodowych. Doskonała alternatywa dla standardowych eventów — kreatywna, angażująca i pełna niespodzianek.",                                         duration: "Do ustalenia", maxPeople: "wycena indywidualna", priceLabel: "wycena indywidualna", level: "Każdy poziom",    active: true },
-  { id: 4, iconName: "Leaf",      title: "Warsztaty otwarte",     description: "Regularne warsztaty dla osób indywidualnych. Poznasz podstawy pracy z gliną — toczenie na kole lub hand-building. Nie potrzebujesz żadnego doświadczenia.",                                   duration: "3 godziny",    maxPeople: "małe grupy",          priceLabel: "od 90 zł / os.",      level: "Każdy poziom",    active: true },
+  { id: 3, iconName: "Building2", title: "Team Building",         description: "Integracja przez ceramikę dla firm i grup zawodowych. Doskonała alternatywa dla standardowych eventów – kreatywna, angażująca i pełna niespodzianek.",                                         duration: "Do ustalenia", maxPeople: "wycena indywidualna", priceLabel: "wycena indywidualna", level: "Każdy poziom",    active: true },
+  { id: 4, iconName: "Leaf",      title: "Warsztaty otwarte",     description: "Regularne warsztaty dla osób indywidualnych. Poznasz podstawy pracy z gliną – toczenie na kole lub hand-building. Nie potrzebujesz żadnego doświadczenia.",                                   duration: "3 godziny",    maxPeople: "małe grupy",          priceLabel: "od 90 zł / os.",      level: "Każdy poziom",    active: true },
   { id: 5, iconName: "Users",     title: "Dla dzieci i rodzin",   description: "Warsztaty dla dzieci od 8 lat i całych rodzin. Bezpieczne materiały, przystępna forma, mnóstwo frajdy i niepowtarzalne wspomnienia.",                                                           duration: "2–3 godziny",  maxPeople: "rodziny i grupy",     priceLabel: "od 60 zł / os.",      level: "Dzieci od 8 lat", active: true },
   { id: 6, iconName: "Gift",      title: "Vouchery prezentowe",   description: "Podaruj komuś wyjątkowe doświadczenie! Vouchery na dowolny rodzaj warsztatów. Idealne na urodziny, imieniny, Dzień Matki lub po prostu z okazji.",                                             duration: "według wybranego warsztatu", maxPeople: "dla 1 osoby lub pary", priceLabel: "od 80 zł",  level: "Każdy poziom",    active: true },
 ]);
@@ -164,10 +164,10 @@ const WORKSHOPS_INCLUDES_DEFAULT = JSON.stringify([
 ]);
 
 const WORKSHOPS_FAQ_DEFAULT = JSON.stringify([
-  { id: 1, question: "Co muszę zabrać?",                     answer: "Nic — wszystkie materiały są zapewnione. Warto mieć na sobie ubranie, które może się zabrudzić (glina to glina)." },
+  { id: 1, question: "Co muszę zabrać?",                     answer: "Nic – wszystkie materiały są zapewnione. Warto mieć na sobie ubranie, które może się zabrudzić (glina to glina)." },
   { id: 2, question: "Czy otrzymam swoje prace?",            answer: "Tak! Przedmioty po wysuszeniu i wypaleniu możesz odebrać osobiście lub wyślę je pocztą." },
   { id: 3, question: "Kiedy dostanę gotowe prace?",          answer: "Wypalanie trwa ok. 2–3 tygodni od warsztatów. Poinformuję Cię, gdy prace będą gotowe." },
-  { id: 4, question: "Czy mogę kupić voucher na warsztaty?", answer: "Tak, zapraszam do kontaktu — wystawiam vouchery podarunkowe od 80 zł." },
+  { id: 4, question: "Czy mogę kupić voucher na warsztaty?", answer: "Tak, zapraszam do kontaktu – wystawiam vouchery podarunkowe od 80 zł." },
   { id: 5, question: "Jak zarezerwować miejsce?",            answer: "Napisz do mnie przez formularz kontaktowy lub zadzwoń." },
 ]);
 
@@ -214,7 +214,7 @@ const DEFAULTS: Record<string, string> = {
   shipping_free_enabled: "true",
   shipping_free_from: "300",
   shipping_time: "2–4 dni robocze",
-  // Płatności — przelew tradycyjny
+  // Płatności – przelew tradycyjny
   payment_bank_account_name: "",
   payment_bank_account_number: "",
   payment_bank_name: "",
@@ -230,7 +230,7 @@ const DEFAULTS: Record<string, string> = {
   vacation_message: "",
   // Zamówienia indywidualne
   custom_order_notify_email_enabled: "true",
-  // Działalność nierejestrowana — minimalne wynagrodzenie (aktualizuj co rok!)
+  // Działalność nierejestrowana – minimalne wynagrodzenie (aktualizuj co rok!)
   // 2026: 4806 zł (ustawa z 25.07.2025 r. o ograniczeniu biurokracji i wsparciu przedsiębiorczości)
   dzn_min_wage: "4806",
 };
@@ -272,7 +272,7 @@ export async function getSettings(
 }
 
 /**
- * Dane kontaktowe z cache — czytane przy każdym renderze layoutu (JSON-LD),
+ * Dane kontaktowe z cache – czytane przy każdym renderze layoutu (JSON-LD),
  * więc nie mogą uderzać w bazę za każdym razem. Unieważniane tagiem
  * `settings` przy zapisie w /api/admin/settings.
  */

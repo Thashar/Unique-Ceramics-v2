@@ -224,7 +224,7 @@ export default function ProductForm({ product, categories }: { product?: Product
         </button>
         {product && (
           <button type="button" onClick={handleDelete}
-            className="ml-auto flex items-center gap-2 text-sm text-red-500 hover:text-red-700 transition-colors">
+            className="ml-auto flex items-center gap-2 text-sm text-red-600 hover:text-red-800 transition-colors">
             <Trash2 size={15} />
             Usuń produkt
           </button>

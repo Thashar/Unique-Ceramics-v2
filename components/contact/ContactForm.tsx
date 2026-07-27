@@ -150,11 +150,11 @@ export default function ContactForm({ workshopOptions = [] }: Props) {
 
       {status === "success" && (
         <p className="text-sm text-center text-clay">
-          Wiadomość wysłana — odpiszę w ciągu 1–2 dni roboczych.
+          Wiadomość wysłana – odpiszę w ciągu 1–2 dni roboczych.
         </p>
       )}
       {status === "error" && (
-        <p className="text-sm text-center text-red-500">
+        <p className="text-sm text-center text-red-700">
           Coś poszło nie tak. Spróbuj ponownie lub napisz bezpośrednio na e-mail.
         </p>
       )}

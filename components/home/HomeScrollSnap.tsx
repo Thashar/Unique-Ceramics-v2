@@ -27,7 +27,7 @@ export default function HomeScrollSnap() {
     let touchStartScrollY = 0;
     let touchIsVertical: boolean | null = null;
 
-    // Sekcje są statyczne po zamontowaniu — materializujemy raz, bez DOM query na każdy event.
+    // Sekcje są statyczne po zamontowaniu – materializujemy raz, bez DOM query na każdy event.
     let sections: HTMLElement[] = Array.from(document.querySelectorAll<HTMLElement>("[data-snap]"));
 
     function getSectionTop(section: HTMLElement): number {
@@ -45,12 +45,12 @@ export default function HomeScrollSnap() {
     }
 
     // Poniżej breakpointu `lg` stopka ma `min-h-svh` (może być wyższa od ekranu),
-    // od `lg` w górę jest dokładnie na jeden ekran — swobodne przewijanie
+    // od `lg` w górę jest dokładnie na jeden ekran – swobodne przewijanie
     // dotyczy więc tylko urządzeń mobilnych.
     const mobileMq = window.matchMedia("(max-width: 1023px)");
 
     // Sekcja przewijana swobodnie (bez przyciągania w środku): każda wyższa
-    // od viewportu oraz — na mobile — stopka oznaczona `data-snap-free`, nawet
+    // od viewportu oraz – na mobile – stopka oznaczona `data-snap-free`, nawet
     // gdy akurat mieści się na ekranie. Przyciąganie działa tylko na jej
     // krawędziach, czyli płynny ruch pojawia się dopiero przy wyjściu z sekcji.
     function isFree(section: HTMLElement): boolean {
@@ -180,7 +180,7 @@ export default function HomeScrollSnap() {
       sections = Array.from(document.querySelectorAll<HTMLElement>("[data-snap]"));
       if (isScrolling) return;
       const idx = getIndexByScrollY(window.scrollY);
-      // Nie wyrywaj użytkownika ze swobodnie przewijanej sekcji (stopka) —
+      // Nie wyrywaj użytkownika ze swobodnie przewijanej sekcji (stopka) –
       // na mobile resize odpala też samo zwijanie paska adresu.
       if (isFree(sections[idx])) return;
       window.scrollTo({ top: getSectionTop(sections[idx]), behavior: "instant" });

@@ -39,7 +39,7 @@ export default function StripeResumeButton({ orderId }: { orderId: string }) {
         <CreditCard size={14} strokeWidth={1.5} />
         {loading ? "Przekierowanie..." : "Dokończ płatność"}
       </button>
-      {error && <p className="text-xs text-red-500 text-center">{error}</p>}
+      {error && <p className="text-xs text-red-700 text-center">{error}</p>}
     </div>
   );
 }

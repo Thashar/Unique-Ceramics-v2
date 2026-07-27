@@ -1,4 +1,4 @@
-﻿// Treść zmienia się rzadko — ISR; zapis ustawień w adminie odświeża cache
+﻿// Treść zmienia się rzadko – ISR; zapis ustawień w adminie odświeża cache
 export const revalidate = 300;
 
 import type { Metadata } from "next";

@@ -50,7 +50,7 @@ async function sendAdminNotification(params: {
   const shippingLabel = SHIPPING_LABEL[shippingMethod ?? "courier"] ?? shippingMethod ?? "Kurier";
 
   const rows = items
-    .map((i) => `${i.name} ×${i.quantity} — ${(i.price * i.quantity).toFixed(2)} zł`)
+    .map((i) => `${i.name} ×${i.quantity} – ${(i.price * i.quantity).toFixed(2)} zł`)
     .join("\n");
 
   const adminEmail = process.env.RESEND_FROM_EMAIL?.match(/<(.+)>/)?.[1]
@@ -64,14 +64,14 @@ async function sendAdminNotification(params: {
     await resend.emails.send({
       from: process.env.RESEND_FROM_EMAIL ?? "Unique Ceramics <onboarding@resend.dev>",
       to: adminEmail,
-      subject: `🛒 Nowe zamówienie #${orderNumber} — ${firstName} ${lastName} — ${total.toFixed(2)} zł`,
+      subject: `🛒 Nowe zamówienie #${orderNumber} – ${firstName} ${lastName} – ${total.toFixed(2)} zł`,
       text: [
         `Nowe zamówienie #${orderNumber}`,
         ...(vacationNote ? [``, `⚠️ URLOP: ${vacationNote}`] : []),
         ``,
         `Klient: ${firstName} ${lastName}`,
         `E-mail: ${email}`,
-        `Telefon: ${phone || "—"}`,
+        `Telefon: ${phone || "–"}`,
         `Adres: ${shippingMethod === "pickup" ? "Odbiór osobisty" : `${street}, ${postcode} ${city}`}`,
         ``,
         `Metoda wysyłki: ${shippingLabel}${shippingMethod === "parcel_locker" && parcelLockerCode ? ` (${parcelLockerCode})` : ""}`,
@@ -126,7 +126,7 @@ function buildTransferEmail(params: {
 
   const shippingLabel = SHIPPING_LABEL[shippingMethod ?? "courier"] ?? "Kurier";
   const shippingInfo = shippingMethod === "parcel_locker" && parcelLockerCode
-    ? `${shippingLabel} — paczkomat <strong style="font-family:monospace;">${parcelLockerCode}</strong>`
+    ? `${shippingLabel} – paczkomat <strong style="font-family:monospace;">${parcelLockerCode}</strong>`
     : shippingLabel;
 
   const itemsHtml = items
@@ -157,17 +157,17 @@ function buildTransferEmail(params: {
       </p>
       ${vacationNote ? `
       <div style="background:#fff8f0;border-left:3px solid #c87941;padding:16px 20px;margin:0 0 24px;">
-        <p style="margin:0 0 4px;font-family:Arial,sans-serif;font-size:11px;color:#9a7a6a;letter-spacing:0.15em;text-transform:uppercase;">Informacja o realizacji</p>
+        <p style="margin:0 0 4px;font-family:Arial,sans-serif;font-size:11px;color:#6b5748;letter-spacing:0.15em;text-transform:uppercase;">Informacja o realizacji</p>
         <p style="margin:0;font-size:14px;color:#7a4a1e;line-height:1.5;">${vacationNote}</p>
       </div>` : ""}
 
       <div style="background:#f5f0eb;padding:12px 24px;margin:0 0 20px;font-size:13px;color:#4a3728;">
-        <span style="color:#9a7a6a;font-family:Arial,sans-serif;font-size:11px;text-transform:uppercase;letter-spacing:0.12em;">Metoda wysyłki: </span>
+        <span style="color:#6b5748;font-family:Arial,sans-serif;font-size:11px;text-transform:uppercase;letter-spacing:0.12em;">Metoda wysyłki: </span>
         ${shippingInfo}
       </div>
 
       <div style="background:#f5f0eb;border-left:3px solid #c87941;padding:20px 24px;margin:0 0 ${blikPhone ? "16px" : "28px"};">
-        <p style="margin:0 0 6px;font-family:Arial,sans-serif;font-size:11px;color:#9a7a6a;letter-spacing:0.15em;text-transform:uppercase;">Przelew bankowy</p>
+        <p style="margin:0 0 6px;font-family:Arial,sans-serif;font-size:11px;color:#6b5748;letter-spacing:0.15em;text-transform:uppercase;">Przelew bankowy</p>
         ${bankAccountName ? `<p style="margin:4px 0;font-size:14px;color:#3d2b1f;"><strong>Odbiorca:</strong> ${bankAccountName}</p>` : ""}
         ${bankAccountNumber ? `<p style="margin:4px 0;font-size:14px;color:#3d2b1f;"><strong>Numer konta:</strong> <span style="font-family:monospace;">${bankAccountNumber}</span></p>` : ""}
         ${bankName ? `<p style="margin:4px 0;font-size:14px;color:#3d2b1f;"><strong>Bank:</strong> ${bankName}</p>` : ""}
@@ -176,25 +176,25 @@ function buildTransferEmail(params: {
       </div>
       ${blikPhone ? `
       <div style="background:#f5f0eb;border-left:3px solid #c87941;padding:20px 24px;margin:0 0 28px;">
-        <p style="margin:0 0 6px;font-family:Arial,sans-serif;font-size:11px;color:#9a7a6a;letter-spacing:0.15em;text-transform:uppercase;">Przelew BLIK na telefon</p>
+        <p style="margin:0 0 6px;font-family:Arial,sans-serif;font-size:11px;color:#6b5748;letter-spacing:0.15em;text-transform:uppercase;">Przelew BLIK na telefon</p>
         <p style="margin:4px 0;font-size:14px;color:#3d2b1f;"><strong>Numer telefonu:</strong> <span style="font-family:monospace;">${blikPhone}</span></p>
         <p style="margin:4px 0;font-size:14px;color:#3d2b1f;"><strong>Kwota:</strong> ${total.toFixed(2).replace(".", ",")} zł</p>
-        <p style="margin:8px 0 0;font-size:12px;color:#9a7a6a;">W tytule przelewu BLIK wpisz: ${transferTitle} #${orderNumber}</p>
+        <p style="margin:8px 0 0;font-size:12px;color:#6b5748;">W tytule przelewu BLIK wpisz: ${transferTitle} #${orderNumber}</p>
       </div>` : ""}
 
       <table style="width:100%;border-collapse:collapse;margin:0 0 8px;font-size:14px;color:#4a3728;">
         <thead>
           <tr style="background:#f5f0eb;">
-            <th style="padding:8px 12px;text-align:left;font-weight:normal;font-family:Arial,sans-serif;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#9a7a6a;">Produkt</th>
-            <th style="padding:8px 12px;text-align:center;font-weight:normal;font-family:Arial,sans-serif;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#9a7a6a;">Ilość</th>
-            <th style="padding:8px 12px;text-align:right;font-weight:normal;font-family:Arial,sans-serif;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#9a7a6a;">Cena</th>
+            <th style="padding:8px 12px;text-align:left;font-weight:normal;font-family:Arial,sans-serif;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#6b5748;">Produkt</th>
+            <th style="padding:8px 12px;text-align:center;font-weight:normal;font-family:Arial,sans-serif;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#6b5748;">Ilość</th>
+            <th style="padding:8px 12px;text-align:right;font-weight:normal;font-family:Arial,sans-serif;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#6b5748;">Cena</th>
           </tr>
         </thead>
         <tbody>${itemsHtml}</tbody>
       </table>
       <table style="width:100%;font-size:14px;color:#4a3728;">
         <tr>
-          <td style="padding:6px 12px;text-align:right;color:#9a7a6a;">Wysyłka</td>
+          <td style="padding:6px 12px;text-align:right;color:#6b5748;">Wysyłka</td>
           <td style="padding:6px 12px;text-align:right;width:120px;">${shippingCost === 0 ? "Gratis" : `${shippingCost.toFixed(2).replace(".", ",")} zł`}</td>
         </tr>
         <tr style="border-top:2px solid #e8e0d6;">
@@ -211,7 +211,7 @@ function buildTransferEmail(params: {
       </div>
     </div>
     <div style="background:#f5f0eb;padding:20px 40px;text-align:center;">
-      <p style="color:#9a7a6a;font-size:12px;margin:0;">© ${new Date().getFullYear()} Unique Ceramics · ręcznie tworzone z sercem</p>
+      <p style="color:#6b5748;font-size:12px;margin:0;">© ${new Date().getFullYear()} Unique Ceramics · ręcznie tworzone z sercem</p>
     </div>
   </div>
 </body>
@@ -342,7 +342,7 @@ export async function POST(req: Request) {
     }
   }
 
-  // Kwoty liczone po stronie serwera — nie ufamy wartościom z klienta
+  // Kwoty liczone po stronie serwera – nie ufamy wartościom z klienta
   const shippingSettings = await getSettings([
     "shipping_cost",
     "shipping_cost_parcel_locker",
@@ -355,7 +355,7 @@ export async function POST(req: Request) {
   const shippingCostCourier = Number(shippingSettings.shipping_cost) || 18;
   const shippingCostParcel = Number(shippingSettings.shipping_cost_parcel_locker) || 18;
 
-  // Urlop — wylicz notatkę raz, użyj w obu mailach
+  // Urlop – wylicz notatkę raz, użyj w obu mailach
   let vacationNote: string | undefined;
   if (shippingSettings.vacation_enabled === "true") {
     const customMsg = shippingSettings.vacation_message;
@@ -378,7 +378,7 @@ export async function POST(req: Request) {
   const freeEnabled = shippingSettings.shipping_free_enabled === "true";
   const freeFrom = Number(shippingSettings.shipping_free_from) || 300;
 
-  // Kwoty zaokrąglane do groszy — unikamy artefaktów arytmetyki float
+  // Kwoty zaokrąglane do groszy – unikamy artefaktów arytmetyki float
   const subtotal = Math.round(
     (items as { productId: string; quantity: number }[]).reduce((sum, item) => {
       return sum + productMap.get(item.productId)!.price * item.quantity;
@@ -394,7 +394,7 @@ export async function POST(req: Request) {
   const typedItems = items as { productId: string; quantity: number }[];
 
   // Atomowo: dekrementacja magazynu + utworzenie zamówienia.
-  // Warunek stock >= quantity wykrywa wyścig równoległych zakupów —
+  // Warunek stock >= quantity wykrywa wyścig równoległych zakupów –
   // przy braku stanu cała transakcja jest wycofywana.
   const OUT_OF_STOCK = "OUT_OF_STOCK";
   let order;
@@ -453,7 +453,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Błąd tworzenia zamówienia" }, { status: 500 });
   }
 
-  // Powiadomienie dla właściciela sklepu — używamy zweryfikowanych danych z serwera
+  // Powiadomienie dla właściciela sklepu – używamy zweryfikowanych danych z serwera
   const orderNumber = order.id.slice(-8).toUpperCase();
   const verifiedItems = typedItems.map((item) => {
     const product = productMap.get(item.productId)!;
@@ -467,7 +467,7 @@ export async function POST(req: Request) {
     parcelLockerCode: shippingMethod === "parcel_locker" ? String(parcelLockerCode ?? "").trim() : null,
   });
 
-  // Stripe — create Checkout session and redirect
+  // Stripe – create Checkout session and redirect
   if (paymentMethod === "stripe") {
     const stripeKey = process.env.STRIPE_SECRET_KEY;
     if (!stripeKey) {
@@ -529,7 +529,7 @@ export async function POST(req: Request) {
             process.env.RESEND_FROM_EMAIL ??
             "Unique Ceramics <onboarding@resend.dev>",
           to: email,
-          subject: `Zamówienie #${orderNumber} — dane do przelewu`,
+          subject: `Zamówienie #${orderNumber} – dane do przelewu`,
           html: buildTransferEmail({
             orderNumber,
             firstName,

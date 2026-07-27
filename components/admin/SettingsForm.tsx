@@ -112,7 +112,7 @@ function Field({ label, value, setter, type = "text", placeholder, mono }: {
   );
 }
 
-/** Pole wieloliniowe — Enter wstawia nowy wiersz zachowywany przy renderze. */
+/** Pole wieloliniowe – Enter wstawia nowy wiersz zachowywany przy renderze. */
 function MultilineField({ label, value, setter, placeholder, rows = 3 }: {
   label: string;
   value: string;
@@ -314,7 +314,7 @@ export default function SettingsForm({ section, initial }: Props) {
           <p className="text-xs opacity-90 break-words">{errMsg}</p>
           <button
             onClick={() => setErrMsg("")}
-            className="mt-2 text-xs underline opacity-70 hover:opacity-100"
+            className="mt-2 text-xs underline hover:opacity-80"
           >
             Zamknij
           </button>
@@ -323,11 +323,11 @@ export default function SettingsForm({ section, initial }: Props) {
 
       {section === "strona_glowna" && (
         <div className="max-w-2xl space-y-8">
-          <h2 className="font-serif text-2xl text-espresso">Strona główna — zdjęcia</h2>
+          <h2 className="font-serif text-2xl text-espresso">Strona główna – zdjęcia</h2>
 
           <div className="space-y-4">
             <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/80">Sekcja hero (nagłówek)</h3>
-            <p className="text-xs text-charcoal/80">Pierwsze zdjęcie widoczne po wejściu na stronę — duże, pełnoekranowe tło.</p>
+            <p className="text-xs text-charcoal/80">Pierwsze zdjęcie widoczne po wejściu na stronę – duże, pełnoekranowe tło.</p>
             <ImageUploader
               currentUrl={homeHeroImage}
               onUploaded={(url) => setHomeHeroImage(url)}
@@ -342,7 +342,7 @@ export default function SettingsForm({ section, initial }: Props) {
 
           <div className="border-t border-sand pt-6 space-y-4">
             <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/80">Sekcja „O mnie&rdquo;</h3>
-            <p className="text-xs text-charcoal/80">Tło sekcji z historią — widoczne za tekstem na stronie głównej.</p>
+            <p className="text-xs text-charcoal/80">Tło sekcji z historią – widoczne za tekstem na stronie głównej.</p>
             <ImageUploader
               currentUrl={homeAboutImage}
               onUploaded={(url) => setHomeAboutImage(url)}
@@ -357,7 +357,7 @@ export default function SettingsForm({ section, initial }: Props) {
 
           <div className="border-t border-sand pt-6 space-y-4">
             <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/80">Sekcja „Warsztaty&rdquo;</h3>
-            <p className="text-xs text-charcoal/80">Tło sekcji warsztatów — widoczne za tekstem na stronie głównej.</p>
+            <p className="text-xs text-charcoal/80">Tło sekcji warsztatów – widoczne za tekstem na stronie głównej.</p>
             <ImageUploader
               currentUrl={homeWorkshopsImage}
               onUploaded={(url) => setHomeWorkshopsImage(url)}
@@ -417,7 +417,7 @@ export default function SettingsForm({ section, initial }: Props) {
 
           <div className="border-t border-sand pt-6 space-y-4">
             <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/80">Zdjęcie przy opisie (prawa kolumna)</h3>
-            <p className="text-xs text-charcoal/80">Jeżeli puste — kolumna zdjęcia znika, tekst zajmuje całą szerokość.</p>
+            <p className="text-xs text-charcoal/80">Jeżeli puste – kolumna zdjęcia znika, tekst zajmuje całą szerokość.</p>
             <ImageUploader
               currentUrl={aboutContentImage}
               onUploaded={(url) => setAboutContentImage(url)}
@@ -427,7 +427,7 @@ export default function SettingsForm({ section, initial }: Props) {
           </div>
 
           <div className="border-t border-sand pt-6">
-            <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-3">Treść — historia</label>
+            <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-3">Treść – historia</label>
             <RichEditor value={aboutStory} onChange={setAboutStory} />
           </div>
 
@@ -481,7 +481,7 @@ export default function SettingsForm({ section, initial }: Props) {
 
           <div className="border-t border-sand pt-6 space-y-4">
             <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/80">Zdjęcie przy opisie (prawa kolumna)</h3>
-            <p className="text-xs text-charcoal/80">Jeżeli puste — kolumna zdjęcia znika, tekst zajmuje całą szerokość.</p>
+            <p className="text-xs text-charcoal/80">Jeżeli puste – kolumna zdjęcia znika, tekst zajmuje całą szerokość.</p>
             <ImageUploader
               currentUrl={workshopsContentImage}
               onUploaded={(url) => setWorkshopsContentImage(url)}
@@ -573,7 +573,7 @@ export default function SettingsForm({ section, initial }: Props) {
           />
           <p className="text-xs text-charcoal/80">
             Adres i godziny wyświetlają się w kolumnie &bdquo;Kontakt&rdquo; w stopce oraz na stronie /kontakt.
-            Każdy <strong>Enter</strong> łamie wiersz dokładnie w tym miejscu — przecinek też rozdziela wpisy,
+            Każdy <strong>Enter</strong> łamie wiersz dokładnie w tym miejscu – przecinek też rozdziela wpisy,
             ale wtedy o złamaniu decyduje szerokość ekranu.
             Godziny trafiają do danych strukturalnych (SEO), więc zachowaj format
             <span className="font-mono"> Skrót dni HH:MM–HH:MM</span> w każdym wierszu,
@@ -605,8 +605,8 @@ export default function SettingsForm({ section, initial }: Props) {
             <span className="text-xs tracking-widest uppercase text-charcoal/80">Darmowa wysyłka</span>
             <Toggle checked={freeEnabled} onChange={setFreeEnabled} />
           </div>
-          <Field label="Koszt wysyłki — Kurier (zł)" value={shippingCost} setter={setShippingCost} type="number" />
-          <Field label="Koszt wysyłki — Paczkomat InPost (zł)" value={shippingCostParcel} setter={setShippingCostParcel} type="number" />
+          <Field label="Koszt wysyłki – Kurier (zł)" value={shippingCost} setter={setShippingCost} type="number" />
+          <Field label="Koszt wysyłki – Paczkomat InPost (zł)" value={shippingCostParcel} setter={setShippingCostParcel} type="number" />
           {freeEnabled && (
             <Field label="Darmowa wysyłka od (zł)" value={freeFrom} setter={setFreeFrom} type="number" />
           )}
@@ -689,7 +689,7 @@ export default function SettingsForm({ section, initial }: Props) {
                   className="w-full bg-warm-white border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors"
                 />
                 <p className="text-[11px] text-charcoal/80 mt-1">
-                  Jeśli puste — komunikat nie będzie zawierał daty.
+                  Jeśli puste – komunikat nie będzie zawierał daty.
                 </p>
               </div>
 
@@ -701,11 +701,11 @@ export default function SettingsForm({ section, initial }: Props) {
                   type="text"
                   value={vacationMessage}
                   onChange={(e) => setVacationMessage(e.target.value)}
-                  placeholder="Jestem na urlopie — zamówienia będą realizowane od..."
+                  placeholder="Jestem na urlopie – zamówienia będą realizowane od..."
                   className="w-full bg-warm-white border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors"
                 />
                 <p className="text-[11px] text-charcoal/80 mt-1">
-                  Jeśli puste — komunikat zostanie wygenerowany automatycznie na podstawie daty.
+                  Jeśli puste – komunikat zostanie wygenerowany automatycznie na podstawie daty.
                 </p>
               </div>
             </>
@@ -730,7 +730,7 @@ export default function SettingsForm({ section, initial }: Props) {
             <div>
               <span className="text-xs tracking-widest uppercase text-charcoal/80">Powiadomienia e-mail</span>
               <p className="text-[11px] text-charcoal/80 mt-0.5">
-                Gdy włączone — przy każdym nowym zamówieniu indywidualnym
+                Gdy włączone – przy każdym nowym zamówieniu indywidualnym
                 zostanie wysłany e-mail na adres kontaktowy sklepu.
               </p>
             </div>
@@ -755,7 +755,7 @@ export default function SettingsForm({ section, initial }: Props) {
           </div>
           <div className="p-4 bg-cream border border-sand text-xs text-charcoal/80 leading-relaxed space-y-2">
             <p className="font-medium text-charcoal/80">Konfiguracja kluczy API</p>
-            <p>Klucze Stripe ustawiasz w pliku <span className="font-mono">.env.local</span> — nie są przechowywane w bazie danych:</p>
+            <p>Klucze Stripe ustawiasz w pliku <span className="font-mono">.env.local</span> – nie są przechowywane w bazie danych:</p>
             <pre className="font-mono text-[11px] bg-warm-white border border-sand p-3 leading-5 overflow-x-auto">{`STRIPE_SECRET_KEY=sk_live_...
 STRIPE_WEBHOOK_SECRET=whsec_...`}</pre>
             <p>Klucze znajdziesz w panelu Stripe → Developers → API keys. Webhook dodaj pod adresem <span className="font-mono">/api/stripe/webhook</span> z eventem <span className="font-mono">checkout.session.completed</span>.</p>

@@ -1,4 +1,4 @@
-﻿// Treść zmienia się rzadko — ISR; zapis ustawień w adminie odświeża cache
+﻿// Treść zmienia się rzadko – ISR; zapis ustawień w adminie odświeża cache
 export const revalidate = 300;
 
 import type { Metadata } from "next";
@@ -14,10 +14,10 @@ import { hexToRgba } from "@/lib/overlay";
 export const metadata: Metadata = {
   title: "O mnie",
   description:
-    "Poznaj historię Unique Ceramics — pracowni ceramicznej z okolic Gliwic. Ręcznie robiona ceramika tworzona z pasji do gliny na Śląsku.",
+    "Poznaj historię Unique Ceramics – pracowni ceramicznej z okolic Gliwic. Ręcznie robiona ceramika tworzona z pasji do gliny na Śląsku.",
   alternates: { canonical: "https://uniqueceramics.pl/o-mnie" },
   openGraph: {
-    title: "O mnie — Unique Ceramics",
+    title: "O mnie – Unique Ceramics",
     description:
       "Poznaj historię pracowni ceramicznej Unique Ceramics z okolic Gliwic. Ręcznie robiona ceramika tworzona z pasji do gliny.",
     url: "https://uniqueceramics.pl/o-mnie",
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
         url: "/images/OpenGraph.webp",
         width: 1200,
         height: 630,
-        alt: "Pracownia ceramiczna Unique Ceramics — Gliwice",
+        alt: "Pracownia ceramiczna Unique Ceramics – Gliwice",
       },
     ],
   },
@@ -42,7 +42,7 @@ export default async function AboutPage() {
   ]);
   const heroImage = s.about_hero_image;
   const heroPos = s.about_hero_position || "50% 50%";
-  // Minimum 30vh — pilnuje też wartości zapisanych zanim suwak dostał ten próg
+  // Minimum 30vh – pilnuje też wartości zapisanych zanim suwak dostał ten próg
   const heroHeight = Math.max(30, parseInt(s.about_hero_height) || 50);
   const overlayBg = hexToRgba(s.about_hero_overlay_color, s.about_hero_overlay_opacity);
   const contentImage = s.about_content_image;
@@ -112,7 +112,7 @@ export default async function AboutPage() {
               </div>
             </div>
 
-            {/* Sidebar ze zdjęciem — widoczny tylko gdy ustawione */}
+            {/* Sidebar ze zdjęciem – widoczny tylko gdy ustawione */}
             {contentImage && (
               <div className="lg:col-span-5">
                 <div className="relative aspect-[3/4] overflow-hidden rounded-sm">
@@ -137,8 +137,8 @@ export default async function AboutPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
               {[
                 { title: "Ręcznie", text: "Każdy przedmiot tworzę osobiście. Nie korzystam z produkcji seryjnej ani odlewów." },
-                { title: "Z uwagą", text: "Dbam o każdy detal — od kształtu, przez glazurę, aż po opakowanie." },
-                { title: "Z pasją", text: "Ceramika to nie tylko zawód — to sposób, w jaki postrzegam i tworzę piękno." },
+                { title: "Z uwagą", text: "Dbam o każdy detal – od kształtu, przez glazurę, aż po opakowanie." },
+                { title: "Z pasją", text: "Ceramika to nie tylko zawód – to sposób, w jaki postrzegam i tworzę piękno." },
               ].map(({ title, text }) => (
                 <div key={title} className="text-center">
                   <h3 className="font-serif text-2xl text-espresso mb-4">{title}</h3>

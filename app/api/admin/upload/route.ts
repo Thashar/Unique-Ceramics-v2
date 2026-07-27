@@ -36,7 +36,7 @@ export async function POST(req: Request) {
   const bytes = await file.arrayBuffer();
   const buffer = Buffer.from(bytes);
 
-  // Weryfikacja magic bytes — nie ufamy nagłówkowi Content-Type z klienta
+  // Weryfikacja magic bytes – nie ufamy nagłówkowi Content-Type z klienta
   const isJpeg = buffer[0] === 0xff && buffer[1] === 0xd8;
   const isPng = buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47;
   const isWebp = buffer.length > 11 && buffer.toString("ascii", 0, 4) === "RIFF" && buffer.toString("ascii", 8, 12) === "WEBP";
@@ -63,10 +63,10 @@ export async function POST(req: Request) {
 
   const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.webp`;
 
-  // WAŻNE: nie przekazuj Buffera bezpośrednio do `upload()` — supabase-js wysyła go
+  // WAŻNE: nie przekazuj Buffera bezpośrednio do `upload()` – supabase-js wysyła go
   // wtedy jako surowe ciało żądania i w środowisku serverless bajty potrafią przejść
   // przez konwersję na tekst UTF-8 (każdy bajt spoza ASCII → U+FFFD), przez co plik
-  // w Storage jest uszkodzony. Blob wymusza multipart/form-data — binarnie bezpieczny.
+  // w Storage jest uszkodzony. Blob wymusza multipart/form-data – binarnie bezpieczny.
   const blob = new Blob([new Uint8Array(webpBuffer)], { type: "image/webp" });
 
   const { error } = await supabase.storage
@@ -78,7 +78,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Nie udało się zapisać pliku." }, { status: 500 });
   }
 
-  // Kontrola spójności — gdyby transport znów uszkodził bajty, rozmiar się nie zgodzi.
+  // Kontrola spójności – gdyby transport znów uszkodził bajty, rozmiar się nie zgodzi.
   // Lepiej odrzucić upload niż zapisać w ustawieniach link do zepsutego zdjęcia.
   const { data: info } = await supabase.storage.from("products").info(filename);
   if (info && typeof info.size === "number" && info.size !== webpBuffer.byteLength) {
@@ -87,7 +87,7 @@ export async function POST(req: Request) {
     );
     await supabase.storage.from("products").remove([filename]);
     return NextResponse.json(
-      { error: "Plik zapisał się uszkodzony — spróbuj ponownie." },
+      { error: "Plik zapisał się uszkodzony – spróbuj ponownie." },
       { status: 500 }
     );
   }

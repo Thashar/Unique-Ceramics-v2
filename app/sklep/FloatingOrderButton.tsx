@@ -14,7 +14,7 @@ const REACH = 4.81; // długość smugi = zasięg (px)
 
 // Cienka smuga "rozbryzgu" od czubka wysuniętego palca wskazującego.
 //
-// Obrót jest STATYCZNY (na wrapperze, pivot w czubku palca) — kierunek smugi
+// Obrót jest STATYCZNY (na wrapperze, pivot w czubku palca) – kierunek smugi
 // jest stały, brak animacji obrotu = brak „przekręcania" i stanów pośrednich.
 // Wewnętrzny pasek animuje tylko wzdłuż własnej (poziomej) osi:
 //   • 0.22→0.31  tworzenie OD PALCA na zewnątrz: lewy (bliższy) koniec stoi przy
@@ -76,7 +76,7 @@ function HandIcon() {
       <rect x="6" y="9" width="13" height="12" rx="4.5" />
       {/* kciuk (odchylony w bok) */}
       <rect x="3" y="9.5" width="3" height="7.5" rx="1.5" transform="rotate(-32 4.5 13)" />
-      {/* palec wskazujący — wysunięty */}
+      {/* palec wskazujący – wysunięty */}
       <rect x="7" y="0" width="3.4" height="14" rx="1.7" />
       {/* środkowy */}
       <rect x="10.6" y="5" width="3.4" height="10" rx="1.7" />

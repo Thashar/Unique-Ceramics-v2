@@ -30,11 +30,11 @@ export default function FooterMap() {
       className="w-full h-full flex flex-col items-center justify-center gap-3 bg-espresso/40 hover:bg-espresso/60 transition-colors group"
       aria-label="Kliknij aby załadować mapę Google (wymaga zgody na cookies)"
     >
-      <MapPin size={24} strokeWidth={1.5} className="text-sand/40 group-hover:text-terracotta transition-colors" />
-      <span className="text-xs text-sand/50 group-hover:text-sand/80 text-center leading-relaxed transition-colors">
+      <MapPin size={24} strokeWidth={1.5} className="text-sand/60 group-hover:text-terracotta transition-colors" />
+      <span className="text-xs text-sand/70 group-hover:text-sand text-center leading-relaxed transition-colors">
         Kliknij, aby załadować mapę
         <br />
-        <span className="text-[10px] text-sand/30">(zgoda na cookies Google)</span>
+        <span className="text-[10px] text-sand/70">(zgoda na cookies Google)</span>
       </span>
     </button>
   );

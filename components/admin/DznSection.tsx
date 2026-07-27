@@ -71,7 +71,7 @@ export default function DznSection({
       setEditing(false);
       setTimeout(() => setSaved(false), 3000);
     } catch {
-      setError("Nie udało się zapisać — spróbuj ponownie.");
+      setError("Nie udało się zapisać – spróbuj ponownie.");
     } finally {
       setSaving(false);
     }
@@ -92,7 +92,7 @@ export default function DznSection({
 
         <div className="flex-1 min-w-0">
           <h2 className="font-serif text-lg text-espresso leading-tight">
-            Działalność nierejestrowana — {currentYear}
+            Działalność nierejestrowana – {currentYear}
           </h2>
 
           {/* Edytowalne minimalne wynagrodzenie */}
@@ -134,12 +134,12 @@ export default function DznSection({
               >
                 <span className="tabular-nums">{minWage.toLocaleString("pl-PL")} zł</span>
                 <Edit2 size={11} className="text-charcoal/80" />
-                {saved && <Check size={11} className="text-green-600 ml-0.5" />}
+                {saved && <Check size={11} className="text-green-700 ml-0.5" />}
               </button>
             )}
           </div>
 
-          {error && <p className="text-xs text-red-600 mt-1">{error}</p>}
+          {error && <p className="text-xs text-red-700 mt-1">{error}</p>}
 
           <p className="text-xs text-charcoal/80 mt-1">
             Limit kwartalny:{" "}
@@ -174,28 +174,28 @@ export default function DznSection({
                 <div className="flex items-center gap-2.5 flex-wrap">
                   <span
                     className={`text-xs font-semibold tabular-nums ${
-                      isOverRed ? "text-red-600" : isOverAmb ? "text-amber-700" : "text-espresso"
+                      isOverRed ? "text-red-700" : isOverAmb ? "text-amber-700" : "text-espresso"
                     }`}
                   >
                     {label}
                   </span>
                   <span className="text-[11px] text-charcoal/80">{months}</span>
                   {isCurrent && (
-                    <span className="text-[10px] tracking-widest uppercase text-terracotta font-medium">
+                    <span className="text-[10px] tracking-widest uppercase text-clay font-medium">
                       Bieżący
                     </span>
                   )}
                   {isOverRed && (
-                    <AlertTriangle size={13} className="text-red-500 shrink-0" />
+                    <AlertTriangle size={13} className="text-red-700 shrink-0" />
                   )}
                   {!isOverRed && isOverAmb && (
-                    <AlertTriangle size={13} className="text-amber-500 shrink-0" />
+                    <AlertTriangle size={13} className="text-amber-700 shrink-0" />
                   )}
                 </div>
                 <div className="flex items-baseline gap-1.5 shrink-0 ml-2">
                   <span
                     className={`text-sm font-medium tabular-nums ${
-                      isOverRed ? "text-red-600" : isOverAmb ? "text-amber-700" : "text-espresso"
+                      isOverRed ? "text-red-700" : isOverAmb ? "text-amber-700" : "text-espresso"
                     }`}
                   >
                     {fmt(data.rev)} zł
@@ -239,12 +239,12 @@ export default function DznSection({
           art. 5 ustawy z dnia 6 marca 2018 r. Prawo przedsiębiorców (Dz.U. 2018 poz. 646),
           zmieniony ustawą z dnia 25 lipca 2025 r. o ograniczeniu biurokracji i wsparciu
           przedsiębiorczości. Od 1 stycznia 2026 r. limit jest <strong className="font-medium">kwartalny</strong>{" "}
-          (225% min. wynagrodzenia za kwartał kalendarzowy) — miesiące w kwartale można rozliczać
+          (225% min. wynagrodzenia za kwartał kalendarzowy) – miesiące w kwartale można rozliczać
           nierównomiernie.{" "}
           Pomarańczowy = &gt;{Math.round(DZN_WARN_AMB * 100)}% limitu · Czerwony = &gt;{Math.round(DZN_WARN_RED * 100)}% limitu.{" "}
           Uwaga: przepisy liczą{" "}
           <em>przychód należny</em> (wystawione rachunki/faktury), nie tylko wpływy
-          — i obejmuje on <strong className="font-medium">pełną kwotę pobraną od klienta wraz z kosztem
+          – i obejmuje on <strong className="font-medium">pełną kwotę pobraną od klienta wraz z kosztem
           wysyłki</strong>. Skonsultuj z księgowym.
         </p>
       </div>

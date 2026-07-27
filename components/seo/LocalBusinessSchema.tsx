@@ -67,7 +67,7 @@ export default async function LocalBusinessSchema() {
     "@id": `${BASE}/#business`,
     name: "Unique Ceramics",
     description:
-      "Pracownia ceramiki artystycznej tworząca ręcznie robione naczynia użytkowe i dekoracyjne. Kubki, filiżanki, miski, talerze i świeczniki wykonywane z pasją — każdy egzemplarz jest niepowtarzalny.",
+      "Pracownia ceramiki artystycznej tworząca ręcznie robione naczynia użytkowe i dekoracyjne. Kubki, filiżanki, miski, talerze i świeczniki wykonywane z pasją – każdy egzemplarz jest niepowtarzalny.",
     url: BASE,
     logo: `${BASE}/images/logo.webp`,
     image: `${BASE}/images/OpenGraph.webp`,
@@ -90,7 +90,7 @@ export default async function LocalBusinessSchema() {
     priceRange: "$$",
     currenciesAccepted: "PLN",
     paymentAccepted: "Bank Transfer, BLIK",
-    // Pomijamy klucz, gdy godzin nie da się sparsować — lepiej brak danych
+    // Pomijamy klucz, gdy godzin nie da się sparsować – lepiej brak danych
     // niż błędne godziny w wynikach wyszukiwania
     ...(openingHours.length ? { openingHoursSpecification: openingHours } : {}),
     areaServed: AREA_SERVED,

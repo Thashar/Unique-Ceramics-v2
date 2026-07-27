@@ -7,8 +7,8 @@ import { useContacts } from "@/lib/public-contacts";
 
 /**
  * Panel Instagrama w stopce. Na stronie głównej handle przychodzi propsem
- * (jest tam i tak pobierany serwerowo); na pozostałych stronach — gdzie stopka
- * musi być w pełni synchroniczna — bierzemy go ze wspólnego store'u kontaktów.
+ * (jest tam i tak pobierany serwerowo); na pozostałych stronach – gdzie stopka
+ * musi być w pełni synchroniczna – bierzemy go ze wspólnego store'u kontaktów.
  */
 export default function FooterInstagramPanel({ instagram }: { instagram?: string }) {
   const contacts = useContacts();

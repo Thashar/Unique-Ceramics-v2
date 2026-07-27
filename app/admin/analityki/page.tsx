@@ -90,7 +90,7 @@ export default async function AnalitykiPage() {
   const monthStart      = new Date(now.getFullYear(), now.getMonth(), 1);
   const twelveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 11, 1);
 
-  // ── Zamówienia sklepowe — dane miesięczne (ostatnie 12 miesięcy) ──────────
+  // ── Zamówienia sklepowe – dane miesięczne (ostatnie 12 miesięcy) ──────────
   // Tylko opłacone (PAID). Przychód rozpoznawany wg daty wpłaty
   // (paidAt → createdAt jako fallback dla starych zamówień bez paidAt).
   const monthlyRaw = await db.$queryRaw<RawMonthRow[]>`
@@ -111,7 +111,7 @@ export default async function AnalitykiPage() {
     ORDER BY yr, mo
   `.catch(() => [] as RawMonthRow[]);
 
-  // ── Zamówienia indywidualne — dane miesięczne (ostatnie 12 miesięcy) ──────
+  // ── Zamówienia indywidualne – dane miesięczne (ostatnie 12 miesięcy) ──────
   const customMonthlyRaw = await db.$queryRaw<RawMonthRow[]>`
     SELECT
       EXTRACT(YEAR  FROM "createdAt")::int          AS yr,
@@ -176,7 +176,7 @@ export default async function AnalitykiPage() {
     ORDER BY cnt DESC
   `.catch(() => [] as RawGroupRow[]);
 
-  // ── Kwartały — zamówienia sklepowe (tylko PAID, wg daty wpłaty) ────────────
+  // ── Kwartały – zamówienia sklepowe (tylko PAID, wg daty wpłaty) ────────────
   const quarterlyRaw = await db.$queryRaw<RawQuarterRow[]>`
     SELECT
       EXTRACT(QUARTER FROM rec)::int AS q,
@@ -192,8 +192,8 @@ export default async function AnalitykiPage() {
     ORDER BY q
   `.catch(() => [] as RawQuarterRow[]);
 
-  // ── Kwartały — zamówienia indywidualne (PAID lub DONE, z ceną) ───────────
-  // Do limitu działalności nierejestrowanej liczy się przychód należny — wraz z
+  // ── Kwartały – zamówienia indywidualne (PAID lub DONE, z ceną) ───────────
+  // Do limitu działalności nierejestrowanej liczy się przychód należny – wraz z
   // wysyłką pobraną od klienta (zamówienia sklepowe mają ją już w "total").
   const customQuarterlyRaw = await db.$queryRaw<RawQuarterRow[]>`
     SELECT
@@ -322,7 +322,7 @@ export default async function AnalitykiPage() {
   const totalShipping = shippingRaw.reduce((s, r) => s + Number(r.total), 0);
   const totalOrders   = statusRaw.reduce((s, r) => s + Number(r.cnt), 0);
 
-  // ── Działalność nierejestrowana — kwartały (sklep + indywidualne) ─────────
+  // ── Działalność nierejestrowana – kwartały (sklep + indywidualne) ─────────
   const dznMinWageStr = await getSetting("dzn_min_wage").catch(() => "4806");
   const dznMinWage    = Math.max(1000, parseInt(dznMinWageStr || "4806", 10) || 4806);
   const currentQuarter = Math.ceil((now.getMonth() + 1) / 3);
@@ -410,7 +410,7 @@ export default async function AnalitykiPage() {
               <Icon size={17} strokeWidth={1.5} className="text-clay" />
             </div>
             <p className="font-serif text-2xl text-espresso leading-none tabular-nums">{value}</p>
-            <p className="text-[11px] text-terracotta mt-1.5">{sub}</p>
+            <p className="text-[11px] text-clay mt-1.5">{sub}</p>
             <p className="text-[11px] tracking-widest uppercase text-charcoal/80 mt-1.5">{label}</p>
           </div>
         ))}
@@ -418,7 +418,7 @@ export default async function AnalitykiPage() {
 
       {/* ── Wykres miesięczny ──────────────────────────────────────────────── */}
       <div className="bg-cream border border-sand/60 p-6">
-        <h2 className="font-serif text-lg text-espresso mb-1">Przychód i zamówienia — ostatnie 12 miesięcy</h2>
+        <h2 className="font-serif text-lg text-espresso mb-1">Przychód i zamówienia – ostatnie 12 miesięcy</h2>
         <p className="text-xs text-charcoal/80 mb-6">
           Tylko opłacone · przychód rozpoznawany wg daty wpłaty · uwzględnia zamówienia indywidualne (Opłacone/Zrealizowane)
         </p>
@@ -452,7 +452,7 @@ export default async function AnalitykiPage() {
           ))}
         </div>
 
-        {/* Wykres zamówień — linia punktowa */}
+        {/* Wykres zamówień – linia punktowa */}
         <div className="mt-6 pt-5 border-t border-sand">
           <p className="text-xs text-charcoal/80 mb-3 tracking-widest uppercase">Liczba zamówień</p>
           <div className="flex items-end gap-1.5 h-16">
@@ -463,7 +463,7 @@ export default async function AnalitykiPage() {
                   style={{ height: `${(m.cnt / maxCnt) * 100}%` }}
                 />
                 {m.cnt > 0 && (
-                  <span className="absolute -top-4 text-[9px] text-terracotta font-medium">{m.cnt}</span>
+                  <span className="absolute -top-4 text-[9px] text-clay font-medium">{m.cnt}</span>
                 )}
               </div>
             ))}
@@ -641,7 +641,7 @@ export default async function AnalitykiPage() {
 
       {/* ── Roczne podsumowanie finansowe ─────────────────────────────────── */}
       <div className="bg-cream border border-sand/60 p-6">
-        <h2 className="font-serif text-lg text-espresso mb-5">Podsumowanie finansowe — {now.getFullYear()}</h2>
+        <h2 className="font-serif text-lg text-espresso mb-5">Podsumowanie finansowe – {now.getFullYear()}</h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-5">
           {[
             { label: "Przychód brutto",         value: `${fmt(yearRevenue)} zł` },

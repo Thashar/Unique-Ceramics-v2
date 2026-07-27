@@ -47,7 +47,7 @@ async function loadFonts(): Promise<{ regular: Buffer; bold: Buffer } | null> {
       cachedBold    = Buffer.from(await rb.value.arrayBuffer());
       return { regular: cachedRegular, bold: cachedBold };
     }
-  } catch { /* ignoruj — fallback do Helvetica */ }
+  } catch { /* ignoruj – fallback do Helvetica */ }
   fontsFailed = true;
   return null;
 }
@@ -68,7 +68,7 @@ export async function GET(
   _req: Request,
   { params }: { params: Promise<{ year: string; month: string }> },
 ) {
-  // requireAdmin() zwraca null (nie rzuca) dla nie-admina — MUSIMY sprawdzić
+  // requireAdmin() zwraca null (nie rzuca) dla nie-admina – MUSIMY sprawdzić
   // wartość zwracaną. try/catch łapie tylko nieoczekiwany błąd (fail closed).
   let adminSession;
   try {
@@ -91,9 +91,9 @@ export async function GET(
   const periodStart = new Date(yr, mo - 1, 1);
   const periodEnd   = new Date(yr, mo,     1);
 
-  // Zamówienia sklepowe — tylko opłacone (PAID). Przychód rozpoznawany wg daty
+  // Zamówienia sklepowe – tylko opłacone (PAID). Przychód rozpoznawany wg daty
   // wpłaty (paidAt → createdAt jako fallback dla starych zamówień bez paidAt).
-  // COALESCE niewyrażalny w Prisma where — filtrujemy po stronie aplikacji.
+  // COALESCE niewyrażalny w Prisma where – filtrujemy po stronie aplikacji.
   const ordersQuery = db.order.findMany({
     where: {
       status:        { not: "CANCELLED" },
@@ -102,7 +102,7 @@ export async function GET(
     include: { items: true },
   });
 
-  // Zamówienia indywidualne — statusy PAID lub DONE, z podaną ceną
+  // Zamówienia indywidualne – statusy PAID lub DONE, z podaną ceną
   const customOrdersQuery = db.customOrder.findMany({
     where: {
       status:    { in: ["PAID", "DONE"] },
@@ -152,7 +152,7 @@ export async function GET(
   // ── Podatek dochodowy (PIT) ─────────────────────────────────────────────────
   // Podstawa opodatkowania = przychód z produktów. Wysyłka jest kosztem uzyskania
   // przychodu (przychód z wysyłki ≈ koszt nadania), więc nie podlega opodatkowaniu.
-  // Stawka 12% (domyślnie) lub 32% — gdy w panelu analityki zaznaczono podwyższoną
+  // Stawka 12% (domyślnie) lub 32% – gdy w panelu analityki zaznaczono podwyższoną
   // stawkę dla danego miesiąca (klucz Setting: tax_high_{rok}_{miesiac}).
   const taxHigh = (await getSetting(`tax_high_${yr}_${mo}`).catch(() => "false")) === "true";
   const taxRate = taxHigh ? 0.32 : 0.12;
@@ -397,7 +397,7 @@ export async function GET(
     if (order.shippingMethod === "pickup") {
       addressText = "Odbior osobisty\nw pracowni ceramicznej";
     } else if (order.shippingMethod === "parcel_locker") {
-      addressText = `Paczkomat InPost\n${order.parcelLockerCode ?? "—"}`;
+      addressText = `Paczkomat InPost\n${order.parcelLockerCode ?? "–"}`;
     } else {
       addressText = [
         order.street ?? "",
@@ -518,7 +518,7 @@ export async function GET(
       const addressText = [
         co.street ?? "",
         [co.postcode, co.city].filter(Boolean).join(" "),
-      ].filter(Boolean).join("\n") || "—";
+      ].filter(Boolean).join("\n") || "–";
 
       const cells = [
         `IND-${co.orderNumber}\n${statusLabel}`,
@@ -527,8 +527,8 @@ export async function GET(
         co.orderType,
         descText,
         addressText,
-        co.shippingCost != null ? fmtMoney(co.shippingCost) : "—",
-        co.paidAmount   != null ? fmtMoney(co.paidAmount)   : "—",
+        co.shippingCost != null ? fmtMoney(co.shippingCost) : "–",
+        co.paidAmount   != null ? fmtMoney(co.paidAmount)   : "–",
         fmtMoney(co.price ?? 0),
       ];
 

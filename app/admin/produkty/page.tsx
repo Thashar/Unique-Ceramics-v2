@@ -62,7 +62,7 @@ export default async function AdminProductsPage({
         </div>
       ) : (
         <div className="bg-cream border border-sand/60">
-          {/* Nagłówek tabeli — tylko desktop */}
+          {/* Nagłówek tabeli – tylko desktop */}
           <div className="hidden md:grid md:grid-cols-[72px_1fr_120px_96px_100px_72px] text-[11px] tracking-widest uppercase text-charcoal/80 px-4 py-3 border-b border-sand">
             <span>Zdjęcie</span>
             <span>Nazwa</span>
@@ -89,7 +89,7 @@ export default async function AdminProductsPage({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
                     <p className="text-sm font-medium text-espresso truncate">{product.name}</p>
-                    {product.featured && <Star size={11} className="text-terracotta shrink-0 fill-terracotta" />}
+                    {product.featured && <Star size={11} className="text-clay shrink-0 fill-clay" />}
                   </div>
                   <p className="text-xs text-charcoal/80 capitalize">{product.category}</p>
                   <div className="flex items-center justify-between mt-1.5">
@@ -97,7 +97,7 @@ export default async function AdminProductsPage({
                       !product.active
                         ? "bg-charcoal/8 text-charcoal/80"
                         : product.stock === 0
-                        ? "bg-red-50 text-red-600 ring-1 ring-red-200"
+                        ? "bg-red-50 text-red-700 ring-1 ring-red-200"
                         : "bg-green-50 text-green-700 ring-1 ring-green-200"
                     }`}>
                       {!product.active ? "Ukryty" : product.stock === 0 ? "Brak" : `${product.stock} szt.`}
@@ -127,7 +127,7 @@ export default async function AdminProductsPage({
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5">
                     <p className="text-sm font-medium text-espresso truncate">{product.name}</p>
-                    {product.featured && <Star size={11} className="text-terracotta shrink-0 fill-terracotta" />}
+                    {product.featured && <Star size={11} className="text-clay shrink-0 fill-clay" />}
                   </div>
                   <p className="text-xs text-charcoal/80 capitalize mt-0.5">{product.category}</p>
                 </div>
@@ -142,7 +142,7 @@ export default async function AdminProductsPage({
                     !product.active
                       ? "bg-charcoal/8 text-charcoal/80"
                       : product.stock === 0
-                      ? "bg-red-50 text-red-600 ring-1 ring-red-200"
+                      ? "bg-red-50 text-red-700 ring-1 ring-red-200"
                       : "bg-green-50 text-green-700 ring-1 ring-green-200"
                   }`}>
                     {!product.active ? "Ukryty" : product.stock === 0 ? "Brak" : "Aktywny"}

@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { isRateLimited } from "@/lib/rate-limit";
 
-// Eksport danych osobowych konta — prawo dostępu (RODO art. 15) i przenoszenia
+// Eksport danych osobowych konta – prawo dostępu (RODO art. 15) i przenoszenia
 // (art. 20). Zwraca komplet danych powiązanych z kontem jako plik JSON.
 export async function GET() {
   const session = await auth();

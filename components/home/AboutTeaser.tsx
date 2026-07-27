@@ -19,7 +19,7 @@ export default function AboutTeaser({
       data-snap
       data-header-theme="transparent"
     >
-      {/* Tło — takie same jak Warsztaty */}
+      {/* Tło – takie same jak Warsztaty */}
       <div className="absolute inset-0 bg-espresso">
         {aboutImage && (
           <Image
@@ -35,7 +35,7 @@ export default function AboutTeaser({
         <div className="absolute inset-0 bg-gradient-to-r from-espresso/75 via-espresso/35 to-transparent" />
       </div>
 
-      {/* Treść — identyczna struktura jak Hero i Warsztaty */}
+      {/* Treść – identyczna struktura jak Hero i Warsztaty */}
       <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-10 w-full pt-20">
         <div className="max-w-xl">
           <motion.p

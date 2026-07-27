@@ -32,7 +32,7 @@ export default function CategoriesManager({ initialCategories }: Props) {
 
   // ── Desktop drag & drop ────────────────────────────────────────────────────
   const dragIdxRef = useRef<number | null>(null);
-  const [dragIdx, setDragIdx] = useState<number | null>(null); // tylko do renderu — .current nie wolno czytać w JSX
+  const [dragIdx, setDragIdx] = useState<number | null>(null); // tylko do renderu – .current nie wolno czytać w JSX
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
 
   // ── Touch drag & drop (mobile) ─────────────────────────────────────────────
@@ -146,7 +146,7 @@ export default function CategoriesManager({ initialCategories }: Props) {
         showToast("Kolejność zapisana");
       }
     } catch {
-      setError("Błąd sieci — spróbuj ponownie");
+      setError("Błąd sieci – spróbuj ponownie");
     } finally {
       setSavingOrder(false);
     }
@@ -246,13 +246,13 @@ export default function CategoriesManager({ initialCategories }: Props) {
       {error && (
         <div className="mb-4 bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 flex items-center justify-between">
           <span>{error}</span>
-          <button onClick={() => setError("")} className="ml-4 opacity-60 hover:opacity-100"><X size={14} /></button>
+          <button onClick={() => setError("")} className="ml-4 hover:opacity-70"><X size={14} /></button>
         </div>
       )}
 
       {isDefaultFallback && (
         <div className="mb-6 p-4 bg-cream border border-sand text-sm text-charcoal/80 space-y-3">
-          <p>Brak kategorii w bazie danych — sklep wyświetla domyślne. Kliknij poniżej, aby je zapisać i móc edytować.</p>
+          <p>Brak kategorii w bazie danych – sklep wyświetla domyślne. Kliknij poniżej, aby je zapisać i móc edytować.</p>
           <button onClick={seedDefaults} disabled={saving}
             className="bg-clay hover:bg-espresso disabled:opacity-50 text-cream text-xs tracking-widest uppercase px-5 py-2.5 transition-colors">
             {saving ? "Zapisuję..." : "Zainicjuj domyślne kategorie"}
@@ -270,7 +270,7 @@ export default function CategoriesManager({ initialCategories }: Props) {
 
           <div className="border border-sand divide-y divide-sand mb-4">
             {categories.length === 0 && (
-              <p className="px-4 py-6 text-sm text-charcoal/80 text-center">Brak kategorii — dodaj pierwszą poniżej.</p>
+              <p className="px-4 py-6 text-sm text-charcoal/80 text-center">Brak kategorii – dodaj pierwszą poniżej.</p>
             )}
 
             {categories.map((cat, idx) => {
@@ -317,7 +317,7 @@ export default function CategoriesManager({ initialCategories }: Props) {
                         → {autoSlug(editLabel) || cat.slug}
                       </span>
                       <button onClick={() => saveEdit(cat)} disabled={saving}
-                        className="p-1.5 text-green-600 hover:text-green-800 disabled:opacity-40 transition-colors" title="Zapisz">
+                        className="p-1.5 text-green-700 hover:text-green-800 disabled:opacity-40 transition-colors" title="Zapisz">
                         <Check size={16} />
                       </button>
                       <button onClick={cancelEdit}
@@ -341,7 +341,7 @@ export default function CategoriesManager({ initialCategories }: Props) {
                             <Pencil size={14} />
                           </button>
                           <button onClick={() => deleteCategory(cat)}
-                            className="p-1.5 text-charcoal/80 hover:text-red-600 transition-colors" title="Usuń">
+                            className="p-1.5 text-charcoal/80 hover:text-red-700 transition-colors" title="Usuń">
                             <Trash2 size={14} />
                           </button>
                         </>
@@ -355,7 +355,7 @@ export default function CategoriesManager({ initialCategories }: Props) {
 
           {orderDirty && (
             <div className="mb-4 flex items-center gap-3 px-4 py-3 bg-amber-50 border border-amber-200">
-              <p className="text-xs text-amber-700 flex-1">Kolejność zmieniona — zatwierdź, żeby zapisać.</p>
+              <p className="text-xs text-amber-700 flex-1">Kolejność zmieniona – zatwierdź, żeby zapisać.</p>
               <button onClick={saveOrder} disabled={savingOrder}
                 className="flex items-center gap-1.5 bg-clay hover:bg-espresso disabled:opacity-50 text-cream text-xs tracking-widest uppercase px-4 py-2 transition-colors shrink-0">
                 <Check size={12} />
@@ -377,7 +377,7 @@ export default function CategoriesManager({ initialCategories }: Props) {
                   autoFocus
                 />
                 {addLabel && (
-                  <p className="text-xs text-charcoal/80 font-mono pl-1">slug: {autoSlug(addLabel) || "—"}</p>
+                  <p className="text-xs text-charcoal/80 font-mono pl-1">slug: {autoSlug(addLabel) || "–"}</p>
                 )}
               </div>
               <div className="flex gap-3">

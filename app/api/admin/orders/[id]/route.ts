@@ -6,7 +6,7 @@ import { NextResponse } from "next/server";
 const PAYMENT_STATUSES = ["PENDING", "PAID"];
 const SHIPPED_STATUSES = [OrderStatus.SHIPPED, OrderStatus.DELIVERED];
 
-// Liniowy przepływ statusów — każdy można przesunąć tylko o 1 do przodu.
+// Liniowy przepływ statusów – każdy można przesunąć tylko o 1 do przodu.
 const STATUS_FLOW: OrderStatus[] = [
   OrderStatus.PENDING,
   OrderStatus.CONFIRMED,
@@ -81,7 +81,7 @@ async function sendPaymentConfirmationEmail(order: {
     await resend.emails.send({
       from: fromEmail,
       to: order.email,
-      subject: `Zamówienie #${orderNumber} — płatność potwierdzona`,
+      subject: `Zamówienie #${orderNumber} – płatność potwierdzona`,
       html: `
 <!DOCTYPE html>
 <html lang="pl">
@@ -109,22 +109,22 @@ async function sendPaymentConfirmationEmail(order: {
 
       <table style="width:100%;border-collapse:collapse;margin:0 0 24px;font-size:14px;color:#4a3728;border:1px solid #e8dfd0;">
         <tr style="background:#f5f0e8;">
-          <td style="padding:10px 16px;font-family:Arial,sans-serif;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#8b7355;">Numer zamówienia</td>
+          <td style="padding:10px 16px;font-family:Arial,sans-serif;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#6b5748;">Numer zamówienia</td>
           <td style="padding:10px 16px;text-align:right;font-family:monospace;font-weight:bold;">#${orderNumber}</td>
         </tr>
         <tr>
-          <td style="padding:10px 16px;font-family:Arial,sans-serif;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#8b7355;">Kwota</td>
+          <td style="padding:10px 16px;font-family:Arial,sans-serif;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#6b5748;">Kwota</td>
           <td style="padding:10px 16px;text-align:right;font-weight:bold;">${order.total.toFixed(2).replace(".", ",")} zł</td>
         </tr>
       </table>
 
-      <p style="color:#9a8a80;font-size:12px;line-height:1.6;margin:0;">
+      <p style="color:#6b5748;font-size:12px;line-height:1.6;margin:0;">
         W razie pytań odpiszę na tę wiadomość lub skontaktuj się przez formularz kontaktowy.
       </p>
     </div>
 
     <div style="background:#f5f0e8;padding:20px 40px;text-align:center;border-top:1px solid #e8dfd0;">
-      <p style="margin:0;font-family:Arial,sans-serif;font-size:11px;color:#9a8a80;">
+      <p style="margin:0;font-family:Arial,sans-serif;font-size:11px;color:#6b5748;">
         © Unique Ceramics · kontakt@uniqueceramics.pl
       </p>
     </div>
@@ -155,7 +155,7 @@ async function sendCancellationEmail(order: {
     await resend.emails.send({
       from: fromEmail,
       to: order.email,
-      subject: `Zamówienie #${orderNumber} — anulowane`,
+      subject: `Zamówienie #${orderNumber} – anulowane`,
       html: `
 <!DOCTYPE html>
 <html lang="pl">
@@ -178,17 +178,17 @@ async function sendCancellationEmail(order: {
       </div>
 
       <p style="color:#6b5748;font-size:14px;line-height:1.6;margin:0 0 20px;">
-        Jeśli to pomyłka lub masz pytania, odpowiedz na tę wiadomość — chętnie pomogę.
+        Jeśli to pomyłka lub masz pytania, odpowiedz na tę wiadomość – chętnie pomogę.
         Zapraszam do ponownych zakupów w sklepie.
       </p>
 
-      <p style="color:#9a8a80;font-size:12px;line-height:1.6;margin:0;">
-        Jeśli dokonałaś/eś płatności, a zamówienie zostało anulowane przez pomyłkę — skontaktuj się ze mną niezwłocznie.
+      <p style="color:#6b5748;font-size:12px;line-height:1.6;margin:0;">
+        Jeśli dokonałaś/eś płatności, a zamówienie zostało anulowane przez pomyłkę – skontaktuj się ze mną niezwłocznie.
       </p>
     </div>
 
     <div style="background:#f5f0e8;padding:20px 40px;text-align:center;border-top:1px solid #e8dfd0;">
-      <p style="margin:0;font-family:Arial,sans-serif;font-size:11px;color:#9a8a80;">
+      <p style="margin:0;font-family:Arial,sans-serif;font-size:11px;color:#6b5748;">
         © Unique Ceramics · kontakt@uniqueceramics.pl
       </p>
     </div>
@@ -223,7 +223,7 @@ async function sendShippedEmail(order: {
     await resend.emails.send({
       from: fromEmail,
       to: order.email,
-      subject: `Zamówienie #${orderNumber} — przesyłka wysłana!`,
+      subject: `Zamówienie #${orderNumber} – przesyłka wysłana!`,
       html: `
 <!DOCTYPE html>
 <html lang="pl">
@@ -247,11 +247,11 @@ async function sendShippedEmail(order: {
 
       <table style="width:100%;border-collapse:collapse;margin:0 0 24px;font-size:14px;color:#4a3728;border:1px solid #e8dfd0;">
         <tr style="background:#f5f0e8;">
-          <td style="padding:10px 16px;font-family:Arial,sans-serif;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#8b7355;">Dostawca</td>
+          <td style="padding:10px 16px;font-family:Arial,sans-serif;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#6b5748;">Dostawca</td>
           <td style="padding:10px 16px;text-align:right;font-weight:bold;">${carrierLabel}</td>
         </tr>
         <tr>
-          <td style="padding:10px 16px;font-family:Arial,sans-serif;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#8b7355;">Numer listu</td>
+          <td style="padding:10px 16px;font-family:Arial,sans-serif;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#6b5748;">Numer listu</td>
           <td style="padding:10px 16px;text-align:right;font-family:monospace;">${order.trackingNumber}</td>
         </tr>
       </table>
@@ -263,13 +263,13 @@ async function sendShippedEmail(order: {
         </a>
       </div>` : ""}
 
-      <p style="color:#9a8a80;font-size:12px;line-height:1.6;margin:0;">
+      <p style="color:#6b5748;font-size:12px;line-height:1.6;margin:0;">
         Jeśli masz pytania dotyczące przesyłki, odpiszę na tę wiadomość lub skontaktuj się z kurierem podając numer listu.
       </p>
     </div>
 
     <div style="background:#f5f0e8;padding:20px 40px;text-align:center;border-top:1px solid #e8dfd0;">
-      <p style="margin:0;font-family:Arial,sans-serif;font-size:11px;color:#9a8a80;">
+      <p style="margin:0;font-family:Arial,sans-serif;font-size:11px;color:#6b5748;">
         © Unique Ceramics · kontakt@uniqueceramics.pl
       </p>
     </div>
@@ -305,7 +305,7 @@ export async function PATCH(
 
     const updateData: { trackingNumber?: string; trackingCarrier?: string } = {};
     if (body.trackingNumber !== undefined) {
-      // Numer listu trafia do URL śledzenia i maila — ogranicz do bezpiecznych znaków
+      // Numer listu trafia do URL śledzenia i maila – ogranicz do bezpiecznych znaków
       const num = String(body.trackingNumber).trim().slice(0, 64);
       if (num && !/^[A-Za-z0-9-]+$/.test(num)) {
         return NextResponse.json(
@@ -317,7 +317,7 @@ export async function PATCH(
     }
     if (body.trackingCarrier !== undefined) {
       const carrier = String(body.trackingCarrier).trim();
-      // Allowlista przewoźników — chroni budowanie URL śledzenia
+      // Allowlista przewoźników – chroni budowanie URL śledzenia
       if (carrier && !Object.prototype.hasOwnProperty.call(CARRIER_LABELS, carrier)) {
         return NextResponse.json({ error: "Nieprawidłowy dostawca." }, { status: 400 });
       }
@@ -328,7 +328,7 @@ export async function PATCH(
     return NextResponse.json(order);
   }
 
-  // Zmiana samej daty/godziny wpłaty (paidAt) — rozliczenie wg tej daty.
+  // Zmiana samej daty/godziny wpłaty (paidAt) – rozliczenie wg tej daty.
   // (Status zmienia ją w modalu; tutaj edycja w panelu już opłaconego zamówienia.)
   if (body.paidAt !== undefined && body.status === undefined) {
     const existing = await db.order.findUnique({
@@ -402,7 +402,7 @@ export async function PATCH(
   }
   if (!isAllowedTransition(existingOrder.status, body.status)) {
     return NextResponse.json(
-      { error: "Niedozwolona zmiana statusu — status można przesunąć tylko o jeden krok do przodu lub anulować." },
+      { error: "Niedozwolona zmiana statusu – status można przesunąć tylko o jeden krok do przodu lub anulować." },
       { status: 400 }
     );
   }
@@ -517,7 +517,7 @@ export async function PATCH(
     void sendCancellationEmail(cancelledOrderForEmail);
   }
 
-  // Mail o wysyłce — gdy status zmieniony na SHIPPED i są dane listu
+  // Mail o wysyłce – gdy status zmieniony na SHIPPED i są dane listu
   if (
     body.status === OrderStatus.SHIPPED &&
     order.shippingMethod !== "pickup" &&

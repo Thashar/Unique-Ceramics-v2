@@ -1,4 +1,4 @@
-﻿// Treść zmienia się rzadko — ISR; zapis ustawień w adminie odświeża cache
+﻿// Treść zmienia się rzadko – ISR; zapis ustawień w adminie odświeża cache
 export const revalidate = 300;
 
 import type { Metadata } from "next";
@@ -19,19 +19,19 @@ import { hexToRgba } from "@/lib/overlay";
 export const metadata: Metadata = {
   title: "Warsztaty ceramiczne",
   description:
-    "Warsztaty ceramiczne w małych grupach w okolicach Gliwic — dla początkujących i zaawansowanych. Lepienie z gliny, toczenie, szkliwienie.",
+    "Warsztaty ceramiczne w małych grupach w okolicach Gliwic – dla początkujących i zaawansowanych. Lepienie z gliny, toczenie, szkliwienie.",
   alternates: { canonical: "https://uniqueceramics.pl/warsztaty" },
   openGraph: {
-    title: "Warsztaty ceramiczne — Unique Ceramics",
+    title: "Warsztaty ceramiczne – Unique Ceramics",
     description:
-      "Warsztaty ceramiczne w małych grupach w okolicach Gliwic. Lepienie z gliny, toczenie na kole, szkliwienie — dla każdego poziomu.",
+      "Warsztaty ceramiczne w małych grupach w okolicach Gliwic. Lepienie z gliny, toczenie na kole, szkliwienie – dla każdego poziomu.",
     url: "https://uniqueceramics.pl/warsztaty",
     images: [
       {
         url: "/images/OpenGraph.webp",
         width: 1200,
         height: 630,
-        alt: "Warsztaty ceramiczne — Unique Ceramics Gliwice",
+        alt: "Warsztaty ceramiczne – Unique Ceramics Gliwice",
       },
     ],
   },
@@ -88,7 +88,7 @@ export default async function WorkshopsPage() {
   ]);
   const heroImage = s.workshops_hero_image;
   const heroPos = s.workshops_hero_position || "50% 50%";
-  // Minimum 30vh — pilnuje też wartości zapisanych zanim suwak dostał ten próg
+  // Minimum 30vh – pilnuje też wartości zapisanych zanim suwak dostał ten próg
   const heroHeight = Math.max(30, parseInt(s.workshops_hero_height) || 50);
   const overlayBg = hexToRgba(s.workshops_hero_overlay_color, s.workshops_hero_overlay_opacity);
   const contentImage = s.workshops_content_image;
@@ -123,7 +123,7 @@ export default async function WorkshopsPage() {
       courseMode: "in-person",
       location: {
         "@type": "Place",
-        name: "Unique Ceramics — pracownia",
+        name: "Unique Ceramics – pracownia",
         address: {
           "@type": "PostalAddress",
           streetAddress: "Familijna 23",
@@ -193,7 +193,7 @@ export default async function WorkshopsPage() {
           )}
         </div>
 
-        {/* Separator między wprowadzeniem a pierwszą ofertą — taka sama kreska jak między warsztatami */}
+        {/* Separator między wprowadzeniem a pierwszą ofertą – taka sama kreska jak między warsztatami */}
         {workshops.length > 0 && (
           <div className="bg-warm-white px-6 lg:px-10">
             <div className="max-w-7xl mx-auto border-t border-sand" />

@@ -88,13 +88,13 @@ export default function DesktopCarousel({ products }: { products: Product[] }) {
 
   return (
     <div ref={containerRef} className="relative w-full">
-      {/* Lewa strzałka — poza overflow, wycentrowana na obrazku */}
+      {/* Lewa strzałka – poza overflow, wycentrowana na obrazku */}
       {canNav && (
         <button
           ref={leftArrowRef}
           onClick={() => animateTo(page - 1)}
           disabled={page === 0}
-          className="absolute -translate-y-1/2 text-espresso/30 hover:text-espresso disabled:opacity-0 disabled:pointer-events-none transition-colors duration-200"
+          className="absolute -translate-y-1/2 text-espresso/70 hover:text-espresso disabled:opacity-0 disabled:pointer-events-none transition-colors duration-200"
           style={{ left: "-56px", top: 0 }}
           aria-label="Poprzednia strona"
         >
@@ -108,7 +108,7 @@ export default function DesktopCarousel({ products }: { products: Product[] }) {
           ref={rightArrowRef}
           onClick={() => animateTo(page + 1)}
           disabled={page === totalPages - 1}
-          className="absolute -translate-y-1/2 text-espresso/30 hover:text-espresso disabled:opacity-0 disabled:pointer-events-none transition-colors duration-200"
+          className="absolute -translate-y-1/2 text-espresso/70 hover:text-espresso disabled:opacity-0 disabled:pointer-events-none transition-colors duration-200"
           style={{ right: "-56px", top: 0 }}
           aria-label="Następna strona"
         >

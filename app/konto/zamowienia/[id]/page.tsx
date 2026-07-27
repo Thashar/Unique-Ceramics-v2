@@ -110,7 +110,7 @@ export default async function OrderDetailPage({
                   <div
                     className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-colors ${
                       done
-                        ? "bg-terracotta text-warm-white"
+                        ? "bg-terracotta text-espresso"
                         : "bg-sand text-charcoal/80"
                     }`}
                   >
@@ -219,10 +219,10 @@ export default async function OrderDetailPage({
             </h3>
             <p className="text-xs text-clay font-medium mb-2">{SHIPPING_LABELS[order.shippingMethod] ?? order.shippingMethod}</p>
             {order.shippingMethod === "pickup" ? (
-              <p className="text-sm text-charcoal/80">Odbiór osobisty w pracowni — Familijna 23, 44-164 Kleszczów</p>
+              <p className="text-sm text-charcoal/80">Odbiór osobisty w pracowni – Familijna 23, 44-164 Kleszczów</p>
             ) : order.shippingMethod === "parcel_locker" ? (
               <>
-                <p className="text-sm text-espresso font-mono font-medium">{order.parcelLockerCode ?? "—"}</p>
+                <p className="text-sm text-espresso font-mono font-medium">{order.parcelLockerCode ?? "–"}</p>
                 <p className="text-xs text-charcoal/80 mt-1">Kod paczkomatu InPost</p>
               </>
             ) : (
@@ -248,7 +248,7 @@ export default async function OrderDetailPage({
                order.paymentMethod === "stripe" ? "Karta (Stripe)" :
                order.paymentMethod}
             </p>
-            <p className={`text-xs mt-1 ${order.paymentStatus === "PAID" ? "text-green-600" : "text-amber-600"}`}>
+            <p className={`text-xs mt-1 ${order.paymentStatus === "PAID" ? "text-green-700" : "text-amber-700"}`}>
               {order.paymentStatus === "PAID" ? "Opłacone" : "Oczekuje na płatność"}
             </p>
             {order.paymentMethod === "transfer" && order.paymentStatus !== "PAID" && (

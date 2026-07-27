@@ -71,7 +71,7 @@ function AdminNavInner({ onClose }: { onClose?: () => void }) {
           );
         })}
 
-        {/* Ustawienia — rozwijane */}
+        {/* Ustawienia – rozwijane */}
         <div className="pt-1">
           <Link
             href="/admin/ustawienia?s=strona_glowna"
@@ -86,7 +86,7 @@ function AdminNavInner({ onClose }: { onClose?: () => void }) {
             <span className="flex-1">Ustawienia</span>
             {onSettings
               ? <ChevronDown size={13} className="opacity-70" />
-              : <ChevronRight size={13} className="opacity-40" />}
+              : <ChevronRight size={13} className="opacity-70" />}
           </Link>
 
           {onSettings && (
@@ -106,7 +106,7 @@ function AdminNavInner({ onClose }: { onClose?: () => void }) {
                 </Link>
               ))}
 
-              {/* Płatności — druga warstwa */}
+              {/* Płatności – druga warstwa */}
               <button
                 onClick={() => setPaymentsManualOpen((v) => !v)}
                 className={`w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-md transition-colors ${
@@ -118,7 +118,7 @@ function AdminNavInner({ onClose }: { onClose?: () => void }) {
                 <span>Płatności</span>
                 {paymentsOpen
                   ? <ChevronDown size={11} className="opacity-60" />
-                  : <ChevronRight size={11} className="opacity-40" />}
+                  : <ChevronRight size={11} className="opacity-70" />}
               </button>
 
               {paymentsOpen && (
@@ -149,14 +149,14 @@ function AdminNavInner({ onClose }: { onClose?: () => void }) {
           href="/"
           target="_blank"
           onClick={onClose}
-          className="flex items-center gap-3 px-3 py-2 text-xs text-white/35 hover:text-white/65 transition-colors rounded-lg hover:bg-white/5"
+          className="flex items-center gap-3 px-3 py-2 text-xs text-white/60 hover:text-white transition-colors rounded-lg hover:bg-white/5"
         >
           <ExternalLink size={14} strokeWidth={1.5} />
           Otwórz sklep
         </Link>
         <button
           onClick={() => signOut({ callbackUrl: "/" })}
-          className="w-full flex items-center gap-3 px-3 py-2 text-xs text-white/35 hover:text-white/65 transition-colors rounded-lg hover:bg-white/5"
+          className="w-full flex items-center gap-3 px-3 py-2 text-xs text-white/60 hover:text-white transition-colors rounded-lg hover:bg-white/5"
         >
           <LogOut size={14} strokeWidth={1.5} />
           Wyloguj się
@@ -177,7 +177,7 @@ export default function AdminNav() {
           <Image src="/images/logo.webp" alt="" width={32} height={32} className="h-7 w-auto brightness-0 invert shrink-0" />
           <div>
             <p className="font-serif text-base tracking-wide text-white leading-none">Unique Ceramics</p>
-            <p className="text-[10px] text-white/30 mt-0.5 tracking-widest uppercase">Panel administracyjny</p>
+            <p className="text-[10px] text-white/60 mt-0.5 tracking-widest uppercase">Panel administracyjny</p>
           </div>
         </div>
         <Suspense fallback={null}>
@@ -217,7 +217,7 @@ export default function AdminNav() {
             <Image src="/images/logo.webp" alt="" width={32} height={32} className="h-7 w-auto brightness-0 invert shrink-0" />
             <div>
               <p className="font-serif text-base tracking-wide text-white leading-none">Unique Ceramics</p>
-              <p className="text-[10px] text-white/30 mt-0.5 tracking-widest uppercase">Panel admina</p>
+              <p className="text-[10px] text-white/60 mt-0.5 tracking-widest uppercase">Panel admina</p>
             </div>
           </div>
           <button

@@ -31,16 +31,16 @@ export default async function ConfirmationPage({
         include: { items: true },
       });
       if (found) {
-        // Zamówienia zalogowanych użytkowników — weryfikuj własność
+        // Zamówienia zalogowanych użytkowników – weryfikuj własność
         if (found.userId) {
           if (session?.user?.id === found.userId) order = found;
         } else {
-          // Zamówienie gościa — URL jest tokenem dostępu
+          // Zamówienie gościa – URL jest tokenem dostępu
           order = found;
         }
       }
     } catch {
-      // DB not available — show generic confirmation
+      // DB not available – show generic confirmation
     }
   }
 
@@ -65,7 +65,7 @@ export default async function ConfirmationPage({
           <CheckCircle
             size={64}
             strokeWidth={1}
-            className="mx-auto text-green-500 mb-8"
+            className="mx-auto text-green-700 mb-8"
           />
           <h1 className="font-serif text-4xl text-espresso mb-4">
             Dziękuję za zamówienie!
@@ -131,12 +131,12 @@ export default async function ConfirmationPage({
               </div>
             </div>
             <p className="text-xs text-charcoal/80 mt-4 leading-relaxed">
-              Płatność zrealizuj w ciągu <strong>48 godzin</strong> — po tym czasie zamówienie zostanie automatycznie anulowane. Dane zostały też wysłane na Twój adres e-mail.
+              Płatność zrealizuj w ciągu <strong>48 godzin</strong> – po tym czasie zamówienie zostanie automatycznie anulowane. Dane zostały też wysłane na Twój adres e-mail.
             </p>
           </div>
         )}
 
-        {/* Stripe — payment processed */}
+        {/* Stripe – payment processed */}
         {order?.paymentMethod === "stripe" && (
           <div className="bg-cream border-l-4 border-terracotta p-6 mb-8">
             <p className="text-xs tracking-widest uppercase text-clay mb-3">

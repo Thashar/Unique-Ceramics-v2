@@ -37,7 +37,7 @@ export default async function CheckoutPage() {
       `;
       if (rows.length > 0) savedAddress = JSON.parse(rows[0].value);
     } catch {
-      // Setting table may not exist yet — address just won't be prefilled
+      // Setting table may not exist yet – address just won't be prefilled
     }
 
     if (savedAddress) {
@@ -67,7 +67,7 @@ export default async function CheckoutPage() {
           {
             value: "stripe",
             label: "Karta płatnicza (Stripe)",
-            desc: "Bezpieczna płatność kartą — Visa, Mastercard. Obsługiwane przez Stripe.",
+            desc: "Bezpieczna płatność kartą – Visa, Mastercard. Obsługiwane przez Stripe.",
           },
         ]
       : []),

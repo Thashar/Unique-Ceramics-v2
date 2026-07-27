@@ -1,7 +1,7 @@
 import FooterContent from "./FooterContent";
 
 /**
- * Stopka podstron — identyczna z tą na stronie głównej (`FooterContent`),
+ * Stopka podstron – identyczna z tą na stronie głównej (`FooterContent`),
  * bez ramki pełnoekranowej sekcji. Musi być w pełni synchroniczna (ważne!):
  * async server component tutaj wywala hydratację na stronach statycznych.
  */

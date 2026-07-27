@@ -20,7 +20,7 @@ const SHIPPING_LABELS: Record<string, string> = {
   pickup:        "Odbiór osobisty",
 };
 
-// Status płatności — tylko do odczytu (zmienia się automatycznie przy statusie „Opłacone")
+// Status płatności – tylko do odczytu (zmienia się automatycznie przy statusie „Opłacone")
 const PAYMENT_STATUS_BADGE: Record<string, { label: string; color: string }> = {
   PENDING: { label: "Oczekuje", color: "bg-amber-50 text-amber-700 border-amber-300" },
   PAID:    { label: "Opłacone", color: "bg-green-50 text-green-700 border-green-300" },
@@ -88,7 +88,7 @@ export default async function AdminOrderDetailPage({
           <p className="text-sm text-charcoal/80 mt-1">{order.email}</p>
           {order.phone && <p className="text-sm text-charcoal/80">{order.phone}</p>}
           {order.user && (
-            <p className="text-xs text-terracotta mt-2">Zarejestrowany klient</p>
+            <p className="text-xs text-clay mt-2">Zarejestrowany klient</p>
           )}
         </div>
         <div className="bg-cream p-5">
@@ -102,7 +102,7 @@ export default async function AdminOrderDetailPage({
             <p className="text-sm text-charcoal/80">Odbiór osobisty w pracowni</p>
           ) : order.shippingMethod === "parcel_locker" ? (
             <>
-              <p className="text-sm font-medium text-espresso font-mono">{order.parcelLockerCode ?? "—"}</p>
+              <p className="text-sm font-medium text-espresso font-mono">{order.parcelLockerCode ?? "–"}</p>
               <p className="text-xs text-charcoal/80 mt-1">Kod paczkomatu InPost</p>
             </>
           ) : (

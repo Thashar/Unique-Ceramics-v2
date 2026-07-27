@@ -37,8 +37,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const product = await getProduct(slug);
   if (!product) return { title: "Produkt nie istnieje" };
   return {
-    title: `${product.name} — Unique Ceramics`,
-    description: product.description ?? `${product.name} — ręcznie robiona ceramika. Kup online.`,
+    title: `${product.name} – Unique Ceramics`,
+    description: product.description ?? `${product.name} – ręcznie robiona ceramika. Kup online.`,
     alternates: { canonical: `https://uniqueceramics.pl/sklep/${slug}` },
     openGraph: {
       title: product.name,
@@ -68,7 +68,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     "@type": "Product",
     name: product.name,
     description: product.description
-      ?? `${product.name} — ręcznie robiona ceramika artystyczna. Każdy egzemplarz jest unikalny.`,
+      ?? `${product.name} – ręcznie robiona ceramika artystyczna. Każdy egzemplarz jest unikalny.`,
     image: product.images,
     sku: product.slug,
     brand: {
@@ -168,13 +168,13 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                 <AlertTriangle
                   size={16}
                   strokeWidth={1.5}
-                  className="text-amber-600 shrink-0 mt-0.5"
+                  className="text-amber-700 shrink-0 mt-0.5"
                 />
                 <div className="text-xs text-amber-800 leading-relaxed space-y-1">
                   <p className="font-medium">Każdy egzemplarz jest niepowtarzalny</p>
-                  <p className="text-amber-700/80">
+                  <p className="text-amber-700">
                     Z uwagi na ręczne wykonanie i naturalny charakter gliny, produkt może
-                    nieznacznie różnić się od zdjęcia — w odcieniu, fakturze lub kształcie.
+                    nieznacznie różnić się od zdjęcia – w odcieniu, fakturze lub kształcie.
                     Zachowuje jednak wszystkie cechy jakościowe i nie odbiega znacząco od
                     pierwowzoru.
                   </p>
@@ -186,7 +186,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             <div className="mb-6 text-sm">
               {product.stock > 0 ? (
                 product.stock <= 3 ? (
-                  <p className="text-amber-600">
+                  <p className="text-amber-700">
                     Ostatnie{" "}
                     {product.stock === 1
                       ? "sztuki"

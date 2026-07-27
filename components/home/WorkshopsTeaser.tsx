@@ -34,7 +34,7 @@ export default function WorkshopsTeaser({
         <div className="absolute inset-0 bg-espresso/75" />
       </div>
 
-      {/* Treść — taka sama struktura jak Hero */}
+      {/* Treść – taka sama struktura jak Hero */}
       <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-10 w-full pt-20">
         <div className="max-w-xl">
           <motion.p

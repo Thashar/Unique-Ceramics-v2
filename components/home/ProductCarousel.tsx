@@ -24,7 +24,7 @@ export default function ProductCarousel({ products }: { products: Product[] }) {
   const perPage = 2;
   const maxPage = Math.max(0, Math.ceil(products.length / perPage) - 1);
 
-  // Przesunięcie dla danej strony, przycięte tak, by nie przewinąć poza koniec —
+  // Przesunięcie dla danej strony, przycięte tak, by nie przewinąć poza koniec –
   // przy nieparzystej liczbie produktów ostatnia strona równa się do prawej
   // krawędzi (pokazuje pełne 2 karty zamiast jednej i pustego miejsca).
   function targetOffset(page: number): number {
@@ -59,7 +59,7 @@ export default function ProductCarousel({ products }: { products: Product[] }) {
 
     isAnimating.current = true;
     setCurrent(clamped);
-    // Czas startu z timestampu rAF — bez wywołań performance.now() w ciele komponentu
+    // Czas startu z timestampu rAF – bez wywołań performance.now() w ciele komponentu
     let t0: number | null = null;
 
     function step(now: number) {
@@ -75,7 +75,7 @@ export default function ProductCarousel({ products }: { products: Product[] }) {
   useEffect(() => {
     applyTranslate(targetOffset(0));
 
-    // Obrót ekranu / zmiana szerokości zmienia szerokość karty — wyrównaj
+    // Obrót ekranu / zmiana szerokości zmienia szerokość karty – wyrównaj
     // przesunięcie do aktualnej strony, żeby karuzela nie została „w pół karty".
     function realign() {
       applyTranslate(targetOffset(pageRef.current));

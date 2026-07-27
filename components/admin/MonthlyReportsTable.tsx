@@ -96,7 +96,7 @@ export default function MonthlyReportsTable({ rows, highFlags, currentYear }: Pr
                 <td className="py-2 text-right tabular-nums">{m.cnt}</td>
                 <td className="py-2 text-right tabular-nums">{fmt(m.rev)} zł</td>
                 <td className="py-2 text-right tabular-nums text-charcoal/80">{fmt(m.ship)} zł</td>
-                <td className="py-2 text-right tabular-nums">{hasOrders ? `${fmt(base)} zł` : "—"}</td>
+                <td className="py-2 text-right tabular-nums">{hasOrders ? `${fmt(base)} zł` : "–"}</td>
                 <td className="py-2 text-center">
                   {hasOrders ? (
                     <label className="inline-flex items-center justify-center gap-1.5 cursor-pointer">
@@ -108,20 +108,20 @@ export default function MonthlyReportsTable({ rows, highFlags, currentYear }: Pr
                         className="w-3.5 h-3.5 accent-clay cursor-pointer disabled:opacity-40"
                       />
                       {saving === key && <Loader2 size={11} className="animate-spin text-clay" />}
-                      {savedKey === key && saving !== key && <Check size={11} className="text-green-600" />}
+                      {savedKey === key && saving !== key && <Check size={11} className="text-green-700" />}
                     </label>
                   ) : (
-                    <span className="text-charcoal/80">—</span>
+                    <span className="text-charcoal/80">–</span>
                   )}
                 </td>
                 <td className="py-2 text-right tabular-nums">
                   {hasOrders ? (
-                    <span className={high ? "text-red-600 font-medium" : "text-espresso"}>
+                    <span className={high ? "text-red-700 font-medium" : "text-espresso"}>
                       {fmt(tax)} zł
                       <span className="text-charcoal/80 ml-1">({high ? "32" : "12"}%)</span>
                     </span>
                   ) : (
-                    "—"
+                    "–"
                   )}
                 </td>
                 <td className="py-2 text-right">
@@ -129,13 +129,13 @@ export default function MonthlyReportsTable({ rows, highFlags, currentYear }: Pr
                     <a
                       href={`/api/admin/reports/${m.yr}/${m.mo}`}
                       className="inline-flex items-center gap-1 text-clay hover:text-espresso transition-colors"
-                      title={`Pobierz raport PDF — ${m.label || `${m.mo}/${m.yr}`}`}
+                      title={`Pobierz raport PDF – ${m.label || `${m.mo}/${m.yr}`}`}
                     >
                       <Download size={12} />
                       <span>PDF</span>
                     </a>
                   ) : (
-                    <span className="text-charcoal/80">—</span>
+                    <span className="text-charcoal/80">–</span>
                   )}
                 </td>
               </tr>
@@ -144,7 +144,7 @@ export default function MonthlyReportsTable({ rows, highFlags, currentYear }: Pr
         </tbody>
         <tfoot>
           <tr className="border-t-2 border-sand text-espresso font-semibold">
-            <td className="pt-2.5" colSpan={4}>Podatek do odprowadzenia — {currentYear}</td>
+            <td className="pt-2.5" colSpan={4}>Podatek do odprowadzenia – {currentYear}</td>
             <td className="pt-2.5 text-right tabular-nums">{fmt(yearBase)} zł</td>
             <td className="pt-2.5" />
             <td className="pt-2.5 text-right tabular-nums" colSpan={2}>{fmt(yearTax)} zł</td>
@@ -158,7 +158,7 @@ export default function MonthlyReportsTable({ rows, highFlags, currentYear }: Pr
         opodatkowaniu. Domyślna stawka PIT to <strong className="font-medium">12%</strong>;
         zaznacz <strong className="font-medium">„Stawka 32%”</strong> dla miesięcy, w których
         dochód roczny przekroczył próg skali podatkowej (120 000 zł). Wybór zapisuje się
-        automatycznie i jest uwzględniany w raporcie PDF. Kwoty orientacyjne — ostateczne
+        automatycznie i jest uwzględniany w raporcie PDF. Kwoty orientacyjne – ostateczne
         rozliczenie skonsultuj z księgowym.
       </p>
     </div>

@@ -10,11 +10,11 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useCart } from "@/lib/cart";
 
 // Dystans (px) zjazdu poniżej górnej krawędzi stopki, na którym header
-// płynnie zanika do zera — dobrany tak, by zniknął zanim zacznie zasłaniać
+// płynnie zanika do zera – dobrany tak, by zniknął zanim zacznie zasłaniać
 // treść (stopka ma pt-20, czyli 80 px zapasu pod headerem).
 const FADE_DISTANCE = 150;
 
-// Wysokość headera (h-20) i baneru urlopowego (h-5) — muszą zgadzać się
+// Wysokość headera (h-20) i baneru urlopowego (h-5) – muszą zgadzać się
 // z klasami w JSX; służą do wyliczenia --header-offset.
 const HEADER_H = 80;
 const VACATION_BANNER_H = 20;
@@ -100,7 +100,7 @@ function AccountDropdown({ scrolled }: { scrolled: boolean }) {
           <div className="border-t border-sand mt-1 pt-1">
             <button
               onClick={() => { setOpen(false); signOut({ callbackUrl: "/" }); }}
-              className="flex items-center gap-3 px-4 py-2.5 text-sm text-charcoal/80 hover:text-red-600 hover:bg-red-50 w-full text-left transition-colors"
+              className="flex items-center gap-3 px-4 py-2.5 text-sm text-charcoal/80 hover:text-red-700 hover:bg-red-50 w-full text-left transition-colors"
             >
               <LogOut size={15} strokeWidth={1.5} />
               Wyloguj się
@@ -114,7 +114,7 @@ function AccountDropdown({ scrolled }: { scrolled: boolean }) {
 
 export default function Header({ topOffset = false, showProjects = true }: { topOffset?: boolean; showProjects?: boolean }) {
   // Na homepage header jest przezroczysty gdy widoczna sekcja z ciemnym tłem
-  // (Hero, O mnie, Warsztaty). W pozostałych sekcjach i na innych stronach — solid.
+  // (Hero, O mnie, Warsztaty). W pozostałych sekcjach i na innych stronach – solid.
   const [transparentVisible, setTransparentVisible] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
   // Auto-chowanie na mobile przy przewijaniu w dół (podstrony)
@@ -127,7 +127,7 @@ export default function Header({ topOffset = false, showProjects = true }: { top
   const menuOpenRef = useRef(menuOpen);
   const scheduleRef = useRef<() => void>(() => {});
 
-  // Wzorzec "reset stanu przy zmianie props/pochodnych" — setState podczas renderowania
+  // Wzorzec "reset stanu przy zmianie props/pochodnych" – setState podczas renderowania
   // (nie w efekcie) jest dozwolony wg React docs i nie triggeruje cascading renders.
   const [prevIsHome, setPrevIsHome] = useState(isHome);
   if (prevIsHome !== isHome) {
@@ -137,7 +137,7 @@ export default function Header({ topOffset = false, showProjects = true }: { top
 
   const navLinks = ALL_NAV_LINKS.filter((l) => l.always || showProjects);
   const dark = !isHome || !transparentVisible;
-  // Schowany tylko gdy menu mobilne jest zamknięte — inaczej nie dałoby się go zamknąć
+  // Schowany tylko gdy menu mobilne jest zamknięte – inaczej nie dałoby się go zamknąć
   const collapsed = hidden && !menuOpen;
 
   // Zamknij menu mobilne klawiszem Escape
@@ -160,7 +160,7 @@ export default function Header({ topOffset = false, showProjects = true }: { top
       const sections = document.querySelectorAll<HTMLElement>('[data-header-theme="transparent"]');
 
       // Sekcji może jeszcze nie być w DOM (hydratacja / strumieniowany HTML).
-      // Nie wolno wtedy zgadywać na ciemny header — strona główna zaczyna się
+      // Nie wolno wtedy zgadywać na ciemny header – strona główna zaczyna się
       // od jasnej sekcji (Hero), więc zostajemy przy przezroczystym i ponawiamy
       // pomiar w kolejnych klatkach, aż układ będzie gotowy (~1,5 s).
       if (sections.length === 0) {
@@ -181,7 +181,7 @@ export default function Header({ topOffset = false, showProjects = true }: { top
 
     // Zanikanie headera po zjechaniu poniżej „punktu zero" stopki (jej górnej
     // krawędzi), żeby nie zasłaniał treści stopki; przy powrocie w górę
-    // pojawia się tą samą drogą. Wyłącznie na urządzeniach mobilnych — od `lg`
+    // pojawia się tą samą drogą. Wyłącznie na urządzeniach mobilnych – od `lg`
     // stopka ma dokładnie jeden ekran i header nie ma czego zasłaniać.
     // Przezroczystość ustawiamy prosto na węźle DOM (bez setState), bo wartość
     // zmienia się w każdej klatce przewijania.
@@ -200,7 +200,7 @@ export default function Header({ topOffset = false, showProjects = true }: { top
       node.style.pointerEvents = opacity < 0.05 ? "none" : "";
     }
 
-    // Pomiar zawsze w kolejnej klatce — po ustabilizowaniu układu, nie w trakcie
+    // Pomiar zawsze w kolejnej klatce – po ustabilizowaniu układu, nie w trakcie
     // zdarzenia (chroni przed odczytem rect-a sprzed programowego scrolla).
     function schedule() {
       cancelAnimationFrame(raf);
@@ -210,11 +210,11 @@ export default function Header({ topOffset = false, showProjects = true }: { top
     scheduleRef.current = schedule;
     schedule();
 
-    // scroll — zwykłe przewijanie
-    // resize / orientationchange — zmiana wysokości viewportu (zwijanie paska
+    // scroll – zwykłe przewijanie
+    // resize / orientationchange – zmiana wysokości viewportu (zwijanie paska
     //   adresu na mobile, obrót ekranu, zmiana rozmiaru okna)
-    // pageshow — powrót z bfcache (wejście „wstecz" z zewnętrznej strony)
-    // load — układ ustabilizowany po wczytaniu zasobów; łapie też wymuszony
+    // pageshow – powrót z bfcache (wejście „wstecz" z zewnętrznej strony)
+    // load – układ ustabilizowany po wczytaniu zasobów; łapie też wymuszony
     //   przez HomeScrollSnap powrót na górę strony po przywróceniu scrolla
     window.addEventListener("scroll", schedule, { passive: true });
     window.addEventListener("resize", schedule);
@@ -238,7 +238,7 @@ export default function Header({ topOffset = false, showProjects = true }: { top
     };
   }, [isHome]);
 
-  // Otwarte menu mobilne zawsze w pełni widoczne — nawet gdy jesteśmy w stopce
+  // Otwarte menu mobilne zawsze w pełni widoczne – nawet gdy jesteśmy w stopce
   useEffect(() => {
     menuOpenRef.current = menuOpen;
     scheduleRef.current();
@@ -262,7 +262,7 @@ export default function Header({ topOffset = false, showProjects = true }: { top
       // Próg wygasza drobne drgania (m.in. zwijanie paska adresu na mobile)
       if (Math.abs(delta) < SCROLL_DELTA) return;
       lastY = y;
-      // Blisko góry strony header zostaje widoczny — chowamy dopiero gdy
+      // Blisko góry strony header zostaje widoczny – chowamy dopiero gdy
       // pasek kategorii w /sklep zdążył się przykleić
       setHidden(delta > 0 && y > HIDE_AFTER);
     }
@@ -311,7 +311,7 @@ export default function Header({ topOffset = false, showProjects = true }: { top
       }`}
       // Przejścia inline, bo każde ma inny czas: wsuwanie/wysuwanie ma być
       // szybkie, a zmiana tła na stronie głównej łagodna. Przezroczystość
-      // celowo poza listą — w stopce sterujemy nią pozycją scrolla, klatka
+      // celowo poza listą – w stopce sterujemy nią pozycją scrolla, klatka
       // po klatce, i każde przejście by ją opóźniało.
       style={{
         transform: collapsed ? "translateY(-100%)" : "translateY(0)",
@@ -338,7 +338,7 @@ export default function Header({ topOffset = false, showProjects = true }: { top
             </span>
             <span
               className={`text-[6.5px] tracking-[0.18em] uppercase mt-0.5 transition-colors duration-500 ${
-                dark ? "text-cream/40" : "text-white/55"
+                dark ? "text-cream/70" : "text-white/70"
               }`}
             >
               Ręcznie tworzone z sercem
@@ -383,7 +383,7 @@ export default function Header({ topOffset = false, showProjects = true }: { top
           >
             <ShoppingBag size={22} strokeWidth={1.5} />
             {count > 0 && (
-              <span className="absolute top-1 right-1 w-4 h-4 bg-terracotta text-warm-white text-[10px] rounded-full flex items-center justify-center font-medium leading-none">
+              <span className="absolute top-1 right-1 w-4 h-4 bg-terracotta text-espresso text-[10px] rounded-full flex items-center justify-center font-medium leading-none">
                 {count > 9 ? "9+" : count}
               </span>
             )}

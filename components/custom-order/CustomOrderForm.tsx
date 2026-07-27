@@ -68,7 +68,7 @@ export default function CustomOrderForm({ topOffset: _topOffset = false }: { top
           <p className="text-xs tracking-[0.3em] uppercase text-clay mb-3">Na zamówienie</p>
           <h1 className="font-serif text-5xl text-espresso mb-6">Zamówienie indywidualne</h1>
           <p className="text-charcoal/80 leading-relaxed">
-            Tworzę ceramikę na zamówienie — zestawy ślubne, prezenty firmowe lub spersonalizowaną ceramikę, której nie ma w sklepie.
+            Tworzę ceramikę na zamówienie – zestawy ślubne, prezenty firmowe lub spersonalizowaną ceramikę, której nie ma w sklepie.
             Czas realizacji wynosi zazwyczaj 4+ tygodnie od potwierdzenia projektu.
           </p>
         </div>
@@ -158,7 +158,7 @@ export default function CustomOrderForm({ topOffset: _topOffset = false }: { top
                   rows={6}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Opisz co chcesz zamówić — rodzaj przedmiotów, ilość, preferowane kolory, rozmiary, styl..."
+                  placeholder="Opisz co chcesz zamówić – rodzaj przedmiotów, ilość, preferowane kolory, rozmiary, styl..."
                   className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm resize-none"
                 />
               </div>

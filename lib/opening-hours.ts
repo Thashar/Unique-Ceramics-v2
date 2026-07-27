@@ -1,7 +1,7 @@
 /**
  * Zamiana godzin otwarcia z ustawienia `contact_hours` (tekst wpisywany
  * w panelu admina, np. „Wt–Czw 17:00–19:00, So 15:00–17:00") na
- * `openingHoursSpecification` wg schema.org — dane strukturalne dla Google.
+ * `openingHoursSpecification` wg schema.org – dane strukturalne dla Google.
  *
  * Wejście jest polem tekstowym, więc parser celowo jest zachowawczy:
  * fragmentu, którego nie rozumie, po prostu nie zwraca. Lepiej pominąć
@@ -59,7 +59,7 @@ function normalizeTime(raw: string): string | null {
 
 /** „Wt–Czw" → [Tuesday, Wednesday, Thursday]; „So" → [Saturday]. */
 function parseDays(raw: string): string[] {
-  const parts = raw.split(/\s*[–—-]\s*/).map(dayKey).filter(Boolean);
+  const parts = raw.split(/\s*[––-]\s*/).map(dayKey).filter(Boolean);
   if (parts.length === 1) {
     const i = DAYS[parts[0]];
     return i === undefined ? [] : [WEEK[i]];
@@ -82,7 +82,7 @@ function parseDays(raw: string): string[] {
 /**
  * Sprowadza godziny do postaci z prawdziwymi znakami nowego wiersza.
  * Pole w panelu jest wieloliniowe (Enter), ale wcześniej dało się tam wpisać
- * `<br>` — taki zapis honorujemy jako złamanie wiersza zamiast pokazywać
+ * `<br>` – taki zapis honorujemy jako złamanie wiersza zamiast pokazywać
  * użytkownikowi surowy znacznik. HTML NIE jest renderowany.
  */
 export function normalizeHours(text: string): string {
@@ -94,11 +94,11 @@ export function parseOpeningHours(text: string): OpeningHoursSpec[] {
   const out: OpeningHoursSpec[] = [];
 
   // Wpisy rozdziela przecinek, średnik albo nowy wiersz (pole w panelu
-  // admina jest wieloliniowe — Enter łamie wiersz także w stopce)
+  // admina jest wieloliniowe – Enter łamie wiersz także w stopce)
   for (const chunk of normalizeHours(text).split(/[,;\n]/)) {
     const m = chunk
       .trim()
-      .match(/^(.+?)\s+(\d{1,2}(?:[:.]\d{2})?)\s*[–—-]\s*(\d{1,2}(?:[:.]\d{2})?)$/);
+      .match(/^(.+?)\s+(\d{1,2}(?:[:.]\d{2})?)\s*[––-]\s*(\d{1,2}(?:[:.]\d{2})?)$/);
     if (!m) continue;
 
     const dayOfWeek = parseDays(m[1]);
@@ -114,7 +114,7 @@ export function parseOpeningHours(text: string): OpeningHoursSpec[] {
 
 /**
  * Rozbija „44-164 Kleszczów (k. Gliwic)" na kod pocztowy i miejscowość.
- * Dopisek w nawiasie jest pomijany — w JSON-LD ma być sama nazwa miasta.
+ * Dopisek w nawiasie jest pomijany – w JSON-LD ma być sama nazwa miasta.
  */
 export function parseCityLine(line: string): { postalCode?: string; locality: string } {
   const trimmed = line.trim();

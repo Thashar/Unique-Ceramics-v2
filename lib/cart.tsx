@@ -24,7 +24,7 @@ function normalize(raw: unknown[]): CartItem[] {
       price:    Number(item.price ?? 0),
       image:    String(item.image ?? ""),
       quantity: Number(item.quantity ?? 1),
-      // Stare wpisy w localStorage nie mają stock — defaultujemy do dużej liczby
+      // Stare wpisy w localStorage nie mają stock – defaultujemy do dużej liczby
       // żeby nie blokować działania istniejących koszyków
       stock:    typeof item.stock === "number" ? item.stock : 9999,
     };
@@ -62,7 +62,7 @@ function setItems(next: CartItem[]) {
 }
 
 function subscribe(listener: () => void): () => void {
-  // Pierwsza subskrypcja po hydratacji — React sam wykryje zmianę snapshotu
+  // Pierwsza subskrypcja po hydratacji – React sam wykryje zmianę snapshotu
   load();
   listeners.add(listener);
   return () => listeners.delete(listener);

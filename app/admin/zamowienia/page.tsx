@@ -15,7 +15,7 @@ const STATUS_COLORS: Record<string, string> = {
   IN_PROGRESS: "bg-orange-50 text-orange-700 ring-1 ring-orange-200",
   SHIPPED:     "bg-purple-50 text-purple-700 ring-1 ring-purple-200",
   DELIVERED:   "bg-green-50 text-green-700 ring-1 ring-green-200",
-  CANCELLED:   "bg-red-50 text-red-600 ring-1 ring-red-200",
+  CANCELLED:   "bg-red-50 text-red-700 ring-1 ring-red-200",
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -85,7 +85,7 @@ export default async function AdminOrdersPage({
         </div>
       ) : (
         <div className="bg-cream border border-sand/60">
-          {/* Nagłówek tabeli — tylko desktop */}
+          {/* Nagłówek tabeli – tylko desktop */}
           <div className="hidden md:grid md:grid-cols-[96px_1fr_120px_110px_140px_80px] text-[11px] tracking-widest uppercase text-charcoal/80 px-4 py-3 border-b border-sand">
             <span>Nr</span>
             <span>Klient</span>

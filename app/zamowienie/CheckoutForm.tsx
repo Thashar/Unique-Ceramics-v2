@@ -39,13 +39,13 @@ interface Props {
 
 function FieldError({ msg }: { msg?: string }) {
   if (!msg) return null;
-  return <p className="mt-1 text-xs text-red-600">{msg}</p>;
+  return <p className="mt-1 text-xs text-red-700">{msg}</p>;
 }
 
 const SHIPPING_METHODS = [
   { value: "courier",       label: "Kurier",            icon: Truck,   desc: "Dostawa pod wskazany adres. Czas dostawy: 1–3 dni robocze." },
   { value: "parcel_locker", label: "Paczkomat InPost",  icon: Package, desc: "Odbiór z wybranego paczkomatu. Czas dostawy: 1–2 dni robocze." },
-  { value: "pickup",        label: "Odbiór osobisty",   icon: MapPin,  desc: "Odbiór osobisty w pracowni — Familijna 23, 44-164 Kleszczów. Bezpłatny." },
+  { value: "pickup",        label: "Odbiór osobisty",   icon: MapPin,  desc: "Odbiór osobisty w pracowni – Familijna 23, 44-164 Kleszczów. Bezpłatny." },
 ] as const;
 
 export default function CheckoutForm({
@@ -76,7 +76,7 @@ export default function CheckoutForm({
   const total = subtotal + shipping;
 
   // Zablokuj złożenie zamówienia jeśli zalogowany użytkownik nie ma kompletnego adresu
-  // (null = gość — brak blokady; false = niekompletny; true = OK)
+  // (null = gość – brak blokady; false = niekompletny; true = OK)
   const addressBlocked = savedAddressComplete === false && shippingMethod !== "pickup";
 
   const [form, setForm] = useState({
@@ -250,8 +250,8 @@ export default function CheckoutForm({
                         <p className="text-sm font-medium text-espresso">{label}</p>
                         {(() => {
                           const cost = methodShippingCost(value);
-                          if (value === "pickup") return <span className="text-xs text-green-600 font-medium">Bezpłatne</span>;
-                          if (cost === 0) return <span className="text-xs text-green-600 font-medium">Gratis</span>;
+                          if (value === "pickup") return <span className="text-xs text-green-700 font-medium">Bezpłatne</span>;
+                          if (cost === 0) return <span className="text-xs text-green-700 font-medium">Gratis</span>;
                           return <span className="text-xs text-charcoal/80">{cost} zł</span>;
                         })()}
                       </div>
@@ -271,7 +271,7 @@ export default function CheckoutForm({
               )}
             </div>
 
-            {/* Adres dostawy — ukryty przy odbiorze osobistym */}
+            {/* Adres dostawy – ukryty przy odbiorze osobistym */}
             {shippingMethod !== "pickup" && (
               <div>
                 <h2 className="font-serif text-2xl text-espresso mb-6">Adres dostawy</h2>
@@ -349,7 +349,7 @@ export default function CheckoutForm({
                   <span>Wysyłka</span>
                   <span>
                     {shipping === 0
-                      ? <span className="text-green-600">{shippingMethod === "pickup" ? "Odbiór osobisty" : "Gratis"}</span>
+                      ? <span className="text-green-700">{shippingMethod === "pickup" ? "Odbiór osobisty" : "Gratis"}</span>
                       : `${shipping} zł`}
                   </span>
                 </div>

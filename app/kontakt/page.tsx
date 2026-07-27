@@ -1,4 +1,4 @@
-﻿// Treść zmienia się rzadko — ISR; zapis ustawień w adminie odświeża cache
+﻿// Treść zmienia się rzadko – ISR; zapis ustawień w adminie odświeża cache
 export const revalidate = 300;
 
 import type { Metadata } from "next";
@@ -14,10 +14,10 @@ import ContactForm from "@/components/contact/ContactForm";
 export const metadata: Metadata = {
   title: "Kontakt",
   description:
-    "Skontaktuj się z pracownią ceramiczną Unique Ceramics — Familijna 23, 44-164 Kleszczów (k. Gliwic). Telefon, e-mail, Instagram.",
+    "Skontaktuj się z pracownią ceramiczną Unique Ceramics – Familijna 23, 44-164 Kleszczów (k. Gliwic). Telefon, e-mail, Instagram.",
   alternates: { canonical: "https://uniqueceramics.pl/kontakt" },
   openGraph: {
-    title: "Kontakt — Unique Ceramics",
+    title: "Kontakt – Unique Ceramics",
     description:
       "Skontaktuj się z pracownią ceramiczną Unique Ceramics z okolic Gliwic. Telefon, e-mail, formularz kontaktowy.",
     url: "https://uniqueceramics.pl/kontakt",
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
         url: "/images/OpenGraph.webp",
         width: 1200,
         height: 630,
-        alt: "Kontakt — pracownia ceramiczna Unique Ceramics",
+        alt: "Kontakt – pracownia ceramiczna Unique Ceramics",
       },
     ],
   },
@@ -91,11 +91,11 @@ export default async function ContactPage() {
           </div>
         </div>
 
-        {/* Obszar obsługi — tylko dla robotów/SEO, niewidoczny wizualnie */}
+        {/* Obszar obsługi – tylko dla robotów/SEO, niewidoczny wizualnie */}
         <section aria-label="Obszar obsługi" className="sr-only">
           <p>
             Pracownia ceramiczna Unique Ceramics mieści się przy ul. Familijna 23, 44-164 Kleszczów (k. Gliwic, woj. śląskie).
-            Wysyłka w całej Polsce — odbiór osobisty dostępny lokalnie.
+            Wysyłka w całej Polsce – odbiór osobisty dostępny lokalnie.
             Obsługujemy zamówienia z całego Śląska: Gliwice, Zabrze, Knurów, Pyskowice, Tarnowskie Góry, Bytom, Piekary Śląskie,
             Chorzów, Ruda Śląska, Świętochłowice, Siemianowice Śląskie, Katowice, Mikołów, Tychy, Mysłowice, Sosnowiec, Dąbrowa Górnicza i okolice.
           </p>
@@ -208,7 +208,7 @@ export default async function ContactPage() {
               <div className="mt-12 p-8 bg-cream">
                 <h3 className="font-serif text-xl text-espresso mb-4">Zamówienie indywidualne</h3>
                 <p className="text-charcoal/80 text-sm leading-relaxed mb-6">
-                  Tworzę ceramikę na zamówienie — zestawy ślubne, prezenty firmowe,
+                  Tworzę ceramikę na zamówienie – zestawy ślubne, prezenty firmowe,
                   naczynia z personalizacją. Czas realizacji: 4+ tygodnie.
                 </p>
                 <a

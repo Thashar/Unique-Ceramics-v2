@@ -4,9 +4,9 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { isRateLimited } from "@/lib/rate-limit";
 
-// Usunięcie konta — prawo do bycia zapomnianym (RODO art. 17).
+// Usunięcie konta – prawo do bycia zapomnianym (RODO art. 17).
 // Zamówienia NIE są kasowane, lecz odłączane od konta (Order.userId → null
-// przez onDelete: SetNull) — dane do faktur podlegają obowiązkowi retencji
+// przez onDelete: SetNull) – dane do faktur podlegają obowiązkowi retencji
 // (przepisy podatkowe), więc retencja ma odrębną podstawę prawną.
 // Kaskadowo usuwane są sesje i powiązania OAuth (onDelete: Cascade) oraz
 // zapisany adres dostawy (Setting `user_address_{id}`).
@@ -37,8 +37,8 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ error: "Nie znaleziono konta" }, { status: 404 });
   }
 
-  // Konto z hasłem (Credentials) — wymagaj ponownego uwierzytelnienia.
-  // Konto OAuth (bez hasła) — wystarcza aktywna sesja.
+  // Konto z hasłem (Credentials) – wymagaj ponownego uwierzytelnienia.
+  // Konto OAuth (bez hasła) – wystarcza aktywna sesja.
   if (user.password) {
     if (typeof currentPassword !== "string" || !(await bcrypt.compare(currentPassword, user.password))) {
       return NextResponse.json({ error: "Nieprawidłowe hasło." }, { status: 400 });

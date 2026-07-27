@@ -17,7 +17,7 @@ export async function PUT(
   }
   const data = validation.data;
 
-  // Slug musi pozostać unikalny — odrzuć kolizję z innym produktem
+  // Slug musi pozostać unikalny – odrzuć kolizję z innym produktem
   const clash = await db.product.findUnique({ where: { slug: data.slug } });
   if (clash && clash.id !== id) {
     return NextResponse.json({ error: "Slug już istnieje" }, { status: 409 });

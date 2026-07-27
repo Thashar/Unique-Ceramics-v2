@@ -24,7 +24,7 @@ const empty: Address = {
 
 function FieldError({ msg }: { msg?: string }) {
   if (!msg) return null;
-  return <p className="mt-1 text-xs text-red-600">{msg}</p>;
+  return <p className="mt-1 text-xs text-red-700">{msg}</p>;
 }
 
 export default function AddressPage() {

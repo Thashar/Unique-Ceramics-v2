@@ -1,7 +1,7 @@
 import { MetadataRoute } from "next";
 import { db } from "@/lib/db";
 
-// Odświeżaj sitemapę co godzinę — nowe produkty trafiają do niej bez deployu
+// Odświeżaj sitemapę co godzinę – nowe produkty trafiają do niej bez deployu
 export const revalidate = 3600;
 
 const BASE = "https://uniqueceramics.pl";
@@ -25,7 +25,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       select: { slug: true, updatedAt: true },
     });
   } catch {
-    // DB not available — return static routes only
+    // DB not available – return static routes only
   }
 
   const productRoutes: MetadataRoute.Sitemap = products.map((p) => ({

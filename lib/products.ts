@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
  * Katalog sklepu cache'owany 60 s pod tagiem "products".
  * Strona /sklep czyta searchParams (rendering dynamiczny), więc cache na
  * poziomie zapytania zdejmuje ruch z bazy; mutacje w adminie unieważniają tag.
- * Jedno zapytanie do DB — podział na inStock/soldOut w JS.
+ * Jedno zapytanie do DB – podział na inStock/soldOut w JS.
  */
 export const getShopProducts = unstable_cache(
   async () => {
@@ -23,7 +23,7 @@ export const getShopProducts = unstable_cache(
 );
 
 /**
- * Wyróżnione produkty na stronie głównej — cache 3600 s, inwalidowany
+ * Wyróżnione produkty na stronie głównej – cache 3600 s, inwalidowany
  * przez revalidateProductPages() po każdej mutacji w adminie.
  */
 export const getFeaturedProducts = unstable_cache(

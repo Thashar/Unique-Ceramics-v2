@@ -24,7 +24,7 @@ export default function VacationBanner({
     }
   }
 
-  const text = [message, formattedDate].filter(Boolean).join(" — ");
+  const text = [message, formattedDate].filter(Boolean).join(" – ");
 
   return <VacationBannerInner text={text} />;
 }

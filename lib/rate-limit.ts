@@ -1,9 +1,9 @@
 // Rate limiter dla API routes.
 //
-// Domyślnie używa trwałego magazynu Upstash Redis (REST) — działa poprawnie na
+// Domyślnie używa trwałego magazynu Upstash Redis (REST) – działa poprawnie na
 // serverless/Vercel, gdzie instancje są efemeryczne i jest ich wiele równolegle.
 // Gdy zmienne UPSTASH_* nie są ustawione (lub Redis chwilowo niedostępny),
-// degraduje się do limitera in-memory (per-instancja) — wystarczający lokalnie
+// degraduje się do limitera in-memory (per-instancja) – wystarczający lokalnie
 // i jako bezpiecznik, ale na produkcji skonfiguruj Upstash.
 
 // ── Fallback in-memory ────────────────────────────────────────────────────────
@@ -73,7 +73,7 @@ async function upstashRateLimited(
     if (!Number.isFinite(count) || count <= 0) return null;
     return count > limit;
   } catch {
-    // Niedostępny Redis — fallback do in-memory (fail-safe: nie blokujemy ruchu)
+    // Niedostępny Redis – fallback do in-memory (fail-safe: nie blokujemy ruchu)
     return null;
   }
 }

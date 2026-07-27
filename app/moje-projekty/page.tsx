@@ -9,10 +9,10 @@ export const revalidate = 300;
 export const metadata = {
   title: "Moje projekty",
   description:
-    "Prace ceramiczne wykonywane w pracowni Unique Ceramics — każdy projekt to unikalne dzieło stworzone ręcznie z lokalnej gliny.",
+    "Prace ceramiczne wykonywane w pracowni Unique Ceramics – każdy projekt to unikalne dzieło stworzone ręcznie z lokalnej gliny.",
   alternates: { canonical: "https://uniqueceramics.pl/moje-projekty" },
   openGraph: {
-    title: "Moje projekty — Unique Ceramics",
+    title: "Moje projekty – Unique Ceramics",
     description:
       "Prace ceramiczne tworzone ręcznie z lokalnej gliny. Poznaj moje projekty.",
     url: "https://uniqueceramics.pl/moje-projekty",

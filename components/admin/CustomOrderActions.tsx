@@ -182,7 +182,7 @@ export default function CustomOrderActions({
           <Field label="Telefon">
             {customerUnlocked
               ? <input type="text"  value={customerPhone} maxLength={20}  onChange={(e) => setCustomerPhone(e.target.value)} className={inputCls} />
-              : <p className={textCls}>{customerPhone || "—"}</p>
+              : <p className={textCls}>{customerPhone || "–"}</p>
             }
           </Field>
 
@@ -193,20 +193,20 @@ export default function CustomOrderActions({
               <Field label="Ulica / nr domu">
                 {customerUnlocked
                   ? <input type="text" value={street}   maxLength={200} onChange={(e) => setStreet(e.target.value)}   className={inputCls} placeholder="np. Kwiatowa 5/3" />
-                  : <p className={textCls}>{street || "—"}</p>
+                  : <p className={textCls}>{street || "–"}</p>
                 }
               </Field>
               <div className="grid grid-cols-2 gap-2">
                 <Field label="Kod pocztowy">
                   {customerUnlocked
                     ? <input type="text" value={postcode} maxLength={20}  onChange={(e) => setPostcode(e.target.value)} className={inputCls} placeholder="00-000" />
-                    : <p className={textCls}>{postcode || "—"}</p>
+                    : <p className={textCls}>{postcode || "–"}</p>
                   }
                 </Field>
                 <Field label="Miasto">
                   {customerUnlocked
                     ? <input type="text" value={city}     maxLength={100} onChange={(e) => setCity(e.target.value)}     className={inputCls} placeholder="Warszawa" />
-                    : <p className={textCls}>{city || "—"}</p>
+                    : <p className={textCls}>{city || "–"}</p>
                   }
                 </Field>
               </div>
@@ -280,7 +280,7 @@ export default function CustomOrderActions({
               <option key={s.value} value={s.value}>
                 {s.label}
                 {s.value === "PAID" && (!paidAmount || parseFloat(paidAmount) <= 0)
-                  ? " — wymagana kwota wplacona"
+                  ? " – wymagana kwota wplacona"
                   : ""}
               </option>
             ))}
@@ -298,7 +298,7 @@ export default function CustomOrderActions({
           />
         </div>
 
-        {error && <p className="text-xs text-red-600">{error}</p>}
+        {error && <p className="text-xs text-red-700">{error}</p>}
 
         <div className="flex items-center gap-4">
           <button
@@ -308,7 +308,7 @@ export default function CustomOrderActions({
           >
             {saving ? "Zapisuje..." : "Zapisz"}
           </button>
-          {saved && <span className="text-xs text-green-600">Zapisano</span>}
+          {saved && <span className="text-xs text-green-700">Zapisano</span>}
         </div>
       </div>
     </div>

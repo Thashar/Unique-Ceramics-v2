@@ -1,7 +1,7 @@
 const LETTERS_PL = "a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ";
 
 export const ADDRESS_PATTERNS = {
-  // Imię / Nazwisko: same litery (polskie), spacja, łącznik, apostrof — min 2 znaki
+  // Imię / Nazwisko: same litery (polskie), spacja, łącznik, apostrof – min 2 znaki
   name:     new RegExp(`^[${LETTERS_PL}][${LETTERS_PL}\\s\\-']{1,49}$`),
   // Telefon: 9 cyfr, opcjonalnie poprzedzone +48 (spacje i łączniki ignorowane przy sprawdzaniu)
   phone:    /^(\+48)?[0-9]{9}$/,

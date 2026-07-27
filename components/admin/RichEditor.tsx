@@ -41,7 +41,7 @@ export default function RichEditor({ value, onChange }: Props) {
   useEffect(() => {
     let cancelled = false;
 
-    // Jodit jest biblioteką wyłącznie przeglądarkową — import dynamiczny
+    // Jodit jest biblioteką wyłącznie przeglądarkową – import dynamiczny
     // zapobiega wykonaniu bundle'a podczas SSR komponentu klienckiego
     import("jodit").then(({ Jodit }) => {
       if (cancelled || editorRef.current || !textareaRef.current) return;

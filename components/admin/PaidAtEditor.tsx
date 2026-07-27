@@ -31,7 +31,7 @@ export default function PaidAtEditor({
     ? new Date(paidAt).toLocaleString("pl-PL", {
         day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit",
       })
-    : "—";
+    : "–";
 
   function startEdit() {
     setValue(toLocalInput(paidAt ? new Date(paidAt) : new Date()));
@@ -102,7 +102,7 @@ export default function PaidAtEditor({
               <X size={11} /> Anuluj
             </button>
           </div>
-          {error && <p className="text-xs text-red-600">{error}</p>}
+          {error && <p className="text-xs text-red-700">{error}</p>}
         </div>
       ) : (
         <div className="flex items-center gap-2">
@@ -114,7 +114,7 @@ export default function PaidAtEditor({
           >
             <Pencil size={11} /> Zmień
           </button>
-          {saved && <Check size={12} className="text-green-600" />}
+          {saved && <Check size={12} className="text-green-700" />}
         </div>
       )}
     </div>

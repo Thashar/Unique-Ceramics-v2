@@ -41,10 +41,10 @@ export async function POST(request: Request) {
       replyTo: email,
       subject: `Kontakt: ${subject || "Wiadomość ze strony"}`,
       text: [
-        `Imię: ${name || "—"}`,
-        `Telefon: ${phone || "—"}`,
+        `Imię: ${name || "–"}`,
+        `Telefon: ${phone || "–"}`,
         `E-mail: ${email}`,
-        `Temat: ${subject || "—"}`,
+        `Temat: ${subject || "–"}`,
         ...(workshopType ? [`Rodzaj warsztatu: ${workshopType}`] : []),
         "",
         message,

@@ -29,7 +29,7 @@ jobs:
       - name: Build produkcyjny
         run: npm run build
         env:
-          # Atrapy — strony mają fallbacki gdy baza jest niedostępna podczas builda
+          # Atrapy – strony mają fallbacki gdy baza jest niedostępna podczas builda
           DATABASE_URL: "postgresql://user:pass@localhost:5432/db"
           DIRECT_URL: "postgresql://user:pass@localhost:5432/db"
           AUTH_SECRET: "ci-only-secret-min-32-characters-long!!"

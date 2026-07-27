@@ -6,7 +6,7 @@ type ConsentLevel = "all" | "necessary" | null;
 
 const KEY = "uc-cookie-consent";
 
-// Moduł działa jako zewnętrzny store (localStorage) — czytany przez
+// Moduł działa jako zewnętrzny store (localStorage) – czytany przez
 // useSyncExternalStore, dzięki czemu nie potrzebujemy setState w efektach
 let cached: ConsentLevel | undefined;
 const listeners = new Set<() => void>();
@@ -52,7 +52,7 @@ export function acceptNecessary() {
 
 export function useCookieConsent() {
   const consent = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-  // false podczas SSR/hydratacji, true po stronie klienta — bez setState w efekcie
+  // false podczas SSR/hydratacji, true po stronie klienta – bez setState w efekcie
   const hydrated = useSyncExternalStore(
     subscribe,
     () => true,

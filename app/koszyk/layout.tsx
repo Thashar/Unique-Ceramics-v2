@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Koszyk",
-  description: "Twój koszyk zakupowy — Unique Ceramics.",
+  description: "Twój koszyk zakupowy – Unique Ceramics.",
   robots: { index: false, follow: false },
 };
 

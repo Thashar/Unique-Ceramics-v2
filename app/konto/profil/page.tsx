@@ -154,7 +154,7 @@ export default function ProfilePage() {
               />
             </div>
             {passwordMsg && (
-              <p className={`text-sm ${passwordMsg.includes("zmienione") ? "text-green-700" : "text-red-600"}`}>
+              <p className={`text-sm ${passwordMsg.includes("zmienione") ? "text-green-700" : "text-red-700"}`}>
                 {passwordMsg}
               </p>
             )}
@@ -173,7 +173,7 @@ export default function ProfilePage() {
         )}
       </div>
 
-      {/* Twoje dane — eksport (RODO) */}
+      {/* Twoje dane – eksport (RODO) */}
       <div className="bg-cream p-8">
         <h3 className="text-xs tracking-widest uppercase text-clay mb-4 flex items-center gap-2">
           <Download size={14} strokeWidth={1.5} />
@@ -191,7 +191,7 @@ export default function ProfilePage() {
         </a>
       </div>
 
-      {/* Strefa niebezpieczna — usunięcie konta (RODO art. 17) */}
+      {/* Strefa niebezpieczna – usunięcie konta (RODO art. 17) */}
       <div className="border border-red-200 bg-red-50/50 p-8">
         <h3 className="text-xs tracking-widest uppercase text-red-700 mb-4 flex items-center gap-2">
           <ShieldAlert size={14} strokeWidth={1.5} />
@@ -215,7 +215,7 @@ export default function ProfilePage() {
               />
             </div>
           )}
-          {deleteMsg && <p className="text-sm text-red-600">{deleteMsg}</p>}
+          {deleteMsg && <p className="text-sm text-red-700">{deleteMsg}</p>}
           <button
             type="submit"
             disabled={deleting}

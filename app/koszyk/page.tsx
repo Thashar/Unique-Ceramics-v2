@@ -104,7 +104,7 @@ export default function CartPage() {
                   </div>
                   <button
                     onClick={() => removeItem(item.id)}
-                    className="text-charcoal/80 hover:text-red-500 transition-colors"
+                    className="text-charcoal/80 hover:text-red-700 transition-colors"
                   >
                     <Trash2 size={16} />
                   </button>
@@ -135,7 +135,7 @@ export default function CartPage() {
                 <span>Wysyłka</span>
                 <span>
                   {shippingCost === 0 ? (
-                    <span className="text-green-600">Gratis</span>
+                    <span className="text-green-700">Gratis</span>
                   ) : (
                     `${shippingCost.toFixed(2).replace(".", ",")} zł`
                   )}

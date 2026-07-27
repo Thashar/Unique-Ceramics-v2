@@ -39,7 +39,7 @@ export default function AccountNav() {
 
       <button
         onClick={() => signOut({ callbackUrl: "/" })}
-        className="flex items-center gap-3 px-4 py-3 text-sm text-charcoal/80 hover:text-red-600 hover:bg-red-50 transition-colors text-left"
+        className="flex items-center gap-3 px-4 py-3 text-sm text-charcoal/80 hover:text-red-700 hover:bg-red-50 transition-colors text-left"
       >
         <LogOut size={16} strokeWidth={1.5} />
         Wyloguj się

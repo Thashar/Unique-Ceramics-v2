@@ -5,7 +5,7 @@ import { normalizeHours } from "@/lib/opening-hours";
 
 /**
  * Publiczne dane kontaktowe jako store modułowy (wzorzec jak `lib/cart.tsx`).
- * Kilka komponentów stopki potrzebuje tych samych danych — dzięki wspólnemu
+ * Kilka komponentów stopki potrzebuje tych samych danych – dzięki wspólnemu
  * store'owi `/api/public/contacts` jest odpytywane raz na stronę, a nie
  * osobno przez każdy z nich.
  */
@@ -23,7 +23,7 @@ export type PublicContacts = {
   addressRegion: string;
 };
 
-// Muszą odpowiadać defaultom z lib/settings.ts — pokazują się do czasu,
+// Muszą odpowiadać defaultom z lib/settings.ts – pokazują się do czasu,
 // aż dojedzie odpowiedź z API (bez tego stopka „podskakiwałaby" po wczytaniu).
 export const CONTACTS_DEFAULTS: PublicContacts = {
   phone: "+48 668 443 706",
@@ -44,7 +44,7 @@ const listeners = new Set<() => void>();
 
 function normalize(j: Partial<PublicContacts>): PublicContacts {
   return {
-    // Telefon, e-mail i Instagram muszą być zawsze — pusta wartość wraca do defaultu
+    // Telefon, e-mail i Instagram muszą być zawsze – pusta wartość wraca do defaultu
     phone: j.phone || CONTACTS_DEFAULTS.phone,
     email: j.email || CONTACTS_DEFAULTS.email,
     instagram: j.instagram || CONTACTS_DEFAULTS.instagram,
