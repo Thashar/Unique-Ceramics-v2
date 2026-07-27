@@ -24,6 +24,11 @@ const VACATION_BANNER_H = 20;
 const SCROLL_DELTA = 8;
 const HIDE_AFTER = 120;
 
+// Kontrolne przeliczenia przezroczystości po wejściu na stronę główną (ms).
+// Zabezpieczenie przed wyścigiem: gdyby pierwszy pomiar trafił w moment
+// niegotowego układu, stan naprawia się sam, bez czekania na przewinięcie.
+const RECHECK_DELAYS = [400, 1200, 2500];
+
 const ALL_NAV_LINKS = [
   { href: "/sklep",         label: "Sklep",          always: true  },
   { href: "/o-mnie",        label: "O mnie",          always: true  },
@@ -222,8 +227,14 @@ export default function Header({ topOffset = false, showProjects = true }: { top
     window.addEventListener("pageshow", schedule);
     if (document.readyState !== "complete") window.addEventListener("load", schedule);
 
+    // Pomiary kontrolne po starcie. Bez nich błędny odczyt (np. gdy układ nie
+    // był jeszcze gotowy) utrzymywał się aż do pierwszego przewinięcia —
+    // użytkownik widział ciemny header nad hero i nic go nie naprawiało.
+    const recheck = RECHECK_DELAYS.map((ms) => window.setTimeout(schedule, ms));
+
     return () => {
       cancelAnimationFrame(raf);
+      for (const id of recheck) clearTimeout(id);
       scheduleRef.current = () => {};
       window.removeEventListener("scroll", schedule);
       window.removeEventListener("resize", schedule);
