@@ -131,7 +131,7 @@ export default async function AboutPage() {
         {/* Wartości */}
         <div className="bg-cream py-20 px-6 lg:px-10">
           <div className="max-w-7xl mx-auto">
-            <h2 className="font-serif text-3xl text-espresso mb-5 text-center">Jak pracuję</h2>
+            <h2 className="font-serif text-[2rem] md:text-4xl text-espresso mb-5 text-center">Jak pracuję</h2>
             <ClayRule align="center" className="max-w-[220px] mx-auto mb-12" />
             <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
               {[
