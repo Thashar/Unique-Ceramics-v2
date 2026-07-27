@@ -14,6 +14,8 @@ interface Props {
   /** Co ile ms zmienia się zdjęcie (0 = bez automatu) */
   intervalMs?: number;
   priority?: boolean;
+  /** Numer aktualnego zdjęcia (od 0) – wołany w chwili rozpoczęcia przejścia */
+  onIndexChange?: (index: number) => void;
 }
 
 // Zdjęcia z panelu są już raz skompresowane (WebP q82), więc domyślne q75 optymalizatora
@@ -44,6 +46,7 @@ export default function ImageGallery({
   sizes = "(max-width: 1024px) 100vw, 50vw",
   intervalMs = 5000,
   priority = false,
+  onIndexChange,
 }: Props) {
   const count = images.length;
   const isSlider = count > 1;
@@ -79,7 +82,10 @@ export default function ImageGallery({
     indexRef.current = value;
     setInstant(withoutTransition);
     setIndex(value);
-  }, []);
+    // Powiadamiamy stąd, a nie z efektu: to zwykły handler, więc rodzic dostaje
+    // numer zdjęcia w chwili startu przejścia i może animować razem z taśmą
+    onIndexChange?.(((value - 1) % count + count) % count);
+  }, [count, onIndexChange]);
 
   /**
    * Kończy przejście: zwalnia blokadę i sprowadza indeks z klonu na realne zdjęcie.

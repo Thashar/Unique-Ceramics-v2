@@ -4,12 +4,8 @@ export const revalidate = 300;
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import {
-  type LucideIcon,
-  Cake, Gem, Building2, Leaf, Users, Gift,
-  Package, GraduationCap, Flame, Camera, Coffee, CheckCircle,
-  Star, Heart, Palette, Globe, Music, Award, Scissors,
-} from "lucide-react";
+import { ICON_MAP, CheckCircle, Leaf } from "./icons";
+import WorkshopIncludes from "./WorkshopIncludes";
 import Header from "@/components/layout/HeaderWrapper";
 import Footer from "@/components/layout/Footer";
 import ClayRule from "@/components/ui/ClayRule";
@@ -38,13 +34,6 @@ export const metadata: Metadata = {
       },
     ],
   },
-};
-
-// Mapa ikon (nazwa → komponent)
-const ICON_MAP: Record<string, LucideIcon> = {
-  Cake, Gem, Building2, Leaf, Users, Gift,
-  Package, GraduationCap, Flame, Camera, Coffee, CheckCircle,
-  Star, Heart, Palette, Globe, Music, Award, Scissors,
 };
 
 type WorkshopOffer = {
@@ -264,19 +253,18 @@ export default async function WorkshopsPage() {
         {includes.length > 0 && (
           <div className="bg-cream py-20 px-6 lg:px-10">
             <div className={`mx-auto ${hasIncludesGallery ? "max-w-6xl" : "max-w-xl"}`}>
-              <div className={hasIncludesGallery ? "grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center" : ""}>
-                <div>
-                  {hasIncludesGallery ? (
-                    <>
-                      <ClayRule className="mb-7" />
-                      <h2 className="font-serif text-[2rem] md:text-4xl text-espresso mb-8">Co zawiera warsztat?</h2>
-                    </>
-                  ) : (
-                    <>
-                      <h2 className="font-serif text-[2rem] md:text-4xl text-espresso mb-5 text-center">Co zawiera warsztat?</h2>
-                      <ClayRule align="center" className="max-w-[220px] mx-auto mb-12" />
-                    </>
-                  )}
+              {hasIncludesGallery ? (
+                <>
+                  {/* Ozdobnik i nagłówek nad siatką – dzięki temu górna krawędź
+                      galerii zaczyna się dokładnie na wysokości nagłówka */}
+                  <ClayRule className="mb-7" />
+                  <h2 className="font-serif text-[2rem] md:text-4xl text-espresso mb-10">Co zawiera warsztat?</h2>
+                  <WorkshopIncludes includes={includes} images={includesGallery} />
+                </>
+              ) : (
+                <>
+                  <h2 className="font-serif text-[2rem] md:text-4xl text-espresso mb-5 text-center">Co zawiera warsztat?</h2>
+                  <ClayRule align="center" className="max-w-[220px] mx-auto mb-12" />
                   <ul className="space-y-4">
                     {includes.map((inc) => {
                       const Icon = ICON_MAP[inc.iconName] ?? CheckCircle;
@@ -290,17 +278,8 @@ export default async function WorkshopsPage() {
                       );
                     })}
                   </ul>
-                </div>
-
-                {hasIncludesGallery && (
-                  <ImageGallery
-                    images={includesGallery}
-                    alt="Zdjęcia z warsztatów ceramicznych"
-                    className="aspect-[4/3] rounded-sm w-full max-w-xl mx-auto"
-                    sizes="(max-width: 640px) 100vw, 576px"
-                  />
-                )}
-              </div>
+                </>
+              )}
             </div>
           </div>
         )}

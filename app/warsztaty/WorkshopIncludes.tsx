@@ -1,0 +1,64 @@
+"use client";
+
+import { useState } from "react";
+import ImageGallery from "@/components/ui/ImageGallery";
+import { ICON_MAP, CheckCircle } from "./icons";
+import type { GalleryImage } from "@/lib/gallery";
+
+export type WorkshopInclude = {
+  id: number;
+  iconName: string;
+  label: string;
+};
+
+interface Props {
+  includes: WorkshopInclude[];
+  images: GalleryImage[];
+}
+
+/**
+ * Lista „Co zawiera warsztat?" sprzężona z pokazem zdjęć: przy zmianie zdjęcia
+ * podświetla się odpowiadająca mu pozycja. Gdy zdjęć jest mniej niż punktów,
+ * numer zawija się modulo – dlatego najlepiej mieć tyle zdjęć, ile pozycji.
+ */
+export default function WorkshopIncludes({ includes, images }: Props) {
+  const [active, setActive] = useState(0);
+  const activeItem = includes.length > 0 ? active % includes.length : -1;
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-start">
+      <ul className="space-y-4">
+        {includes.map((inc, i) => {
+          const Icon = ICON_MAP[inc.iconName] ?? CheckCircle;
+          const isActive = i === activeItem;
+          return (
+            <li key={inc.id} className="flex items-center gap-4">
+              <span
+                className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 transition-colors duration-500 ${
+                  isActive ? "bg-terracotta/35" : "bg-warm-white"
+                }`}
+              >
+                <Icon size={19} strokeWidth={1.5} className="text-clay" />
+              </span>
+              <span
+                className={`leading-snug transition-colors duration-500 ${
+                  isActive ? "font-medium text-espresso" : "text-charcoal"
+                }`}
+              >
+                {inc.label}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+
+      <ImageGallery
+        images={images}
+        alt="Zdjęcia z warsztatów ceramicznych"
+        className="aspect-[4/3] rounded-sm w-full max-w-xl mx-auto lg:mx-0"
+        sizes="(max-width: 640px) 100vw, 576px"
+        onIndexChange={setActive}
+      />
+    </div>
+  );
+}
