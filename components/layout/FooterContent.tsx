@@ -89,7 +89,7 @@ export default function FooterContent({ instagram }: { instagram?: string }) {
           {/* Mobile: własny wiersz, wyśrodkowany. Desktop: przy prawej krawędzi –
               pozycjonowany absolutnie, żeby nie zbijać wyśrodkowania reszty belki. */}
           <div className="basis-full flex justify-center lg:basis-auto lg:absolute lg:right-0 lg:top-1/2 lg:-translate-y-1/2">
-            <ThasharWordmark width="clamp(56px, 16vw, 63px)" />
+            <ThasharWordmark width="clamp(56px, 16vw, 90px)" />
           </div>
         </div>
       </div>
