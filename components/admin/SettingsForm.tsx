@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import { Loader2 } from "lucide-react";
 import RichEditor from "@/components/admin/RichEditor";
@@ -137,6 +138,21 @@ function MultilineField({ label, value, setter, placeholder, rows = 3 }: {
       />
     </div>
   );
+}
+
+const noopSubscribe = () => () => {};
+
+/**
+ * Komunikaty renderujemy przez portal do `body`. `position: fixed` liczy się względem
+ * najbliższego przodka z `transform`/`filter`/`will-change`, a nie zawsze względem okna –
+ * wewnątrz formularza komunikat lądował przez to na górze dokumentu zamiast ekranu.
+ * Portal wyprowadza go poza całe drzewo, więc pozycja jest zawsze względem okna.
+ */
+function Toast({ children }: { children: React.ReactNode }) {
+  // Bez `setState` w efekcie (reguła react-hooks) – serwer widzi `false`, klient `true`
+  const mounted = useSyncExternalStore(noopSubscribe, () => true, () => false);
+  if (!mounted) return null;
+  return createPortal(children, document.body);
 }
 
 /**
@@ -331,21 +347,25 @@ export default function SettingsForm({ section, initial }: Props) {
   return (
     <div className="relative">
       {toast === "ok" && (
-        <div className="fixed top-6 right-6 z-50 bg-espresso text-cream text-sm px-5 py-3 shadow-lg">
-          Zapisano!
-        </div>
+        <Toast>
+          <div className="fixed top-6 right-6 z-50 bg-espresso text-cream text-sm px-5 py-3 shadow-lg">
+            Zapisano!
+          </div>
+        </Toast>
       )}
       {errMsg && (
-        <div className="fixed top-6 right-6 z-50 bg-red-700 text-white text-sm px-5 py-4 shadow-lg max-w-sm">
-          <p className="font-medium mb-1">Błąd zapisu</p>
-          <p className="text-xs opacity-90 break-words">{errMsg}</p>
-          <button
-            onClick={() => setErrMsg("")}
-            className="mt-2 text-xs underline hover:opacity-80"
-          >
-            Zamknij
-          </button>
-        </div>
+        <Toast>
+          <div className="fixed top-6 right-6 z-50 bg-red-700 text-white text-sm px-5 py-4 shadow-lg max-w-sm">
+            <p className="font-medium mb-1">Błąd zapisu</p>
+            <p className="text-xs opacity-90 break-words">{errMsg}</p>
+            <button
+              onClick={() => setErrMsg("")}
+              className="mt-2 text-xs underline hover:opacity-80"
+            >
+              Zamknij
+            </button>
+          </div>
+        </Toast>
       )}
 
       {section === "strona_glowna" && (

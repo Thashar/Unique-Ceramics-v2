@@ -148,7 +148,7 @@ function OffersEditor({ json, onChange }: { json: string; onChange: (v: string) 
             onClick={() => setExpanded(expanded === w.id ? null : w.id)}
           >
             <span className={`w-2 h-2 rounded-full shrink-0 ${w.active ? "bg-clay" : "bg-sand"}`} />
-            <span className="flex-1 text-sm text-espresso font-medium truncate">{w.title || "(bez tytułu)"}</span>
+            <span className="flex-1 min-w-0 text-sm text-espresso font-medium truncate">{w.title || "(bez tytułu)"}</span>
             <span className="text-xs text-charcoal/80 shrink-0 hidden sm:block">{w.priceLabel}</span>
             <div
               className="flex items-center gap-0.5 shrink-0"
@@ -192,8 +192,10 @@ function OffersEditor({ json, onChange }: { json: string; onChange: (v: string) 
                 <Toggle checked={w.active} onChange={(v) => update(w.id, { active: v })} />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
+              {/* Na wąskich ekranach kolumny zwijają się do jednej – trzy pola obok
+                  siebie nie mieszczą się w panelu i rozpychały stronę w poziomie */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="min-w-0">
                   <label className="block text-xs text-charcoal/80 mb-1.5">Ikona</label>
                   <select
                     value={w.iconName}
@@ -205,7 +207,7 @@ function OffersEditor({ json, onChange }: { json: string; onChange: (v: string) 
                     ))}
                   </select>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <label className="block text-xs text-charcoal/80 mb-1.5">Poziom / oznaczenie</label>
                   <input
                     type="text"
@@ -237,8 +239,8 @@ function OffersEditor({ json, onChange }: { json: string; onChange: (v: string) 
                 />
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
-                <div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="min-w-0">
                   <label className="block text-xs text-charcoal/80 mb-1.5">Czas trwania</label>
                   <input
                     type="text"
@@ -248,7 +250,7 @@ function OffersEditor({ json, onChange }: { json: string; onChange: (v: string) 
                     placeholder="np. 3 godziny"
                   />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <label className="block text-xs text-charcoal/80 mb-1.5">Liczba uczestników</label>
                   <input
                     type="text"
@@ -258,7 +260,7 @@ function OffersEditor({ json, onChange }: { json: string; onChange: (v: string) 
                     placeholder="np. od 4 osób"
                   />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <label className="block text-xs text-charcoal/80 mb-1.5">Cena</label>
                   <input
                     type="text"
@@ -320,7 +322,7 @@ function IncludesEditor({ json, onChange }: { json: string; onChange: (v: string
   return (
     <div className="space-y-2">
       {items.map((inc, idx) => (
-        <div key={inc.id} className="flex items-center gap-2">
+        <div key={inc.id} className="flex items-center gap-2 min-w-0">
           <div className="flex flex-col shrink-0">
             <button
               onClick={() => moveUp(idx)}
@@ -340,17 +342,19 @@ function IncludesEditor({ json, onChange }: { json: string; onChange: (v: string
           <select
             value={inc.iconName}
             onChange={(e) => update(inc.id, { iconName: e.target.value })}
-            className="w-36 shrink-0 bg-warm-white border border-sand text-espresso text-xs px-2 py-2 outline-none focus:border-clay"
+            className="w-28 sm:w-36 shrink-0 bg-warm-white border border-sand text-espresso text-xs px-2 py-2 outline-none focus:border-clay"
           >
             {INCLUDE_ICONS.map((ic) => (
               <option key={ic.value} value={ic.value}>{ic.label}</option>
             ))}
           </select>
+          {/* `min-w-0` jest tu obowiązkowe: pole tekstowe ma własną szerokość minimalną
+              i bez tego rozpychało wiersz poza kontener, poszerzając całą stronę */}
           <input
             type="text"
             value={inc.label}
             onChange={(e) => update(inc.id, { label: e.target.value })}
-            className="flex-1 bg-warm-white border border-sand text-espresso text-sm px-3 py-2 outline-none focus:border-clay"
+            className="flex-1 min-w-0 bg-warm-white border border-sand text-espresso text-sm px-3 py-2 outline-none focus:border-clay"
             placeholder="Co zawiera warsztat..."
           />
           <button

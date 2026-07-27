@@ -114,11 +114,11 @@ export default function GalleryEditor({ json, onChange, aspectRatio = "4/3" }: P
           {items.map((img, idx) => (
             <div key={`${idx}-${img.url}`} className="border border-sand bg-warm-white p-4 space-y-3">
               <div className="flex items-center justify-between gap-3">
-                <span className="text-xs tracking-widest uppercase text-charcoal/80">
+                <span className="min-w-0 truncate text-xs tracking-widest uppercase text-charcoal/80">
                   Zdjęcie {idx + 1}
                   {idx === 0 && items.length > 1 && " – pierwsze w pokazie"}
                 </span>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 shrink-0">
                   <button
                     type="button"
                     onClick={() => rotate(idx, 270)}
