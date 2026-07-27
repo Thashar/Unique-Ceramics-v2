@@ -1,0 +1,80 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   Wordmark THASHAR.DEV w stopce — obraz + animacja błysku na hoverze.
+   Bazuje na komponencie z thashar-wordmark (lipiec 2026), ale kolory są
+   dopasowane do palety Unique Ceramics:
+   - filtr `saturate/hue-rotate/brightness` zamienia tealowy `.DEV`
+     (#57A4B1 w pliku źródłowym) na terracottę #C4A882; białe litery
+     THASHAR pozostają białe (filtry hue/saturate nie ruszają szarości,
+     a brightness i tak przycina biel do 255),
+   - smuga błysku: rdzeń cream #F5F0E8 + otoczka terracotta.
+   Maska błysku wskazuje ten sam plik z /public (CSP: img-src 'self').
+   Rozmiar nadpisujesz zmienną --thb-width (domyślnie 110px).
+   ───────────────────────────────────────────────────────────────────────── */
+
+.thb {
+  display: inline-flex;
+  position: relative;
+  line-height: 1;
+  text-decoration: none;
+  opacity: 0.75;
+  transition: opacity 0.2s;
+}
+
+.thb:hover {
+  opacity: 1;
+}
+
+/* Błysk: diagonalna smuga światła przycięta maską do kształtu liter */
+.thb::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 42%,
+    rgba(196, 168, 130, 0.9) 50%,
+    #f5f0e8 52%,
+    rgba(196, 168, 130, 0.9) 54%,
+    transparent 62%
+  );
+  background-size: 250% 100%;
+  background-position: 200% 0;
+  -webkit-mask: url("/images/thashar-wordmark.webp") center/100% 100% no-repeat;
+  mask: url("/images/thashar-wordmark.webp") center/100% 100% no-repeat;
+}
+
+.thb:hover::after {
+  animation: thbShine 0.8s ease-in-out forwards;
+}
+
+@keyframes thbShine {
+  0% {
+    background-position: 200% 0;
+    opacity: 1;
+  }
+  100% {
+    background-position: -100% 0;
+    opacity: 0;
+  }
+}
+
+.img {
+  display: block;
+  width: var(--thb-width, 110px);
+  height: auto;
+  /* teal .DEV → terracotta #C4A882 */
+  filter: saturate(0.6) hue-rotate(214deg) brightness(1.15);
+}
+
+.thb:hover .img {
+  filter: saturate(0.6) hue-rotate(214deg) brightness(1.15)
+    drop-shadow(0 0 6px rgba(196, 168, 130, 0.55));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .thb:hover::after {
+    animation: none;
+  }
+}

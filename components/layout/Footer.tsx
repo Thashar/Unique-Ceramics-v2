@@ -2,6 +2,7 @@
 import Image from "next/image";
 import FooterContactsClient from "./FooterContactsClient";
 import FooterMap from "./FooterMap";
+import ThasharWordmark from "./ThasharWordmark";
 
 export default function Footer({ compact = false }: { compact?: boolean }) {
   if (compact) {
@@ -69,9 +70,12 @@ export default function Footer({ compact = false }: { compact?: boolean }) {
         </div>
 
         <div className="border-t border-sand/10 px-6 lg:px-10 py-4">
-          <p className="text-center text-xs text-sand/30">
-            © {new Date().getFullYear()} Unique Ceramics. Wszelkie prawa zastrzeżone.
-          </p>
+          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6">
+            <p className="text-xs text-sand/30 text-center">
+              © {new Date().getFullYear()} Unique Ceramics. Wszelkie prawa zastrzeżone.
+            </p>
+            <ThasharWordmark width="90px" />
+          </div>
         </div>
       </footer>
     );
@@ -144,9 +148,12 @@ export default function Footer({ compact = false }: { compact?: boolean }) {
       </div>
 
       <div className="border-t border-sand/10 px-6 lg:px-10 py-5">
-        <p className="text-center text-xs text-sand/30">
-          © {new Date().getFullYear()} Unique Ceramics. Wszelkie prawa zastrzeżone.
-        </p>
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6">
+          <p className="text-xs text-sand/30 text-center">
+            © {new Date().getFullYear()} Unique Ceramics. Wszelkie prawa zastrzeżone.
+          </p>
+          <ThasharWordmark />
+        </div>
       </div>
     </footer>
   );

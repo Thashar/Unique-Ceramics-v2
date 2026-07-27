@@ -3,6 +3,7 @@ import Image from "next/image";
 import FooterInstagramPanel from "./FooterInstagramPanel";
 import FooterContactsClient from "./FooterContactsClient";
 import FooterMap from "./FooterMap";
+import ThasharWordmark from "./ThasharWordmark";
 
 const NAV_LINKS = [
   ["Sklep", "/sklep"],
@@ -74,6 +75,7 @@ export default function FooterWithInstagram({ instagram }: { instagram: string }
           <p className="text-xs text-sand/30 whitespace-nowrap">
             © {new Date().getFullYear()} Wszelkie prawa zastrzeżone.
           </p>
+          <ThasharWordmark width="90px" className="shrink-0" />
         </div>
       </div>
     </footer>

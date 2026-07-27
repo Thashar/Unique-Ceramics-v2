@@ -247,6 +247,7 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 - **FooterContactsClient.tsx** — `"use client"`, pobiera kontakty z `/api/public/contacts` po mount
 - **FooterMap.tsx** — `"use client"`, mapa Google w iframe — ładowana dopiero po zgodzie cookies
 - **CookieBanner.tsx** — `"use client"`, baner zgody na cookies; na mobile: skrócony tekst, mniejsze pady i czcionka, układ poziomy (wiersz)
+- **ThasharWordmark.tsx** + **ThasharWordmark.module.css** — wordmark „Powered by THASHAR.DEV" w belce praw autorskich obu stopek (link do https://thashar.dev). Serwerowy (animacja czysto CSS-owa, bez JS): błysk na hoverze to diagonalna smuga przycięta CSS-ową maską do kształtu liter (`mask: url(/images/thashar-wordmark.webp)`) + `drop-shadow`. Kolory dopasowane do palety: filtr `saturate(.6) hue-rotate(214deg) brightness(1.15)` zamienia tealowy `.DEV` (#57A4B1 w pliku) na terracottę #C4A882, białe litery zostają białe; smuga = rdzeń cream + otoczka terracotta. Szerokość przez prop `width` (zmienna `--thb-width`, default 110 px). Respektuje `prefers-reduced-motion`. Źródło grafiki: `public/images/thashar-wordmark.webp` (774×219)
 - **Providers.tsx** — opakowuje tylko `SessionProvider` + renderuje `CookieBanner` (koszyk/zgoda nie potrzebują providerów)
 
 ### `components/home/`
