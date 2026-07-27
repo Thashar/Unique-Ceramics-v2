@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import { Loader2 } from "lucide-react";
 import RichEditor from "@/components/admin/RichEditor";
 import ImageUploader from "@/components/admin/ImageUploader";
 import FocalPointPicker from "@/components/admin/FocalPointPicker";
@@ -138,12 +139,31 @@ function MultilineField({ label, value, setter, placeholder, rows = 3 }: {
   );
 }
 
-function SaveButton({ onClick, label }: { onClick: () => void; label: string }) {
+/**
+ * Zapis idzie do API, więc przycisk sam pilnuje stanu „w toku”: kręcące się kółko
+ * daje znać, że kliknięcie zostało przyjęte, a blokada chroni przed dublowaniem zapisu.
+ */
+function SaveButton({ onClick, label }: { onClick: () => void | Promise<void>; label: string }) {
+  const [saving, setSaving] = useState(false);
+
+  const handleClick = async () => {
+    if (saving) return;
+    setSaving(true);
+    try {
+      await onClick();
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <button
-      onClick={onClick}
-      className="bg-clay hover:bg-espresso text-cream text-xs tracking-widest uppercase px-6 py-3 transition-colors"
+      onClick={handleClick}
+      disabled={saving}
+      aria-busy={saving}
+      className="inline-flex items-center gap-2 bg-clay hover:bg-espresso text-cream text-xs tracking-widest uppercase px-6 py-3 transition-colors disabled:cursor-wait disabled:hover:bg-clay"
     >
+      {saving && <Loader2 size={14} className="animate-spin" aria-hidden="true" />}
       {label}
     </button>
   );

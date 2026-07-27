@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Upload, X, MoveUp, MoveDown } from "lucide-react";
+import { Upload, X, MoveUp, MoveDown, RotateCcw, RotateCw } from "lucide-react";
 import FocalPointPicker from "@/components/admin/FocalPointPicker";
 import { uploadErrorMessage } from "@/lib/upload-error";
 import { parseGallery, GALLERY_MAX_IMAGES, GALLERY_DEFAULT_POSITION, type GalleryImage } from "@/lib/gallery";
@@ -14,9 +14,24 @@ interface Props {
   aspectRatio?: string;
 }
 
+/**
+ * Obrót zamienia osie kadru, więc punkt kadrowania trzeba przeliczyć –
+ * inaczej po obrocie zdjęcie przycinałoby się w zupełnie innym miejscu.
+ */
+function rotatePosition(position: string, angle: 90 | 180 | 270): string {
+  const [xs, ys] = position.split(" ");
+  const x = parseInt(xs);
+  const y = parseInt(ys);
+  if (Number.isNaN(x) || Number.isNaN(y)) return GALLERY_DEFAULT_POSITION;
+  if (angle === 90) return `${100 - y}% ${x}%`;
+  if (angle === 180) return `${100 - x}% ${100 - y}%`;
+  return `${y}% ${100 - x}%`;
+}
+
 export default function GalleryEditor({ json, onChange, aspectRatio = "4/3" }: Props) {
   const [items, setItems] = useState<GalleryImage[]>(() => parseGallery(json));
   const [uploading, setUploading] = useState(false);
+  const [rotatingIdx, setRotatingIdx] = useState<number | null>(null);
   const [error, setError] = useState("");
 
   const emit = (next: GalleryImage[]) => {
@@ -39,6 +54,30 @@ export default function GalleryEditor({ json, onChange, aspectRatio = "4/3" }: P
     [next[idx], next[target]] = [next[target], next[idx]];
     emit(next);
   };
+
+  /** Obrót trwały: serwer zapisuje obrócony plik i zwraca nowy adres. */
+  async function rotate(idx: number, angle: 90 | 270) {
+    if (rotatingIdx !== null) return;
+    setRotatingIdx(idx);
+    setError("");
+    try {
+      const res = await fetch("/api/admin/rotate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: items[idx].url, angle }),
+      });
+      const data = await res.json().catch(() => null);
+      if (res.ok && data?.url) {
+        update(idx, { url: data.url, position: rotatePosition(items[idx].position, angle) });
+      } else {
+        setError(data?.error ?? "Nie udało się obrócić zdjęcia.");
+      }
+    } catch {
+      setError("Brak połączenia z serwerem – spróbuj ponownie.");
+    } finally {
+      setRotatingIdx(null);
+    }
+  }
 
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.target.files;
@@ -80,6 +119,25 @@ export default function GalleryEditor({ json, onChange, aspectRatio = "4/3" }: P
                   {idx === 0 && items.length > 1 && " – pierwsze w pokazie"}
                 </span>
                 <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => rotate(idx, 270)}
+                    disabled={rotatingIdx !== null}
+                    title="Obróć w lewo"
+                    className="p-1.5 text-charcoal hover:text-espresso disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    <RotateCcw size={14} className={rotatingIdx === idx ? "animate-spin" : ""} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => rotate(idx, 90)}
+                    disabled={rotatingIdx !== null}
+                    title="Obróć w prawo"
+                    className="p-1.5 text-charcoal hover:text-espresso disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    <RotateCw size={14} className={rotatingIdx === idx ? "animate-spin" : ""} />
+                  </button>
+                  <span className="w-px h-4 bg-sand mx-1" />
                   <button
                     type="button"
                     onClick={() => move(idx, -1)}

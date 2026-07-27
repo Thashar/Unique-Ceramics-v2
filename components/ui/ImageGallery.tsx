@@ -58,24 +58,62 @@ export default function ImageGallery({
 
   const containerRef = useRef<HTMLDivElement>(null);
   const animatingRef = useRef(false);
+  const indexRef = useRef(isSlider ? 1 : 0);
+  const commitRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const startRef = useRef({ x: 0, y: 0 });
   const axisRef = useRef<"none" | "x" | "y">("none");
   const movedRef = useRef(false);
   const reduced = usePrefersReducedMotion();
 
-  const logical = isSlider ? ((index - 1) % count + count) % count : 0;
+  // Indeks nigdy nie wyjeżdża poza taśmę – nawet gdyby korekta się spóźniła,
+  // widać zawsze zdjęcie, a nie pusty kadr
+  const lastSlide = slides.length - 1;
+  const safeIndex = Math.min(Math.max(index, 0), lastSlide);
+  const logical = isSlider ? ((safeIndex - 1) % count + count) % count : 0;
+
+  const applyIndex = useCallback((value: number, withoutTransition: boolean) => {
+    indexRef.current = value;
+    setInstant(withoutTransition);
+    setIndex(value);
+  }, []);
+
+  /**
+   * Kończy przejście: zwalnia blokadę i sprowadza indeks z klonu na realne zdjęcie.
+   * Idempotentne – może je wywołać zarówno `transitionend`, jak i zegar awaryjny.
+   */
+  const finish = useCallback(() => {
+    if (commitRef.current) {
+      clearTimeout(commitRef.current);
+      commitRef.current = null;
+    }
+    animatingRef.current = false;
+    const i = indexRef.current;
+    if (i <= 0) applyIndex(count, true);
+    else if (i >= count + 1) applyIndex(1, true);
+  }, [applyIndex, count]);
+
+  const start = useCallback((target: number) => {
+    animatingRef.current = true;
+    applyIndex(target, false);
+    // Nie polegamy wyłącznie na `transitionend` – gdy animacja zostanie przerwana
+    // albo karta jest w tle, zdarzenie nie przychodzi i taśma zatrzymałaby się na klonie
+    if (commitRef.current) clearTimeout(commitRef.current);
+    commitRef.current = setTimeout(finish, TRANSITION_MS + 60);
+  }, [applyIndex, finish]);
 
   const go = useCallback((dir: 1 | -1) => {
     if (!isSlider || animatingRef.current) return;
-    animatingRef.current = true;
-    setIndex((i) => i + dir);
-  }, [isSlider]);
+    start(indexRef.current + dir);
+  }, [isSlider, start]);
 
   const goTo = useCallback((target: number) => {
     if (!isSlider || animatingRef.current || target === logical) return;
-    animatingRef.current = true;
-    setIndex(target + 1);
-  }, [isSlider, logical]);
+    start(target + 1);
+  }, [isSlider, start, logical]);
+
+  useEffect(() => () => {
+    if (commitRef.current) clearTimeout(commitRef.current);
+  }, []);
 
   // Automatyczne przewijanie w lewo – zatrzymane przy hoverze, dotyku,
   // poza widocznym obszarem i przy „ograniczonych animacjach”
@@ -113,22 +151,8 @@ export default function ImageGallery({
 
   const handleTransitionEnd = (e: React.TransitionEvent) => {
     if (e.propertyName !== "transform" || e.target !== e.currentTarget) return;
-    animatingRef.current = false;
-    if (index === 0) {
-      setInstant(true);
-      setIndex(count);
-    } else if (index === count + 1) {
-      setInstant(true);
-      setIndex(1);
-    }
+    finish();
   };
-
-  // Zabezpieczenie: gdy przeglądarka nie wyśle transitionend (np. karta w tle)
-  useEffect(() => {
-    if (!animatingRef.current) return;
-    const id = setTimeout(() => { animatingRef.current = false; }, TRANSITION_MS + 100);
-    return () => clearTimeout(id);
-  }, [index]);
 
   const onTouchStart = (e: React.TouchEvent) => {
     if (!isSlider || animatingRef.current) return;
@@ -204,7 +228,7 @@ export default function ImageGallery({
     );
   }
 
-  const transform = `translate3d(calc(${-index * 100}% + ${dragPx}px), 0, 0)`;
+  const transform = `translate3d(calc(${-safeIndex * 100}% + ${dragPx}px), 0, 0)`;
   const animate = !instant && !dragging;
 
   return (
