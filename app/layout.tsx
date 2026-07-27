@@ -1,6 +1,7 @@
 ﻿import type { Metadata } from "next";
 import { Playfair_Display, Inter } from "next/font/google";
 import Providers from "@/components/layout/Providers";
+import LocalBusinessSchema from "@/components/seo/LocalBusinessSchema";
 import "./globals.css";
 
 const playfair = Playfair_Display({
@@ -97,98 +98,6 @@ export const metadata: Metadata = {
   },
 };
 
-const localBusinessSchema = {
-  "@context": "https://schema.org",
-  "@type": ["LocalBusiness", "Store"],
-  "@id": `${BASE}/#business`,
-  name: "Unique Ceramics",
-  description:
-    "Pracownia ceramiki artystycznej tworząca ręcznie robione naczynia użytkowe i dekoracyjne. Kubki, filiżanki, miski, talerze i świeczniki wykonywane z pasją — każdy egzemplarz jest niepowtarzalny.",
-  url: BASE,
-  logo: `${BASE}/images/logo.webp`,
-  image: `${BASE}/images/OpenGraph.webp`,
-  telephone: "+48668443706",
-  email: "kontakt@uniqueceramics.pl",
-  address: {
-    "@type": "PostalAddress",
-    streetAddress: "Familijna 23",
-    postalCode: "44-164",
-    addressLocality: "Kleszczów",
-    addressRegion: "Śląskie",
-    addressCountry: "PL",
-  },
-  geo: {
-    "@type": "GeoCoordinates",
-    latitude: 50.3482019,
-    longitude: 18.5182082,
-  },
-  hasMap: "https://maps.google.com/?q=Familijna+23,+44-164+Kleszczów",
-  priceRange: "$$",
-  currenciesAccepted: "PLN",
-  paymentAccepted: "Bank Transfer, BLIK",
-  openingHoursSpecification: [
-    {
-      "@type": "OpeningHoursSpecification",
-      dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
-      opens: "09:00",
-      closes: "17:00",
-    },
-  ],
-  areaServed: [
-    { "@type": "City", name: "Kleszczów" },
-    { "@type": "City", name: "Gliwice" },
-    { "@type": "City", name: "Knurów" },
-    { "@type": "City", name: "Pyskowice" },
-    { "@type": "City", name: "Zabrze" },
-    { "@type": "City", name: "Tarnowskie Góry" },
-    { "@type": "City", name: "Bytom" },
-    { "@type": "City", name: "Piekary Śląskie" },
-    { "@type": "City", name: "Chorzów" },
-    { "@type": "City", name: "Ruda Śląska" },
-    { "@type": "City", name: "Świętochłowice" },
-    { "@type": "City", name: "Siemianowice Śląskie" },
-    { "@type": "City", name: "Katowice" },
-    { "@type": "City", name: "Mikołów" },
-    { "@type": "City", name: "Tychy" },
-    { "@type": "City", name: "Mysłowice" },
-    { "@type": "City", name: "Sosnowiec" },
-    { "@type": "City", name: "Dąbrowa Górnicza" },
-    { "@type": "AdministrativeArea", name: "Śląsk" },
-    { "@type": "Country", name: "Polska" },
-  ],
-  sameAs: ["https://www.instagram.com/unique.ceramics"],
-  hasOfferCatalog: {
-    "@type": "OfferCatalog",
-    name: "Ceramika artystyczna",
-    itemListElement: [
-      { "@type": "OfferCatalog", name: "Kubki ceramiczne" },
-      { "@type": "OfferCatalog", name: "Filiżanki ceramiczne" },
-      { "@type": "OfferCatalog", name: "Miski i naczynia" },
-      { "@type": "OfferCatalog", name: "Talerze ceramiczne" },
-      { "@type": "OfferCatalog", name: "Świeczniki ceramiczne" },
-    ],
-  },
-};
-
-const websiteSchema = {
-  "@context": "https://schema.org",
-  "@type": "WebSite",
-  "@id": `${BASE}/#website`,
-  name: "Unique Ceramics",
-  url: BASE,
-  description: "Sklep z ręcznie robioną ceramiką artystyczną",
-  inLanguage: "pl-PL",
-  publisher: { "@id": `${BASE}/#business` },
-  potentialAction: {
-    "@type": "SearchAction",
-    target: {
-      "@type": "EntryPoint",
-      urlTemplate: `${BASE}/sklep?kategoria={search_term_string}`,
-    },
-    "query-input": "required name=search_term_string",
-  },
-};
-
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
@@ -202,14 +111,9 @@ export default function RootLayout({
       </head>
       <body className="min-h-[100svh] flex flex-col">
         <Providers>{children}</Providers>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }}
-        />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
-        />
+        {/* Dane strukturalne (LocalBusiness + WebSite) — adres, telefon i godziny
+            otwarcia czytane z ustawień panelu admina */}
+        <LocalBusinessSchema />
       </body>
     </html>
   );

@@ -9,6 +9,10 @@ export async function GET() {
     "contact_facebook",
     "contact_youtube",
     "contact_whatsapp",
+    "contact_hours",
+    "contact_address_street",
+    "contact_address_city",
+    "contact_address_region",
   ]);
   return NextResponse.json({
     phone: s.contact_phone,
@@ -17,5 +21,9 @@ export async function GET() {
     facebook: s.contact_facebook,
     youtube: s.contact_youtube,
     whatsapp: s.contact_whatsapp,
+    hours: s.contact_hours,
+    addressStreet: s.contact_address_street,
+    addressCity: s.contact_address_city,
+    addressRegion: s.contact_address_region,
   });
 }

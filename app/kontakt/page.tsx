@@ -49,6 +49,10 @@ export default async function ContactPage() {
     "contact_email",
     "contact_instagram",
     "contact_whatsapp",
+    "contact_hours",
+    "contact_address_street",
+    "contact_address_city",
+    "contact_address_region",
     "workshops_offers",
   ]);
 
@@ -56,6 +60,10 @@ export default async function ContactPage() {
   const email = settings.contact_email;
   const instagram = settings.contact_instagram;
   const whatsapp = settings.contact_whatsapp;
+  const hours = settings.contact_hours;
+  const addrStreet = settings.contact_address_street;
+  const addrCity = settings.contact_address_city;
+  const addrRegion = settings.contact_address_region;
   const workshopOptions = parseWorkshopTitles(settings.workshops_offers);
 
   // Link wa.me wymaga samych cyfr (bez spacji, +, myślników)
@@ -164,12 +172,24 @@ export default async function ContactPage() {
                   <div>
                     <p className="text-xs tracking-widest uppercase text-clay mb-1">Lokalizacja</p>
                     <address className="not-italic text-charcoal/80 leading-relaxed text-sm">
-                      ul. Familijna 23<br />
-                      44-164 Kleszczów (k. Gliwic)<br />
-                      woj. śląskie
+                      {addrStreet}
+                      {addrCity && <><br />{addrCity}</>}
+                      {addrRegion && <><br />{addrRegion}</>}
                     </address>
                   </div>
                 </div>
+
+                {hours && (
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 bg-cream rounded-full flex items-center justify-center flex-shrink-0">
+                      <Clock size={18} strokeWidth={1.5} className="text-clay" />
+                    </div>
+                    <div>
+                      <p className="text-xs tracking-widest uppercase text-clay mb-1">Godziny otwarcia</p>
+                      <p className="text-charcoal/80 text-sm leading-relaxed">{hours}</p>
+                    </div>
+                  </div>
+                )}
 
                 <div className="flex items-start gap-4">
                   <div className="w-10 h-10 bg-cream rounded-full flex items-center justify-center flex-shrink-0">

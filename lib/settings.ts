@@ -1,4 +1,19 @@
+import { unstable_cache } from "next/cache";
 import { db } from "@/lib/db";
+
+/** Klucze kontaktowe używane w stopce i w danych strukturalnych. */
+export const CONTACT_KEYS = [
+  "contact_phone",
+  "contact_email",
+  "contact_instagram",
+  "contact_facebook",
+  "contact_youtube",
+  "contact_whatsapp",
+  "contact_hours",
+  "contact_address_street",
+  "contact_address_city",
+  "contact_address_region",
+];
 
 const REGULAMIN_DEFAULT = `<h2>I. Postanowienia ogólne</h2>
 <ol>
@@ -190,7 +205,10 @@ const DEFAULTS: Record<string, string> = {
   contact_facebook: "",
   contact_youtube: "",
   contact_whatsapp: "",
-  contact_hours: "Pon–Pt 9:00–17:00",
+  contact_hours: "Wt–Czw 17:00–19:00, So 15:00–17:00",
+  contact_address_street: "ul. Familijna 23",
+  contact_address_city: "44-164 Kleszczów (k. Gliwic)",
+  contact_address_region: "woj. śląskie",
   shipping_cost: "18",
   shipping_cost_parcel_locker: "18",
   shipping_free_enabled: "true",
@@ -252,3 +270,14 @@ export async function getSettings(
   for (const key of keys) map[key] = DEFAULTS[key] ?? "";
   return map;
 }
+
+/**
+ * Dane kontaktowe z cache — czytane przy każdym renderze layoutu (JSON-LD),
+ * więc nie mogą uderzać w bazę za każdym razem. Unieważniane tagiem
+ * `settings` przy zapisie w /api/admin/settings.
+ */
+export const getContactSettings = unstable_cache(
+  async () => getSettings(CONTACT_KEYS),
+  ["contact-settings"],
+  { revalidate: 3600, tags: ["settings"] }
+);

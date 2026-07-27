@@ -1,12 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Mail, Phone } from "lucide-react";
+import { Mail, Phone, MapPin, Clock } from "lucide-react";
 import InstagramIcon from "@/components/ui/InstagramIcon";
 import FacebookIcon from "@/components/ui/FacebookIcon";
 import YoutubeIcon from "@/components/ui/YoutubeIcon";
 import WhatsAppIcon from "@/components/ui/WhatsAppIcon";
 
+// Muszą odpowiadać defaultom z lib/settings.ts — pokazują się zanim
+// dojedzie odpowiedź z /api/public/contacts.
 const DEFAULTS = {
   phone: "+48 668 443 706",
   email: "kontakt@uniqueceramics.pl",
@@ -14,6 +16,10 @@ const DEFAULTS = {
   facebook: "",
   youtube: "",
   whatsapp: "",
+  hours: "Wt–Czw 17:00–19:00, So 15:00–17:00",
+  addressStreet: "ul. Familijna 23",
+  addressCity: "44-164 Kleszczów (k. Gliwic)",
+  addressRegion: "woj. śląskie",
 };
 
 export default function FooterContactsClient() {
@@ -30,6 +36,10 @@ export default function FooterContactsClient() {
           facebook:  json.facebook  || "",
           youtube:   json.youtube   || "",
           whatsapp:  json.whatsapp  || "",
+          hours:         json.hours         || DEFAULTS.hours,
+          addressStreet: json.addressStreet || DEFAULTS.addressStreet,
+          addressCity:   json.addressCity   || DEFAULTS.addressCity,
+          addressRegion: json.addressRegion || "",
         });
       })
       .catch(() => {});
@@ -98,6 +108,25 @@ export default function FooterContactsClient() {
           <WhatsAppIcon size={15} />
           WhatsApp
         </a>
+      )}
+
+      {/* Adres pracowni i godziny — te same ustawienia co strona /kontakt */}
+      {(data.addressStreet || data.addressCity) && (
+        <div className="flex items-start gap-3 text-sm">
+          <MapPin size={15} strokeWidth={1.5} className="shrink-0 mt-0.5" />
+          <address className="not-italic leading-relaxed">
+            {data.addressStreet}
+            {data.addressCity && <><br />{data.addressCity}</>}
+            {data.addressRegion && <><br />{data.addressRegion}</>}
+          </address>
+        </div>
+      )}
+
+      {data.hours && (
+        <div className="flex items-start gap-3 text-sm">
+          <Clock size={15} strokeWidth={1.5} className="shrink-0 mt-0.5" />
+          <span className="leading-relaxed">{data.hours}</span>
+        </div>
       )}
     </>
   );

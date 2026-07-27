@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-auth";
 import { sanitizeRichHtml } from "@/lib/sanitize-html";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
 
 // Klucze przechowujące HTML — sanityzowane już przy zapisie (defense in depth,
@@ -40,6 +40,9 @@ async function saveSettings(body: { key: string; value: string }[]) {
   );
   // Strony treściowe są cachowane (ISR) — po zapisie ustawień odśwież wszystko
   revalidatePath("/", "layout");
+  // Dane kontaktowe idą przez unstable_cache (JSON-LD w layoucie) — revalidatePath
+  // ich nie czyści, potrzebny jest tag
+  revalidateTag("settings", "max");
 }
 
 async function handleSave(req: Request) {

@@ -43,6 +43,10 @@ interface Props {
     contact_facebook: string;
     contact_youtube: string;
     contact_whatsapp: string;
+    contact_hours: string;
+    contact_address_street: string;
+    contact_address_city: string;
+    contact_address_region: string;
     shipping_cost: string;
     shipping_cost_parcel_locker: string;
     shipping_free_enabled: string;
@@ -220,6 +224,10 @@ export default function SettingsForm({ section, initial }: Props) {
   const [facebook, setFacebook] = useState(initial.contact_facebook);
   const [youtube, setYoutube] = useState(initial.contact_youtube);
   const [whatsapp, setWhatsapp] = useState(initial.contact_whatsapp);
+  const [hours, setHours] = useState(initial.contact_hours);
+  const [addrStreet, setAddrStreet] = useState(initial.contact_address_street);
+  const [addrCity, setAddrCity] = useState(initial.contact_address_city);
+  const [addrRegion, setAddrRegion] = useState(initial.contact_address_region);
 
   // Wysyłka
   const [shippingCost, setShippingCost] = useState(initial.shipping_cost);
@@ -527,6 +535,20 @@ export default function SettingsForm({ section, initial }: Props) {
           <Field label="YouTube (pełny URL kanału)" value={youtube} setter={setYoutube} placeholder="https://youtube.com/..." />
           <Field label="WhatsApp (numer telefonu, np. 48668443706)" value={whatsapp} setter={setWhatsapp} placeholder="48668443706" />
           <p className="text-xs text-charcoal/50">Facebook, YouTube i WhatsApp wyświetlają się w stopce tylko gdy są wypełnione.</p>
+
+          <h2 className="font-serif text-2xl text-espresso pt-4">Adres pracowni</h2>
+          <Field label="Ulica i numer" value={addrStreet} setter={setAddrStreet} placeholder="ul. Familijna 23" />
+          <Field label="Kod pocztowy i miejscowość" value={addrCity} setter={setAddrCity} placeholder="44-164 Kleszczów (k. Gliwic)" />
+          <Field label="Województwo (opcjonalnie)" value={addrRegion} setter={setAddrRegion} placeholder="woj. śląskie" />
+
+          <h2 className="font-serif text-2xl text-espresso pt-4">Godziny otwarcia</h2>
+          <Field label="Godziny otwarcia" value={hours} setter={setHours} placeholder="Wt–Czw 17:00–19:00, So 15:00–17:00" />
+          <p className="text-xs text-charcoal/50">
+            Adres i godziny wyświetlają się w kolumnie &bdquo;Kontakt&rdquo; w stopce oraz na stronie /kontakt.
+            Godziny trafiają też do danych strukturalnych (SEO) — zachowaj format
+            <span className="font-mono"> Skrót dni HH:MM–HH:MM</span>, np. <span className="font-mono">Wt–Czw 17:00–19:00, So 15:00–17:00</span>.
+          </p>
+
           <SaveButton
             onClick={() => save([
               { key: "contact_phone", value: phone },
@@ -535,6 +557,10 @@ export default function SettingsForm({ section, initial }: Props) {
               { key: "contact_facebook", value: facebook },
               { key: "contact_youtube", value: youtube },
               { key: "contact_whatsapp", value: whatsapp },
+              { key: "contact_hours", value: hours },
+              { key: "contact_address_street", value: addrStreet },
+              { key: "contact_address_city", value: addrCity },
+              { key: "contact_address_region", value: addrRegion },
             ])}
             label="Zapisz kontakt"
           />

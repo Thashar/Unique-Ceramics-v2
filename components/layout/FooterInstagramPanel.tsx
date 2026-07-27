@@ -1,12 +1,31 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import InstagramIcon from "@/components/ui/InstagramIcon";
 import { ArrowRight } from "lucide-react";
 
-export default function FooterInstagramPanel({ instagram }: { instagram: string }) {
-  const handle = instagram.startsWith("@") ? instagram.slice(1) : instagram;
-  const displayHandle = instagram.startsWith("@") ? instagram : `@${instagram}`;
+const DEFAULT_HANDLE = "@unique.ceramics";
+
+/**
+ * Panel Instagrama w stopce. Na stronie głównej handle przychodzi propsem
+ * (jest tam i tak pobierany serwerowo); na pozostałych stronach — gdzie stopka
+ * musi być w pełni synchroniczna — dociągamy go z /api/public/contacts.
+ */
+export default function FooterInstagramPanel({ instagram }: { instagram?: string }) {
+  const [fetched, setFetched] = useState(DEFAULT_HANDLE);
+
+  useEffect(() => {
+    if (instagram) return;
+    fetch("/api/public/contacts")
+      .then((r) => r.json())
+      .then((json) => { if (json.instagram) setFetched(json.instagram); })
+      .catch(() => {});
+  }, [instagram]);
+
+  const value = instagram || fetched;
+  const handle = value.startsWith("@") ? value.slice(1) : value;
+  const displayHandle = value.startsWith("@") ? value : `@${value}`;
   const href = `https://instagram.com/${handle}`;
 
   return (
