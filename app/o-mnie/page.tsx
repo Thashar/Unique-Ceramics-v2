@@ -121,8 +121,8 @@ export default async function AboutPage() {
                 <ImageGallery
                   images={gallery}
                   alt="Zdjęcia z pracowni"
-                  className="aspect-[3/4] rounded-sm"
-                  sizes="(max-width: 1024px) 100vw, 40vw"
+                  className="aspect-[4/3] rounded-sm w-full max-w-xl mx-auto"
+                  sizes="(max-width: 640px) 100vw, 576px"
                 />
               </div>
             )}

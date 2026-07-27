@@ -10,11 +10,11 @@ interface Props {
   /** JSON galerii (format z lib/gallery.ts) */
   json: string;
   onChange: (json: string) => void;
-  /** Proporcje podglądu – takie same jak na stronie publicznej */
+  /** Proporcje podglądu – takie same jak na stronie publicznej (kadr poziomy 4/3) */
   aspectRatio?: string;
 }
 
-export default function GalleryEditor({ json, onChange, aspectRatio = "3/4" }: Props) {
+export default function GalleryEditor({ json, onChange, aspectRatio = "4/3" }: Props) {
   const [items, setItems] = useState<GalleryImage[]>(() => parseGallery(json));
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
