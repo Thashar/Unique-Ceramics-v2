@@ -7,9 +7,11 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import Header from "@/components/layout/HeaderWrapper";
 import Footer from "@/components/layout/Footer";
+import ImageGallery from "@/components/ui/ImageGallery";
 import { getSettings } from "@/lib/settings";
 import { sanitizeRichHtml } from "@/lib/sanitize-html";
 import { hexToRgba } from "@/lib/overlay";
+import { parseGallery } from "@/lib/gallery";
 
 export const metadata: Metadata = {
   title: "O mnie",
@@ -37,7 +39,7 @@ export default async function AboutPage() {
     "about_hero_image", "about_hero_position",
     "about_hero_overlay_color", "about_hero_overlay_opacity",
     "about_hero_height",
-    "about_content_image", "about_content_position",
+    "about_content_gallery", "about_content_image", "about_content_position",
     "about_story",
   ]);
   const heroImage = s.about_hero_image;
@@ -45,8 +47,9 @@ export default async function AboutPage() {
   // Minimum 30vh – pilnuje też wartości zapisanych zanim suwak dostał ten próg
   const heroHeight = Math.max(30, parseInt(s.about_hero_height) || 50);
   const overlayBg = hexToRgba(s.about_hero_overlay_color, s.about_hero_overlay_opacity);
-  const contentImage = s.about_content_image;
-  const contentPos = s.about_content_position || "50% 50%";
+  // Galeria przy opisie; stare klucze `about_content_image` działają jako pojedyncze zdjęcie
+  const gallery = parseGallery(s.about_content_gallery, s.about_content_image, s.about_content_position);
+  const hasGallery = gallery.length > 0;
   const story = s.about_story;
 
   return (
@@ -84,9 +87,9 @@ export default async function AboutPage() {
 
         {/* Treść */}
         <div className="bg-warm-white py-24 px-6 lg:px-10">
-          <div className={`max-w-7xl mx-auto grid grid-cols-1 gap-16 ${contentImage ? "lg:grid-cols-12" : ""}`}>
+          <div className={`max-w-7xl mx-auto grid grid-cols-1 gap-16 ${hasGallery ? "lg:grid-cols-12" : ""}`}>
             {/* Tekst główny */}
-            <div className={contentImage ? "lg:col-span-7" : ""}>
+            <div className={hasGallery ? "lg:col-span-7" : ""}>
               <h2 className="font-serif text-3xl text-espresso mb-8 leading-snug">
                 „Ręcznie tworzone z sercem&rdquo;
               </h2>
@@ -112,19 +115,15 @@ export default async function AboutPage() {
               </div>
             </div>
 
-            {/* Sidebar ze zdjęciem – widoczny tylko gdy ustawione */}
-            {contentImage && (
+            {/* Sidebar z galerią – widoczny tylko gdy dodano zdjęcia */}
+            {hasGallery && (
               <div className="lg:col-span-5">
-                <div className="relative aspect-[3/4] overflow-hidden rounded-sm">
-                  <Image
-                    src={contentImage}
-                    alt="Przy pracy"
-                    fill
-                    className="object-cover"
-                    style={{ objectPosition: contentPos }}
-                    sizes="(max-width: 1024px) 100vw, 40vw"
-                  />
-                </div>
+                <ImageGallery
+                  images={gallery}
+                  alt="Zdjęcia z pracowni"
+                  className="aspect-[3/4] rounded-sm"
+                  sizes="(max-width: 1024px) 100vw, 40vw"
+                />
               </div>
             )}
           </div>

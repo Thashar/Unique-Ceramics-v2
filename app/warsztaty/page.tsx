@@ -12,9 +12,12 @@ import {
 } from "lucide-react";
 import Header from "@/components/layout/HeaderWrapper";
 import Footer from "@/components/layout/Footer";
+import ClayRule from "@/components/ui/ClayRule";
+import ImageGallery from "@/components/ui/ImageGallery";
 import { getSettings } from "@/lib/settings";
 import { sanitizeRichHtml } from "@/lib/sanitize-html";
 import { hexToRgba } from "@/lib/overlay";
+import { parseGallery } from "@/lib/gallery";
 
 export const metadata: Metadata = {
   title: "Warsztaty ceramiczne",
@@ -77,12 +80,23 @@ function parseJson<T>(json: string): T[] {
   }
 }
 
+// Wprowadzenie: tekst do lewej, pierwszy akapit jako lead (Playfair, większy,
+// ciemniejszy). `p:first-child` zamiast klasy w treści — HTML z panelu zostaje
+// nietknięty, a nowy akapit dopisany na początku automatycznie staje się leadem.
+const INTRO_PROSE = [
+  "text-charcoal/80 text-lg leading-relaxed [&_p]:mb-4 [&_strong]:text-espresso",
+  // Krok wielkości celowo mały — wyróżnienie nosi serif i kolor. Przy dłuższym
+  // pierwszym akapicie duży stopień pisma zamieniał lead w ścianę tekstu.
+  "[&>p:first-child]:font-serif [&>p:first-child]:text-xl [&>p:first-child]:md:text-[22px]",
+  "[&>p:first-child]:leading-relaxed [&>p:first-child]:text-espresso [&>p:first-child]:mb-5",
+].join(" ");
+
 export default async function WorkshopsPage() {
   const s = await getSettings([
     "workshops_hero_image", "workshops_hero_position",
     "workshops_hero_overlay_color", "workshops_hero_overlay_opacity",
     "workshops_hero_height",
-    "workshops_content_image", "workshops_content_position",
+    "workshops_content_gallery", "workshops_content_image", "workshops_content_position",
     "workshops_intro", "contact_phone",
     "workshops_offers", "workshops_includes", "workshops_faq",
   ]);
@@ -91,8 +105,9 @@ export default async function WorkshopsPage() {
   // Minimum 30vh – pilnuje też wartości zapisanych zanim suwak dostał ten próg
   const heroHeight = Math.max(30, parseInt(s.workshops_hero_height) || 50);
   const overlayBg = hexToRgba(s.workshops_hero_overlay_color, s.workshops_hero_overlay_opacity);
-  const contentImage = s.workshops_content_image;
-  const contentPos = s.workshops_content_position || "50% 50%";
+  // Galeria przy wprowadzeniu; stary klucz `workshops_content_image` = pojedyncze zdjęcie
+  const gallery = parseGallery(s.workshops_content_gallery, s.workshops_content_image, s.workshops_content_position);
+  const hasGallery = gallery.length > 0;
   const intro = s.workshops_intro;
 
   const workshops = parseJson<WorkshopOffer>(s.workshops_offers).filter((w) => w.active);
@@ -166,30 +181,28 @@ export default async function WorkshopsPage() {
           </div>
         )}
 
-        {/* Lead */}
+        {/* Lead — ozdobnik (kreska z mozaiką) + wprowadzenie.
+            Pierwszy akapit jest wyróżniony selektorem `p:first-child`, więc treść
+            w panelu pozostaje zwykłym HTML-em — nie trzeba nic oznaczać ręcznie. */}
         <div className="bg-warm-white py-16 px-6 lg:px-10">
-          {contentImage ? (
+          {hasGallery ? (
             <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-              <div
-                className="text-charcoal/80 text-lg leading-relaxed [&_p]:mb-4 [&_strong]:text-espresso"
-                dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(intro) }}
-              />
-              <div className="relative aspect-[3/4] overflow-hidden rounded-sm">
-                <Image
-                  src={contentImage}
-                  alt="Warsztaty ceramiczne"
-                  fill
-                  className="object-cover"
-                  style={{ objectPosition: contentPos }}
-                  sizes="(max-width: 1024px) 100vw, 50vw"
-                />
+              <div>
+                <ClayRule className="mb-7" />
+                <div className={INTRO_PROSE} dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(intro) }} />
               </div>
+              <ImageGallery
+                images={gallery}
+                alt="Zdjęcia z warsztatów ceramicznych"
+                className="aspect-[3/4] rounded-sm"
+                sizes="(max-width: 1024px) 100vw, 50vw"
+              />
             </div>
           ) : (
-            <div
-              className="max-w-3xl mx-auto text-center text-charcoal/80 text-lg leading-relaxed [&_p]:mb-4 [&_strong]:text-espresso"
-              dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(intro) }}
-            />
+            <div className="max-w-[62ch] mx-auto">
+              <ClayRule className="mb-7" />
+              <div className={INTRO_PROSE} dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(intro) }} />
+            </div>
           )}
         </div>
 

@@ -286,6 +286,9 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` – zwracają wartość z DB l
 ### `components/seo/`
 - **LocalBusinessSchema.tsx** – async server component z danymi strukturalnymi JSON-LD (LocalBusiness + WebSite), renderowany w `app/layout.tsx`. Adres, telefon, e-mail, `sameAs` i `openingHoursSpecification` pochodzą z `getContactSettings()`, więc nie rozjeżdżają się z treścią stopki i /kontakt. **Nie wstawiaj JSON-LD z powrotem do `app/layout.tsx`** – layout ma zostać synchroniczny
 
+### `components/ui/` — ozdobniki
+- **ClayRule.tsx** — ozdobnik otwierający blok treści: mozaika kafelków szkliwa (2×5, 10 px, terracotta/clay/sand z różnym kryciem) osadzona w cienkiej kresce. Synchroniczny, bezstanowy, `aria-hidden`. Używany nad wprowadzeniem na `/warsztaty`; pasuje też do innych stron treściowych
+
 ### `components/checkout/`
 - **InPostWidget.tsx** – `"use client"`, widget wyboru paczkomatu InPost; gdy `INPOST_GEOWIDGET_TOKEN` ustawiony: mapa CDN geowidget.inpost.pl; bez tokenu: wyszukiwarka przez publiczne API `api-shipx-pl.easypack24.net`. Obsługiwane parametry API (zweryfikowane): `city=<Nazwa>` (wymaga dokładnej kapitalizacji – `capitalizeCity` normalizuje automatycznie, w tym polskie znaki i myślniki, np. „bielsko-biała" → „Bielsko-Biała"), `post_code=<XX-XXX>` (pełny kod pocztowy), `/points/<KOD>` (bezpośrednio po kodzie paczkomatu). Parametry `zip_code`, `name`, `street` są przez API ignorowane. Cache akumuluje wyniki ze wszystkich zapytań – po wyszukaniu miasta filtrowanie po dowolnym podciągu (fragment kodu, ulicy, adresu, kodu pocztowego) działa natychmiast bez kolejnych requestów. Puste odpowiedzi API nie nadpisują wyników z cache. Zwraca wybrany kod przez `onChange`.
 

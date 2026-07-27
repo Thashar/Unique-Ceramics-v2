@@ -416,14 +416,9 @@ export default function SettingsForm({ section, initial }: Props) {
           </div>
 
           <div className="border-t border-sand pt-6 space-y-4">
-            <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/80">Zdjęcie przy opisie (prawa kolumna)</h3>
-            <p className="text-xs text-charcoal/80">Jeżeli puste – kolumna zdjęcia znika, tekst zajmuje całą szerokość.</p>
-            <ImageUploader
-              currentUrl={aboutContentImage}
-              onUploaded={(url) => setAboutContentImage(url)}
-              label="Zdjęcie przy opisie"
-            />
-            <FocalPointPicker imageUrl={aboutContentImage} value={aboutContentPos} onChange={setAboutContentPos} />
+            <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/80">Galeria przy opisie (prawa kolumna)</h3>
+            <p className="text-xs text-charcoal/80">Jeżeli pusta – kolumna zdjęć znika, tekst zajmuje całą szerokość.</p>
+            <GalleryEditor json={aboutGallery} onChange={setAboutGallery} />
           </div>
 
           <div className="border-t border-sand pt-6">
