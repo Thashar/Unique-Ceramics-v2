@@ -139,8 +139,8 @@ export default function ProductForm({ product, categories }: { product?: Product
             </div>
           ))}
           <label className={`w-24 h-24 border-2 border-dashed border-sand flex flex-col items-center justify-center cursor-pointer hover:border-clay transition-colors ${uploading ? "opacity-50 pointer-events-none" : ""}`}>
-            <Upload size={20} strokeWidth={1.5} className="text-charcoal/40 mb-1" />
-            <span className="text-[10px] text-charcoal/40">{uploading ? "Upload..." : "Dodaj"}</span>
+            <Upload size={20} strokeWidth={1.5} className="text-charcoal/80 mb-1" />
+            <span className="text-[10px] text-charcoal/80">{uploading ? "Upload..." : "Dodaj"}</span>
             <input type="file" accept="image/*" multiple className="hidden" onChange={handleImageUpload} />
           </label>
         </div>
@@ -207,7 +207,7 @@ export default function ProductForm({ product, categories }: { product?: Product
             onChange={(e) => set("variesFromPhoto", e.target.checked)} className="accent-clay w-4 h-4 mt-0.5 shrink-0" />
           <div>
             <span className="text-sm text-espresso">Produkt może różnić się od zdjęcia</span>
-            <p className="text-xs text-charcoal/45 mt-0.5">Wyświetla informację o naturalnej unikalności ceramiki na stronie produktu.</p>
+            <p className="text-xs text-charcoal/80 mt-0.5">Wyświetla informację o naturalnej unikalności ceramiki na stronie produktu.</p>
           </div>
         </label>
       </div>
@@ -215,11 +215,11 @@ export default function ProductForm({ product, categories }: { product?: Product
       {/* Przyciski */}
       <div className="flex items-center gap-4 pt-4 border-t border-sand">
         <button type="submit" disabled={saving}
-          className="bg-clay hover:bg-terracotta disabled:bg-sand disabled:text-charcoal/40 text-warm-white text-xs tracking-widest uppercase px-8 py-3.5 transition-colors">
+          className="bg-clay hover:bg-terracotta hover:text-espresso disabled:bg-sand disabled:text-charcoal/40 text-warm-white text-xs tracking-widest uppercase px-8 py-3.5 transition-colors">
           {saving ? "Zapisuję..." : product ? "Zapisz zmiany" : "Dodaj produkt"}
         </button>
         <button type="button" onClick={() => router.back()}
-          className="text-sm text-charcoal/50 hover:text-espresso transition-colors">
+          className="text-sm text-charcoal/80 hover:text-espresso transition-colors">
           Anuluj
         </button>
         {product && (

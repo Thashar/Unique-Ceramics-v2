@@ -58,7 +58,7 @@ export default async function AccountDashboard() {
             <p className="text-charcoal/80 mb-6">Nie masz jeszcze żadnych zamówień.</p>
             <Link
               href="/sklep"
-              className="inline-flex items-center gap-2 bg-clay hover:bg-terracotta text-warm-white text-xs tracking-widest uppercase px-6 py-3 transition-colors"
+              className="inline-flex items-center gap-2 bg-clay hover:bg-terracotta hover:text-espresso text-warm-white text-xs tracking-widest uppercase px-6 py-3 transition-colors"
             >
               Przejdź do sklepu
             </Link>
@@ -77,7 +77,7 @@ export default async function AccountDashboard() {
                     <p className="text-sm font-medium text-espresso">
                       Zamówienie #{order.id.slice(-8).toUpperCase()}
                     </p>
-                    <p className="text-xs text-charcoal/50 mt-0.5">
+                    <p className="text-xs text-charcoal/80 mt-0.5">
                       {new Date(order.createdAt).toLocaleDateString("pl-PL", {
                         day: "numeric",
                         month: "long",
@@ -93,7 +93,7 @@ export default async function AccountDashboard() {
                   <p className="font-serif text-lg text-espresso hidden sm:block">
                     {order.total.toLocaleString("pl-PL", { style: "currency", currency: "PLN", minimumFractionDigits: 0 })}
                   </p>
-                  <ChevronRight size={16} strokeWidth={1.5} className="text-charcoal/30 group-hover:text-clay transition-colors" />
+                  <ChevronRight size={16} strokeWidth={1.5} className="text-charcoal/80 group-hover:text-clay transition-colors" />
                 </div>
               </Link>
             ))}
@@ -121,14 +121,14 @@ export default async function AccountDashboard() {
           <User size={24} strokeWidth={1.5} />
           <div>
             <p className="font-medium text-sm">Edytuj profil</p>
-            <p className="text-xs text-charcoal/50">Dane osobowe i hasło</p>
+            <p className="text-xs text-charcoal/80">Dane osobowe i hasło</p>
           </div>
           <ChevronRight size={16} className="ml-auto group-hover:translate-x-1 transition-transform" />
         </Link>
         {isAdmin && (
           <Link
             href="/admin"
-            className="flex items-center gap-4 bg-clay hover:bg-terracotta text-warm-white p-6 transition-colors group sm:col-span-2"
+            className="flex items-center gap-4 bg-clay hover:bg-terracotta hover:text-espresso text-warm-white p-6 transition-colors group sm:col-span-2"
           >
             <LayoutDashboard size={24} strokeWidth={1.5} />
             <div>

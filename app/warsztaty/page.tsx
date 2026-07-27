@@ -216,7 +216,7 @@ export default async function WorkshopsPage() {
                         <span className="text-xs tracking-widest uppercase text-clay">{w.level}</span>
                       </div>
                       <h2 className="font-serif text-3xl text-espresso mb-4">{w.title}</h2>
-                      <p className="text-charcoal/75 leading-relaxed mb-6">{w.description}</p>
+                      <p className="text-charcoal/80 leading-relaxed mb-6">{w.description}</p>
                     </div>
                     <div className="bg-cream p-8 self-start">
                       <div className="space-y-3 mb-8">
@@ -239,7 +239,7 @@ export default async function WorkshopsPage() {
                           </div>
                         )}
                       </div>
-                      <Link href="/kontakt" className="block text-center bg-clay hover:bg-terracotta text-warm-white text-xs tracking-widest uppercase py-4 transition-colors">
+                      <Link href="/kontakt" className="block text-center bg-clay hover:bg-terracotta hover:text-espresso text-warm-white text-xs tracking-widest uppercase py-4 transition-colors">
                         Zarezerwuj
                       </Link>
                     </div>
@@ -263,7 +263,7 @@ export default async function WorkshopsPage() {
                       <div className="w-10 h-10 bg-cream rounded-full flex items-center justify-center mx-auto mb-3">
                         <Icon size={18} strokeWidth={1.5} className="text-clay" />
                       </div>
-                      <p className="text-sm text-charcoal/75 leading-relaxed">{inc.label}</p>
+                      <p className="text-sm text-charcoal/80 leading-relaxed">{inc.label}</p>
                     </div>
                   );
                 })}
@@ -281,7 +281,7 @@ export default async function WorkshopsPage() {
                 {faq.map((item) => (
                   <div key={item.id} className="border-b border-sand pb-8 last:border-0 last:pb-0">
                     <h3 className="font-serif text-xl text-espresso mb-3">{item.question}</h3>
-                    <p className="text-charcoal/70 leading-relaxed text-sm">{item.answer}</p>
+                    <p className="text-charcoal/80 leading-relaxed text-sm">{item.answer}</p>
                   </div>
                 ))}
               </div>

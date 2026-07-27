@@ -67,7 +67,17 @@ export default async function ShopPage({
       <div className="min-h-[100svh] bg-warm-white">
         <h1 className="sr-only">Sklep ceramiczny — sklep z ceramiką ręcznie robioną, Gliwice</h1>
         {/* Filtry kategorii */}
-        <div className={`border-b border-sand bg-cream sticky z-30 shadow-sm ${vacationEnabled ? "top-[100px]" : "top-20"}`}>
+        {/* Pasek przykleja się pod headerem. --header-offset ustawia Header:
+            gdy na mobile chowa się przy przewijaniu w dół, pasek podjeżdża pod
+            samą górę (albo pod baner urlopowy) i zostaje jedynym stałym elementem.
+            Fallback w var() odpowiada stanowi przed hydratacją. */}
+        <div
+          className="border-b border-sand bg-cream sticky z-30 shadow-sm"
+          style={{
+            top: `var(--header-offset, ${vacationEnabled ? "100px" : "80px"})`,
+            transition: "top 300ms ease",
+          }}
+        >
           <div className="max-w-7xl mx-auto px-6 lg:px-10 flex gap-1.5 md:gap-2 overflow-x-auto py-2 md:py-4 no-scrollbar">
             {CATEGORIES.map((cat) => (
               <Link

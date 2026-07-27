@@ -109,14 +109,14 @@ export default function ProfilePage() {
               type="email"
               value={session?.user?.email ?? ""}
               disabled
-              className="w-full bg-sand/50 border border-sand px-4 py-3 text-charcoal/50 text-sm cursor-not-allowed"
+              className="w-full bg-sand/50 border border-sand px-4 py-3 text-charcoal/80 text-sm cursor-not-allowed"
             />
-            <p className="text-xs text-charcoal/40 mt-1.5">Adres e-mail nie może być zmieniony.</p>
+            <p className="text-xs text-charcoal/80 mt-1.5">Adres e-mail nie może być zmieniony.</p>
           </div>
           <button
             type="submit"
             disabled={savingName}
-            className="inline-flex items-center gap-2 bg-clay hover:bg-terracotta disabled:bg-sand text-warm-white text-xs tracking-widest uppercase px-6 py-3 transition-colors"
+            className="inline-flex items-center gap-2 bg-clay hover:bg-terracotta hover:text-espresso disabled:bg-sand text-warm-white text-xs tracking-widest uppercase px-6 py-3 transition-colors"
           >
             {nameSaved ? <><CheckCircle size={14} /> Zapisano</> : savingName ? "Zapisywanie..." : "Zapisz zmiany"}
           </button>
@@ -143,7 +143,7 @@ export default function ProfilePage() {
               />
             </div>
             <div>
-              <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">Nowe hasło <span className="normal-case text-charcoal/40">(min. 8 znaków)</span></label>
+              <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">Nowe hasło <span className="normal-case text-charcoal/80">(min. 8 znaków)</span></label>
               <input
                 type="password"
                 required
@@ -179,7 +179,7 @@ export default function ProfilePage() {
           <Download size={14} strokeWidth={1.5} />
           Twoje dane
         </h3>
-        <p className="text-sm text-charcoal/70 mb-5 leading-relaxed">
+        <p className="text-sm text-charcoal/80 mb-5 leading-relaxed">
           Pobierz kopię wszystkich danych powiązanych z Twoim kontem (profil, zapisany adres, historia zamówień) w formacie JSON.
         </p>
         <a
@@ -197,7 +197,7 @@ export default function ProfilePage() {
           <ShieldAlert size={14} strokeWidth={1.5} />
           Strefa niebezpieczna
         </h3>
-        <p className="text-sm text-charcoal/70 mb-5 leading-relaxed">
+        <p className="text-sm text-charcoal/80 mb-5 leading-relaxed">
           Trwałe usunięcie konta jest nieodwracalne. Złożone zamówienia pozostaną w systemie ze względu na obowiązki księgowe, ale zostaną odłączone od Twojego konta.
         </p>
         <form onSubmit={handleDeleteAccount} className="space-y-4">

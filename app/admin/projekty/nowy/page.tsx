@@ -15,7 +15,7 @@ export default async function NewProjectPage() {
     <div>
       <Link
         href="/admin/projekty"
-        className="flex items-center gap-1 text-sm text-charcoal/50 hover:text-charcoal mb-6 transition-colors"
+        className="flex items-center gap-1 text-sm text-charcoal/80 hover:text-charcoal mb-6 transition-colors"
       >
         <ChevronLeft size={14} />
         Powrót do projektów

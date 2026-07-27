@@ -54,7 +54,7 @@ export default function ImageUploader({ currentUrl, onUploaded, label = "Zdjęci
         />
       )}
       {preview && previewBroken && (
-        <p className="mb-3 bg-sand text-charcoal/70 text-xs px-4 py-6 text-center">
+        <p className="mb-3 bg-sand text-charcoal/80 text-xs px-4 py-6 text-center">
           Nie udało się wczytać podglądu tego zdjęcia — wgraj je ponownie.
         </p>
       )}
@@ -63,7 +63,7 @@ export default function ImageUploader({ currentUrl, onUploaded, label = "Zdjęci
         accept="image/jpeg,image/png,image/webp"
         onChange={handleFile}
         disabled={uploading}
-        className="text-sm text-charcoal/70 file:mr-3 file:px-4 file:py-1.5 file:text-xs file:tracking-widest file:uppercase file:bg-espresso file:text-cream file:border-0 file:cursor-pointer hover:file:bg-clay"
+        className="text-sm text-charcoal/80 file:mr-3 file:px-4 file:py-1.5 file:text-xs file:tracking-widest file:uppercase file:bg-espresso file:text-cream file:border-0 file:cursor-pointer hover:file:bg-clay"
       />
       {uploading && <p className="text-xs text-clay mt-2">Przesyłanie...</p>}
       {error && (

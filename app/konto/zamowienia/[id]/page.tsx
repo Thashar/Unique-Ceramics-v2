@@ -89,7 +89,7 @@ export default async function OrderDetailPage({
           <h2 className="font-serif text-2xl text-espresso">
             Zamówienie #{order.id.slice(-8).toUpperCase()}
           </h2>
-          <p className="text-sm text-charcoal/50 mt-1">
+          <p className="text-sm text-charcoal/80 mt-1">
             Złożone {new Date(order.createdAt).toLocaleDateString("pl-PL", {
               day: "numeric", month: "long", year: "numeric",
             })}
@@ -111,12 +111,12 @@ export default async function OrderDetailPage({
                     className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-colors ${
                       done
                         ? "bg-terracotta text-warm-white"
-                        : "bg-sand text-charcoal/40"
+                        : "bg-sand text-charcoal/80"
                     }`}
                   >
                     {i + 1}
                   </div>
-                  <p className={`text-[10px] tracking-wider uppercase text-center max-w-[60px] ${done ? "text-espresso" : "text-charcoal/40"}`}>
+                  <p className={`text-[10px] tracking-wider uppercase text-center max-w-[60px] ${done ? "text-espresso" : "text-charcoal/80"}`}>
                     {step.label}
                   </p>
                 </div>
@@ -135,8 +135,8 @@ export default async function OrderDetailPage({
           </h3>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <p className="text-sm text-charcoal/60">Dostawca: <span className="text-espresso font-medium">{carrierLabel}</span></p>
-              <p className="text-sm text-charcoal/60 mt-0.5">Numer listu: <span className="text-espresso font-mono">{order.trackingNumber}</span></p>
+              <p className="text-sm text-charcoal/80">Dostawca: <span className="text-espresso font-medium">{carrierLabel}</span></p>
+              <p className="text-sm text-charcoal/80 mt-0.5">Numer listu: <span className="text-espresso font-mono">{order.trackingNumber}</span></p>
             </div>
             {trackingUrl && (
               <a
@@ -176,7 +176,7 @@ export default async function OrderDetailPage({
                     ) : (
                       <p className="text-sm font-medium text-espresso">{item.name}</p>
                     )}
-                    <p className="text-xs text-charcoal/50 mt-0.5">
+                    <p className="text-xs text-charcoal/80 mt-0.5">
                       {item.price.toLocaleString("pl-PL", { style: "currency", currency: "PLN", minimumFractionDigits: 0 })} × {item.quantity}
                     </p>
                   </div>
@@ -219,19 +219,19 @@ export default async function OrderDetailPage({
             </h3>
             <p className="text-xs text-clay font-medium mb-2">{SHIPPING_LABELS[order.shippingMethod] ?? order.shippingMethod}</p>
             {order.shippingMethod === "pickup" ? (
-              <p className="text-sm text-charcoal/70">Odbiór osobisty w pracowni — Familijna 23, 44-164 Kleszczów</p>
+              <p className="text-sm text-charcoal/80">Odbiór osobisty w pracowni — Familijna 23, 44-164 Kleszczów</p>
             ) : order.shippingMethod === "parcel_locker" ? (
               <>
                 <p className="text-sm text-espresso font-mono font-medium">{order.parcelLockerCode ?? "—"}</p>
-                <p className="text-xs text-charcoal/50 mt-1">Kod paczkomatu InPost</p>
+                <p className="text-xs text-charcoal/80 mt-1">Kod paczkomatu InPost</p>
               </>
             ) : (
               <>
                 <p className="text-sm text-espresso font-medium">{order.firstName} {order.lastName}</p>
-                <p className="text-sm text-charcoal/70 mt-1">{order.street}</p>
-                <p className="text-sm text-charcoal/70">{order.postcode} {order.city}</p>
-                {order.phone && <p className="text-sm text-charcoal/70 mt-1">{order.phone}</p>}
-                <p className="text-sm text-charcoal/70">{order.email}</p>
+                <p className="text-sm text-charcoal/80 mt-1">{order.street}</p>
+                <p className="text-sm text-charcoal/80">{order.postcode} {order.city}</p>
+                {order.phone && <p className="text-sm text-charcoal/80 mt-1">{order.phone}</p>}
+                <p className="text-sm text-charcoal/80">{order.email}</p>
               </>
             )}
           </div>
@@ -253,7 +253,7 @@ export default async function OrderDetailPage({
             </p>
             {order.paymentMethod === "transfer" && order.paymentStatus !== "PAID" && (
               <div className="mt-3 pt-3 border-t border-sand">
-                <p className="text-[11px] tracking-widest uppercase text-charcoal/45 mb-1">Tytuł przelewu</p>
+                <p className="text-[11px] tracking-widest uppercase text-charcoal/80 mb-1">Tytuł przelewu</p>
                 <p className="text-sm text-espresso font-medium select-all">{transferTitle}</p>
               </div>
             )}
@@ -269,7 +269,7 @@ export default async function OrderDetailPage({
                 <Clock size={14} strokeWidth={1.5} />
                 Uwagi
               </h3>
-              <p className="text-sm text-charcoal/70">{order.note}</p>
+              <p className="text-sm text-charcoal/80">{order.note}</p>
             </div>
           )}
         </div>

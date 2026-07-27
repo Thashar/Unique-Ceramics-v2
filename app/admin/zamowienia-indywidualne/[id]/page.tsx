@@ -45,7 +45,7 @@ export default async function AdminCustomOrderDetailPage({
         <div>
           <h1 className="font-serif text-3xl text-espresso">Zamówienie indywidualne</h1>
           <p className="text-lg font-mono text-clay mt-1">IND-{order.orderNumber}</p>
-          <p className="text-xs font-mono text-charcoal/30 mt-0.5">{order.id}</p>
+          <p className="text-xs font-mono text-charcoal/80 mt-0.5">{order.id}</p>
         </div>
         <span
           className={`text-[10px] tracking-widest uppercase px-3 py-1.5 ${STATUS_COLORS[order.status] ?? "bg-sand text-charcoal"}`}
@@ -57,44 +57,44 @@ export default async function AdminCustomOrderDetailPage({
       {/* Szczegóły zamówienia */}
       <div className="grid grid-cols-2 gap-6 mb-6">
         <div className="bg-cream p-6">
-          <h2 className="text-xs tracking-widest uppercase text-charcoal/50 mb-4">Szczegóły zamówienia</h2>
+          <h2 className="text-xs tracking-widest uppercase text-charcoal/80 mb-4">Szczegóły zamówienia</h2>
           <div className="space-y-2 text-sm">
             <div>
-              <span className="text-charcoal/50 text-xs">Rodzaj:</span>
+              <span className="text-charcoal/80 text-xs">Rodzaj:</span>
               <p className="text-espresso">{order.orderType}</p>
             </div>
             {order.budget && (
               <div>
-                <span className="text-charcoal/50 text-xs">Budżet klienta:</span>
+                <span className="text-charcoal/80 text-xs">Budżet klienta:</span>
                 <p className="text-espresso">{order.budget}</p>
               </div>
             )}
             {order.price != null && (
               <div>
-                <span className="text-charcoal/50 text-xs">Cena zamówienia:</span>
+                <span className="text-charcoal/80 text-xs">Cena zamówienia:</span>
                 <p className="text-espresso font-semibold">{order.price.toFixed(2)} zł</p>
               </div>
             )}
             {order.shippingCost != null && (
               <div>
-                <span className="text-charcoal/50 text-xs">Koszt wysyłki:</span>
+                <span className="text-charcoal/80 text-xs">Koszt wysyłki:</span>
                 <p className="text-espresso">{order.shippingCost.toFixed(2)} zł</p>
               </div>
             )}
             {order.paidAmount != null && (
               <div>
-                <span className="text-charcoal/50 text-xs">Kwota wpłacona:</span>
+                <span className="text-charcoal/80 text-xs">Kwota wpłacona:</span>
                 <p className="text-espresso font-semibold">{order.paidAmount.toFixed(2)} zł</p>
               </div>
             )}
             {order.deadline && (
               <div>
-                <span className="text-charcoal/50 text-xs">Termin:</span>
+                <span className="text-charcoal/80 text-xs">Termin:</span>
                 <p className="text-espresso">{order.deadline}</p>
               </div>
             )}
             <div>
-              <span className="text-charcoal/50 text-xs">Data zgłoszenia:</span>
+              <span className="text-charcoal/80 text-xs">Data zgłoszenia:</span>
               <p className="text-espresso">
                 {new Date(order.createdAt).toLocaleDateString("pl-PL", {
                   year: "numeric",
@@ -109,7 +109,7 @@ export default async function AdminCustomOrderDetailPage({
         </div>
 
         <div className="bg-cream p-6">
-          <h2 className="text-xs tracking-widest uppercase text-charcoal/50 mb-4">Opis zamówienia</h2>
+          <h2 className="text-xs tracking-widest uppercase text-charcoal/80 mb-4">Opis zamówienia</h2>
           <p className="text-sm text-charcoal/80 leading-relaxed whitespace-pre-wrap">{order.description}</p>
         </div>
       </div>

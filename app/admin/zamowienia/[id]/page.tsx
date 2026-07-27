@@ -24,7 +24,7 @@ const SHIPPING_LABELS: Record<string, string> = {
 const PAYMENT_STATUS_BADGE: Record<string, { label: string; color: string }> = {
   PENDING: { label: "Oczekuje", color: "bg-amber-50 text-amber-700 border-amber-300" },
   PAID:    { label: "Opłacone", color: "bg-green-50 text-green-700 border-green-300" },
-  expired: { label: "Wygasła",  color: "bg-charcoal/5 text-charcoal/50 border-sand" },
+  expired: { label: "Wygasła",  color: "bg-charcoal/5 text-charcoal/80 border-sand" },
 };
 
 export default async function AdminOrderDetailPage({
@@ -61,8 +61,8 @@ export default async function AdminOrderDetailPage({
       <div className="flex items-start justify-between gap-4 mb-6">
         <div>
           <h1 className="font-serif text-3xl text-espresso">Zamówienie</h1>
-          <p className="text-xs font-mono text-charcoal/35 mt-1 select-all">{order.id}</p>
-          <p className="text-xs text-charcoal/45 mt-1">
+          <p className="text-xs font-mono text-charcoal/80 mt-1 select-all">{order.id}</p>
+          <p className="text-xs text-charcoal/80 mt-1">
             {new Date(order.createdAt).toLocaleDateString("pl-PL", {
               day: "numeric", month: "long", year: "numeric",
               hour: "2-digit", minute: "2-digit",
@@ -82,7 +82,7 @@ export default async function AdminOrderDetailPage({
         <div className="bg-cream p-5">
           <div className="flex items-center gap-2 mb-3">
             <User size={14} className="text-clay" strokeWidth={1.5} />
-            <h2 className="text-xs tracking-widest uppercase text-charcoal/50">Klient</h2>
+            <h2 className="text-xs tracking-widest uppercase text-charcoal/80">Klient</h2>
           </div>
           <p className="text-sm font-medium text-espresso">{order.firstName} {order.lastName}</p>
           <p className="text-sm text-charcoal/80 mt-1">{order.email}</p>
@@ -94,7 +94,7 @@ export default async function AdminOrderDetailPage({
         <div className="bg-cream p-5">
           <div className="flex items-center gap-2 mb-3">
             <MapPin size={14} className="text-clay" strokeWidth={1.5} />
-            <h2 className="text-xs tracking-widest uppercase text-charcoal/50">
+            <h2 className="text-xs tracking-widest uppercase text-charcoal/80">
               {order.shippingMethod === "parcel_locker" ? "Paczkomat" : "Adres dostawy"}
             </h2>
           </div>
@@ -103,7 +103,7 @@ export default async function AdminOrderDetailPage({
           ) : order.shippingMethod === "parcel_locker" ? (
             <>
               <p className="text-sm font-medium text-espresso font-mono">{order.parcelLockerCode ?? "—"}</p>
-              <p className="text-xs text-charcoal/50 mt-1">Kod paczkomatu InPost</p>
+              <p className="text-xs text-charcoal/80 mt-1">Kod paczkomatu InPost</p>
             </>
           ) : (
             <>
@@ -122,7 +122,7 @@ export default async function AdminOrderDetailPage({
       <div className="bg-cream p-5 mb-4">
         <div className="flex items-center gap-2 mb-4">
           <Package size={14} className="text-clay" strokeWidth={1.5} />
-          <h2 className="text-xs tracking-widest uppercase text-charcoal/50">Produkty</h2>
+          <h2 className="text-xs tracking-widest uppercase text-charcoal/80">Produkty</h2>
         </div>
         <div className="space-y-2.5">
           {order.items.map((item) => {
@@ -141,7 +141,7 @@ export default async function AdminOrderDetailPage({
                   ) : (
                     <p className="text-sm text-espresso">{item.name}</p>
                   )}
-                  <p className="text-xs text-charcoal/45">
+                  <p className="text-xs text-charcoal/80">
                     {item.price.toFixed(2).replace(".", ",")} zł × {item.quantity}
                   </p>
                 </div>
@@ -153,7 +153,7 @@ export default async function AdminOrderDetailPage({
           })}
         </div>
         <div className="border-t border-sand mt-4 pt-4 space-y-2">
-          <div className="flex justify-between text-sm text-charcoal/55">
+          <div className="flex justify-between text-sm text-charcoal/80">
             <span>Wysyłka</span>
             <span className="tabular-nums">
               {order.shippingCost === 0
@@ -175,7 +175,7 @@ export default async function AdminOrderDetailPage({
         <div className="bg-cream p-5">
           <div className="flex items-center gap-2 mb-3">
             <CreditCard size={14} className="text-clay" strokeWidth={1.5} />
-            <h2 className="text-xs tracking-widest uppercase text-charcoal/50">Płatność</h2>
+            <h2 className="text-xs tracking-widest uppercase text-charcoal/80">Płatność</h2>
           </div>
           <p className="text-sm text-espresso">
             {PAYMENT_LABELS[order.paymentMethod] ?? order.paymentMethod}
@@ -204,9 +204,9 @@ export default async function AdminOrderDetailPage({
           <div className="bg-cream p-5">
             <div className="flex items-center gap-2 mb-3">
               <MessageSquare size={14} className="text-clay" strokeWidth={1.5} />
-              <h2 className="text-xs tracking-widest uppercase text-charcoal/50">Uwagi klienta</h2>
+              <h2 className="text-xs tracking-widest uppercase text-charcoal/80">Uwagi klienta</h2>
             </div>
-            <p className="text-sm text-charcoal/75 leading-relaxed">{order.note}</p>
+            <p className="text-sm text-charcoal/80 leading-relaxed">{order.note}</p>
           </div>
         ) : null}
       </div>
@@ -216,7 +216,7 @@ export default async function AdminOrderDetailPage({
         <div className="bg-cream p-5">
           <div className="flex items-center gap-2 mb-4">
             <Truck size={14} className="text-clay" strokeWidth={1.5} />
-            <h2 className="text-xs tracking-widest uppercase text-charcoal/50">List przewozowy</h2>
+            <h2 className="text-xs tracking-widest uppercase text-charcoal/80">List przewozowy</h2>
           </div>
           <TrackingForm
             orderId={order.id}

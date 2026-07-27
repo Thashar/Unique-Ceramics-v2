@@ -91,7 +91,7 @@ export default function AddressPage() {
     `w-full bg-warm-white border ${fieldErrors[field] ? "border-red-400" : "border-sand"} focus:border-clay outline-none px-4 py-3 text-espresso text-sm`;
 
   if (loading) {
-    return <div className="text-charcoal/50 text-sm">Ładowanie...</div>;
+    return <div className="text-charcoal/80 text-sm">Ładowanie...</div>;
   }
 
   return (
@@ -103,7 +103,7 @@ export default function AddressPage() {
           <MapPin size={14} strokeWidth={1.5} />
           Domyślny adres dostawy
         </h3>
-        <p className="text-xs text-charcoal/50 mb-6">
+        <p className="text-xs text-charcoal/80 mb-6">
           Dane zostaną automatycznie uzupełnione przy kolejnym zamówieniu.
         </p>
 
@@ -206,7 +206,7 @@ export default function AddressPage() {
           <button
             type="submit"
             disabled={saving}
-            className="inline-flex items-center gap-2 bg-clay hover:bg-terracotta disabled:bg-sand text-warm-white text-xs tracking-widest uppercase px-6 py-3 transition-colors"
+            className="inline-flex items-center gap-2 bg-clay hover:bg-terracotta hover:text-espresso disabled:bg-sand text-warm-white text-xs tracking-widest uppercase px-6 py-3 transition-colors"
           >
             {saved ? (
               <>

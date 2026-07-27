@@ -72,7 +72,7 @@ export default function MonthlyReportsTable({ rows, highFlags, currentYear }: Pr
     <div className="mt-6 pt-5 border-t border-sand overflow-x-auto">
       <table className="w-full text-xs">
         <thead>
-          <tr className="text-left text-charcoal/40 tracking-widest uppercase">
+          <tr className="text-left text-charcoal/80 tracking-widest uppercase">
             <th className="pb-2 font-normal">Miesiąc</th>
             <th className="pb-2 font-normal text-right">Zamówień</th>
             <th className="pb-2 font-normal text-right">Przychód</th>
@@ -91,11 +91,11 @@ export default function MonthlyReportsTable({ rows, highFlags, currentYear }: Pr
             const tax   = taxDue(m, high);
             const hasOrders = m.cnt > 0;
             return (
-              <tr key={`tbl-${key}`} className="text-charcoal/70">
+              <tr key={`tbl-${key}`} className="text-charcoal/80">
                 <td className="py-2 text-espresso font-medium">{m.label || `${m.mo}/${m.yr}`}</td>
                 <td className="py-2 text-right tabular-nums">{m.cnt}</td>
                 <td className="py-2 text-right tabular-nums">{fmt(m.rev)} zł</td>
-                <td className="py-2 text-right tabular-nums text-charcoal/45">{fmt(m.ship)} zł</td>
+                <td className="py-2 text-right tabular-nums text-charcoal/80">{fmt(m.ship)} zł</td>
                 <td className="py-2 text-right tabular-nums">{hasOrders ? `${fmt(base)} zł` : "—"}</td>
                 <td className="py-2 text-center">
                   {hasOrders ? (
@@ -111,14 +111,14 @@ export default function MonthlyReportsTable({ rows, highFlags, currentYear }: Pr
                       {savedKey === key && saving !== key && <Check size={11} className="text-green-600" />}
                     </label>
                   ) : (
-                    <span className="text-charcoal/20">—</span>
+                    <span className="text-charcoal/80">—</span>
                   )}
                 </td>
                 <td className="py-2 text-right tabular-nums">
                   {hasOrders ? (
                     <span className={high ? "text-red-600 font-medium" : "text-espresso"}>
                       {fmt(tax)} zł
-                      <span className="text-charcoal/35 ml-1">({high ? "32" : "12"}%)</span>
+                      <span className="text-charcoal/80 ml-1">({high ? "32" : "12"}%)</span>
                     </span>
                   ) : (
                     "—"
@@ -135,7 +135,7 @@ export default function MonthlyReportsTable({ rows, highFlags, currentYear }: Pr
                       <span>PDF</span>
                     </a>
                   ) : (
-                    <span className="text-charcoal/20">—</span>
+                    <span className="text-charcoal/80">—</span>
                   )}
                 </td>
               </tr>
@@ -152,7 +152,7 @@ export default function MonthlyReportsTable({ rows, highFlags, currentYear }: Pr
         </tfoot>
       </table>
 
-      <p className="text-[11px] text-charcoal/40 mt-3 leading-relaxed">
+      <p className="text-[11px] text-charcoal/80 mt-3 leading-relaxed">
         <strong className="font-medium">Podstawa opodatkowania</strong> = przychód z produktów
         (przychód brutto − wysyłka). Wysyłka jest kosztem uzyskania przychodu i nie podlega
         opodatkowaniu. Domyślna stawka PIT to <strong className="font-medium">12%</strong>;

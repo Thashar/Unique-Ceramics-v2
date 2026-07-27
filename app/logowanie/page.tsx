@@ -71,7 +71,7 @@ function LoginForm() {
         <div className="absolute inset-0 flex items-center">
           <div className="w-full border-t border-sand" />
         </div>
-        <div className="relative flex justify-center text-xs uppercase tracking-widest text-charcoal/40">
+        <div className="relative flex justify-center text-xs uppercase tracking-widest text-charcoal/80">
           <span className="bg-warm-white px-3">lub e-mailem</span>
         </div>
       </div>
@@ -109,7 +109,7 @@ function LoginForm() {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-charcoal/40 hover:text-clay transition-colors"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-charcoal/80 hover:text-clay transition-colors"
             >
               {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
@@ -119,7 +119,7 @@ function LoginForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-clay hover:bg-terracotta disabled:bg-sand disabled:text-charcoal/40 text-warm-white text-xs tracking-widest uppercase py-4 transition-colors"
+          className="w-full bg-clay hover:bg-terracotta hover:text-espresso disabled:bg-sand disabled:text-charcoal/40 text-warm-white text-xs tracking-widest uppercase py-4 transition-colors"
         >
           {loading ? "Logowanie..." : "Zaloguj się"}
         </button>
@@ -153,7 +153,7 @@ export default function LoginPage() {
           </Suspense>
         </div>
 
-        <p className="text-center text-xs text-charcoal/40 mt-6">
+        <p className="text-center text-xs text-charcoal/80 mt-6">
           <Link href="/" className="hover:text-clay transition-colors">
             ← Wróć do sklepu
           </Link>

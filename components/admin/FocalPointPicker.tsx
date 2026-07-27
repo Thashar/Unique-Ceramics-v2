@@ -63,7 +63,7 @@ export default function FocalPointPicker({
           })}
         </div>
       </div>
-      <p className="text-[11px] text-charcoal/40 mt-1.5">
+      <p className="text-[11px] text-charcoal/80 mt-1.5">
         Kliknij punkt, który ma pozostać widoczny przy przycinaniu.
       </p>
     </div>

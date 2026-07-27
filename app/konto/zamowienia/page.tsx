@@ -26,7 +26,7 @@ export default async function OrdersPage() {
           <p className="text-charcoal/80 mb-6">Nie złożyłeś jeszcze żadnego zamówienia.</p>
           <Link
             href="/sklep"
-            className="inline-flex items-center gap-2 bg-clay hover:bg-terracotta text-warm-white text-xs tracking-widest uppercase px-6 py-3 transition-colors"
+            className="inline-flex items-center gap-2 bg-clay hover:bg-terracotta hover:text-espresso text-warm-white text-xs tracking-widest uppercase px-6 py-3 transition-colors"
           >
             Przejdź do sklepu
           </Link>
@@ -45,14 +45,14 @@ export default async function OrdersPage() {
                   <p className="text-sm font-medium text-espresso">
                     #{order.id.slice(-8).toUpperCase()}
                   </p>
-                  <p className="text-xs text-charcoal/50 mt-0.5">
+                  <p className="text-xs text-charcoal/80 mt-0.5">
                     {new Date(order.createdAt).toLocaleDateString("pl-PL", {
                       day: "numeric",
                       month: "long",
                       year: "numeric",
                     })}
                   </p>
-                  <p className="text-xs text-charcoal/50 mt-1">
+                  <p className="text-xs text-charcoal/80 mt-1">
                     {order.items.map((i) => `${i.name} ×${i.quantity}`).join(", ")}
                   </p>
                 </div>
@@ -63,7 +63,7 @@ export default async function OrdersPage() {
                 <p className="font-serif text-xl text-espresso">
                   {order.total.toLocaleString("pl-PL", { style: "currency", currency: "PLN", minimumFractionDigits: 0 })}
                 </p>
-                <ChevronRight size={16} strokeWidth={1.5} className="text-charcoal/30 group-hover:text-clay transition-colors" />
+                <ChevronRight size={16} strokeWidth={1.5} className="text-charcoal/80 group-hover:text-clay transition-colors" />
               </div>
             </Link>
           ))}

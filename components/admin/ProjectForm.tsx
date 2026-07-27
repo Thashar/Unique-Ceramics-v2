@@ -134,7 +134,7 @@ export default function ProjectForm({ project }: { project?: Project }) {
           </div>
         )}
         <label
-          className={`flex items-center gap-2 border border-dashed border-sand px-4 py-3 cursor-pointer text-sm text-charcoal/50 hover:border-terracotta hover:text-terracotta transition-colors ${
+          className={`flex items-center gap-2 border border-dashed border-sand px-4 py-3 cursor-pointer text-sm text-charcoal/80 hover:border-terracotta hover:text-terracotta transition-colors ${
             uploading ? "opacity-50 pointer-events-none" : ""
           }`}
         >
@@ -149,7 +149,7 @@ export default function ProjectForm({ project }: { project?: Project }) {
             disabled={uploading}
           />
         </label>
-        <p className="text-xs text-charcoal/40 mt-1">Pierwsze zdjęcie wyświetla się jako główne.</p>
+        <p className="text-xs text-charcoal/80 mt-1">Pierwsze zdjęcie wyświetla się jako główne.</p>
       </div>
 
       {/* Opis */}
@@ -171,7 +171,7 @@ export default function ProjectForm({ project }: { project?: Project }) {
           onChange={(e) => setOrder(e.target.value)}
           className="w-24 border border-sand bg-warm-white px-4 py-3 text-sm text-charcoal focus:outline-none focus:border-terracotta transition-colors"
         />
-        <p className="text-xs text-charcoal/40 mt-1">Niższa liczba = wyżej na liście.</p>
+        <p className="text-xs text-charcoal/80 mt-1">Niższa liczba = wyżej na liście.</p>
       </div>
 
       {/* Aktywny */}

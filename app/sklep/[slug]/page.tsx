@@ -157,7 +157,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             </p>
 
             {product.description && (
-              <p className="text-charcoal/75 leading-relaxed text-sm mb-6">
+              <p className="text-charcoal/80 leading-relaxed text-sm mb-6">
                 {product.description}
               </p>
             )}
@@ -196,7 +196,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                   <p className="text-green-700">Dostępny</p>
                 )
               ) : (
-                <p className="text-charcoal/50">Wyprzedano</p>
+                <p className="text-charcoal/80">Wyprzedano</p>
               )}
             </div>
 
@@ -212,14 +212,14 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
             {/* Wysyłka */}
             <div className="mt-6 pt-6 border-t border-sand space-y-3">
-              <div className="flex items-center gap-3 text-xs text-charcoal/60">
+              <div className="flex items-center gap-3 text-xs text-charcoal/80">
                 <Truck size={14} strokeWidth={1.5} className="shrink-0 text-clay" />
                 <span>
                   Wysyłka {shippingCost.toFixed(0)} zł
                   {freeEnabled && ` · bezpłatna od ${freeFrom.toFixed(0)} zł`}
                 </span>
               </div>
-              <div className="flex items-center gap-3 text-xs text-charcoal/60">
+              <div className="flex items-center gap-3 text-xs text-charcoal/80">
                 <Clock size={14} strokeWidth={1.5} className="shrink-0 text-clay" />
                 <span>Czas realizacji: {shippingTime}</span>
               </div>

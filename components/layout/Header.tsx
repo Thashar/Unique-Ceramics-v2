@@ -14,6 +14,16 @@ import { useCart } from "@/lib/cart";
 // treść (stopka ma pt-20, czyli 80 px zapasu pod headerem).
 const FADE_DISTANCE = 150;
 
+// Wysokość headera (h-20) i baneru urlopowego (h-5) — muszą zgadzać się
+// z klasami w JSX; służą do wyliczenia --header-offset.
+const HEADER_H = 80;
+const VACATION_BANNER_H = 20;
+
+// Auto-chowanie na mobile: minimalny ruch, który uznajemy za przewijanie,
+// oraz pozycja, poniżej której wolno schować header.
+const SCROLL_DELTA = 8;
+const HIDE_AFTER = 120;
+
 const ALL_NAV_LINKS = [
   { href: "/sklep",         label: "Sklep",          always: true  },
   { href: "/o-mnie",        label: "O mnie",          always: true  },
@@ -69,12 +79,12 @@ function AccountDropdown({ scrolled }: { scrolled: boolean }) {
             <p className="text-xs font-medium text-espresso truncate">
               {session.user?.name ?? session.user?.email}
             </p>
-            <p className="text-xs text-charcoal/40 truncate">{session.user?.email}</p>
+            <p className="text-xs text-charcoal/80 truncate">{session.user?.email}</p>
           </div>
           <Link
             href="/konto"
             onClick={() => setOpen(false)}
-            className="flex items-center gap-3 px-4 py-2.5 text-sm text-charcoal/70 hover:text-espresso hover:bg-cream transition-colors"
+            className="flex items-center gap-3 px-4 py-2.5 text-sm text-charcoal/80 hover:text-espresso hover:bg-cream transition-colors"
           >
             <User size={15} strokeWidth={1.5} />
             Moje konto
@@ -82,7 +92,7 @@ function AccountDropdown({ scrolled }: { scrolled: boolean }) {
           <Link
             href="/konto/zamowienia"
             onClick={() => setOpen(false)}
-            className="flex items-center gap-3 px-4 py-2.5 text-sm text-charcoal/70 hover:text-espresso hover:bg-cream transition-colors"
+            className="flex items-center gap-3 px-4 py-2.5 text-sm text-charcoal/80 hover:text-espresso hover:bg-cream transition-colors"
           >
             <Package size={15} strokeWidth={1.5} />
             Zamówienia
@@ -90,7 +100,7 @@ function AccountDropdown({ scrolled }: { scrolled: boolean }) {
           <div className="border-t border-sand mt-1 pt-1">
             <button
               onClick={() => { setOpen(false); signOut({ callbackUrl: "/" }); }}
-              className="flex items-center gap-3 px-4 py-2.5 text-sm text-charcoal/70 hover:text-red-600 hover:bg-red-50 w-full text-left transition-colors"
+              className="flex items-center gap-3 px-4 py-2.5 text-sm text-charcoal/80 hover:text-red-600 hover:bg-red-50 w-full text-left transition-colors"
             >
               <LogOut size={15} strokeWidth={1.5} />
               Wyloguj się
@@ -107,6 +117,8 @@ export default function Header({ topOffset = false, showProjects = true }: { top
   // (Hero, O mnie, Warsztaty). W pozostałych sekcjach i na innych stronach — solid.
   const [transparentVisible, setTransparentVisible] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
+  // Auto-chowanie na mobile przy przewijaniu w dół (podstrony)
+  const [hidden, setHidden] = useState(false);
   const { count } = useCart();
   const pathname = usePathname();
   const isHome = pathname === "/";
@@ -125,6 +137,8 @@ export default function Header({ topOffset = false, showProjects = true }: { top
 
   const navLinks = ALL_NAV_LINKS.filter((l) => l.always || showProjects);
   const dark = !isHome || !transparentVisible;
+  // Schowany tylko gdy menu mobilne jest zamknięte — inaczej nie dałoby się go zamknąć
+  const collapsed = hidden && !menuOpen;
 
   // Zamknij menu mobilne klawiszem Escape
   useEffect(() => {
@@ -230,6 +244,55 @@ export default function Header({ topOffset = false, showProjects = true }: { top
     scheduleRef.current();
   }, [menuOpen]);
 
+  // Auto-chowanie headera na urządzeniach mobilnych: przewijanie w dół chowa,
+  // w górę wyłania. Strona główna ma własny scroll-snap i zanikanie w stopce,
+  // więc jej to nie dotyczy.
+  useEffect(() => {
+    if (isHome) return;
+
+    const mobileMq = window.matchMedia("(max-width: 1023px)");
+    let lastY = window.scrollY;
+    let raf = 0;
+
+    function evaluate() {
+      if (!mobileMq.matches) { setHidden(false); return; }
+
+      const y = Math.max(0, window.scrollY);
+      const delta = y - lastY;
+      // Próg wygasza drobne drgania (m.in. zwijanie paska adresu na mobile)
+      if (Math.abs(delta) < SCROLL_DELTA) return;
+      lastY = y;
+      // Blisko góry strony header zostaje widoczny — chowamy dopiero gdy
+      // pasek kategorii w /sklep zdążył się przykleić
+      setHidden(delta > 0 && y > HIDE_AFTER);
+    }
+
+    function onScroll() {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(evaluate);
+    }
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, [isHome]);
+
+  // --header-offset: gdzie mają się przyklejać elementy pod headerem
+  // (pasek kategorii w /sklep). Schowany header = zostaje sam baner urlopowy.
+  useEffect(() => {
+    const bannerH = topOffset ? VACATION_BANNER_H : 0;
+    const root = document.documentElement;
+    root.style.setProperty(
+      "--header-offset",
+      `${collapsed ? bannerH : bannerH + HEADER_H}px`
+    );
+    return () => { root.style.removeProperty("--header-offset"); };
+  }, [collapsed, topOffset]);
+
   return (
     <>
       {menuOpen && (
@@ -241,13 +304,19 @@ export default function Header({ topOffset = false, showProjects = true }: { top
       )}
     <header
       ref={headerRef}
-      // Bez `transition-all`: przezroczystość headera w stopce jest sterowana
-      // pozycją scrolla klatka po klatce, a 500 ms przejście by ją opóźniało.
-      className={`fixed ${topOffset ? "top-5" : "top-0"} left-0 right-0 z-50 transition-[background-color,box-shadow] duration-500 ${
+      className={`fixed ${topOffset ? "top-5" : "top-0"} left-0 right-0 z-50 ${
         dark || menuOpen
           ? "bg-espresso shadow-sm"
           : "bg-transparent"
       }`}
+      // Przejścia inline, bo każde ma inny czas: wsuwanie/wysuwanie ma być
+      // szybkie, a zmiana tła na stronie głównej łagodna. Przezroczystość
+      // celowo poza listą — w stopce sterujemy nią pozycją scrolla, klatka
+      // po klatce, i każde przejście by ją opóźniało.
+      style={{
+        transform: collapsed ? "translateY(-100%)" : "translateY(0)",
+        transition: "transform 300ms ease, background-color 500ms, box-shadow 500ms",
+      }}
     >
       <div className="max-w-7xl mx-auto px-6 lg:px-10 h-20 flex items-center justify-between">
         {/* Logo */}

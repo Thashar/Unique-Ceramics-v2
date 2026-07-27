@@ -98,7 +98,7 @@ export default async function AboutPage() {
               <div className="mt-12 flex flex-wrap gap-6">
                 <Link
                   href="/moje-projekty"
-                  className="inline-flex items-center gap-2 bg-clay hover:bg-terracotta text-warm-white text-sm tracking-widest uppercase px-8 py-4 transition-colors group"
+                  className="inline-flex items-center gap-2 bg-clay hover:bg-terracotta hover:text-espresso text-warm-white text-sm tracking-widest uppercase px-8 py-4 transition-colors group"
                 >
                   Moje prace
                   <ArrowRight size={15} className="group-hover:translate-x-1 transition-transform" strokeWidth={1.5} />
@@ -142,7 +142,7 @@ export default async function AboutPage() {
               ].map(({ title, text }) => (
                 <div key={title} className="text-center">
                   <h3 className="font-serif text-2xl text-espresso mb-4">{title}</h3>
-                  <p className="text-charcoal/70 leading-relaxed text-sm">{text}</p>
+                  <p className="text-charcoal/80 leading-relaxed text-sm">{text}</p>
                 </div>
               ))}
             </div>

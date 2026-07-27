@@ -34,11 +34,11 @@ export default async function AdminProductsPage({
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="font-serif text-3xl text-espresso">Produkty</h1>
-          <p className="text-sm text-charcoal/45 mt-0.5">{products.length} wyników</p>
+          <p className="text-sm text-charcoal/80 mt-0.5">{products.length} wyników</p>
         </div>
         <Link
           href="/admin/produkty/nowy"
-          className="flex items-center gap-2 bg-clay hover:bg-terracotta text-warm-white text-xs tracking-widest uppercase px-4 py-2.5 transition-colors"
+          className="flex items-center gap-2 bg-clay hover:bg-terracotta hover:text-espresso text-warm-white text-xs tracking-widest uppercase px-4 py-2.5 transition-colors"
         >
           <Plus size={15} />
           <span className="hidden sm:inline">Dodaj produkt</span>
@@ -51,7 +51,7 @@ export default async function AdminProductsPage({
       </Suspense>
 
       {products.length === 0 ? (
-        <div className="bg-cream border border-sand/60 text-center py-16 text-charcoal/50">
+        <div className="bg-cream border border-sand/60 text-center py-16 text-charcoal/80">
           <ShoppingBag size={36} strokeWidth={1} className="mx-auto mb-4 text-sand" />
           <p className="text-sm">
             {q || kat || status
@@ -63,7 +63,7 @@ export default async function AdminProductsPage({
       ) : (
         <div className="bg-cream border border-sand/60">
           {/* Nagłówek tabeli — tylko desktop */}
-          <div className="hidden md:grid md:grid-cols-[72px_1fr_120px_96px_100px_72px] text-[11px] tracking-widest uppercase text-charcoal/45 px-4 py-3 border-b border-sand">
+          <div className="hidden md:grid md:grid-cols-[72px_1fr_120px_96px_100px_72px] text-[11px] tracking-widest uppercase text-charcoal/80 px-4 py-3 border-b border-sand">
             <span>Zdjęcie</span>
             <span>Nazwa</span>
             <span className="text-right">Cena</span>
@@ -91,11 +91,11 @@ export default async function AdminProductsPage({
                     <p className="text-sm font-medium text-espresso truncate">{product.name}</p>
                     {product.featured && <Star size={11} className="text-terracotta shrink-0 fill-terracotta" />}
                   </div>
-                  <p className="text-xs text-charcoal/45 capitalize">{product.category}</p>
+                  <p className="text-xs text-charcoal/80 capitalize">{product.category}</p>
                   <div className="flex items-center justify-between mt-1.5">
                     <span className={`text-[10px] tracking-wide uppercase px-1.5 py-0.5 rounded-sm ${
                       !product.active
-                        ? "bg-charcoal/8 text-charcoal/50"
+                        ? "bg-charcoal/8 text-charcoal/80"
                         : product.stock === 0
                         ? "bg-red-50 text-red-600 ring-1 ring-red-200"
                         : "bg-green-50 text-green-700 ring-1 ring-green-200"
@@ -129,7 +129,7 @@ export default async function AdminProductsPage({
                     <p className="text-sm font-medium text-espresso truncate">{product.name}</p>
                     {product.featured && <Star size={11} className="text-terracotta shrink-0 fill-terracotta" />}
                   </div>
-                  <p className="text-xs text-charcoal/45 capitalize mt-0.5">{product.category}</p>
+                  <p className="text-xs text-charcoal/80 capitalize mt-0.5">{product.category}</p>
                 </div>
                 <div className="text-right text-sm text-espresso tabular-nums">
                   {product.price.toFixed(2).replace(".", ",")} zł
@@ -140,7 +140,7 @@ export default async function AdminProductsPage({
                 <div className="text-center">
                   <span className={`text-[10px] tracking-wide uppercase px-2 py-0.5 rounded-sm ${
                     !product.active
-                      ? "bg-charcoal/8 text-charcoal/50"
+                      ? "bg-charcoal/8 text-charcoal/80"
                       : product.stock === 0
                       ? "bg-red-50 text-red-600 ring-1 ring-red-200"
                       : "bg-green-50 text-green-700 ring-1 ring-green-200"

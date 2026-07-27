@@ -32,19 +32,19 @@ export default function OrdersSearch() {
     <div className="relative mb-4">
       <Search
         size={14}
-        className="absolute left-3 top-1/2 -translate-y-1/2 text-charcoal/35 pointer-events-none"
+        className="absolute left-3 top-1/2 -translate-y-1/2 text-charcoal/80 pointer-events-none"
       />
       <input
         type="search"
         placeholder="Szukaj po numerze zamówienia, e-mailu, imieniu, nazwisku, telefonie, adresie…"
         defaultValue={currentQuery}
         onChange={(e) => updateQuery(e.target.value)}
-        className="w-full bg-cream border border-sand focus:border-clay outline-none pl-9 pr-9 py-2.5 text-sm text-espresso placeholder:text-charcoal/35 transition-colors"
+        className="w-full bg-cream border border-sand focus:border-clay outline-none pl-9 pr-9 py-2.5 text-sm text-espresso placeholder:text-charcoal/80 transition-colors"
       />
       {currentQuery && (
         <button
           onClick={() => updateQuery("")}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-charcoal/35 hover:text-charcoal transition-colors"
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-charcoal/80 hover:text-charcoal transition-colors"
           aria-label="Wyczyść wyszukiwanie"
         >
           <X size={14} />

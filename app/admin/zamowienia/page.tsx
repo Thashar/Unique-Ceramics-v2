@@ -79,14 +79,14 @@ export default async function AdminOrdersPage({
       {filteredOrders.length === 0 ? (
         <div className="bg-cream border border-sand/60 p-16 text-center">
           <ShoppingBag size={36} strokeWidth={1} className="mx-auto mb-4 text-sand" />
-          <p className="text-sm text-charcoal/45">
+          <p className="text-sm text-charcoal/80">
             {q ? `Brak wyników dla „${q}"` : "Brak zamówień w tej kategorii"}
           </p>
         </div>
       ) : (
         <div className="bg-cream border border-sand/60">
           {/* Nagłówek tabeli — tylko desktop */}
-          <div className="hidden md:grid md:grid-cols-[96px_1fr_120px_110px_140px_80px] text-[11px] tracking-widest uppercase text-charcoal/45 px-4 py-3 border-b border-sand">
+          <div className="hidden md:grid md:grid-cols-[96px_1fr_120px_110px_140px_80px] text-[11px] tracking-widest uppercase text-charcoal/80 px-4 py-3 border-b border-sand">
             <span>Nr</span>
             <span>Klient</span>
             <span className="text-center">Data</span>
@@ -107,9 +107,9 @@ export default async function AdminOrdersPage({
                 <div className="md:hidden px-4 py-3 space-y-1.5">
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <p className="text-[10px] font-mono text-charcoal/40 mb-0.5">#{orderNumber}</p>
+                      <p className="text-[10px] font-mono text-charcoal/80 mb-0.5">#{orderNumber}</p>
                       <p className="text-sm font-medium text-espresso">{order.firstName} {order.lastName}</p>
-                      <p className="text-xs text-charcoal/45">{order.email}</p>
+                      <p className="text-xs text-charcoal/80">{order.email}</p>
                     </div>
                     <span className={`shrink-0 text-[10px] tracking-wide uppercase px-2 py-0.5 rounded-sm ${
                       STATUS_COLORS[order.status] ?? "bg-sand text-charcoal"
@@ -118,7 +118,7 @@ export default async function AdminOrdersPage({
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-charcoal/45">
+                    <span className="text-charcoal/80">
                       {order.items.length} szt. · {new Date(order.createdAt).toLocaleDateString("pl-PL")}
                     </span>
                     <span className="font-medium text-espresso tabular-nums">
@@ -129,14 +129,14 @@ export default async function AdminOrdersPage({
 
                 {/* Desktop */}
                 <div className="hidden md:grid md:grid-cols-[96px_1fr_120px_110px_140px_80px] items-center px-4 py-3">
-                  <div className="font-mono text-[11px] text-charcoal/50">
+                  <div className="font-mono text-[11px] text-charcoal/80">
                     #{orderNumber}
                   </div>
                   <div>
                     <p className="text-sm font-medium text-espresso">{order.firstName} {order.lastName}</p>
-                    <p className="text-xs text-charcoal/45 mt-0.5">{order.email}</p>
+                    <p className="text-xs text-charcoal/80 mt-0.5">{order.email}</p>
                   </div>
-                  <div className="text-center text-xs text-charcoal/55">
+                  <div className="text-center text-xs text-charcoal/80">
                     {new Date(order.createdAt).toLocaleDateString("pl-PL")}
                   </div>
                   <div className="text-right text-sm text-espresso tabular-nums">

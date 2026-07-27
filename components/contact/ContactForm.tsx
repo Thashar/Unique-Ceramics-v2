@@ -143,7 +143,7 @@ export default function ContactForm({ workshopOptions = [] }: Props) {
       <button
         type="submit"
         disabled={status === "sending"}
-        className="w-full bg-clay hover:bg-terracotta text-warm-white text-xs tracking-widest uppercase py-4 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+        className="w-full bg-clay hover:bg-terracotta hover:text-espresso text-warm-white text-xs tracking-widest uppercase py-4 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
       >
         {status === "sending" ? "Wysyłanie…" : "Wyślij wiadomość"}
       </button>

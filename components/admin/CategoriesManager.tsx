@@ -251,7 +251,7 @@ export default function CategoriesManager({ initialCategories }: Props) {
       )}
 
       {isDefaultFallback && (
-        <div className="mb-6 p-4 bg-cream border border-sand text-sm text-charcoal/70 space-y-3">
+        <div className="mb-6 p-4 bg-cream border border-sand text-sm text-charcoal/80 space-y-3">
           <p>Brak kategorii w bazie danych — sklep wyświetla domyślne. Kliknij poniżej, aby je zapisać i móc edytować.</p>
           <button onClick={seedDefaults} disabled={saving}
             className="bg-clay hover:bg-espresso disabled:opacity-50 text-cream text-xs tracking-widest uppercase px-5 py-2.5 transition-colors">
@@ -263,14 +263,14 @@ export default function CategoriesManager({ initialCategories }: Props) {
       {!isDefaultFallback && (
         <>
           <div className="mb-4">
-            <p className="text-xs text-charcoal/40 tracking-widests uppercase">
+            <p className="text-xs text-charcoal/80 tracking-widests uppercase">
               {categories.length} {categories.length === 1 ? "kategoria" : categories.length < 5 ? "kategorie" : "kategorii"}
             </p>
           </div>
 
           <div className="border border-sand divide-y divide-sand mb-4">
             {categories.length === 0 && (
-              <p className="px-4 py-6 text-sm text-charcoal/40 text-center">Brak kategorii — dodaj pierwszą poniżej.</p>
+              <p className="px-4 py-6 text-sm text-charcoal/80 text-center">Brak kategorii — dodaj pierwszą poniżej.</p>
             )}
 
             {categories.map((cat, idx) => {
@@ -296,7 +296,7 @@ export default function CategoriesManager({ initialCategories }: Props) {
                     className={`shrink-0 touch-none transition-colors select-none
                       ${isBeingDragged
                         ? "text-clay cursor-grabbing"
-                        : "text-charcoal/25 hover:text-charcoal/50 cursor-grab active:cursor-grabbing"
+                        : "text-charcoal/80 hover:text-espresso cursor-grab active:cursor-grabbing"
                       }`}
                     title="Przeciągnij, aby zmienić kolejność"
                     onTouchStart={(e) => onGripTouchStart(idx, e)}
@@ -313,7 +313,7 @@ export default function CategoriesManager({ initialCategories }: Props) {
                         className="flex-1 min-w-[100px] bg-cream border border-sand focus:border-clay outline-none px-3 py-1.5 text-espresso text-sm"
                         autoFocus
                       />
-                      <span className="text-xs text-charcoal/35 font-mono hidden sm:inline">
+                      <span className="text-xs text-charcoal/80 font-mono hidden sm:inline">
                         → {autoSlug(editLabel) || cat.slug}
                       </span>
                       <button onClick={() => saveEdit(cat)} disabled={saving}
@@ -321,7 +321,7 @@ export default function CategoriesManager({ initialCategories }: Props) {
                         <Check size={16} />
                       </button>
                       <button onClick={cancelEdit}
-                        className="p-1.5 text-charcoal/40 hover:text-espresso transition-colors" title="Anuluj">
+                        className="p-1.5 text-charcoal/80 hover:text-espresso transition-colors" title="Anuluj">
                         <X size={16} />
                       </button>
                     </div>
@@ -329,19 +329,19 @@ export default function CategoriesManager({ initialCategories }: Props) {
                     <>
                       <div className="flex-1">
                         <span className="text-sm text-espresso font-medium">{cat.label}</span>
-                        <span className="ml-2 text-xs text-charcoal/40 font-mono">{cat.slug}</span>
+                        <span className="ml-2 text-xs text-charcoal/80 font-mono">{cat.slug}</span>
                         {cat.slug === "inne" && (
-                          <span className="ml-2 text-[10px] tracking-widest uppercase text-charcoal/30">domyślna</span>
+                          <span className="ml-2 text-[10px] tracking-widest uppercase text-charcoal/80">domyślna</span>
                         )}
                       </div>
                       {cat.slug !== "inne" && (
                         <>
                           <button onClick={() => startEdit(cat)}
-                            className="p-1.5 text-charcoal/40 hover:text-espresso transition-colors" title="Edytuj">
+                            className="p-1.5 text-charcoal/80 hover:text-espresso transition-colors" title="Edytuj">
                             <Pencil size={14} />
                           </button>
                           <button onClick={() => deleteCategory(cat)}
-                            className="p-1.5 text-charcoal/40 hover:text-red-600 transition-colors" title="Usuń">
+                            className="p-1.5 text-charcoal/80 hover:text-red-600 transition-colors" title="Usuń">
                             <Trash2 size={14} />
                           </button>
                         </>
@@ -366,7 +366,7 @@ export default function CategoriesManager({ initialCategories }: Props) {
 
           {addOpen ? (
             <div className="border border-clay/40 bg-cream px-4 py-4 space-y-3">
-              <p className="text-xs tracking-widest uppercase text-charcoal/60">Nowa kategoria</p>
+              <p className="text-xs tracking-widest uppercase text-charcoal/80">Nowa kategoria</p>
               <div className="space-y-1.5">
                 <input
                   value={addLabel}
@@ -377,7 +377,7 @@ export default function CategoriesManager({ initialCategories }: Props) {
                   autoFocus
                 />
                 {addLabel && (
-                  <p className="text-xs text-charcoal/35 font-mono pl-1">slug: {autoSlug(addLabel) || "—"}</p>
+                  <p className="text-xs text-charcoal/80 font-mono pl-1">slug: {autoSlug(addLabel) || "—"}</p>
                 )}
               </div>
               <div className="flex gap-3">
@@ -386,7 +386,7 @@ export default function CategoriesManager({ initialCategories }: Props) {
                   {saving ? "Dodaję..." : "Dodaj"}
                 </button>
                 <button onClick={() => { setAddOpen(false); setAddLabel(""); setError(""); }}
-                  className="text-sm text-charcoal/40 hover:text-espresso transition-colors">
+                  className="text-sm text-charcoal/80 hover:text-espresso transition-colors">
                   Anuluj
                 </button>
               </div>
@@ -399,7 +399,7 @@ export default function CategoriesManager({ initialCategories }: Props) {
             </button>
           )}
 
-          <p className="mt-8 text-xs text-charcoal/35">
+          <p className="mt-8 text-xs text-charcoal/80">
             Slug kategorii musi odpowiadać wartości pola Kategoria w produktach. Zmiana sluga nie aktualizuje automatycznie produktów.
           </p>
         </>

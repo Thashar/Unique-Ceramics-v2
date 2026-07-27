@@ -71,7 +71,7 @@ export default async function ConfirmationPage({
             Dziękuję za zamówienie!
           </h1>
           {orderNumber && (
-            <p className="text-xs text-charcoal/40 mb-2">
+            <p className="text-xs text-charcoal/80 mb-2">
               Nr zamówienia:{" "}
               <span className="font-mono text-charcoal/80">{orderNumber}</span>
             </p>
@@ -87,7 +87,7 @@ export default async function ConfirmationPage({
             <div className="space-y-2 text-sm text-charcoal/80">
               {bankSettings.payment_bank_account_name && (
                 <div className="flex justify-between gap-4">
-                  <span className="text-charcoal/50 shrink-0">Odbiorca</span>
+                  <span className="text-charcoal/80 shrink-0">Odbiorca</span>
                   <span className="font-medium text-espresso text-right">
                     {bankSettings.payment_bank_account_name}
                   </span>
@@ -95,7 +95,7 @@ export default async function ConfirmationPage({
               )}
               {bankSettings.payment_bank_account_number && (
                 <div className="flex justify-between gap-4">
-                  <span className="text-charcoal/50 shrink-0">Numer konta</span>
+                  <span className="text-charcoal/80 shrink-0">Numer konta</span>
                   <span className="font-mono text-espresso text-right break-all">
                     {bankSettings.payment_bank_account_number}
                   </span>
@@ -103,7 +103,7 @@ export default async function ConfirmationPage({
               )}
               {bankSettings.payment_bank_name && (
                 <div className="flex justify-between gap-4">
-                  <span className="text-charcoal/50 shrink-0">Bank</span>
+                  <span className="text-charcoal/80 shrink-0">Bank</span>
                   <span className="text-espresso text-right">
                     {bankSettings.payment_bank_name}
                   </span>
@@ -111,7 +111,7 @@ export default async function ConfirmationPage({
               )}
               {bankSettings.payment_blik_enabled === "true" && bankSettings.payment_blik_phone && (
                 <div className="flex justify-between gap-4 border-t border-sand pt-2 mt-2">
-                  <span className="text-charcoal/50 shrink-0">BLIK na telefon</span>
+                  <span className="text-charcoal/80 shrink-0">BLIK na telefon</span>
                   <span className="font-mono text-espresso text-right">
                     {bankSettings.payment_blik_phone}
                   </span>
@@ -119,18 +119,18 @@ export default async function ConfirmationPage({
               )}
               {order && (
                 <div className="flex justify-between gap-4 border-t border-sand pt-2 mt-2">
-                  <span className="text-charcoal/50 shrink-0">Kwota</span>
+                  <span className="text-charcoal/80 shrink-0">Kwota</span>
                   <span className="font-serif text-lg text-espresso">
                     {order.total.toFixed(2).replace(".", ",")} zł
                   </span>
                 </div>
               )}
               <div className="flex justify-between gap-4">
-                <span className="text-charcoal/50 shrink-0">Tytuł przelewu</span>
+                <span className="text-charcoal/80 shrink-0">Tytuł przelewu</span>
                 <span className="text-espresso text-right">{transferTitle}</span>
               </div>
             </div>
-            <p className="text-xs text-charcoal/50 mt-4 leading-relaxed">
+            <p className="text-xs text-charcoal/80 mt-4 leading-relaxed">
               Płatność zrealizuj w ciągu <strong>48 godzin</strong> — po tym czasie zamówienie zostanie automatycznie anulowane. Dane zostały też wysłane na Twój adres e-mail.
             </p>
           </div>
@@ -142,7 +142,7 @@ export default async function ConfirmationPage({
             <p className="text-xs tracking-widest uppercase text-clay mb-3">
               Płatność kartą
             </p>
-            <p className="text-sm text-charcoal/70 leading-relaxed">
+            <p className="text-sm text-charcoal/80 leading-relaxed">
               Płatność kartą została zrealizowana. Potwierdzenie otrzymasz na podany adres e-mail.
             </p>
           </div>
@@ -151,12 +151,12 @@ export default async function ConfirmationPage({
         {/* Order summary */}
         {order && (
           <div className="bg-cream p-6 mb-8">
-            <p className="text-xs tracking-widest uppercase text-charcoal/50 mb-4">
+            <p className="text-xs tracking-widest uppercase text-charcoal/80 mb-4">
               Podsumowanie
             </p>
             <div className="space-y-2 text-sm">
               {order.items.map((item) => (
-                <div key={item.id} className="flex justify-between text-charcoal/70">
+                <div key={item.id} className="flex justify-between text-charcoal/80">
                   <span>
                     {item.name} ×{item.quantity}
                   </span>
@@ -165,7 +165,7 @@ export default async function ConfirmationPage({
                   </span>
                 </div>
               ))}
-              <div className="flex justify-between text-charcoal/50 border-t border-sand pt-2">
+              <div className="flex justify-between text-charcoal/80 border-t border-sand pt-2">
                 <span>Wysyłka</span>
                 <span>
                   {order.shippingCost === 0
@@ -184,7 +184,7 @@ export default async function ConfirmationPage({
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Link
             href="/sklep"
-            className="px-8 py-4 bg-clay hover:bg-terracotta text-warm-white text-xs tracking-widest uppercase transition-colors text-center"
+            className="px-8 py-4 bg-clay hover:bg-terracotta hover:text-espresso text-warm-white text-xs tracking-widest uppercase transition-colors text-center"
           >
             Wróć do sklepu
           </Link>

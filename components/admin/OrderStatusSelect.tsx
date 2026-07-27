@@ -121,7 +121,7 @@ export default function OrderStatusSelect({
   return (
     <div className="flex flex-col items-end gap-1">
       <div className="flex items-center gap-2.5">
-        {saving && <Loader2 size={14} className="text-charcoal/40 animate-spin" />}
+        {saving && <Loader2 size={14} className="text-charcoal/80 animate-spin" />}
         <div className="relative">
           <select
             value={status}
@@ -151,7 +151,7 @@ export default function OrderStatusSelect({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-espresso/40 px-4">
           <div className="bg-warm-white border border-sand rounded-sm shadow-xl w-full max-w-sm p-6 text-left">
             <h3 className="font-serif text-lg text-espresso mb-1">Data wpłaty</h3>
-            <p className="text-xs text-charcoal/55 mb-4">
+            <p className="text-xs text-charcoal/80 mb-4">
               Podaj datę i godzinę otrzymania wpłaty. Przychód zostanie rozliczony w miesiącu tej daty.
             </p>
             <input
@@ -166,7 +166,7 @@ export default function OrderStatusSelect({
               <button
                 onClick={() => setPaidModalOpen(false)}
                 disabled={saving}
-                className="text-xs text-charcoal/50 hover:text-charcoal px-3 py-2 transition-colors"
+                className="text-xs text-charcoal/80 hover:text-charcoal px-3 py-2 transition-colors"
               >
                 Anuluj
               </button>

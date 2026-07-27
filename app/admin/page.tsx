@@ -95,7 +95,7 @@ export default async function AdminDashboard() {
         <h1 className="font-serif text-3xl text-espresso">Dashboard</h1>
         <Link
           href="/admin/produkty/nowy"
-          className="flex items-center gap-2 bg-clay hover:bg-terracotta text-warm-white text-xs tracking-widest uppercase px-4 py-2.5 transition-colors"
+          className="flex items-center gap-2 bg-clay hover:bg-terracotta hover:text-espresso text-warm-white text-xs tracking-widest uppercase px-4 py-2.5 transition-colors"
         >
           <Plus size={14} />
           Dodaj produkt
@@ -145,7 +145,7 @@ export default async function AdminDashboard() {
             </div>
             <p className="font-serif text-xl sm:text-2xl text-espresso leading-none tabular-nums">{value}</p>
             {sub && <p className="text-[10px] sm:text-[11px] text-terracotta mt-1 sm:mt-1.5 leading-tight">{sub}</p>}
-            <p className="text-[10px] sm:text-[11px] tracking-widest uppercase text-charcoal/45 mt-1 sm:mt-1.5 leading-tight">{label}</p>
+            <p className="text-[10px] sm:text-[11px] tracking-widest uppercase text-charcoal/80 mt-1 sm:mt-1.5 leading-tight">{label}</p>
           </Link>
         ))}
       </div>
@@ -166,7 +166,7 @@ export default async function AdminDashboard() {
           </div>
 
           {recentOrders.length === 0 ? (
-            <p className="text-sm text-charcoal/40 text-center py-10">Brak zamówień</p>
+            <p className="text-sm text-charcoal/80 text-center py-10">Brak zamówień</p>
           ) : (
             <div className="divide-y divide-sand/50">
               {recentOrders.map((order) => (
@@ -179,7 +179,7 @@ export default async function AdminDashboard() {
                     <p className="text-sm font-medium text-espresso truncate">
                       {order.firstName} {order.lastName}
                     </p>
-                    <p className="text-xs text-charcoal/45 mt-0.5">
+                    <p className="text-xs text-charcoal/80 mt-0.5">
                       {order.items.length} szt. · {new Date(order.createdAt).toLocaleDateString("pl-PL")}
                     </p>
                   </div>
@@ -207,14 +207,14 @@ export default async function AdminDashboard() {
             <div className="space-y-1">
               <Link
                 href="/admin/produkty/nowy"
-                className="flex items-center gap-2.5 px-3 py-2.5 hover:bg-sand/30 transition-colors rounded-sm text-sm text-charcoal/70 hover:text-espresso"
+                className="flex items-center gap-2.5 px-3 py-2.5 hover:bg-sand/30 transition-colors rounded-sm text-sm text-charcoal/80 hover:text-espresso"
               >
                 <Plus size={15} className="text-clay shrink-0" />
                 Dodaj produkt
               </Link>
               <Link
                 href="/admin/zamowienia?status=PENDING"
-                className="flex items-center gap-2.5 px-3 py-2.5 hover:bg-sand/30 transition-colors rounded-sm text-sm text-charcoal/70 hover:text-espresso"
+                className="flex items-center gap-2.5 px-3 py-2.5 hover:bg-sand/30 transition-colors rounded-sm text-sm text-charcoal/80 hover:text-espresso"
               >
                 <ShoppingBag size={15} className="text-clay shrink-0" />
                 <span className="flex-1">Nowe zamówienia</span>
@@ -226,7 +226,7 @@ export default async function AdminDashboard() {
               </Link>
               <Link
                 href="/admin/zamowienia-indywidualne"
-                className="flex items-center gap-2.5 px-3 py-2.5 hover:bg-sand/30 transition-colors rounded-sm text-sm text-charcoal/70 hover:text-espresso"
+                className="flex items-center gap-2.5 px-3 py-2.5 hover:bg-sand/30 transition-colors rounded-sm text-sm text-charcoal/80 hover:text-espresso"
               >
                 <ClipboardList size={15} className="text-clay shrink-0" />
                 <span className="flex-1">Zam. indywidualne</span>
@@ -238,7 +238,7 @@ export default async function AdminDashboard() {
               </Link>
               <Link
                 href="/admin/ustawienia?s=wysylka"
-                className="flex items-center gap-2.5 px-3 py-2.5 hover:bg-sand/30 transition-colors rounded-sm text-sm text-charcoal/70 hover:text-espresso"
+                className="flex items-center gap-2.5 px-3 py-2.5 hover:bg-sand/30 transition-colors rounded-sm text-sm text-charcoal/80 hover:text-espresso"
               >
                 <Settings size={15} className="text-clay shrink-0" />
                 Ustawienia wysyłki
@@ -248,11 +248,11 @@ export default async function AdminDashboard() {
 
           {/* Przychód w tym miesiącu */}
           <div className="bg-cream border border-sand/60 p-5">
-            <p className="text-[11px] tracking-widest uppercase text-charcoal/45 mb-1">Ten miesiąc</p>
+            <p className="text-[11px] tracking-widest uppercase text-charcoal/80 mb-1">Ten miesiąc</p>
             <p className="font-serif text-2xl text-espresso tabular-nums">
               {(revenueMonth._sum.total ?? 0).toFixed(0)} zł
             </p>
-            <p className="text-xs text-charcoal/40 mt-2">
+            <p className="text-xs text-charcoal/80 mt-2">
               Łącznie: {(revenueAll._sum.total ?? 0).toFixed(0)} zł
             </p>
             <Link

@@ -11,7 +11,7 @@ export default function ShopError({ reset }: { error: Error; reset: () => void }
         </p>
         <button
           onClick={reset}
-          className="bg-clay hover:bg-terracotta text-warm-white text-xs tracking-widest uppercase px-8 py-4 transition-colors"
+          className="bg-clay hover:bg-terracotta hover:text-espresso text-warm-white text-xs tracking-widest uppercase px-8 py-4 transition-colors"
         >
           Spróbuj ponownie
         </button>

@@ -40,7 +40,7 @@ export default function FooterInstagramPanel({ instagram }: { instagram?: string
         href={href}
         target="_blank"
         rel="noopener noreferrer"
-        className="group inline-flex items-center gap-3 border border-terracotta/50 hover:border-terracotta hover:bg-terracotta text-cream text-sm tracking-widest uppercase px-6 py-3.5 transition-all duration-300 self-start"
+        className="group inline-flex items-center gap-3 border border-terracotta/50 hover:border-terracotta hover:bg-terracotta hover:text-espresso text-cream text-sm tracking-widest uppercase px-6 py-3.5 transition-all duration-300 self-start"
       >
         <InstagramIcon size={14} />
         {displayHandle}

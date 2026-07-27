@@ -22,7 +22,7 @@ export default function ProductGrid({ products, kategoria, dbError }: Props) {
       <div className="text-center py-24">
         <ShoppingBag size={48} strokeWidth={1} className="mx-auto text-sand mb-6" />
         <p className="font-serif text-2xl text-espresso mb-2">Sklep chwilowo niedostępny</p>
-        <p className="text-charcoal/50 text-sm">Spróbuj ponownie za chwilę.</p>
+        <p className="text-charcoal/80 text-sm">Spróbuj ponownie za chwilę.</p>
       </div>
     );
   }
@@ -32,7 +32,7 @@ export default function ProductGrid({ products, kategoria, dbError }: Props) {
       <div className="text-center py-24">
         <ShoppingBag size={48} strokeWidth={1} className="mx-auto text-sand mb-6" />
         <p className="font-serif text-2xl text-espresso mb-2">Brak produktów</p>
-        <p className="text-charcoal/50 text-sm">
+        <p className="text-charcoal/80 text-sm">
           {kategoria ? "Brak produktów w tej kategorii." : "Sklep jest w przygotowaniu."}
         </p>
       </div>
@@ -44,7 +44,7 @@ export default function ProductGrid({ products, kategoria, dbError }: Props) {
   return (
     <>
       <div className="flex items-center justify-between mb-3 md:mb-8">
-        <p className="text-xs text-charcoal/40 tracking-widest uppercase">
+        <p className="text-xs text-charcoal/80 tracking-widest uppercase">
           {products.length}{" "}
           {products.length === 1 ? "produkt" : products.length < 5 ? "produkty" : "produktów"}
         </p>
@@ -52,7 +52,7 @@ export default function ProductGrid({ products, kategoria, dbError }: Props) {
           <button
             onClick={() => setLayout("standard")}
             className={`p-1.5 transition-colors ${
-              !compact ? "text-espresso" : "text-charcoal/30 hover:text-charcoal/60"
+              !compact ? "text-espresso" : "text-charcoal/80 hover:text-espresso"
             }`}
             aria-label="Widok standardowy"
             title="Widok standardowy"
@@ -62,7 +62,7 @@ export default function ProductGrid({ products, kategoria, dbError }: Props) {
           <button
             onClick={() => setLayout("compact")}
             className={`p-1.5 transition-colors ${
-              compact ? "text-espresso" : "text-charcoal/30 hover:text-charcoal/60"
+              compact ? "text-espresso" : "text-charcoal/80 hover:text-espresso"
             }`}
             aria-label="Widok kompaktowy"
             title="Widok kompaktowy"

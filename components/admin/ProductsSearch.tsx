@@ -42,13 +42,13 @@ export default function ProductsSearch({ categories = [] }: { categories?: Categ
   return (
     <div className="flex flex-col sm:flex-row flex-wrap gap-3 mb-5">
       <div className="relative flex-1 min-w-0 sm:min-w-48">
-        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-charcoal/35 pointer-events-none" />
+        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-charcoal/80 pointer-events-none" />
         <input
           type="search"
           placeholder="Szukaj po nazwie..."
           defaultValue={currentQuery}
           onChange={(e) => updateParams({ q: e.target.value }, true)}
-          className="w-full bg-cream border border-sand focus:border-clay outline-none pl-9 pr-4 py-2.5 text-sm text-espresso placeholder:text-charcoal/35 transition-colors"
+          className="w-full bg-cream border border-sand focus:border-clay outline-none pl-9 pr-4 py-2.5 text-sm text-espresso placeholder:text-charcoal/80 transition-colors"
         />
       </div>
       <div className="flex gap-3">

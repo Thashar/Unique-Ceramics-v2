@@ -23,7 +23,7 @@ const STATUS_LABEL: Record<string, string> = {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <p className="text-[10px] tracking-widest uppercase text-charcoal/50 mb-1">{label}</p>
+      <p className="text-[10px] tracking-widest uppercase text-charcoal/80 mb-1">{label}</p>
       {children}
     </div>
   );
@@ -152,7 +152,7 @@ export default function CustomOrderActions({
       {/* ── Dane klienta (z odblokowaniem) ─────────────────────────────────── */}
       <div className="bg-cream p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xs tracking-widest uppercase text-charcoal/50">Dane klienta</h2>
+          <h2 className="text-xs tracking-widest uppercase text-charcoal/80">Dane klienta</h2>
           <button
             onClick={() => setCustomerUnlocked((v) => !v)}
             className="flex items-center gap-1.5 text-xs tracking-widest uppercase text-clay hover:text-espresso transition-colors"
@@ -188,7 +188,7 @@ export default function CustomOrderActions({
 
           {/* Adres */}
           <div className="pt-2 border-t border-sand">
-            <p className="text-[10px] tracking-widest uppercase text-charcoal/40 mb-2">Adres dostawy</p>
+            <p className="text-[10px] tracking-widest uppercase text-charcoal/80 mb-2">Adres dostawy</p>
             <div className="space-y-2">
               <Field label="Ulica / nr domu">
                 {customerUnlocked
@@ -227,7 +227,7 @@ export default function CustomOrderActions({
 
       {/* ── Status, cena, wysyłka, notatki ─────────────────────────────────── */}
       <div className="bg-cream p-6 space-y-4">
-        <h2 className="text-xs tracking-widest uppercase text-charcoal/50 mb-4">Status i rozliczenie</h2>
+        <h2 className="text-xs tracking-widest uppercase text-charcoal/80 mb-4">Status i rozliczenie</h2>
 
         {/* Cena zamówienia */}
         <div>
@@ -263,7 +263,7 @@ export default function CustomOrderActions({
             onChange={(e) => { setPaidAmount(e.target.value); setSaved(false); }}
             className="w-full bg-warm-white border border-sand focus:border-clay outline-none px-4 py-2.5 text-sm text-espresso"
           />
-          <p className="text-[10px] text-charcoal/40 mt-1">
+          <p className="text-[10px] text-charcoal/80 mt-1">
             Wymagane do ustawienia statusu Oplacone
           </p>
         </div>
@@ -304,7 +304,7 @@ export default function CustomOrderActions({
           <button
             onClick={handleSave}
             disabled={saving}
-            className="bg-clay hover:bg-terracotta text-warm-white text-xs tracking-widest uppercase px-6 py-2.5 transition-colors disabled:opacity-60"
+            className="bg-clay hover:bg-terracotta hover:text-espresso text-warm-white text-xs tracking-widest uppercase px-6 py-2.5 transition-colors disabled:opacity-60"
           >
             {saving ? "Zapisuje..." : "Zapisz"}
           </button>

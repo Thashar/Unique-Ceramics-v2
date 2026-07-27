@@ -97,7 +97,7 @@ export default function DznSection({
 
           {/* Edytowalne minimalne wynagrodzenie */}
           <div className="flex items-center gap-2 mt-2 flex-wrap">
-            <span className="text-xs text-charcoal/45 shrink-0">Minimalne wynagrodzenie:</span>
+            <span className="text-xs text-charcoal/80 shrink-0">Minimalne wynagrodzenie:</span>
 
             {editing ? (
               <div className="flex items-center gap-1.5 flex-wrap">
@@ -111,7 +111,7 @@ export default function DznSection({
                   max={20000}
                   className="w-24 border border-clay bg-warm-white text-espresso text-xs px-2 py-1 outline-none tabular-nums"
                 />
-                <span className="text-xs text-charcoal/45">zł</span>
+                <span className="text-xs text-charcoal/80">zł</span>
                 <button
                   onClick={save}
                   disabled={saving}
@@ -122,7 +122,7 @@ export default function DznSection({
                 </button>
                 <button
                   onClick={() => setEditing(false)}
-                  className="text-xs text-charcoal/40 hover:text-charcoal transition-colors"
+                  className="text-xs text-charcoal/80 hover:text-charcoal transition-colors"
                 >
                   Anuluj
                 </button>
@@ -133,7 +133,7 @@ export default function DznSection({
                 className="flex items-center gap-1.5 text-xs font-medium text-espresso hover:text-clay transition-colors"
               >
                 <span className="tabular-nums">{minWage.toLocaleString("pl-PL")} zł</span>
-                <Edit2 size={11} className="text-charcoal/30" />
+                <Edit2 size={11} className="text-charcoal/80" />
                 {saved && <Check size={11} className="text-green-600 ml-0.5" />}
               </button>
             )}
@@ -141,9 +141,9 @@ export default function DznSection({
 
           {error && <p className="text-xs text-red-600 mt-1">{error}</p>}
 
-          <p className="text-xs text-charcoal/45 mt-1">
+          <p className="text-xs text-charcoal/80 mt-1">
             Limit kwartalny:{" "}
-            <span className="font-medium text-charcoal/70 tabular-nums">{fmt(quarterly)} zł</span>
+            <span className="font-medium text-charcoal/80 tabular-nums">{fmt(quarterly)} zł</span>
             {" "}· 225% min. wynagrodzenia / kwartał · tylko opłacone zamówienia (z wysyłką)
           </p>
         </div>
@@ -179,7 +179,7 @@ export default function DznSection({
                   >
                     {label}
                   </span>
-                  <span className="text-[11px] text-charcoal/45">{months}</span>
+                  <span className="text-[11px] text-charcoal/80">{months}</span>
                   {isCurrent && (
                     <span className="text-[10px] tracking-widest uppercase text-terracotta font-medium">
                       Bieżący
@@ -200,7 +200,7 @@ export default function DznSection({
                   >
                     {fmt(data.rev)} zł
                   </span>
-                  <span className="text-xs text-charcoal/40 tabular-nums">
+                  <span className="text-xs text-charcoal/80 tabular-nums">
                     ({Math.min(pctVal, 999).toFixed(0)}%)
                   </span>
                 </div>
@@ -216,10 +216,10 @@ export default function DznSection({
 
               {/* Podpis */}
               <div className="flex items-center justify-between mt-1.5">
-                <p className="text-[11px] text-charcoal/35">
+                <p className="text-[11px] text-charcoal/80">
                   {data.cnt > 0 ? `${data.cnt} zamówień` : "Brak zamówień"}
                 </p>
-                <p className="text-[11px] text-charcoal/35 tabular-nums">
+                <p className="text-[11px] text-charcoal/80 tabular-nums">
                   {data.rev >= quarterly
                     ? "⚠ Limit przekroczony!"
                     : data.rev > 0
@@ -234,7 +234,7 @@ export default function DznSection({
 
       {/* Stopka prawna */}
       <div className="mt-4 pt-4 border-t border-sand">
-        <p className="text-[11px] text-charcoal/35 leading-relaxed">
+        <p className="text-[11px] text-charcoal/80 leading-relaxed">
           <strong className="font-medium">Podstawa prawna:</strong>{" "}
           art. 5 ustawy z dnia 6 marca 2018 r. Prawo przedsiębiorców (Dz.U. 2018 poz. 646),
           zmieniony ustawą z dnia 25 lipca 2025 r. o ograniczeniu biurokracji i wsparciu

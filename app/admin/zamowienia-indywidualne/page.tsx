@@ -29,11 +29,11 @@ export default async function AdminCustomOrdersPage() {
       <h1 className="font-serif text-3xl text-espresso mb-6">Zamówienia indywidualne</h1>
 
       {orders.length === 0 ? (
-        <div className="bg-cream border border-sand/60 p-16 text-center text-charcoal/50 text-sm">Brak zamówień indywidualnych</div>
+        <div className="bg-cream border border-sand/60 p-16 text-center text-charcoal/80 text-sm">Brak zamówień indywidualnych</div>
       ) : (
         <div className="space-y-2">
           {/* Nagłówek — tylko desktop */}
-          <div className="hidden md:grid md:grid-cols-[auto_1fr_auto_auto_auto_auto] text-xs tracking-widest uppercase text-charcoal/50 bg-cream border border-sand/60 px-4 py-3">
+          <div className="hidden md:grid md:grid-cols-[auto_1fr_auto_auto_auto_auto] text-xs tracking-widest uppercase text-charcoal/80 bg-cream border border-sand/60 px-4 py-3">
             <span className="w-24 pr-4">Nr</span>
             <span>Klient</span>
             <span className="w-36 pl-4">Rodzaj</span>
@@ -54,7 +54,7 @@ export default async function AdminCustomOrdersPage() {
                   <div>
                     <p className="text-[10px] font-mono text-clay">IND-{order.orderNumber}</p>
                     <p className="text-sm font-medium text-espresso">{order.customerName}</p>
-                    <p className="text-xs text-charcoal/50">{order.customerEmail}</p>
+                    <p className="text-xs text-charcoal/80">{order.customerEmail}</p>
                   </div>
                   <span className={`shrink-0 text-[10px] tracking-widest uppercase px-2 py-1 ${STATUS_COLORS[order.status] ?? "bg-sand text-charcoal"}`}>
                     {STATUS_LABELS[order.status] ?? order.status}
@@ -62,7 +62,7 @@ export default async function AdminCustomOrdersPage() {
                 </div>
                 <div className="flex items-center justify-between">
                   <p className="text-xs text-charcoal/80 truncate max-w-[60%]">{order.orderType}</p>
-                  <p className="text-xs text-charcoal/50">{new Date(order.createdAt).toLocaleDateString("pl-PL")}</p>
+                  <p className="text-xs text-charcoal/80">{new Date(order.createdAt).toLocaleDateString("pl-PL")}</p>
                 </div>
               </div>
 
@@ -73,7 +73,7 @@ export default async function AdminCustomOrdersPage() {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-espresso">{order.customerName}</p>
-                  <p className="text-xs text-charcoal/50">{order.customerEmail}</p>
+                  <p className="text-xs text-charcoal/80">{order.customerEmail}</p>
                 </div>
                 <div className="w-36 pl-4 text-xs text-charcoal/80 truncate">{order.orderType}</div>
                 <div className="w-28 text-center text-xs text-charcoal/80">

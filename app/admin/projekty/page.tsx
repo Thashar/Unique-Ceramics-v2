@@ -30,7 +30,7 @@ export default async function AdminProjectsPage() {
       </div>
 
       {projects.length === 0 ? (
-        <div className="text-center py-24 text-charcoal/40">
+        <div className="text-center py-24 text-charcoal/80">
           <p className="font-serif text-2xl text-espresso mb-2">Brak projektów</p>
           <p className="text-sm">Dodaj pierwszy projekt klikając przycisk powyżej.</p>
         </div>
@@ -56,7 +56,7 @@ export default async function AdminProjectsPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-espresso truncate">{project.title}</p>
-                <p className="text-xs text-charcoal/40 mt-0.5">
+                <p className="text-xs text-charcoal/80 mt-0.5">
                   {project.images.length}{" "}
                   {project.images.length === 1
                     ? "zdjęcie"
@@ -71,12 +71,12 @@ export default async function AdminProjectsPage() {
                   className={`text-xs px-2 py-0.5 rounded-sm ${
                     project.active
                       ? "bg-green-100 text-green-700"
-                      : "bg-sand text-charcoal/50"
+                      : "bg-sand text-charcoal/80"
                   }`}
                 >
                   {project.active ? "Widoczny" : "Ukryty"}
                 </span>
-                <Pencil size={14} className="text-charcoal/30" />
+                <Pencil size={14} className="text-charcoal/80" />
               </div>
             </Link>
           ))}

@@ -67,7 +67,7 @@ export default function CustomOrderForm({ topOffset: _topOffset = false }: { top
         <div className="max-w-7xl mx-auto max-w-2xl">
           <p className="text-xs tracking-[0.3em] uppercase text-clay mb-3">Na zamówienie</p>
           <h1 className="font-serif text-5xl text-espresso mb-6">Zamówienie indywidualne</h1>
-          <p className="text-charcoal/70 leading-relaxed">
+          <p className="text-charcoal/80 leading-relaxed">
             Tworzę ceramikę na zamówienie — zestawy ślubne, prezenty firmowe lub spersonalizowaną ceramikę, której nie ma w sklepie.
             Czas realizacji wynosi zazwyczaj 4+ tygodnie od potwierdzenia projektu.
           </p>
@@ -178,14 +178,14 @@ export default function CustomOrderForm({ topOffset: _topOffset = false }: { top
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-clay hover:bg-terracotta text-warm-white text-xs tracking-widest uppercase py-5 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                className="w-full bg-clay hover:bg-terracotta hover:text-espresso text-warm-white text-xs tracking-widest uppercase py-5 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {loading ? "Wysyłanie..." : "Wyślij zapytanie"}
               </button>
             </form>
           )}
 
-          <div className="mt-12 p-8 bg-cream text-sm text-charcoal/70 leading-relaxed space-y-2">
+          <div className="mt-12 p-8 bg-cream text-sm text-charcoal/80 leading-relaxed space-y-2">
             <p className="font-medium text-espresso text-base mb-4">Co dalej?</p>
             <p>1. Przesłę odpowiedź w ciągu 2 dni roboczych.</p>
             <p>2. Omówimy szczegóły projektu i ustalimy wycenę.</p>

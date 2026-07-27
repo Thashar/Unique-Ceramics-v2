@@ -44,7 +44,7 @@ export default function AddToCartSection({ product }: { product: Product }) {
     return (
       <button
         disabled
-        className="w-full flex items-center justify-center gap-3 text-sm tracking-widest uppercase py-5 bg-sand text-charcoal/40"
+        className="w-full flex items-center justify-center gap-3 text-sm tracking-widest uppercase py-5 bg-sand text-charcoal/80"
       >
         <ShoppingBag size={18} strokeWidth={1.5} />
         Wyprzedano
@@ -75,7 +75,7 @@ export default function AddToCartSection({ product }: { product: Product }) {
             </button>
           </div>
           {inCartQty > 0 && (
-            <span className="text-xs text-charcoal/50">w koszyku: {inCartQty}</span>
+            <span className="text-xs text-charcoal/80">w koszyku: {inCartQty}</span>
           )}
         </div>
       )}
@@ -86,7 +86,7 @@ export default function AddToCartSection({ product }: { product: Product }) {
         className={`w-full flex items-center justify-center gap-3 text-sm tracking-widest uppercase py-5 transition-all duration-300 ${
           added
             ? "bg-green-600 text-white"
-            : "bg-clay hover:bg-terracotta disabled:bg-sand disabled:text-charcoal/40 text-warm-white"
+            : "bg-clay hover:bg-terracotta hover:text-espresso disabled:bg-sand disabled:text-charcoal/40 text-warm-white"
         }`}
       >
         {added ? (

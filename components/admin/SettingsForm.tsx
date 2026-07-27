@@ -163,7 +163,7 @@ function OverlayControl({
         </div>
       ) : (
         <div
-          className="w-full border border-sand border-dashed rounded-sm flex items-center justify-center text-charcoal/30 text-xs"
+          className="w-full border border-sand border-dashed rounded-sm flex items-center justify-center text-charcoal/80 text-xs"
           style={{ aspectRatio }}
         >
           Najpierw wybierz zdjęcie
@@ -171,17 +171,17 @@ function OverlayControl({
       )}
       <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
         <div className="flex items-center gap-2">
-          <span className="text-xs text-charcoal/60">Kolor:</span>
+          <span className="text-xs text-charcoal/80">Kolor:</span>
           <input
             type="color"
             value={color || "#2C2825"}
             onChange={(e) => onColorChange(e.target.value)}
             className="w-8 h-8 cursor-pointer border border-sand rounded p-0.5 bg-warm-white"
           />
-          <span className="text-[11px] text-charcoal/40 font-mono">{color}</span>
+          <span className="text-[11px] text-charcoal/80 font-mono">{color}</span>
         </div>
         <div className="flex items-center gap-2 min-w-[220px]">
-          <span className="text-xs text-charcoal/60 shrink-0">Przezroczystość:</span>
+          <span className="text-xs text-charcoal/80 shrink-0">Przezroczystość:</span>
           <input
             type="range"
             min={0}
@@ -190,10 +190,10 @@ function OverlayControl({
             onChange={(e) => onOpacityChange(e.target.value)}
             className="flex-1 accent-clay"
           />
-          <span className="text-xs text-charcoal/60 w-7 text-right">{pct}%</span>
+          <span className="text-xs text-charcoal/80 w-7 text-right">{pct}%</span>
         </div>
       </div>
-      <p className="text-[11px] text-charcoal/40">Podgląd natychmiastowy. Na stronie efekt widoczny po zapisaniu.</p>
+      <p className="text-[11px] text-charcoal/80">Podgląd natychmiastowy. Na stronie efekt widoczny po zapisaniu.</p>
     </div>
   );
 }
@@ -326,8 +326,8 @@ export default function SettingsForm({ section, initial }: Props) {
           <h2 className="font-serif text-2xl text-espresso">Strona główna — zdjęcia</h2>
 
           <div className="space-y-4">
-            <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/70">Sekcja hero (nagłówek)</h3>
-            <p className="text-xs text-charcoal/40">Pierwsze zdjęcie widoczne po wejściu na stronę — duże, pełnoekranowe tło.</p>
+            <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/80">Sekcja hero (nagłówek)</h3>
+            <p className="text-xs text-charcoal/80">Pierwsze zdjęcie widoczne po wejściu na stronę — duże, pełnoekranowe tło.</p>
             <ImageUploader
               currentUrl={homeHeroImage}
               onUploaded={(url) => setHomeHeroImage(url)}
@@ -341,8 +341,8 @@ export default function SettingsForm({ section, initial }: Props) {
           </div>
 
           <div className="border-t border-sand pt-6 space-y-4">
-            <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/70">Sekcja „O mnie&rdquo;</h3>
-            <p className="text-xs text-charcoal/40">Tło sekcji z historią — widoczne za tekstem na stronie głównej.</p>
+            <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/80">Sekcja „O mnie&rdquo;</h3>
+            <p className="text-xs text-charcoal/80">Tło sekcji z historią — widoczne za tekstem na stronie głównej.</p>
             <ImageUploader
               currentUrl={homeAboutImage}
               onUploaded={(url) => setHomeAboutImage(url)}
@@ -356,8 +356,8 @@ export default function SettingsForm({ section, initial }: Props) {
           </div>
 
           <div className="border-t border-sand pt-6 space-y-4">
-            <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/70">Sekcja „Warsztaty&rdquo;</h3>
-            <p className="text-xs text-charcoal/40">Tło sekcji warsztatów — widoczne za tekstem na stronie głównej.</p>
+            <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/80">Sekcja „Warsztaty&rdquo;</h3>
+            <p className="text-xs text-charcoal/80">Tło sekcji warsztatów — widoczne za tekstem na stronie głównej.</p>
             <ImageUploader
               currentUrl={homeWorkshopsImage}
               onUploaded={(url) => setHomeWorkshopsImage(url)}
@@ -389,7 +389,7 @@ export default function SettingsForm({ section, initial }: Props) {
           <h2 className="font-serif text-2xl text-espresso">O mnie</h2>
 
           <div className="space-y-4">
-            <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/70">Zdjęcie nagłówka (hero)</h3>
+            <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/80">Zdjęcie nagłówka (hero)</h3>
             <ImageUploader
               currentUrl={aboutImage}
               onUploaded={(url) => setAboutImage(url)}
@@ -411,13 +411,13 @@ export default function SettingsForm({ section, initial }: Props) {
                 <span className="text-sm font-medium text-espresso tabular-nums">{aboutHeroHeight}vh</span>
               </div>
               <input type="range" min="30" max="80" step="5" value={aboutHeroHeight} onChange={(e) => setAboutHeroHeight(e.target.value)} className="w-full accent-clay" />
-              <p className="text-[11px] text-charcoal/40">Aktywne gdy zdjęcie jest ustawione. Bez zdjęcia nagłówek ma jasne tło jak w /kontakt.</p>
+              <p className="text-[11px] text-charcoal/80">Aktywne gdy zdjęcie jest ustawione. Bez zdjęcia nagłówek ma jasne tło jak w /kontakt.</p>
             </div>
           </div>
 
           <div className="border-t border-sand pt-6 space-y-4">
-            <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/70">Zdjęcie przy opisie (prawa kolumna)</h3>
-            <p className="text-xs text-charcoal/40">Jeżeli puste — kolumna zdjęcia znika, tekst zajmuje całą szerokość.</p>
+            <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/80">Zdjęcie przy opisie (prawa kolumna)</h3>
+            <p className="text-xs text-charcoal/80">Jeżeli puste — kolumna zdjęcia znika, tekst zajmuje całą szerokość.</p>
             <ImageUploader
               currentUrl={aboutContentImage}
               onUploaded={(url) => setAboutContentImage(url)}
@@ -453,7 +453,7 @@ export default function SettingsForm({ section, initial }: Props) {
           <h2 className="font-serif text-2xl text-espresso">Warsztaty</h2>
 
           <div className="space-y-4">
-            <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/70">Zdjęcie nagłówka (hero)</h3>
+            <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/80">Zdjęcie nagłówka (hero)</h3>
             <ImageUploader
               currentUrl={workshopsImage}
               onUploaded={(url) => setWorkshopsImage(url)}
@@ -475,13 +475,13 @@ export default function SettingsForm({ section, initial }: Props) {
                 <span className="text-sm font-medium text-espresso tabular-nums">{workshopsHeroHeight}vh</span>
               </div>
               <input type="range" min="30" max="80" step="5" value={workshopsHeroHeight} onChange={(e) => setWorkshopsHeroHeight(e.target.value)} className="w-full accent-clay" />
-              <p className="text-[11px] text-charcoal/40">Aktywne gdy zdjęcie jest ustawione. Bez zdjęcia nagłówek ma jasne tło jak w /kontakt.</p>
+              <p className="text-[11px] text-charcoal/80">Aktywne gdy zdjęcie jest ustawione. Bez zdjęcia nagłówek ma jasne tło jak w /kontakt.</p>
             </div>
           </div>
 
           <div className="border-t border-sand pt-6 space-y-4">
-            <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/70">Zdjęcie przy opisie (prawa kolumna)</h3>
-            <p className="text-xs text-charcoal/40">Jeżeli puste — kolumna zdjęcia znika, tekst zajmuje całą szerokość.</p>
+            <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/80">Zdjęcie przy opisie (prawa kolumna)</h3>
+            <p className="text-xs text-charcoal/80">Jeżeli puste — kolumna zdjęcia znika, tekst zajmuje całą szerokość.</p>
             <ImageUploader
               currentUrl={workshopsContentImage}
               onUploaded={(url) => setWorkshopsContentImage(url)}
@@ -556,7 +556,7 @@ export default function SettingsForm({ section, initial }: Props) {
           <Field label="Facebook (pełny URL strony)" value={facebook} setter={setFacebook} placeholder="https://facebook.com/..." />
           <Field label="YouTube (pełny URL kanału)" value={youtube} setter={setYoutube} placeholder="https://youtube.com/..." />
           <Field label="WhatsApp (numer telefonu, np. 48668443706)" value={whatsapp} setter={setWhatsapp} placeholder="48668443706" />
-          <p className="text-xs text-charcoal/50">Facebook, YouTube i WhatsApp wyświetlają się w stopce tylko gdy są wypełnione.</p>
+          <p className="text-xs text-charcoal/80">Facebook, YouTube i WhatsApp wyświetlają się w stopce tylko gdy są wypełnione.</p>
 
           <h2 className="font-serif text-2xl text-espresso pt-4">Adres pracowni</h2>
           <Field label="Ulica i numer" value={addrStreet} setter={setAddrStreet} placeholder="ul. Familijna 23" />
@@ -571,7 +571,7 @@ export default function SettingsForm({ section, initial }: Props) {
             rows={3}
             placeholder={"Wt–Czw 17:00–19:00\nSo 15:00–17:00"}
           />
-          <p className="text-xs text-charcoal/50">
+          <p className="text-xs text-charcoal/80">
             Adres i godziny wyświetlają się w kolumnie &bdquo;Kontakt&rdquo; w stopce oraz na stronie /kontakt.
             Każdy <strong>Enter</strong> łamie wiersz dokładnie w tym miejscu — przecinek też rozdziela wpisy,
             ale wtedy o złamaniu decyduje szerokość ekranu.
@@ -627,14 +627,14 @@ export default function SettingsForm({ section, initial }: Props) {
       {section === "platnosci_przelew" && (
         <div className="max-w-md space-y-5">
           <h2 className="font-serif text-2xl text-espresso">Przelew bankowy / BLIK</h2>
-          <p className="text-xs text-charcoal/50">
+          <p className="text-xs text-charcoal/80">
             Zawsze dostępny jako metoda płatności. Dane zostaną wysłane klientowi e-mailem po złożeniu zamówienia.
           </p>
           <Field label="Imię i nazwisko / Nazwa odbiorcy" value={bankName} setter={setBankName} />
           <Field label="Numer konta (IBAN)" value={bankNumber} setter={setBankNumber} mono />
           <Field label="Nazwa banku" value={bankBankName} setter={setBankBankName} />
           <Field label="Prefiks tytułu przelewu" value={bankTitle} setter={setBankTitle} />
-          <p className="text-xs text-charcoal/40">Tytuł wysyłany do kupującego: „[prefiks] #NR_ZAMÓWIENIA&rdquo;</p>
+          <p className="text-xs text-charcoal/80">Tytuł wysyłany do kupującego: „[prefiks] #NR_ZAMÓWIENIA&rdquo;</p>
           <div className="border-t border-sand pt-5">
             <div className="flex items-center justify-between mb-3">
               <p className="text-xs tracking-widest uppercase text-charcoal/80">Przelew BLIK na telefon</p>
@@ -642,7 +642,7 @@ export default function SettingsForm({ section, initial }: Props) {
             </div>
             {blikEnabled && (
               <>
-                <p className="text-xs text-charcoal/50 mb-3">
+                <p className="text-xs text-charcoal/80 mb-3">
                   Klient zobaczy numer BLIK obok danych do przelewu bankowego.
                 </p>
                 <Field label="Numer telefonu do BLIK" value={blikPhone} setter={setBlikPhone} type="tel" placeholder="+48 600 000 000" />
@@ -666,7 +666,7 @@ export default function SettingsForm({ section, initial }: Props) {
       {section === "urlop" && (
         <div className="max-w-md space-y-6">
           <h2 className="font-serif text-2xl text-espresso">Urlop</h2>
-          <p className="text-xs text-charcoal/50 leading-relaxed">
+          <p className="text-xs text-charcoal/80 leading-relaxed">
             Gdy urlop jest włączony, w sklepie pojawia się pasek informacyjny,
             a zamówienia złożone w tym czasie zawierają wzmiankę w e-mailu potwierdzającym.
           </p>
@@ -688,7 +688,7 @@ export default function SettingsForm({ section, initial }: Props) {
                   onChange={(e) => setVacationEndDate(e.target.value)}
                   className="w-full bg-warm-white border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors"
                 />
-                <p className="text-[11px] text-charcoal/40 mt-1">
+                <p className="text-[11px] text-charcoal/80 mt-1">
                   Jeśli puste — komunikat nie będzie zawierał daty.
                 </p>
               </div>
@@ -704,7 +704,7 @@ export default function SettingsForm({ section, initial }: Props) {
                   placeholder="Jestem na urlopie — zamówienia będą realizowane od..."
                   className="w-full bg-warm-white border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors"
                 />
-                <p className="text-[11px] text-charcoal/40 mt-1">
+                <p className="text-[11px] text-charcoal/80 mt-1">
                   Jeśli puste — komunikat zostanie wygenerowany automatycznie na podstawie daty.
                 </p>
               </div>
@@ -729,7 +729,7 @@ export default function SettingsForm({ section, initial }: Props) {
           <div className="flex items-center justify-between">
             <div>
               <span className="text-xs tracking-widest uppercase text-charcoal/80">Powiadomienia e-mail</span>
-              <p className="text-[11px] text-charcoal/40 mt-0.5">
+              <p className="text-[11px] text-charcoal/80 mt-0.5">
                 Gdy włączone — przy każdym nowym zamówieniu indywidualnym
                 zostanie wysłany e-mail na adres kontaktowy sklepu.
               </p>

@@ -252,10 +252,10 @@ export default function CheckoutForm({
                           const cost = methodShippingCost(value);
                           if (value === "pickup") return <span className="text-xs text-green-600 font-medium">Bezpłatne</span>;
                           if (cost === 0) return <span className="text-xs text-green-600 font-medium">Gratis</span>;
-                          return <span className="text-xs text-charcoal/60">{cost} zł</span>;
+                          return <span className="text-xs text-charcoal/80">{cost} zł</span>;
                         })()}
                       </div>
-                      <p className="text-xs text-charcoal/50 mt-0.5">{desc}</p>
+                      <p className="text-xs text-charcoal/80 mt-0.5">{desc}</p>
                     </div>
                   </label>
                 ))}
@@ -318,7 +318,7 @@ export default function CheckoutForm({
                     <input type="radio" name="payment" value={method.value} checked={form.paymentMethod === method.value} onChange={() => set("paymentMethod", method.value)} className="mt-0.5 accent-clay" />
                     <div>
                       <p className="text-sm font-medium text-espresso">{method.label}</p>
-                      <p className="text-xs text-charcoal/50 mt-0.5">{method.desc}</p>
+                      <p className="text-xs text-charcoal/80 mt-0.5">{method.desc}</p>
                     </div>
                   </label>
                 ))}
@@ -338,14 +338,14 @@ export default function CheckoutForm({
               <h2 className="font-serif text-xl text-espresso mb-6">Twoje zamówienie</h2>
               <div className="space-y-3 mb-6 text-sm">
                 {items.map((item) => (
-                  <div key={item.id} className="flex justify-between text-charcoal/70">
+                  <div key={item.id} className="flex justify-between text-charcoal/80">
                     <span className="truncate pr-2">{item.name} × {item.quantity}</span>
                     <span className="shrink-0">{(item.price * item.quantity).toFixed(2).replace(".", ",")} zł</span>
                   </div>
                 ))}
               </div>
               <div className="border-t border-sand pt-4 space-y-2 text-sm">
-                <div className="flex justify-between text-charcoal/70">
+                <div className="flex justify-between text-charcoal/80">
                   <span>Wysyłka</span>
                   <span>
                     {shipping === 0
@@ -361,7 +361,7 @@ export default function CheckoutForm({
               <button
                 type="submit"
                 disabled={loading || addressBlocked}
-                className="w-full mt-6 bg-clay hover:bg-terracotta disabled:bg-sand disabled:text-charcoal/40 disabled:cursor-not-allowed text-warm-white text-xs tracking-widest uppercase py-4 transition-colors"
+                className="w-full mt-6 bg-clay hover:bg-terracotta hover:text-espresso disabled:bg-sand disabled:text-charcoal/40 disabled:cursor-not-allowed text-warm-white text-xs tracking-widest uppercase py-4 transition-colors"
               >
                 {loading ? "Proszę czekać..." : form.paymentMethod === "stripe" ? "Przejdź do płatności" : "Złóż zamówienie"}
               </button>

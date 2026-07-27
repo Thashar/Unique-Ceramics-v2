@@ -47,7 +47,7 @@ export default function CartPage() {
           <p className="text-charcoal/80 mb-10">Nie masz jeszcze nic w koszyku.</p>
           <Link
             href="/sklep"
-            className="inline-flex items-center gap-3 bg-clay hover:bg-terracotta text-warm-white text-sm tracking-widest uppercase px-8 py-4 transition-colors"
+            className="inline-flex items-center gap-3 bg-clay hover:bg-terracotta hover:text-espresso text-warm-white text-sm tracking-widest uppercase px-8 py-4 transition-colors"
           >
             Przejdź do sklepu
             <ArrowRight size={15} strokeWidth={1.5} />
@@ -61,7 +61,7 @@ export default function CartPage() {
     <div className="min-h-[100svh] bg-warm-white">
       <div className="bg-cream pt-32 pb-12 px-6 text-center">
         <h1 className="font-serif text-5xl text-espresso">Koszyk</h1>
-        <p className="text-charcoal/50 mt-2 text-sm">{items.length} {items.length === 1 ? "produkt" : "produkty"}</p>
+        <p className="text-charcoal/80 mt-2 text-sm">{items.length} {items.length === 1 ? "produkt" : "produkty"}</p>
       </div>
 
       <div className="max-w-5xl mx-auto px-6 lg:px-10 py-16 grid grid-cols-1 lg:grid-cols-3 gap-12">
@@ -104,7 +104,7 @@ export default function CartPage() {
                   </div>
                   <button
                     onClick={() => removeItem(item.id)}
-                    className="text-charcoal/40 hover:text-red-500 transition-colors"
+                    className="text-charcoal/80 hover:text-red-500 transition-colors"
                   >
                     <Trash2 size={16} />
                   </button>
@@ -127,11 +127,11 @@ export default function CartPage() {
           <div className="bg-cream p-8 sticky top-28">
             <h2 className="font-serif text-2xl text-espresso mb-6">Podsumowanie</h2>
             <div className="space-y-3 mb-6">
-              <div className="flex justify-between text-sm text-charcoal/70">
+              <div className="flex justify-between text-sm text-charcoal/80">
                 <span>Produkty</span>
                 <span>{subtotal.toFixed(2).replace(".", ",")} zł</span>
               </div>
-              <div className="flex justify-between text-sm text-charcoal/70">
+              <div className="flex justify-between text-sm text-charcoal/80">
                 <span>Wysyłka</span>
                 <span>
                   {shippingCost === 0 ? (
@@ -153,14 +153,14 @@ export default function CartPage() {
             </div>
             <Link
               href="/zamowienie"
-              className="w-full flex items-center justify-center gap-3 bg-clay hover:bg-terracotta text-warm-white text-sm tracking-widest uppercase py-4 transition-colors"
+              className="w-full flex items-center justify-center gap-3 bg-clay hover:bg-terracotta hover:text-espresso text-warm-white text-sm tracking-widest uppercase py-4 transition-colors"
             >
               Zamów
               <ArrowRight size={15} strokeWidth={1.5} />
             </Link>
             <Link
               href="/sklep"
-              className="block text-center text-xs tracking-widest uppercase text-charcoal/40 hover:text-clay transition-colors mt-4"
+              className="block text-center text-xs tracking-widest uppercase text-charcoal/80 hover:text-clay transition-colors mt-4"
             >
               ← Kontynuuj zakupy
             </Link>

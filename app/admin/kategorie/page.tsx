@@ -21,7 +21,7 @@ export default async function CategoriesPage() {
   return (
     <div>
       <h1 className="font-serif text-3xl text-espresso mb-2">Kategorie</h1>
-      <p className="text-sm text-charcoal/50 mb-8">
+      <p className="text-sm text-charcoal/80 mb-8">
         Kategorie wyświetlane jako filtry w sklepie. Slug jest używany w URL (?kategoria=…) i musi pasować do wartości wpisanej w produktach.
       </p>
 

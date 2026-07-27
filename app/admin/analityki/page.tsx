@@ -366,7 +366,7 @@ export default async function AnalitykiPage() {
             <h1 className="font-serif text-2xl text-espresso">Analityki</h1>
           </div>
         </div>
-        <p className="text-xs text-charcoal/40">
+        <p className="text-xs text-charcoal/80">
           Dane aktualne na {now.toLocaleDateString("pl-PL", { day: "numeric", month: "long", year: "numeric" })}
         </p>
       </div>
@@ -411,7 +411,7 @@ export default async function AnalitykiPage() {
             </div>
             <p className="font-serif text-2xl text-espresso leading-none tabular-nums">{value}</p>
             <p className="text-[11px] text-terracotta mt-1.5">{sub}</p>
-            <p className="text-[11px] tracking-widest uppercase text-charcoal/45 mt-1.5">{label}</p>
+            <p className="text-[11px] tracking-widest uppercase text-charcoal/80 mt-1.5">{label}</p>
           </div>
         ))}
       </div>
@@ -419,7 +419,7 @@ export default async function AnalitykiPage() {
       {/* ── Wykres miesięczny ──────────────────────────────────────────────── */}
       <div className="bg-cream border border-sand/60 p-6">
         <h2 className="font-serif text-lg text-espresso mb-1">Przychód i zamówienia — ostatnie 12 miesięcy</h2>
-        <p className="text-xs text-charcoal/40 mb-6">
+        <p className="text-xs text-charcoal/80 mb-6">
           Tylko opłacone · przychód rozpoznawany wg daty wpłaty · uwzględnia zamówienia indywidualne (Opłacone/Zrealizowane)
         </p>
 
@@ -446,7 +446,7 @@ export default async function AnalitykiPage() {
         {/* Etykiety miesięcy */}
         <div className="flex gap-1.5">
           {timeline.map((m) => (
-            <div key={`lbl-${m.yr}-${m.mo}`} className="flex-1 text-center text-[9px] text-charcoal/35 leading-none">
+            <div key={`lbl-${m.yr}-${m.mo}`} className="flex-1 text-center text-[9px] text-charcoal/80 leading-none">
               {m.label}
             </div>
           ))}
@@ -454,7 +454,7 @@ export default async function AnalitykiPage() {
 
         {/* Wykres zamówień — linia punktowa */}
         <div className="mt-6 pt-5 border-t border-sand">
-          <p className="text-xs text-charcoal/45 mb-3 tracking-widest uppercase">Liczba zamówień</p>
+          <p className="text-xs text-charcoal/80 mb-3 tracking-widest uppercase">Liczba zamówień</p>
           <div className="flex items-end gap-1.5 h-16">
             {timeline.map((m) => (
               <div key={`cnt-${m.yr}-${m.mo}`} className="flex-1 flex flex-col items-center gap-0.5 group relative">
@@ -488,18 +488,18 @@ export default async function AnalitykiPage() {
             <h2 className="font-serif text-lg text-espresso">Bestsellery</h2>
           </div>
           {topProductsRaw.length === 0 ? (
-            <p className="text-sm text-charcoal/40 py-6 text-center">Brak danych</p>
+            <p className="text-sm text-charcoal/80 py-6 text-center">Brak danych</p>
           ) : (
             <div className="space-y-1">
               {topProductsRaw.map((p, i) => {
                 const maxQty = Number(topProductsRaw[0].qty);
                 return (
                   <div key={p.name} className="flex items-center gap-3">
-                    <span className="text-[11px] text-charcoal/35 w-4 shrink-0 text-right">{i + 1}</span>
+                    <span className="text-[11px] text-charcoal/80 w-4 shrink-0 text-right">{i + 1}</span>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2 mb-0.5">
                         <p className="text-xs text-espresso truncate">{p.name}</p>
-                        <p className="text-xs text-charcoal/60 shrink-0 tabular-nums">
+                        <p className="text-xs text-charcoal/80 shrink-0 tabular-nums">
                           {Number(p.qty)} szt. · {fmt(Number(p.revenue))} zł
                         </p>
                       </div>
@@ -524,7 +524,7 @@ export default async function AnalitykiPage() {
             <h2 className="font-serif text-lg text-espresso">Metody wysyłki</h2>
           </div>
           {shippingRaw.length === 0 ? (
-            <p className="text-sm text-charcoal/40 py-6 text-center">Brak danych</p>
+            <p className="text-sm text-charcoal/80 py-6 text-center">Brak danych</p>
           ) : (
             <>
               <div className="space-y-4 mb-6">
@@ -534,7 +534,7 @@ export default async function AnalitykiPage() {
                     <div key={r.key}>
                       <div className="flex justify-between text-xs mb-1">
                         <span className="text-espresso font-medium">{SHIPPING_LABELS[r.key] ?? r.key}</span>
-                        <span className="text-charcoal/55 tabular-nums">{Number(r.cnt)} zam. ({pct(Number(r.cnt), total)}%)</span>
+                        <span className="text-charcoal/80 tabular-nums">{Number(r.cnt)} zam. ({pct(Number(r.cnt), total)}%)</span>
                       </div>
                       <div className="h-2 bg-sand rounded-full overflow-hidden">
                         <div
@@ -549,11 +549,11 @@ export default async function AnalitykiPage() {
 
               {/* Koszty wysyłki */}
               <div className="pt-4 border-t border-sand">
-                <p className="text-[10px] tracking-widest uppercase text-charcoal/40 mb-3">Koszty wysyłki pobrane</p>
+                <p className="text-[10px] tracking-widest uppercase text-charcoal/80 mb-3">Koszty wysyłki pobrane</p>
                 <div className="space-y-1.5">
                   {shippingRaw.map((r) => (
                     <div key={`cost-${r.key}`} className="flex justify-between text-xs">
-                      <span className="text-charcoal/60">{SHIPPING_LABELS[r.key] ?? r.key}</span>
+                      <span className="text-charcoal/80">{SHIPPING_LABELS[r.key] ?? r.key}</span>
                       <span className="tabular-nums text-espresso">{fmt(Number(r.total))} zł</span>
                     </div>
                   ))}
@@ -578,7 +578,7 @@ export default async function AnalitykiPage() {
             <h2 className="font-serif text-lg text-espresso">Metody płatności</h2>
           </div>
           {paymentRaw.length === 0 ? (
-            <p className="text-sm text-charcoal/40 py-6 text-center">Brak danych</p>
+            <p className="text-sm text-charcoal/80 py-6 text-center">Brak danych</p>
           ) : (
             <div className="space-y-4">
               {paymentRaw.map((r) => {
@@ -587,7 +587,7 @@ export default async function AnalitykiPage() {
                   <div key={r.key}>
                     <div className="flex justify-between text-xs mb-1">
                       <span className="text-espresso font-medium">{PAYMENT_LABELS[r.key] ?? r.key}</span>
-                      <span className="text-charcoal/55 tabular-nums">{Number(r.cnt)} zam. ({pct(Number(r.cnt), total)}%)</span>
+                      <span className="text-charcoal/80 tabular-nums">{Number(r.cnt)} zam. ({pct(Number(r.cnt), total)}%)</span>
                     </div>
                     <div className="h-2 bg-sand rounded-full overflow-hidden">
                       <div
@@ -609,7 +609,7 @@ export default async function AnalitykiPage() {
             <h2 className="font-serif text-lg text-espresso">Statusy zamówień</h2>
           </div>
           {statusRaw.length === 0 ? (
-            <p className="text-sm text-charcoal/40 py-6 text-center">Brak danych</p>
+            <p className="text-sm text-charcoal/80 py-6 text-center">Brak danych</p>
           ) : (
             <div className="space-y-3">
               {statusRaw.map((r) => (
@@ -624,14 +624,14 @@ export default async function AnalitykiPage() {
                           style={{ width: `${pct(Number(r.cnt), totalOrders)}%` }}
                         />
                       </div>
-                      <span className="text-xs text-charcoal/55 tabular-nums w-16 text-right">
+                      <span className="text-xs text-charcoal/80 tabular-nums w-16 text-right">
                         {Number(r.cnt)} ({pct(Number(r.cnt), totalOrders)}%)
                       </span>
                     </div>
                   </div>
                 </div>
               ))}
-              <p className="text-[11px] text-charcoal/35 pt-2 border-t border-sand">
+              <p className="text-[11px] text-charcoal/80 pt-2 border-t border-sand">
                 Łącznie: {totalOrders} zamówień sklepowych
               </p>
             </div>
@@ -651,7 +651,7 @@ export default async function AnalitykiPage() {
           ].map(({ label, value }) => (
             <div key={label}>
               <p className="font-serif text-xl text-espresso tabular-nums">{value}</p>
-              <p className="text-[11px] tracking-widest uppercase text-charcoal/40 mt-1">{label}</p>
+              <p className="text-[11px] tracking-widest uppercase text-charcoal/80 mt-1">{label}</p>
             </div>
           ))}
         </div>

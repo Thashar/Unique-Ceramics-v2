@@ -86,7 +86,7 @@ export default function RegisterPage() {
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-sand" />
             </div>
-            <div className="relative flex justify-center text-xs uppercase tracking-widest text-charcoal/40">
+            <div className="relative flex justify-center text-xs uppercase tracking-widest text-charcoal/80">
               <span className="bg-warm-white px-3">lub e-mailem</span>
             </div>
           </div>
@@ -122,7 +122,7 @@ export default function RegisterPage() {
 
             <div>
               <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">
-                Hasło * <span className="normal-case text-charcoal/40">(min. 8 znaków)</span>
+                Hasło * <span className="normal-case text-charcoal/80">(min. 8 znaków)</span>
               </label>
               <div className="relative">
                 <input
@@ -137,7 +137,7 @@ export default function RegisterPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-charcoal/40 hover:text-clay transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-charcoal/80 hover:text-clay transition-colors"
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -147,19 +147,19 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-clay hover:bg-terracotta disabled:bg-sand disabled:text-charcoal/40 text-warm-white text-xs tracking-widest uppercase py-4 transition-colors"
+              className="w-full bg-clay hover:bg-terracotta hover:text-espresso disabled:bg-sand disabled:text-charcoal/40 text-warm-white text-xs tracking-widest uppercase py-4 transition-colors"
             >
               {loading ? "Tworzenie konta..." : "Utwórz konto"}
             </button>
 
-            <p className="text-xs text-charcoal/40 text-center leading-relaxed">
+            <p className="text-xs text-charcoal/80 text-center leading-relaxed">
               Zakładając konto, akceptujesz{" "}
               <Link href="/regulamin" className="underline hover:text-clay transition-colors">regulamin</Link>.
             </p>
           </form>
         </div>
 
-        <p className="text-center text-xs text-charcoal/40 mt-6">
+        <p className="text-center text-xs text-charcoal/80 mt-6">
           <Link href="/" className="hover:text-clay transition-colors">
             ← Wróć do sklepu
           </Link>

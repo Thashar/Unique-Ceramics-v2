@@ -149,7 +149,7 @@ function OffersEditor({ json, onChange }: { json: string; onChange: (v: string) 
           >
             <span className={`w-2 h-2 rounded-full shrink-0 ${w.active ? "bg-clay" : "bg-sand"}`} />
             <span className="flex-1 text-sm text-espresso font-medium truncate">{w.title || "(bez tytułu)"}</span>
-            <span className="text-xs text-charcoal/40 shrink-0 hidden sm:block">{w.priceLabel}</span>
+            <span className="text-xs text-charcoal/80 shrink-0 hidden sm:block">{w.priceLabel}</span>
             <div
               className="flex items-center gap-0.5 shrink-0"
               onClick={(e) => e.stopPropagation()}
@@ -158,7 +158,7 @@ function OffersEditor({ json, onChange }: { json: string; onChange: (v: string) 
                 title="Przesuń wyżej"
                 onClick={() => moveUp(idx)}
                 disabled={idx === 0}
-                className="p-1.5 text-charcoal/30 hover:text-charcoal disabled:opacity-20 transition-colors"
+                className="p-1.5 text-charcoal/80 hover:text-charcoal disabled:opacity-20 transition-colors"
               >
                 <MoveUp size={14} />
               </button>
@@ -166,7 +166,7 @@ function OffersEditor({ json, onChange }: { json: string; onChange: (v: string) 
                 title="Przesuń niżej"
                 onClick={() => moveDown(idx)}
                 disabled={idx === items.length - 1}
-                className="p-1.5 text-charcoal/30 hover:text-charcoal disabled:opacity-20 transition-colors"
+                className="p-1.5 text-charcoal/80 hover:text-charcoal disabled:opacity-20 transition-colors"
               >
                 <MoveDown size={14} />
               </button>
@@ -179,8 +179,8 @@ function OffersEditor({ json, onChange }: { json: string; onChange: (v: string) 
               </button>
             </div>
             {expanded === w.id
-              ? <ChevronUp size={16} className="text-charcoal/40 shrink-0" />
-              : <ChevronDown size={16} className="text-charcoal/40 shrink-0" />
+              ? <ChevronUp size={16} className="text-charcoal/80 shrink-0" />
+              : <ChevronDown size={16} className="text-charcoal/80 shrink-0" />
             }
           </div>
 
@@ -188,13 +188,13 @@ function OffersEditor({ json, onChange }: { json: string; onChange: (v: string) 
           {expanded === w.id && (
             <div className="px-4 pb-5 space-y-4 border-t border-sand">
               <div className="flex items-center justify-between pt-4">
-                <span className="text-xs tracking-widest uppercase text-charcoal/60">Widoczny na stronie</span>
+                <span className="text-xs tracking-widest uppercase text-charcoal/80">Widoczny na stronie</span>
                 <Toggle checked={w.active} onChange={(v) => update(w.id, { active: v })} />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-charcoal/60 mb-1.5">Ikona</label>
+                  <label className="block text-xs text-charcoal/80 mb-1.5">Ikona</label>
                   <select
                     value={w.iconName}
                     onChange={(e) => update(w.id, { iconName: e.target.value })}
@@ -206,7 +206,7 @@ function OffersEditor({ json, onChange }: { json: string; onChange: (v: string) 
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs text-charcoal/60 mb-1.5">Poziom / oznaczenie</label>
+                  <label className="block text-xs text-charcoal/80 mb-1.5">Poziom / oznaczenie</label>
                   <input
                     type="text"
                     value={w.level}
@@ -218,7 +218,7 @@ function OffersEditor({ json, onChange }: { json: string; onChange: (v: string) 
               </div>
 
               <div>
-                <label className="block text-xs text-charcoal/60 mb-1.5">Tytuł</label>
+                <label className="block text-xs text-charcoal/80 mb-1.5">Tytuł</label>
                 <input
                   type="text"
                   value={w.title}
@@ -228,7 +228,7 @@ function OffersEditor({ json, onChange }: { json: string; onChange: (v: string) 
               </div>
 
               <div>
-                <label className="block text-xs text-charcoal/60 mb-1.5">Opis</label>
+                <label className="block text-xs text-charcoal/80 mb-1.5">Opis</label>
                 <textarea
                   value={w.description}
                   onChange={(e) => update(w.id, { description: e.target.value })}
@@ -239,7 +239,7 @@ function OffersEditor({ json, onChange }: { json: string; onChange: (v: string) 
 
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-xs text-charcoal/60 mb-1.5">Czas trwania</label>
+                  <label className="block text-xs text-charcoal/80 mb-1.5">Czas trwania</label>
                   <input
                     type="text"
                     value={w.duration}
@@ -249,7 +249,7 @@ function OffersEditor({ json, onChange }: { json: string; onChange: (v: string) 
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-charcoal/60 mb-1.5">Liczba uczestników</label>
+                  <label className="block text-xs text-charcoal/80 mb-1.5">Liczba uczestników</label>
                   <input
                     type="text"
                     value={w.maxPeople}
@@ -259,7 +259,7 @@ function OffersEditor({ json, onChange }: { json: string; onChange: (v: string) 
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-charcoal/60 mb-1.5">Cena</label>
+                  <label className="block text-xs text-charcoal/80 mb-1.5">Cena</label>
                   <input
                     type="text"
                     value={w.priceLabel}
@@ -325,14 +325,14 @@ function IncludesEditor({ json, onChange }: { json: string; onChange: (v: string
             <button
               onClick={() => moveUp(idx)}
               disabled={idx === 0}
-              className="p-1 text-charcoal/30 hover:text-charcoal disabled:opacity-20 transition-colors"
+              className="p-1 text-charcoal/80 hover:text-charcoal disabled:opacity-20 transition-colors"
             >
               <MoveUp size={12} />
             </button>
             <button
               onClick={() => moveDown(idx)}
               disabled={idx === items.length - 1}
-              className="p-1 text-charcoal/30 hover:text-charcoal disabled:opacity-20 transition-colors"
+              className="p-1 text-charcoal/80 hover:text-charcoal disabled:opacity-20 transition-colors"
             >
               <MoveDown size={12} />
             </button>
@@ -412,19 +412,19 @@ function FaqEditor({ json, onChange }: { json: string; onChange: (v: string) => 
       {items.map((faq, idx) => (
         <div key={faq.id} className="border border-sand bg-warm-white p-4 space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-charcoal/40">Pytanie {idx + 1}</span>
+            <span className="text-xs text-charcoal/80">Pytanie {idx + 1}</span>
             <div className="flex items-center gap-1">
               <button
                 onClick={() => moveUp(idx)}
                 disabled={idx === 0}
-                className="p-1 text-charcoal/30 hover:text-charcoal disabled:opacity-20 transition-colors"
+                className="p-1 text-charcoal/80 hover:text-charcoal disabled:opacity-20 transition-colors"
               >
                 <MoveUp size={14} />
               </button>
               <button
                 onClick={() => moveDown(idx)}
                 disabled={idx === items.length - 1}
-                className="p-1 text-charcoal/30 hover:text-charcoal disabled:opacity-20 transition-colors"
+                className="p-1 text-charcoal/80 hover:text-charcoal disabled:opacity-20 transition-colors"
               >
                 <MoveDown size={14} />
               </button>
@@ -486,24 +486,24 @@ export default function WorkshopsOffersEditor({
     <div className="space-y-10">
       <div className="space-y-4">
         <div>
-          <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/70">Oferta warsztatów</h3>
-          <p className="text-xs text-charcoal/40 mt-1">Karty widoczne na stronie /warsztaty. Możesz zmieniać kolejność strzałkami.</p>
+          <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/80">Oferta warsztatów</h3>
+          <p className="text-xs text-charcoal/80 mt-1">Karty widoczne na stronie /warsztaty. Możesz zmieniać kolejność strzałkami.</p>
         </div>
         <OffersEditor json={offersJson} onChange={onOffersChange} />
       </div>
 
       <div className="border-t border-sand pt-8 space-y-4">
         <div>
-          <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/70">Co zawiera warsztat?</h3>
-          <p className="text-xs text-charcoal/40 mt-1">Ikony i opisy w sekcji poniżej listy ofert.</p>
+          <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/80">Co zawiera warsztat?</h3>
+          <p className="text-xs text-charcoal/80 mt-1">Ikony i opisy w sekcji poniżej listy ofert.</p>
         </div>
         <IncludesEditor json={includesJson} onChange={onIncludesChange} />
       </div>
 
       <div className="border-t border-sand pt-8 space-y-4">
         <div>
-          <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/70">Często zadawane pytania</h3>
-          <p className="text-xs text-charcoal/40 mt-1">Pytania i odpowiedzi na dole strony /warsztaty.</p>
+          <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/80">Często zadawane pytania</h3>
+          <p className="text-xs text-charcoal/80 mt-1">Pytania i odpowiedzi na dole strony /warsztaty.</p>
         </div>
         <FaqEditor json={faqJson} onChange={onFaqChange} />
       </div>

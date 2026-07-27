@@ -75,7 +75,7 @@ export default function PaidAtEditor({
 
   return (
     <div>
-      <p className="text-[11px] tracking-widest uppercase text-charcoal/45 mb-1">Data wpłaty (rozliczenie)</p>
+      <p className="text-[11px] tracking-widest uppercase text-charcoal/80 mb-1">Data wpłaty (rozliczenie)</p>
       {editing ? (
         <div className="space-y-2">
           <input
@@ -97,7 +97,7 @@ export default function PaidAtEditor({
             <button
               onClick={() => setEditing(false)}
               disabled={saving}
-              className="inline-flex items-center gap-1 text-xs text-charcoal/45 hover:text-charcoal transition-colors"
+              className="inline-flex items-center gap-1 text-xs text-charcoal/80 hover:text-charcoal transition-colors"
             >
               <X size={11} /> Anuluj
             </button>

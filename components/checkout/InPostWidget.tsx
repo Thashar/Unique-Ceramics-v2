@@ -86,7 +86,7 @@ function InPostMapWidget({ token, value, onChange }: Props & { token: string }) 
           style={{ width: "100%", display: "block" }}
         />
       ) : (
-        <div className="h-64 bg-cream border border-sand flex items-center justify-center text-sm text-charcoal/40">
+        <div className="h-64 bg-cream border border-sand flex items-center justify-center text-sm text-charcoal/80">
           Ładowanie mapy paczkomatów…
         </div>
       )}
@@ -296,12 +296,12 @@ function InPostSearch({ value, onChange }: { value: string; onChange: (code: str
 
   return (
     <div className="space-y-2">
-      <label className="block text-xs text-charcoal/60 mb-1">
+      <label className="block text-xs text-charcoal/80 mb-1">
         Wpisz pełną nazwę miasta lub kod pocztowy (XX-XXX), aby załadować listę — potem możesz zawęzić wyniki wpisując fragment kodu, ulicy lub adresu
       </label>
 
       <div className="relative">
-        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-charcoal/40 pointer-events-none" />
+        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-charcoal/80 pointer-events-none" />
         <input
           type="text"
           placeholder="np. Gliwice / 44-113 / GLI01M"
@@ -317,7 +317,7 @@ function InPostSearch({ value, onChange }: { value: string; onChange: (code: str
           <button
             type="button"
             onClick={() => { setQuery(""); setResults([]); setFetchError(""); }}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-charcoal/30 hover:text-charcoal/60"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-charcoal/80 hover:text-espresso"
           >
             <X size={15} />
           </button>
@@ -336,7 +336,7 @@ function InPostSearch({ value, onChange }: { value: string; onChange: (code: str
               className="w-full text-left px-4 py-2.5 hover:bg-mist bg-warm-white transition-colors"
             >
               <span className="font-mono text-xs font-semibold text-clay">{point.name}</span>
-              <span className="block text-xs text-charcoal/60 mt-0.5">
+              <span className="block text-xs text-charcoal/80 mt-0.5">
                 {point.address.line1}, {point.address.line2}
               </span>
             </button>
@@ -345,7 +345,7 @@ function InPostSearch({ value, onChange }: { value: string; onChange: (code: str
       )}
 
       {query.length >= 3 && !loading && results.length === 0 && !fetchError && (
-        <p className="text-xs text-charcoal/40">Szukam…</p>
+        <p className="text-xs text-charcoal/80">Szukam…</p>
       )}
     </div>
   );

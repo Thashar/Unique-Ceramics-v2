@@ -39,7 +39,7 @@ export default function InstagramCta({ instagram }: { instagram: string }) {
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          className="group inline-flex items-center gap-3 border border-terracotta/50 hover:border-terracotta hover:bg-terracotta text-cream text-sm tracking-widest uppercase px-8 py-4 transition-all duration-300"
+          className="group inline-flex items-center gap-3 border border-terracotta/50 hover:border-terracotta hover:bg-terracotta hover:text-espresso text-cream text-sm tracking-widest uppercase px-8 py-4 transition-all duration-300"
         >
           <InstagramIcon size={15} />
           {displayHandle}

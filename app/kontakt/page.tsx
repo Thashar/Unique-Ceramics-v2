@@ -198,7 +198,7 @@ export default async function ContactPage() {
                   </div>
                   <div>
                     <p className="text-xs tracking-widest uppercase text-clay mb-1">Czas odpowiedzi</p>
-                    <p className="text-charcoal/70 text-sm leading-relaxed">
+                    <p className="text-charcoal/80 text-sm leading-relaxed">
                       Odpowiadam na wiadomości w ciągu 1–2 dni roboczych.
                     </p>
                   </div>
@@ -207,7 +207,7 @@ export default async function ContactPage() {
 
               <div className="mt-12 p-8 bg-cream">
                 <h3 className="font-serif text-xl text-espresso mb-4">Zamówienie indywidualne</h3>
-                <p className="text-charcoal/70 text-sm leading-relaxed mb-6">
+                <p className="text-charcoal/80 text-sm leading-relaxed mb-6">
                   Tworzę ceramikę na zamówienie — zestawy ślubne, prezenty firmowe,
                   naczynia z personalizacją. Czas realizacji: 4+ tygodnie.
                 </p>

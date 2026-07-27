@@ -45,13 +45,13 @@ export default function OrdersTabs({ counts }: { counts: Record<string, number> 
                 className={`flex items-center gap-1.5 px-3 py-1.5 text-xs tracking-wide transition-colors rounded-sm whitespace-nowrap ${
                   active
                     ? "bg-espresso text-cream"
-                    : "text-charcoal/55 hover:text-espresso hover:bg-sand/40"
+                    : "text-charcoal/80 hover:text-espresso hover:bg-sand/40"
                 }`}
               >
                 {label}
                 {count > 0 && (
                   <span className={`text-[10px] tabular-nums px-1.5 py-0.5 rounded-sm ${
-                    active ? "bg-white/15 text-cream" : "bg-sand text-charcoal/50"
+                    active ? "bg-white/15 text-cream" : "bg-sand text-charcoal/80"
                   }`}>
                     {count}
                   </span>
