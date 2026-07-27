@@ -355,6 +355,23 @@ Fonty: `font-serif` → Playfair Display, `font-sans` → Inter (oba przez `next
 - Komponenty klienckie też renderują się raz na serwerze (SSR) — biblioteki tylko przeglądarkowe (np. Jodit) ładuj dynamicznym `import()` w `useEffect`
 - `Footer.tsx` musi być w pełni synchroniczny
 
+### Ścieżki do zdjęć — pułapka z redirectami
+
+`next.config.ts` przekierowuje stare `/images/*.jpg|png` na `.webp` (po konwersji plików).
+**Redirect nie naprawia zapisanych ścieżek — psuje optymalizację obrazów.** Żądanie
+`/_next/image?url=/images/hero.jpg` dostaje `308` zamiast obrazu, przeglądarka idzie za
+przekierowaniem na surowy plik i pobiera go w pełnej rozdzielczości, omijając optymalizator
+(zmierzone: 227 KB zamiast 33 KB dla wariantu w=640) — do tego bez długiego cache, bo pliki
+z `public/` dostają `max-age=0, must-revalidate`.
+
+Dlatego **w bazie (ustawienia, `Product.images`, `Project.images`) zapisuj zawsze realnie
+istniejącą ścieżkę** — dziś `.webp`. Lista przekierowań w `next.config.ts` jest tylko siatką
+bezpieczeństwa dla starych linków z zewnątrz, nie sposobem na trzymanie nieaktualnych ścieżek.
+Ścieżki naprawiono jednorazowo 27.07.2026 (3 ustawienia + 18 zdjęć produktów).
+
+Objaw uboczny: dopóki hero się ładuje, sekcja pokazuje zapasowe tło `bg-espresso`, co wygląda
+jak ciemny header na stronie głównej.
+
 ### Cache i rewalidacja
 - Strony sesyjne (`/konto`, `/zamowienie`, `/admin`) = `force-dynamic`; strony treściowe = ISR (`revalidate`); dane katalogu = `unstable_cache` z tagiem `products`
 - Trasy z parametrem (`[slug]`) wymagają `generateStaticParams` (może zwracać `[]`), żeby ISR działało — bez tego są w pełni dynamiczne
