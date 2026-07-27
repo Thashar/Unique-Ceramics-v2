@@ -50,11 +50,11 @@ export async function POST(req: Request) {
 
   // Obrót o wielokrotność 90° jest bezstratny geometrycznie – nie zmienia wymiarów
   // poza ich zamianą, więc limit 1920 px z uploadu pozostaje zachowany.
-  // Wyżej niż przy uploadzie (82), bo obrót można powtórzyć kilka razy, a każdy jest
-  // kolejnym pokoleniem stratnej kompresji – q90 hamuje kumulację artefaktów.
+  // Maksymalna jakość jak przy uploadzie – obrót bywa powtarzany, a każdy jest
+  // kolejnym pokoleniem kompresji, więc nie ma tu czego oszczędzać.
   let rotated: Buffer;
   try {
-    rotated = await sharp(buffer).rotate(angle).webp({ quality: 90 }).toBuffer();
+    rotated = await sharp(buffer).rotate(angle).webp({ quality: 100 }).toBuffer();
   } catch (e) {
     console.error("[admin/rotate] sharp:", e);
     return NextResponse.json({ error: "Nie udało się obrócić zdjęcia." }, { status: 400 });

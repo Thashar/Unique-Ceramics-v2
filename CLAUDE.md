@@ -421,11 +421,12 @@ W treściach interfejsu, komentarzach i dokumentacji używaj **półpauzy `–`*
 
 ### Jakość zdjęć – dwa etapy kompresji
 
-Każde zdjęcie z panelu przechodzi **dwie** stratne kompresje: `sharp` przy uploadzie
-(WebP q82, maks. 1920 px) i optymalizator `next/image` przy serwowaniu. W Next 16
-`images.qualities` domyślnie dopuszcza tylko `[75]`, więc drugi etap ściągał zdjęcia do q75
-– na gładkich powierzchniach ceramiki dawało to widoczne pasmowanie. W panelu tego nie
-widać, bo `FocalPointPicker` używa `unoptimized` i pokazuje plik źródłowy.
+Każde zdjęcie z panelu przechodzi **dwa** przekodowania: `sharp` przy uploadzie
+(WebP **q100**, maks. 1920 px – plik w Storage ma być wierną kopią oryginału) i optymalizator
+`next/image` przy serwowaniu. W Next 16 `images.qualities` domyślnie dopuszcza tylko `[75]`,
+więc drugi etap ściągał zdjęcia do q75 – na gładkich powierzchniach ceramiki dawało to
+widoczne pasmowanie. W panelu tego nie widać, bo `FocalPointPicker` używa `unoptimized`
+i pokazuje plik źródłowy.
 
 **O jakości na stronie decyduje wyłącznie drugi etap.** Zmierzone na `hero.webp`
 (wariant 640 px, średnie odchylenie od oryginału – niżej znaczy wierniej):
@@ -436,10 +437,12 @@ widać, bo `FocalPointPicker` używa `unoptimized` i pokazuje plik źródłowy.
 | 85 | 51 kB | 2,79 |
 | 90 (galeria) | 71 kB | 2,31 |
 
-Podnoszenie jakości pliku w Storage **nic nie daje** – upload q82 i q90 przy tym samym
-`quality` renderu wychodzą identycznie (2,79 vs 2,80), a plik rośnie o ~23%. Dlatego
-upload zostaje na q82; wyjątkiem jest `/api/admin/rotate` (q90), bo obrót bywa powtarzany
-i każdy jest kolejnym pokoleniem kompresji.
+Jakość pliku w Storage **nie przekłada się na to, co widzi odwiedzający** – upload q82 i q90
+przy tym samym `quality` renderu wychodzą identycznie (2,79 vs 2,80). Mimo to upload
+i `/api/admin/rotate` kodują w **q100** (decyzja właściciela: plik źródłowy ma być wierny),
+kosztem rozmiaru w Storage: dla `hero.webp` q82 → 216 kB, q90 → 266 kB, q100 → 415 kB
+(bezstratny byłby 1702 kB). **Chcąc realnie poprawić wygląd na stronie, zmieniaj `quality`
+przy renderze, nie przy uploadzie.**
 
 `ImageGallery` renderuje z `quality={90}` (stała `IMAGE_QUALITY`). Pozostałe miejsca
 (karty produktów, hero, portfolio) nadal używają domyślnego q75 – jeśli kiedyś mają
