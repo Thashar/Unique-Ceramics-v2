@@ -19,18 +19,28 @@ function getCardWidth(): number {
   return (window.innerWidth - 2 * PAD - GAP) / 2;
 }
 
-function targetOffset(index: number): number {
-  return PAD - index * (getCardWidth() + GAP);
-}
-
 export default function ProductCarousel({ products }: { products: Product[] }) {
-  const maxIndex = Math.max(0, products.length - 2);
+  // Przewijanie stronami po 2 karty (a nie po jednej)
+  const perPage = 2;
+  const maxPage = Math.max(0, Math.ceil(products.length / perPage) - 1);
+
+  // Przesunięcie dla danej strony, przycięte tak, by nie przewinąć poza koniec —
+  // przy nieparzystej liczbie produktów ostatnia strona równa się do prawej
+  // krawędzi (pokazuje pełne 2 karty zamiast jednej i pustego miejsca).
+  function targetOffset(page: number): number {
+    const cardW = getCardWidth();
+    const raw = PAD - page * perPage * (cardW + GAP);
+    const trackW = products.length * cardW + (products.length - 1) * GAP;
+    const min = Math.min(PAD, window.innerWidth - PAD - trackW);
+    return Math.max(min, raw);
+  }
   const [current, setCurrent] = useState(0);
   const innerRef = useRef<HTMLDivElement>(null);
   const isAnimating = useRef(false);
   const currentOffset = useRef(0);
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
+  const pageRef = useRef(0);
 
   function applyTranslate(x: number) {
     if (!innerRef.current) return;
@@ -40,10 +50,11 @@ export default function ProductCarousel({ products }: { products: Product[] }) {
 
   function animateTo(index: number) {
     if (isAnimating.current) return;
-    const clamped = Math.max(0, Math.min(maxIndex, index));
+    const clamped = Math.max(0, Math.min(maxPage, index));
     const start = currentOffset.current;
     const end = targetOffset(clamped);
     const dist = end - start;
+    pageRef.current = clamped;
     if (Math.abs(dist) < 1) { setCurrent(clamped); return; }
 
     isAnimating.current = true;
@@ -63,6 +74,19 @@ export default function ProductCarousel({ products }: { products: Product[] }) {
 
   useEffect(() => {
     applyTranslate(targetOffset(0));
+
+    // Obrót ekranu / zmiana szerokości zmienia szerokość karty — wyrównaj
+    // przesunięcie do aktualnej strony, żeby karuzela nie została „w pół karty".
+    function realign() {
+      applyTranslate(targetOffset(pageRef.current));
+    }
+    window.addEventListener("resize", realign);
+    window.addEventListener("orientationchange", realign);
+    return () => {
+      window.removeEventListener("resize", realign);
+      window.removeEventListener("orientationchange", realign);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function onTouchStart(e: React.TouchEvent) {
@@ -99,14 +123,14 @@ export default function ProductCarousel({ products }: { products: Product[] }) {
 
       {products.length > 2 && (
         <div className="flex justify-center gap-1.5 mt-5">
-          {Array.from({ length: maxIndex + 1 }).map((_, i) => (
+          {Array.from({ length: maxPage + 1 }).map((_, i) => (
             <button
               key={i}
               onClick={() => animateTo(i)}
               className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
                 i === current ? "bg-clay scale-125" : "bg-sand"
               }`}
-              aria-label={`Produkty ${i + 1}`}
+              aria-label={`Strona ${i + 1}`}
             />
           ))}
         </div>

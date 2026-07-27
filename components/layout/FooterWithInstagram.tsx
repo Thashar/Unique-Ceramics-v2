@@ -59,23 +59,27 @@ export default function FooterWithInstagram({ instagram }: { instagram: string }
         </div>
       </div>
 
-      {/* Belka praw autorskich — wycentrowana */}
+      {/* Belka praw autorskich — wycentrowana; zawija się na wąskich ekranach */}
       <div className="border-t border-sand/10 px-6 lg:px-10 py-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-center gap-4">
-          <div className="flex items-center gap-2.5 shrink-0">
+        <div className="relative max-w-7xl mx-auto flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+          <div className="flex items-center gap-2">
             <Image
               src="/images/logo.webp"
               alt="Unique Ceramics"
               width={24}
               height={24}
-              className="h-6 w-auto brightness-0 invert opacity-70"
+              className="h-5 sm:h-6 w-auto brightness-0 invert opacity-70"
             />
-            <span className="font-serif text-xs text-cream/50 tracking-wide whitespace-nowrap">Unique Ceramics</span>
+            <span className="font-serif text-[11px] sm:text-xs text-cream/50 tracking-wide whitespace-nowrap">Unique Ceramics</span>
           </div>
-          <p className="text-xs text-sand/30 whitespace-nowrap">
+          <p className="text-[11px] sm:text-xs text-sand/30 text-center">
             © {new Date().getFullYear()} Wszelkie prawa zastrzeżone.
           </p>
-          <ThasharWordmark width="90px" className="shrink-0" />
+          {/* Mobile: własny wiersz, wyśrodkowany. Desktop: przy prawej krawędzi —
+              pozycjonowany absolutnie, żeby nie zbijać wyśrodkowania reszty belki. */}
+          <div className="basis-full flex justify-center lg:basis-auto lg:absolute lg:right-0 lg:top-1/2 lg:-translate-y-1/2">
+            <ThasharWordmark width="clamp(56px, 16vw, 63px)" />
+          </div>
         </div>
       </div>
     </footer>

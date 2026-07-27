@@ -70,11 +70,13 @@ export default function Footer({ compact = false }: { compact?: boolean }) {
         </div>
 
         <div className="border-t border-sand/10 px-6 lg:px-10 py-4">
-          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6">
-            <p className="text-xs text-sand/30 text-center">
+          <div className="relative max-w-7xl mx-auto flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+            <p className="text-[11px] sm:text-xs text-sand/30 text-center">
               © {new Date().getFullYear()} Unique Ceramics. Wszelkie prawa zastrzeżone.
             </p>
-            <ThasharWordmark width="90px" />
+            <div className="basis-full flex justify-center lg:basis-auto lg:absolute lg:right-0 lg:top-1/2 lg:-translate-y-1/2">
+              <ThasharWordmark width="clamp(56px, 16vw, 63px)" />
+            </div>
           </div>
         </div>
       </footer>
@@ -148,11 +150,14 @@ export default function Footer({ compact = false }: { compact?: boolean }) {
       </div>
 
       <div className="border-t border-sand/10 px-6 lg:px-10 py-5">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6">
-          <p className="text-xs text-sand/30 text-center">
+        <div className="relative max-w-7xl mx-auto flex flex-wrap items-center justify-center gap-x-4 gap-y-3">
+          <p className="text-[11px] sm:text-xs text-sand/30 text-center">
             © {new Date().getFullYear()} Unique Ceramics. Wszelkie prawa zastrzeżone.
           </p>
-          <ThasharWordmark />
+          {/* Mobile: własny wiersz. Desktop: przy prawej krawędzi stopki. */}
+          <div className="basis-full flex justify-center lg:basis-auto lg:absolute lg:right-0 lg:top-1/2 lg:-translate-y-1/2">
+            <ThasharWordmark width="clamp(63px, 18vw, 77px)" />
+          </div>
         </div>
       </div>
     </footer>

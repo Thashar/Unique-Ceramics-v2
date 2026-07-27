@@ -8,7 +8,8 @@
      a brightness i tak przycina biel do 255),
    - smuga błysku: rdzeń cream #F5F0E8 + otoczka terracotta.
    Maska błysku wskazuje ten sam plik z /public (CSP: img-src 'self').
-   Rozmiar nadpisujesz zmienną --thb-width (domyślnie 110px).
+   Rozmiar nadpisujesz zmienną --thb-width (domyślnie 77px); w stopkach
+   podawana jako clamp(), żeby skalowała się z szerokością ekranu.
    ───────────────────────────────────────────────────────────────────────── */
 
 .thb {
@@ -62,7 +63,7 @@
 
 .img {
   display: block;
-  width: var(--thb-width, 110px);
+  width: var(--thb-width, 77px);
   height: auto;
   /* teal .DEV → terracotta #C4A882 */
   filter: saturate(0.6) hue-rotate(214deg) brightness(1.15);

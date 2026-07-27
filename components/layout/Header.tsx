@@ -128,8 +128,22 @@ export default function Header({ topOffset = false, showProjects = true }: { top
   useEffect(() => {
     if (!isHome) return;
 
-    function update() {
+    let raf = 0;
+    let retries = 0;
+
+    function measure() {
       const sections = document.querySelectorAll<HTMLElement>('[data-header-theme="transparent"]');
+
+      // Sekcji może jeszcze nie być w DOM (hydratacja / strumieniowany HTML).
+      // Nie wolno wtedy zgadywać na ciemny header — strona główna zaczyna się
+      // od jasnej sekcji (Hero), więc zostajemy przy przezroczystym i ponawiamy
+      // pomiar w kolejnych klatkach, aż układ będzie gotowy (~1,5 s).
+      if (sections.length === 0) {
+        if (retries++ < 90) raf = requestAnimationFrame(measure);
+        return;
+      }
+      retries = 0;
+
       let visible = false;
       for (const el of sections) {
         const rect = el.getBoundingClientRect();
@@ -139,13 +153,34 @@ export default function Header({ topOffset = false, showProjects = true }: { top
       setTransparentVisible(visible);
     }
 
-    update();
-    window.addEventListener("scroll", update, { passive: true });
-    // pageshow odpala się przy przywróceniu z bfcache — naprawia stale state transparentności
-    window.addEventListener("pageshow", update);
+    // Pomiar zawsze w kolejnej klatce — po ustabilizowaniu układu, nie w trakcie
+    // zdarzenia (chroni przed odczytem rect-a sprzed programowego scrolla).
+    function schedule() {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(measure);
+    }
+
+    schedule();
+
+    // scroll — zwykłe przewijanie
+    // resize / orientationchange — zmiana wysokości viewportu (zwijanie paska
+    //   adresu na mobile, obrót ekranu, zmiana rozmiaru okna)
+    // pageshow — powrót z bfcache (wejście „wstecz" z zewnętrznej strony)
+    // load — układ ustabilizowany po wczytaniu zasobów; łapie też wymuszony
+    //   przez HomeScrollSnap powrót na górę strony po przywróceniu scrolla
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    window.addEventListener("orientationchange", schedule);
+    window.addEventListener("pageshow", schedule);
+    if (document.readyState !== "complete") window.addEventListener("load", schedule);
+
     return () => {
-      window.removeEventListener("scroll", update);
-      window.removeEventListener("pageshow", update);
+      cancelAnimationFrame(raf);
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+      window.removeEventListener("orientationchange", schedule);
+      window.removeEventListener("pageshow", schedule);
+      window.removeEventListener("load", schedule);
     };
   }, [isHome]);
 

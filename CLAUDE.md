@@ -240,20 +240,22 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 ## Komponenty (`components/`)
 
 ### `components/layout/`
-- **Header.tsx** — responsywna nawigacja, ikona koszyka, menu mobilne; gdy `menuOpen` header zawsze przyjmuje `bg-espresso` (niezależnie od sekcji hero)
+- **Header.tsx** — responsywna nawigacja, ikona koszyka, menu mobilne; gdy `menuOpen` header zawsze przyjmuje `bg-espresso` (niezależnie od sekcji hero).
+  - **Przezroczystość na stronie głównej:** header jest przezroczysty, gdy w viewporcie widać (≥30% wysokości) sekcję oznaczoną `data-header-theme="transparent"`. Oznaczone są wszystkie ciemne sekcje `/` — Hero, „O mnie", Warsztaty i sekcja stopki; jedyną jasną sekcją jest „Wybrane prace" i tylko nad nią header jest `bg-espresso`.
+  - Pomiar jest odporny na wszystkie ścieżki wejścia: startowy stan to `transparent`, przeliczenie idzie przez `requestAnimationFrame` (odczyt rect-a po ustabilizowaniu układu, nie w trakcie zdarzenia), a **brak sekcji w DOM nie przełącza na ciemny** — pomiar jest ponawiany w kolejnych klatkach (~1,5 s). Nasłuch: `scroll`, `resize`, `orientationchange` (zwijanie paska adresu / obrót ekranu), `pageshow` (bfcache) i `load`. Do tego blokada przywracania scrolla w `<head>` (`app/layout.tsx`) i reset stanu przy nawigacji klienckiej na `/`.
 - **Footer.tsx** — synchroniczny (ważne!), importuje `FooterContactsClient`; używany na wszystkich stronach poza stroną główną
 - **FooterWithInstagram.tsx** — scalona stopka + Instagram CTA (strona główna); grid: [IG panel | nawigacja | kontakt | mapa]
 - **FooterInstagramPanel.tsx** — `"use client"`, animowany panel Instagram
 - **FooterContactsClient.tsx** — `"use client"`, pobiera kontakty z `/api/public/contacts` po mount
 - **FooterMap.tsx** — `"use client"`, mapa Google w iframe — ładowana dopiero po zgodzie cookies
 - **CookieBanner.tsx** — `"use client"`, baner zgody na cookies; na mobile: skrócony tekst, mniejsze pady i czcionka, układ poziomy (wiersz)
-- **ThasharWordmark.tsx** + **ThasharWordmark.module.css** — wordmark „Powered by THASHAR.DEV" w belce praw autorskich obu stopek (link do https://thashar.dev). Serwerowy (animacja czysto CSS-owa, bez JS): błysk na hoverze to diagonalna smuga przycięta CSS-ową maską do kształtu liter (`mask: url(/images/thashar-wordmark.webp)`) + `drop-shadow`. Kolory dopasowane do palety: filtr `saturate(.6) hue-rotate(214deg) brightness(1.15)` zamienia tealowy `.DEV` (#57A4B1 w pliku) na terracottę #C4A882, białe litery zostają białe; smuga = rdzeń cream + otoczka terracotta. Szerokość przez prop `width` (zmienna `--thb-width`, default 110 px). Respektuje `prefers-reduced-motion`. Źródło grafiki: `public/images/thashar-wordmark.webp` (774×219)
+- **ThasharWordmark.tsx** + **ThasharWordmark.module.css** — wordmark „Powered by THASHAR.DEV" w belce praw autorskich obu stopek (link do https://thashar.dev). Serwerowy (animacja czysto CSS-owa, bez JS): błysk na hoverze to diagonalna smuga przycięta CSS-ową maską do kształtu liter (`mask: url(/images/thashar-wordmark.webp)`) + `drop-shadow`. Kolory dopasowane do palety: filtr `saturate(.6) hue-rotate(214deg) brightness(1.15)` zamienia tealowy `.DEV` (#57A4B1 w pliku) na terracottę #C4A882, białe litery zostają białe; smuga = rdzeń cream + otoczka terracotta. Szerokość przez prop `width` (zmienna `--thb-width`, default 77 px); stopki podają `clamp()`, więc skaluje się z szerokością ekranu — `clamp(63px,18vw,77px)` w pełnej stopce, `clamp(56px,16vw,63px)` w wersji kompaktowej i na stronie głównej. **Układ belki:** na mobile wordmark idzie do własnego wiersza (`basis-full`), na desktopie jest przyklejony do prawej krawędzi stopki (`lg:absolute lg:right-0`), żeby nie zbijać wyśrodkowania praw autorskich. Belka jest `flex-wrap` z mniejszym tekstem na mobile — bez tego treść nie mieściła się na ekranach ≤390 px i rozpychała stronę w poziomie. Respektuje `prefers-reduced-motion`. Źródło grafiki: `public/images/thashar-wordmark.webp` (774×219)
 - **Providers.tsx** — opakowuje tylko `SessionProvider` + renderuje `CookieBanner` (koszyk/zgoda nie potrzebują providerów)
 
 ### `components/home/`
 - **Hero.tsx**, **FeaturedProducts.tsx**, **AboutTeaser.tsx**, **WorkshopsTeaser.tsx**
 - **HomeScrollSnap.tsx** — `"use client"`, scroll-snap sekcji strony głównej; sekcje materializowane raz przy mount (brak DOM query w handlerach zdarzeń)
-- **ProductCarousel.tsx** — `"use client"`, mobilna karuzela wybranych prac
+- **ProductCarousel.tsx** — `"use client"`, mobilna karuzela wybranych prac; przewijanie **stronami po 2 karty** (nie po jednej) — swipe i kropki zmieniają stronę, kropek jest `ceil(liczba/2)`. Przy nieparzystej liczbie produktów ostatnia strona równa się do prawej krawędzi (pokazuje pełne 2 karty). Wyrównuje przesunięcie po `resize`/`orientationchange`
 - **InstagramCta.tsx** — przyjmuje prop `instagram` (nieużywany na stronie głównej od scalenia ze stopką)
 
 ### `app/sklep/` (server components)
