@@ -7,25 +7,40 @@
  * używać w komponentach serwerowych.
  */
 
-// Krycie zróżnicowane celowo nieregularnie — równy rytm wyglądał jak wykres
+// 9 kolumn × 2 rzędy. Krycie zróżnicowane celowo nieregularnie — równy rytm
+// wyglądał jak wykres. Kolejność: najpierw cały górny rząd, potem dolny.
+const COLUMNS = 9;
 const TILES = [
+  // górny rząd
   "bg-terracotta",
   "bg-clay",
   "bg-sand",
   "bg-terracotta/55",
   "bg-clay/40",
+  "bg-sand/80",
+  "bg-terracotta/75",
+  "bg-clay/55",
+  "bg-sand",
+  // dolny rząd
   "bg-sand",
   "bg-terracotta/80",
   "bg-clay/65",
   "bg-sand/70",
   "bg-terracotta",
+  "bg-clay/45",
+  "bg-sand/85",
+  "bg-terracotta/60",
+  "bg-clay",
 ];
 
 export default function ClayRule({ className = "" }: { className?: string }) {
   return (
     <div className={`flex items-center gap-3.5 ${className}`} aria-hidden="true">
       <span className="h-px w-7 shrink-0 bg-sand" />
-      <span className="grid grid-cols-5 grid-rows-2 gap-[3px] shrink-0">
+      <span
+        className="grid grid-rows-2 gap-[3px] shrink-0"
+        style={{ gridTemplateColumns: `repeat(${COLUMNS}, 0.625rem)` }}
+      >
         {TILES.map((tile, i) => (
           <span key={i} className={`w-2.5 h-2.5 rounded-[1px] ${tile}`} />
         ))}

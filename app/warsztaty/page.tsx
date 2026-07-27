@@ -80,16 +80,10 @@ function parseJson<T>(json: string): T[] {
   }
 }
 
-// Wprowadzenie: tekst do lewej, pierwszy akapit jako lead (Playfair, większy,
-// ciemniejszy). `p:first-child` zamiast klasy w treści — HTML z panelu zostaje
-// nietknięty, a nowy akapit dopisany na początku automatycznie staje się leadem.
-const INTRO_PROSE = [
-  "text-charcoal/80 text-lg leading-relaxed [&_p]:mb-4 [&_strong]:text-espresso",
-  // Krok wielkości celowo mały — wyróżnienie nosi serif i kolor. Przy dłuższym
-  // pierwszym akapicie duży stopień pisma zamieniał lead w ścianę tekstu.
-  "[&>p:first-child]:font-serif [&>p:first-child]:text-xl [&>p:first-child]:md:text-[22px]",
-  "[&>p:first-child]:leading-relaxed [&>p:first-child]:text-espresso [&>p:first-child]:mb-5",
-].join(" ");
+// Wprowadzenie: tekst do lewej w węższej kolumnie, bez wyróżniania pierwszego
+// akapitu — całość jednolita, hierarchię otwarcia niesie sam ozdobnik.
+const INTRO_PROSE =
+  "text-charcoal/80 text-lg leading-relaxed [&_p]:mb-4 [&_strong]:text-espresso";
 
 export default async function WorkshopsPage() {
   const s = await getSettings([
@@ -181,9 +175,8 @@ export default async function WorkshopsPage() {
           </div>
         )}
 
-        {/* Lead — ozdobnik (kreska z mozaiką) + wprowadzenie.
-            Pierwszy akapit jest wyróżniony selektorem `p:first-child`, więc treść
-            w panelu pozostaje zwykłym HTML-em — nie trzeba nic oznaczać ręcznie. */}
+        {/* Wprowadzenie — ozdobnik (kreska z mozaiką) nad tekstem do lewej.
+            Treść w panelu pozostaje zwykłym HTML-em, bez wyróżnień na akapitach. */}
         <div className="bg-warm-white py-16 px-6 lg:px-10">
           {hasGallery ? (
             <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
