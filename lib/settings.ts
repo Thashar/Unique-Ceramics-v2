@@ -198,6 +198,7 @@ const DEFAULTS: Record<string, string> = {
   workshops_content_image: "",
   workshops_content_position: "50% 50%",
   workshops_intro: WORKSHOPS_INTRO_DEFAULT,
+  workshops_includes_gallery: "[]",
   workshops_offers: WORKSHOPS_OFFERS_DEFAULT,
   workshops_includes: WORKSHOPS_INCLUDES_DEFAULT,
   workshops_faq: WORKSHOPS_FAQ_DEFAULT,

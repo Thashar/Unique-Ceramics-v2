@@ -131,6 +131,7 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` – zwracają wartość z DB l
 | `workshops_intro` | HTML wprowadzenia do warsztatów |
 | `workshops_offers` | JSON – tablica kart ofert warsztatów (`WorkshopOffer[]`): id, iconName, title, description, duration, maxPeople, priceLabel, level, active |
 | `workshops_includes` | JSON – tablica elementów „Co zawiera warsztat?" (`WorkshopInclude[]`): id, iconName, label |
+| `workshops_includes_gallery` | JSON – galeria zdjęć obok listy „Co zawiera warsztat?" (format jak `about_content_gallery`). Pusta = lista zwęża się i zostaje na środku |
 | `workshops_faq` | JSON – tablica pytań i odpowiedzi FAQ (`WorkshopFaq[]`): id, question, answer |
 | `contact_phone` | Numer telefonu (default: +48 668 443 706) |
 | `contact_email` | E-mail (default: kontakt@uniqueceramics.pl) |
@@ -176,7 +177,8 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` – zwracają wartość z DB l
 | `/zamowienie/potwierdzenie` | force-dynamic | Potwierdzenie + dane do przelewu |
 | `/zamowienie-indywidualne` | static (client) | Zamówienie na miarę |
 | `/logowanie`, `/rejestracja` | static (client) | Auth |
-| `/o-mnie`, `/warsztaty`, `/kontakt`, `/regulamin`, `/polityka-prywatnosci` | ISR 300 s | Strony treściowe (treść z ustawień; zapis w adminie robi `revalidatePath`); `/kontakt` zawiera ukrytą sekcję SEO „Obszar obsługi" (`sr-only` – lista miast Śląska, indeksowalna, niewidoczna wizualnie) |
+| `/warsztaty` | ISR 300 s | Wprowadzenie (galeria po prawej), oferty, „Co zawiera warsztat?" jako **lista + galeria** (`workshops_includes_gallery`; bez zdjęć lista zwęża się do `max-w-xl` i zostaje wyśrodkowana) oraz FAQ w **dwóch kolumnach** (`md:grid-cols-2`) zakończone kafelkiem z odesłaniem do `/kontakt` |
+| `/o-mnie`, `/kontakt`, `/regulamin`, `/polityka-prywatnosci` | ISR 300 s | Strony treściowe (treść z ustawień; zapis w adminie robi `revalidatePath`); `/kontakt` zawiera ukrytą sekcję SEO „Obszar obsługi" (`sr-only` – lista miast Śląska, indeksowalna, niewidoczna wizualnie) |
 | `/moje-projekty` | ISR | Publiczne portfolio prac (model `Project`, dane z `getProjects()`) |
 
 ### Strony chronione – konto klienta (`/konto`) – wymaga sesji (middleware + layout)
@@ -281,9 +283,9 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` – zwracają wartość z DB l
 - **InstagramCta.tsx** – przyjmuje prop `instagram` (nieużywany na stronie głównej od scalenia ze stopką)
 
 ### `app/sklep/` (server components)
-- **ProductGrid.tsx** – `"use client"`, siatka produktów; przyjmuje `products` jako prop (data fetchowana w page.tsx). Zawiera przełącznik layoutu (standardowy: 2/3/4 kolumny, kompaktowy: 3/4/5 kolumn) z ikonami `LayoutGrid`/`Grid3X3`; preferencja persystowana w localStorage (`sklep-layout`)
+- **ProductGrid.tsx** – `"use client"`, siatka produktów; przyjmuje `products` jako prop (data fetchowana w page.tsx). Przełącznik layoutu (standardowy: 2/3/4 kolumny, kompaktowy: 3/4/5 kolumn) z ikonami `LayoutGrid`/`Grid3X3` oraz wybór liczby produktów na stronę (30/50/100, domyślnie 30; przełącznik pojawia się dopiero gdy produktów jest więcej niż 30, pod siatką rysuje się numeracja stron). Obie preferencje w localStorage (`sklep-layout`, `sklep-na-stronie`) czytane przez `useSyncExternalStore` – **nie `setState` w efekcie**. Bez zapisanej preferencji layout wybiera media query: na telefonie (`max-width: 767px`) startuje **kompaktowy**, czyli 3 produkty w wierszu. Numer strony jest klamrowany przy renderze (`Math.min`), a nie korygowany efektem
 - **ProductGridSkeleton.tsx** – placeholder `animate-pulse` dla `<Suspense fallback>` w `/sklep`
-- **FloatingOrderButton.tsx** – `"use client"`, pływający przycisk „Zamów indywidualnie" w prawym dolnym rogu sklepu; animowana ikona dłoni; `md:scale-[2]` (2× powiększony tylko na desktop, na mobile – normalny rozmiar)
+- **FloatingOrderButton.tsx** – `"use client"`, pływający przycisk „Zamów indywidualnie" w prawym dolnym rogu sklepu; animowana ikona dłoni. Domyślnie `opacity-70`, pełna widoczność po najechaniu i przy focusie – żeby nie zasłaniał produktów
 
 ### `components/ui/`
 - **ProductCard.tsx** – karta produktu (next/image + framer-motion); przyjmuje opcjonalny prop `compact?: boolean` – zmniejsza czcionkę tytułu (`text-lg`→`text-sm`), cenę, kategorię, marginesy i badge'y w widoku kompaktowym

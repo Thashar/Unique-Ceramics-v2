@@ -93,7 +93,8 @@ export default function FloatingOrderButton() {
     <Link
       href="/zamowienie-indywidualne"
       /* na desktopie rozmiar bazowy (pomniejszony o połowę względem wcześniejszego 2x), zakotwiczony w prawym dolnym rogu */
-      className="fixed bottom-6 right-5 z-40 origin-bottom-right md:scale-100 flex items-center gap-2.5 bg-espresso hover:bg-clay text-cream text-[11px] tracking-widest uppercase px-4 py-3 shadow-md hover:shadow-lg transition-colors duration-200"
+      /* półprzezroczysty, żeby nie zasłaniał produktów; pełna widoczność po najechaniu i przy focusie */
+      className="fixed bottom-6 right-5 z-40 origin-bottom-right md:scale-100 flex items-center gap-2.5 bg-espresso hover:bg-clay text-cream text-[11px] tracking-widest uppercase px-4 py-3 shadow-md hover:shadow-lg opacity-70 hover:opacity-100 focus-visible:opacity-100 transition-[color,background-color,box-shadow,opacity] duration-200"
     >
       <motion.span
         aria-hidden="true"

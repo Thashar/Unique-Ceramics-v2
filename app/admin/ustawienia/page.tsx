@@ -44,6 +44,7 @@ export default async function AdminSettingsPage({
     "workshops_content_image",
     "workshops_content_position",
     "workshops_intro",
+    "workshops_includes_gallery",
     "workshops_offers",
     "workshops_includes",
     "workshops_faq",

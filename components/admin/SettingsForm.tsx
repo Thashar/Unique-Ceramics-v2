@@ -38,6 +38,7 @@ interface Props {
     workshops_content_image: string;
     workshops_content_position: string;
     workshops_intro: string;
+    workshops_includes_gallery: string;
     workshops_offers: string;
     workshops_includes: string;
     workshops_faq: string;
@@ -272,6 +273,10 @@ export default function SettingsForm({ section, initial }: Props) {
     JSON.stringify(parseGallery(initial.workshops_content_gallery, initial.workshops_content_image, initial.workshops_content_position))
   );
   const [workshopsIntro, setWorkshopsIntro] = useState(initial.workshops_intro);
+  // Galeria przy liście „Co zawiera warsztat?" – osobna od tej przy wprowadzeniu
+  const [workshopsIncludesGallery, setWorkshopsIncludesGallery] = useState(() =>
+    JSON.stringify(parseGallery(initial.workshops_includes_gallery))
+  );
   const [workshopsOffers, setWorkshopsOffers] = useState(initial.workshops_offers);
   const [workshopsIncludes, setWorkshopsIncludes] = useState(initial.workshops_includes);
   const [workshopsFaq, setWorkshopsFaq] = useState(initial.workshops_faq);
@@ -534,6 +539,12 @@ export default function SettingsForm({ section, initial }: Props) {
             <RichEditor value={workshopsIntro} onChange={setWorkshopsIntro} />
           </div>
 
+          <div className="border-t border-sand pt-6 space-y-4">
+            <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/80">Galeria przy „Co zawiera warsztat?&rdquo;</h3>
+            <p className="text-xs text-charcoal/80">Zdjęcia obok listy z wyposażeniem warsztatu. Jeżeli pusta – lista zajmuje całą szerokość.</p>
+            <GalleryEditor json={workshopsIncludesGallery} onChange={setWorkshopsIncludesGallery} />
+          </div>
+
           <div className="border-t border-sand pt-6">
             <WorkshopsOffersEditor
               offersJson={workshopsOffers}
@@ -557,6 +568,7 @@ export default function SettingsForm({ section, initial }: Props) {
               { key: "workshops_content_image",        value: galleryHead(workshopsGallery).url },
               { key: "workshops_content_position",     value: galleryHead(workshopsGallery).position },
               { key: "workshops_intro",                value: workshopsIntro },
+              { key: "workshops_includes_gallery",     value: workshopsIncludesGallery },
               { key: "workshops_offers",               value: workshopsOffers },
               { key: "workshops_includes",             value: workshopsIncludes },
               { key: "workshops_faq",                  value: workshopsFaq },

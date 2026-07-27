@@ -91,7 +91,7 @@ export default async function WorkshopsPage() {
     "workshops_hero_overlay_color", "workshops_hero_overlay_opacity",
     "workshops_hero_height",
     "workshops_content_gallery", "workshops_content_image", "workshops_content_position",
-    "workshops_intro", "contact_phone",
+    "workshops_intro", "workshops_includes_gallery", "contact_phone",
     "workshops_offers", "workshops_includes", "workshops_faq",
   ]);
   const heroImage = s.workshops_hero_image;
@@ -102,6 +102,9 @@ export default async function WorkshopsPage() {
   // Galeria przy wprowadzeniu; stary klucz `workshops_content_image` = pojedyncze zdjęcie
   const gallery = parseGallery(s.workshops_content_gallery, s.workshops_content_image, s.workshops_content_position);
   const hasGallery = gallery.length > 0;
+  // Osobna galeria przy liście „Co zawiera warsztat?"
+  const includesGallery = parseGallery(s.workshops_includes_gallery);
+  const hasIncludesGallery = includesGallery.length > 0;
   const intro = s.workshops_intro;
 
   const workshops = parseJson<WorkshopOffer>(s.workshops_offers).filter((w) => w.active);
@@ -256,24 +259,47 @@ export default async function WorkshopsPage() {
           </div>
         )}
 
-        {/* Co zawiera warsztat */}
+        {/* Co zawiera warsztat – lista po lewej, pokaz zdjęć po prawej.
+            Bez zdjęć lista zwęża się i zostaje na środku, żeby nie wisiała w pustce. */}
         {includes.length > 0 && (
           <div className="bg-cream py-20 px-6 lg:px-10">
-            <div className="max-w-7xl mx-auto">
-              <h2 className="font-serif text-[2rem] md:text-4xl text-espresso mb-5 text-center">Co zawiera warsztat?</h2>
-              <ClayRule align="center" className="max-w-[220px] mx-auto mb-12" />
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-3xl mx-auto">
-                {includes.map((inc) => {
-                  const Icon = ICON_MAP[inc.iconName] ?? CheckCircle;
-                  return (
-                    <div key={inc.id} className="bg-warm-white p-6 text-center">
-                      <div className="w-10 h-10 bg-cream rounded-full flex items-center justify-center mx-auto mb-3">
-                        <Icon size={18} strokeWidth={1.5} className="text-clay" />
-                      </div>
-                      <p className="text-sm text-charcoal/80 leading-relaxed">{inc.label}</p>
-                    </div>
-                  );
-                })}
+            <div className={`mx-auto ${hasIncludesGallery ? "max-w-6xl" : "max-w-xl"}`}>
+              <div className={hasIncludesGallery ? "grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center" : ""}>
+                <div>
+                  {hasIncludesGallery ? (
+                    <>
+                      <ClayRule className="mb-7" />
+                      <h2 className="font-serif text-[2rem] md:text-4xl text-espresso mb-8">Co zawiera warsztat?</h2>
+                    </>
+                  ) : (
+                    <>
+                      <h2 className="font-serif text-[2rem] md:text-4xl text-espresso mb-5 text-center">Co zawiera warsztat?</h2>
+                      <ClayRule align="center" className="max-w-[220px] mx-auto mb-12" />
+                    </>
+                  )}
+                  <ul className="space-y-4">
+                    {includes.map((inc) => {
+                      const Icon = ICON_MAP[inc.iconName] ?? CheckCircle;
+                      return (
+                        <li key={inc.id} className="flex items-center gap-4">
+                          <span className="w-11 h-11 bg-warm-white rounded-full flex items-center justify-center shrink-0">
+                            <Icon size={19} strokeWidth={1.5} className="text-clay" />
+                          </span>
+                          <span className="text-charcoal leading-snug">{inc.label}</span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+
+                {hasIncludesGallery && (
+                  <ImageGallery
+                    images={includesGallery}
+                    alt="Zdjęcia z warsztatów ceramicznych"
+                    className="aspect-[4/3] rounded-sm w-full max-w-xl mx-auto"
+                    sizes="(max-width: 640px) 100vw, 576px"
+                  />
+                )}
               </div>
             </div>
           </div>
@@ -282,16 +308,32 @@ export default async function WorkshopsPage() {
         {/* FAQ */}
         {faq.length > 0 && (
           <div className="bg-mist py-20 px-6 lg:px-10">
-            <div className="max-w-3xl mx-auto">
+            <div className="max-w-5xl mx-auto">
               <h2 className="font-serif text-[2rem] md:text-4xl text-espresso mb-5 text-center">Często zadawane pytania</h2>
               <ClayRule align="center" className="max-w-[220px] mx-auto mb-12" />
-              <div className="space-y-8">
+              {/* Dwie kolumny od md – sekcja jest o połowę krótsza, a odpowiedzi
+                  pozostają widoczne bez rozwijania */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
                 {faq.map((item) => (
-                  <div key={item.id} className="border-b border-sand pb-8 last:border-0 last:pb-0">
+                  <div key={item.id} className="border-b border-sand pb-8">
                     <h3 className="font-serif text-xl text-espresso mb-3">{item.question}</h3>
                     <p className="text-charcoal/80 leading-relaxed text-sm">{item.answer}</p>
                   </div>
                 ))}
+              </div>
+
+              {/* Zamknięcie sekcji – bez tego strona urywała się na ostatnim pytaniu */}
+              <div className="mt-12 bg-warm-white border border-sand p-7 flex flex-wrap items-center justify-between gap-5">
+                <div>
+                  <p className="font-serif text-xl text-espresso mb-1">Nie ma tu Twojego pytania?</p>
+                  <p className="text-sm text-charcoal/80">Napisz albo zadzwoń – chętnie wszystko wyjaśnię.</p>
+                </div>
+                <Link
+                  href="/kontakt"
+                  className="bg-clay hover:bg-terracotta hover:text-espresso text-warm-white text-xs tracking-widest uppercase px-8 py-4 transition-colors whitespace-nowrap"
+                >
+                  Napisz do mnie
+                </Link>
               </div>
             </div>
           </div>
