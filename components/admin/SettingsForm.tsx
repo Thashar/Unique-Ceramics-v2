@@ -5,7 +5,9 @@ import Image from "next/image";
 import RichEditor from "@/components/admin/RichEditor";
 import ImageUploader from "@/components/admin/ImageUploader";
 import FocalPointPicker from "@/components/admin/FocalPointPicker";
+import GalleryEditor from "@/components/admin/GalleryEditor";
 import WorkshopsOffersEditor from "@/components/admin/WorkshopsOffersEditor";
+import { parseGallery, galleryHead } from "@/lib/gallery";
 
 interface Props {
   section: string;
@@ -21,6 +23,7 @@ interface Props {
     about_hero_overlay_color: string;
     about_hero_overlay_opacity: string;
     about_hero_height: string;
+    about_content_gallery: string;
     about_content_image: string;
     about_content_position: string;
     about_story: string;
@@ -29,6 +32,7 @@ interface Props {
     workshops_hero_overlay_color: string;
     workshops_hero_overlay_opacity: string;
     workshops_hero_height: string;
+    workshops_content_gallery: string;
     workshops_content_image: string;
     workshops_content_position: string;
     workshops_intro: string;
@@ -216,8 +220,10 @@ export default function SettingsForm({ section, initial }: Props) {
   const [aboutOverlayColor, setAboutOverlayColor] = useState(initial.about_hero_overlay_color);
   const [aboutOverlayOpacity, setAboutOverlayOpacity] = useState(initial.about_hero_overlay_opacity);
   const [aboutHeroHeight, setAboutHeroHeight] = useState(initial.about_hero_height);
-  const [aboutContentImage, setAboutContentImage] = useState(initial.about_content_image);
-  const [aboutContentPos, setAboutContentPos] = useState(initial.about_content_position);
+  // Galeria przy opisie – stare pojedyncze zdjęcie staje się pierwszym elementem
+  const [aboutGallery, setAboutGallery] = useState(() =>
+    JSON.stringify(parseGallery(initial.about_content_gallery, initial.about_content_image, initial.about_content_position))
+  );
   const [aboutStory, setAboutStory] = useState(initial.about_story);
 
   // Warsztaty
@@ -226,8 +232,9 @@ export default function SettingsForm({ section, initial }: Props) {
   const [workshopsOverlayColor, setWorkshopsOverlayColor] = useState(initial.workshops_hero_overlay_color);
   const [workshopsOverlayOpacity, setWorkshopsOverlayOpacity] = useState(initial.workshops_hero_overlay_opacity);
   const [workshopsHeroHeight, setWorkshopsHeroHeight] = useState(initial.workshops_hero_height);
-  const [workshopsContentImage, setWorkshopsContentImage] = useState(initial.workshops_content_image);
-  const [workshopsContentPos, setWorkshopsContentPos] = useState(initial.workshops_content_position);
+  const [workshopsGallery, setWorkshopsGallery] = useState(() =>
+    JSON.stringify(parseGallery(initial.workshops_content_gallery, initial.workshops_content_image, initial.workshops_content_position))
+  );
   const [workshopsIntro, setWorkshopsIntro] = useState(initial.workshops_intro);
   const [workshopsOffers, setWorkshopsOffers] = useState(initial.workshops_offers);
   const [workshopsIncludes, setWorkshopsIncludes] = useState(initial.workshops_includes);
@@ -433,8 +440,10 @@ export default function SettingsForm({ section, initial }: Props) {
               { key: "about_hero_overlay_color",   value: aboutOverlayColor },
               { key: "about_hero_overlay_opacity", value: aboutOverlayOpacity },
               { key: "about_hero_height",          value: aboutHeroHeight },
-              { key: "about_content_image",        value: aboutContentImage },
-              { key: "about_content_position",     value: aboutContentPos },
+              { key: "about_content_gallery",      value: aboutGallery },
+              // Stare klucze trzymamy zgodne z pierwszym zdjęciem galerii (zgodność wstecz)
+              { key: "about_content_image",        value: galleryHead(aboutGallery).url },
+              { key: "about_content_position",     value: galleryHead(aboutGallery).position },
               { key: "about_story",                value: aboutStory },
             ])}
             label="Zapisz stronę O mnie"
@@ -475,14 +484,9 @@ export default function SettingsForm({ section, initial }: Props) {
           </div>
 
           <div className="border-t border-sand pt-6 space-y-4">
-            <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/80">Zdjęcie przy opisie (prawa kolumna)</h3>
-            <p className="text-xs text-charcoal/80">Jeżeli puste – kolumna zdjęcia znika, tekst zajmuje całą szerokość.</p>
-            <ImageUploader
-              currentUrl={workshopsContentImage}
-              onUploaded={(url) => setWorkshopsContentImage(url)}
-              label="Zdjęcie przy opisie"
-            />
-            <FocalPointPicker imageUrl={workshopsContentImage} value={workshopsContentPos} onChange={setWorkshopsContentPos} />
+            <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/80">Galeria przy opisie (prawa kolumna)</h3>
+            <p className="text-xs text-charcoal/80">Jeżeli pusta – kolumna zdjęć znika, tekst zajmuje całą szerokość.</p>
+            <GalleryEditor json={workshopsGallery} onChange={setWorkshopsGallery} />
           </div>
 
           <div className="border-t border-sand pt-6">
@@ -508,8 +512,10 @@ export default function SettingsForm({ section, initial }: Props) {
               { key: "workshops_hero_overlay_color",   value: workshopsOverlayColor },
               { key: "workshops_hero_overlay_opacity", value: workshopsOverlayOpacity },
               { key: "workshops_hero_height",          value: workshopsHeroHeight },
-              { key: "workshops_content_image",        value: workshopsContentImage },
-              { key: "workshops_content_position",     value: workshopsContentPos },
+              { key: "workshops_content_gallery",      value: workshopsGallery },
+              // Stare klucze trzymamy zgodne z pierwszym zdjęciem galerii (zgodność wstecz)
+              { key: "workshops_content_image",        value: galleryHead(workshopsGallery).url },
+              { key: "workshops_content_position",     value: galleryHead(workshopsGallery).position },
               { key: "workshops_intro",                value: workshopsIntro },
               { key: "workshops_offers",               value: workshopsOffers },
               { key: "workshops_includes",             value: workshopsIncludes },
