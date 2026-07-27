@@ -88,7 +88,8 @@ export default async function WorkshopsPage() {
   ]);
   const heroImage = s.workshops_hero_image;
   const heroPos = s.workshops_hero_position || "50% 50%";
-  const heroHeight = parseInt(s.workshops_hero_height) || 50;
+  // Minimum 30vh — pilnuje też wartości zapisanych zanim suwak dostał ten próg
+  const heroHeight = Math.max(30, parseInt(s.workshops_hero_height) || 50);
   const overlayBg = hexToRgba(s.workshops_hero_overlay_color, s.workshops_hero_overlay_opacity);
   const contentImage = s.workshops_content_image;
   const contentPos = s.workshops_content_position || "50% 50%";

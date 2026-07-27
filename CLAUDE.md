@@ -127,7 +127,10 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 | `contact_whatsapp` | Numer WhatsApp (opcjonalny; pusty = ukryty). Link `wa.me/{cyfry}` w stopce i na /kontakt |
 | `contact_facebook` | URL profilu Facebook (opcjonalny; pusty = ukryty w stopce) |
 | `contact_youtube` | URL kanału YouTube (opcjonalny; pusty = ukryty w stopce) |
-| `contact_hours` | Godziny otwarcia (default: Pon–Pt 9:00–17:00) |
+| `contact_hours` | Godziny otwarcia (default: Wt–Czw 17:00–19:00, So 15:00–17:00). Pokazywane w kolumnie „Kontakt" w stopce i na /kontakt; parsowane przez `lib/opening-hours.ts` do `openingHoursSpecification` w JSON-LD |
+| `contact_address_street` | Ulica i numer pracowni (default: ul. Familijna 23) |
+| `contact_address_city` | Kod pocztowy i miejscowość (default: 44-164 Kleszczów (k. Gliwic)) |
+| `contact_address_region` | Województwo, opcjonalne (default: woj. śląskie) |
 | `shipping_cost` | Koszt wysyłki kurierem w zł (default: 18) |
 | `shipping_cost_parcel_locker` | Koszt wysyłki paczkomatem InPost w zł (default: 18) |
 | `shipping_free_enabled` | "true"/"false" — czy jest darmowa wysyłka |
@@ -191,7 +194,7 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 |--------|----------|------|
 | GET | `/api/products` | Lista produktów (query: `kategoria`, `exclude`) |
 | GET | `/api/products/[slug]` | Szczegóły produktu (tylko `active: true`) |
-| GET | `/api/public/contacts` | Dane kontaktowe (phone, email, instagram) |
+| GET | `/api/public/contacts` | Dane kontaktowe (phone, email, instagram, facebook, youtube, whatsapp, hours, addressStreet/City/Region) |
 | GET | `/api/public/shipping` | Ustawienia wysyłki (cost, freeEnabled, freeFrom) |
 | POST | `/api/register` | Rejestracja (rate limit, hasło 8–128 znaków) |
 | POST | `/api/checkout` | Zamówienie: walidacja, kwoty serwerowo, **transakcja stock+order**, e-mail / sesja Stripe |
@@ -223,7 +226,8 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 ## Biblioteki pomocnicze (`lib/`)
 
 - **db.ts** — singleton PrismaClient (`connection_limit=1` pod serverless)
-- **settings.ts** — `getSetting`/`getSettings` z defaultami i retry
+- **settings.ts** — `getSetting`/`getSettings` z defaultami i retry (bez cache — nie wołaj w layoucie!) + `getContactSettings()` (unstable_cache 3600 s, tag `settings`) dla danych kontaktowych czytanych przy każdym renderze; zapis w `/api/admin/settings` robi `revalidateTag("settings", "max")`
+- **opening-hours.ts** — `parseOpeningHours(text)`: zamienia tekst z `contact_hours` (np. „Wt–Czw 17:00–19:00, So 15:00–17:00") na `openingHoursSpecification` schema.org; obsługuje polskie skróty dni, zakresy przez niedzielę i format `9.00`. Fragmentu, którego nie rozumie, **nie zwraca** — lepiej pominąć godziny w JSON-LD niż podać błędne. `parseCityLine(line)` rozbija „44-164 Kleszczów (k. Gliwic)" na kod pocztowy i miejscowość
 - **products.ts** — `getShopProducts()` (unstable_cache 60 s, tag `products`; jedno zapytanie do DB, podział inStock/soldOut w JS) + `getFeaturedProducts()` (unstable_cache 3600 s, tag `products`) + `revalidateProductPages()`
 - **categories.ts** — `getCategories()` (unstable_cache, tag `categories`; fallback do DEFAULT_CATEGORIES gdy DB pusta/niedostępna) + `revalidateCategories()`
 - **admin-auth.ts** — `requireAdmin()`: sesja + **aktualna rola z DB** (nie z JWT — odebranie uprawnień działa natychmiast). **UWAGA: zwraca `null` przy braku uprawnień, NIE rzuca wyjątku** — zawsze sprawdzaj wartość: `if (!await requireAdmin()) return 403`. Nigdy `try/catch` wokół niego (catch nigdy się nie wykona)
@@ -243,10 +247,11 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 - **Header.tsx** — responsywna nawigacja, ikona koszyka, menu mobilne; gdy `menuOpen` header zawsze przyjmuje `bg-espresso` (niezależnie od sekcji hero).
   - **Przezroczystość na stronie głównej:** header jest przezroczysty, gdy w viewporcie widać (≥30% wysokości) sekcję oznaczoną `data-header-theme="transparent"`. Oznaczone są wszystkie ciemne sekcje `/` — Hero, „O mnie", Warsztaty i sekcja stopki; jedyną jasną sekcją jest „Wybrane prace" i tylko nad nią header jest `bg-espresso`.
   - Pomiar jest odporny na wszystkie ścieżki wejścia: startowy stan to `transparent`, przeliczenie idzie przez `requestAnimationFrame` (odczyt rect-a po ustabilizowaniu układu, nie w trakcie zdarzenia), a **brak sekcji w DOM nie przełącza na ciemny** — pomiar jest ponawiany w kolejnych klatkach (~1,5 s). Nasłuch: `scroll`, `resize`, `orientationchange` (zwijanie paska adresu / obrót ekranu), `pageshow` (bfcache) i `load`. Do tego blokada przywracania scrolla w `<head>` (`app/layout.tsx`) i reset stanu przy nawigacji klienckiej na `/`.
-- **Footer.tsx** — synchroniczny (ważne!), importuje `FooterContactsClient`; używany na wszystkich stronach poza stroną główną
-- **FooterWithInstagram.tsx** — scalona stopka + Instagram CTA (strona główna); grid: [IG panel | nawigacja | kontakt | mapa]
-- **FooterInstagramPanel.tsx** — `"use client"`, animowany panel Instagram
-- **FooterContactsClient.tsx** — `"use client"`, pobiera kontakty z `/api/public/contacts` po mount
+- **FooterContent.tsx** — **jedno źródło prawdy dla treści stopki** (synchroniczny): grid [IG panel | nawigacja | kontakt | mapa] + belka praw autorskich z wordmarkiem. Używany przez `Footer` i `FooterWithInstagram`, które różnią się już tylko ramką — nie duplikuj tu układu
+- **Footer.tsx** — synchroniczny (ważne!), cienka ramka wokół `FooterContent`; wszystkie strony poza główną. Wariant `compact` został usunięty (nieużywany)
+- **FooterWithInstagram.tsx** — ta sama treść w sekcji scroll-snap o pełnej wysokości (strona główna)
+- **FooterInstagramPanel.tsx** — `"use client"`, animowany panel Instagram; `instagram` jest opcjonalny — bez propsa handle dociągany jest z `/api/public/contacts` (dzięki temu stopka podstron zostaje synchroniczna)
+- **FooterContactsClient.tsx** — `"use client"`, pobiera kontakty z `/api/public/contacts` po mount: telefon, e-mail, social oraz **adres pracowni i godziny otwarcia** (te same ustawienia co /kontakt)
 - **FooterMap.tsx** — `"use client"`, mapa Google w iframe — ładowana dopiero po zgodzie cookies
 - **CookieBanner.tsx** — `"use client"`, baner zgody na cookies; na mobile: skrócony tekst, mniejsze pady i czcionka, układ poziomy (wiersz)
 - **ThasharWordmark.tsx** + **ThasharWordmark.module.css** — wordmark „Powered by THASHAR.DEV" w belce praw autorskich obu stopek (link do https://thashar.dev). Serwerowy (animacja czysto CSS-owa, bez JS): błysk na hoverze to diagonalna smuga przycięta CSS-ową maską do kształtu liter (`mask: url(/images/thashar-wordmark.webp)`) + `drop-shadow`. Kolory dopasowane do palety: filtr `saturate(.6) hue-rotate(214deg) brightness(1.15)` zamienia tealowy `.DEV` (#57A4B1 w pliku) na terracottę #C4A882, białe litery zostają białe; smuga = rdzeń cream + otoczka terracotta. Szerokość przez prop `width` (zmienna `--thb-width`, default 77 px); stopki podają `clamp()`, więc skaluje się z szerokością ekranu — `clamp(63px,18vw,77px)` w pełnej stopce, `clamp(56px,16vw,63px)` w wersji kompaktowej i na stronie głównej. **Układ belki:** na mobile wordmark idzie do własnego wiersza (`basis-full`), na desktopie jest przyklejony do prawej krawędzi stopki (`lg:absolute lg:right-0`), żeby nie zbijać wyśrodkowania praw autorskich. Belka jest `flex-wrap` z mniejszym tekstem na mobile — bez tego treść nie mieściła się na ekranach ≤390 px i rozpychała stronę w poziomie. Respektuje `prefers-reduced-motion`. Źródło grafiki: `public/images/thashar-wordmark.webp` (774×219)
@@ -254,7 +259,7 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 
 ### `components/home/`
 - **Hero.tsx**, **FeaturedProducts.tsx**, **AboutTeaser.tsx**, **WorkshopsTeaser.tsx**
-- **HomeScrollSnap.tsx** — `"use client"`, scroll-snap sekcji strony głównej; sekcje materializowane raz przy mount (brak DOM query w handlerach zdarzeń)
+- **HomeScrollSnap.tsx** — `"use client"`, scroll-snap sekcji strony głównej; sekcje materializowane raz przy mount (brak DOM query w handlerach zdarzeń). Sekcja z `data-snap-free` (stopka) jest **poniżej breakpointu lg przewijana swobodnie** niezależnie od wysokości — przyciąganie działa tylko na jej krawędziach, więc zjazd w głąb stopki nie odbija do jej początku; `resize` nie wyrywa użytkownika ze swobodnej sekcji
 - **ProductCarousel.tsx** — `"use client"`, mobilna karuzela wybranych prac; przewijanie **stronami po 2 karty** (nie po jednej) — swipe i kropki zmieniają stronę, kropek jest `ceil(liczba/2)`. Przy nieparzystej liczbie produktów ostatnia strona równa się do prawej krawędzi (pokazuje pełne 2 karty). Wyrównuje przesunięcie po `resize`/`orientationchange`
 - **InstagramCta.tsx** — przyjmuje prop `instagram` (nieużywany na stronie głównej od scalenia ze stopką)
 
@@ -267,6 +272,9 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 - **ProductCard.tsx** — karta produktu (next/image + framer-motion); przyjmuje opcjonalny prop `compact?: boolean` — zmniejsza czcionkę tytułu (`text-lg`→`text-sm`), cenę, kategorię, marginesy i badge'y w widoku kompaktowym
 - **InstagramIcon.tsx** — SVG ikona Instagram
 
+### `components/seo/`
+- **LocalBusinessSchema.tsx** — async server component z danymi strukturalnymi JSON-LD (LocalBusiness + WebSite), renderowany w `app/layout.tsx`. Adres, telefon, e-mail, `sameAs` i `openingHoursSpecification` pochodzą z `getContactSettings()`, więc nie rozjeżdżają się z treścią stopki i /kontakt. **Nie wstawiaj JSON-LD z powrotem do `app/layout.tsx`** — layout ma zostać synchroniczny
+
 ### `components/checkout/`
 - **InPostWidget.tsx** — `"use client"`, widget wyboru paczkomatu InPost; gdy `INPOST_GEOWIDGET_TOKEN` ustawiony: mapa CDN geowidget.inpost.pl; bez tokenu: wyszukiwarka przez publiczne API `api-shipx-pl.easypack24.net`. Obsługiwane parametry API (zweryfikowane): `city=<Nazwa>` (wymaga dokładnej kapitalizacji — `capitalizeCity` normalizuje automatycznie, w tym polskie znaki i myślniki, np. „bielsko-biała" → „Bielsko-Biała"), `post_code=<XX-XXX>` (pełny kod pocztowy), `/points/<KOD>` (bezpośrednio po kodzie paczkomatu). Parametry `zip_code`, `name`, `street` są przez API ignorowane. Cache akumuluje wyniki ze wszystkich zapytań — po wyszukaniu miasta filtrowanie po dowolnym podciągu (fragment kodu, ulicy, adresu, kodu pocztowego) działa natychmiast bez kolejnych requestów. Puste odpowiedzi API nie nadpisują wyników z cache. Zwraca wybrany kod przez `onChange`.
 
@@ -278,7 +286,7 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` — zwracają wartość z DB l
 - **FocalPointPicker.tsx** — wybór punktu kadrowania zdjęć (`object-position`)
 - **RichEditor.tsx** — edytor HTML oparty o **Jodit z npm** (dynamiczny `import("jodit")` w useEffect — biblioteka tylko przeglądarkowa, nie może wykonać się przy SSR)
 - **CategoriesManager.tsx** — `"use client"`, CRUD kategorii: lista z edycją inline, zmiana kolejności strzałkami, dodawanie, usuwanie (blokada przy produktach); seed domyślnych gdy DB pusta
-- **SettingsForm.tsx** — formularz ustawień (taby: Strona główna / O mnie / Warsztaty / Regulamin / Polityka / Kontakt / Wysyłka / Płatności); zawiera `OverlayControl` — podgląd maski na żywo dla zdjęć hero (kolor + przezroczystość)
+- **SettingsForm.tsx** — formularz ustawień (taby: Strona główna / O mnie / Warsztaty / Regulamin / Polityka / Kontakt / Wysyłka / Płatności); zawiera `OverlayControl` — podgląd maski na żywo dla zdjęć hero (kolor + przezroczystość). Suwaki „Wysokość nagłówka z obrazem" (O mnie, Warsztaty) mają zakres **30–80 vh**; strony dodatkowo klamrują wartość `Math.max(30, …)`. Zakładka Kontakt obejmuje też adres pracowni (`contact_address_*`) i godziny otwarcia (`contact_hours`)
 - **WorkshopsOffersEditor.tsx** — `"use client"`, edytor ofert warsztatów: karty z akordeonem (tytuł, opis, czas, cena, ikona, widoczność), lista „Co zawiera?" i FAQ; każda sekcja obsługuje dodawanie, usuwanie i zmianę kolejności; zwraca dane jako JSON string przez `onChange`
 - **OrderStatusSelect.tsx** — dropdown statusu zamówienia: pozwala przejść tylko o 1 krok do przodu (pozostałe opcje wyłączone) lub anulować z każdego statusu; przyjmuje `shippingMethod` i `hasTracking` — blokuje zmianę na SHIPPED/DELIVERED gdy brak danych listu (kurier/paczkomat). Przejście na „Opłacone" otwiera **modal z datą i godziną wpłaty** (`datetime-local`, domyślnie teraz) → PATCH `{ status:"PAID", paidAt }`. Status płatności w stronie zamówienia to badge tylko do odczytu (zmienia się sam przy statusie „Opłacone")
 - **OrdersTabs.tsx** — zakładki listy zamówień (z „Opłacone")

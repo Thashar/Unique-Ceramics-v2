@@ -388,7 +388,7 @@ export default function SettingsForm({ section, initial }: Props) {
                 <label className="text-xs tracking-widest uppercase text-charcoal/80">Wysokość nagłówka z obrazem</label>
                 <span className="text-sm font-medium text-espresso tabular-nums">{aboutHeroHeight}vh</span>
               </div>
-              <input type="range" min="20" max="80" step="5" value={aboutHeroHeight} onChange={(e) => setAboutHeroHeight(e.target.value)} className="w-full accent-clay" />
+              <input type="range" min="30" max="80" step="5" value={aboutHeroHeight} onChange={(e) => setAboutHeroHeight(e.target.value)} className="w-full accent-clay" />
               <p className="text-[11px] text-charcoal/40">Aktywne gdy zdjęcie jest ustawione. Bez zdjęcia nagłówek ma jasne tło jak w /kontakt.</p>
             </div>
           </div>
@@ -452,7 +452,7 @@ export default function SettingsForm({ section, initial }: Props) {
                 <label className="text-xs tracking-widest uppercase text-charcoal/80">Wysokość nagłówka z obrazem</label>
                 <span className="text-sm font-medium text-espresso tabular-nums">{workshopsHeroHeight}vh</span>
               </div>
-              <input type="range" min="20" max="80" step="5" value={workshopsHeroHeight} onChange={(e) => setWorkshopsHeroHeight(e.target.value)} className="w-full accent-clay" />
+              <input type="range" min="30" max="80" step="5" value={workshopsHeroHeight} onChange={(e) => setWorkshopsHeroHeight(e.target.value)} className="w-full accent-clay" />
               <p className="text-[11px] text-charcoal/40">Aktywne gdy zdjęcie jest ustawione. Bez zdjęcia nagłówek ma jasne tło jak w /kontakt.</p>
             </div>
           </div>

@@ -42,7 +42,8 @@ export default async function AboutPage() {
   ]);
   const heroImage = s.about_hero_image;
   const heroPos = s.about_hero_position || "50% 50%";
-  const heroHeight = parseInt(s.about_hero_height) || 50;
+  // Minimum 30vh — pilnuje też wartości zapisanych zanim suwak dostał ten próg
+  const heroHeight = Math.max(30, parseInt(s.about_hero_height) || 50);
   const overlayBg = hexToRgba(s.about_hero_overlay_color, s.about_hero_overlay_opacity);
   const contentImage = s.about_content_image;
   const contentPos = s.about_content_position || "50% 50%";
