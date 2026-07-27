@@ -416,6 +416,32 @@ W treściach interfejsu, komentarzach i dokumentacji używaj **półpauzy `–`*
 - Komponenty klienckie też renderują się raz na serwerze (SSR) – biblioteki tylko przeglądarkowe (np. Jodit) ładuj dynamicznym `import()` w `useEffect`
 - `Footer.tsx` musi być w pełni synchroniczny
 
+### Jakość zdjęć – dwa etapy kompresji
+
+Każde zdjęcie z panelu przechodzi **dwie** stratne kompresje: `sharp` przy uploadzie
+(WebP q82, maks. 1920 px) i optymalizator `next/image` przy serwowaniu. W Next 16
+`images.qualities` domyślnie dopuszcza tylko `[75]`, więc drugi etap ściągał zdjęcia do q75
+– na gładkich powierzchniach ceramiki dawało to widoczne pasmowanie. W panelu tego nie
+widać, bo `FocalPointPicker` używa `unoptimized` i pokazuje plik źródłowy.
+
+**O jakości na stronie decyduje wyłącznie drugi etap.** Zmierzone na `hero.webp`
+(wariant 640 px, średnie odchylenie od oryginału – niżej znaczy wierniej):
+
+| `quality` w `next/image` | waga wariantu | odchylenie |
+|---|---|---|
+| 75 (domyślne) | 29 kB | 3,66 |
+| 85 | 51 kB | 2,79 |
+| 90 (galeria) | 71 kB | 2,31 |
+
+Podnoszenie jakości pliku w Storage **nic nie daje** – upload q82 i q90 przy tym samym
+`quality` renderu wychodzą identycznie (2,79 vs 2,80), a plik rośnie o ~23%. Dlatego
+upload zostaje na q82; wyjątkiem jest `/api/admin/rotate` (q90), bo obrót bywa powtarzany
+i każdy jest kolejnym pokoleniem kompresji.
+
+`ImageGallery` renderuje z `quality={90}` (stała `IMAGE_QUALITY`). Pozostałe miejsca
+(karty produktów, hero, portfolio) nadal używają domyślnego q75 – jeśli kiedyś mają
+wyglądać tak samo, dopisz im `quality`, pamiętając o ~2,4× większym transferze.
+
 ### Ścieżki do zdjęć – pułapka z redirectami
 
 `next.config.ts` przekierowuje stare `/images/*.jpg|png` na `.webp` (po konwersji plików).

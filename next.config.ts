@@ -38,6 +38,13 @@ const nextConfig: NextConfig = {
     removeConsole: { exclude: ["error", "warn"] },
   },
   images: {
+    // Next 16 domyślnie dopuszcza tylko `qualities: [75]`. Zdjęcia z panelu są już raz
+    // skompresowane (WebP q82 przy uploadzie), więc drugie przejście przy q75 widać na
+    // gładkich powierzchniach ceramiki. To **jakość optymalizatora decyduje o wyniku** –
+    // podnoszenie jakości pliku w Storage nic nie zmienia (zmierzone). Zdjęcia treściowe
+    // renderujemy więc z `quality={90}`; wartość musi być na tej liście, inaczej Next
+    // cicho sprowadzi ją do najbliższej dozwolonej.
+    qualities: [75, 90],
     remotePatterns: [
       {
         protocol: "https",

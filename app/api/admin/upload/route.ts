@@ -47,7 +47,10 @@ export async function POST(req: Request) {
     );
   }
 
-  // Konwersja do WebP (jakość 82, maks. szerokość 1920 px)
+  // Konwersja do WebP (jakość 82, maks. szerokość 1920 px).
+  // Podnoszenie tej wartości nie ma sensu: o jakości na stronie decyduje drugie
+  // przejście przez optymalizator `next/image` (zmierzone – q82 i q90 na wejściu dają
+  // przy tym samym `quality` obrazu identyczny wynik, a plik w Storage rośnie o ~23%).
   let webpBuffer: Buffer;
   try {
     webpBuffer = await sharp(buffer)
