@@ -255,11 +255,10 @@ export default async function WorkshopsPage() {
             <div className={`mx-auto ${hasIncludesGallery ? "max-w-6xl" : "max-w-xl"}`}>
               {hasIncludesGallery ? (
                 <>
-                  {/* Ozdobnik i nagłówek nad siatką – dzięki temu górna krawędź
-                      galerii zaczyna się dokładnie na wysokości nagłówka */}
+                  {/* Sam ozdobnik nad siatką; nagłówek jest w lewej kolumnie, więc
+                      górna krawędź galerii wypada dokładnie na jego wysokości */}
                   <ClayRule className="mb-7" />
-                  <h2 className="font-serif text-[2rem] md:text-4xl text-espresso mb-10">Co zawiera warsztat?</h2>
-                  <WorkshopIncludes includes={includes} images={includesGallery} />
+                  <WorkshopIncludes includes={includes} images={includesGallery} title="Co zawiera warsztat?" />
                 </>
               ) : (
                 <>
