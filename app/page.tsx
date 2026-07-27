@@ -66,7 +66,13 @@ export default async function Home() {
         {/* Stopka z Instagramem — pt-20 kompensuje header, min-h-svh wypełnia viewport.
             Tło espresso jak w sekcjach hero, więc header zostaje przezroczysty
             (ciemny jest tylko nad jasną sekcją „Wybrane prace"). */}
-        <div data-snap data-header-theme="transparent" className="bg-espresso min-h-svh lg:h-svh flex flex-col">
+        <div
+          data-snap
+          data-snap-free
+          data-header-fade
+          data-header-theme="transparent"
+          className="bg-espresso min-h-svh lg:h-svh flex flex-col"
+        >
           <FooterWithInstagram instagram={s.contact_instagram} />
         </div>
       </main>

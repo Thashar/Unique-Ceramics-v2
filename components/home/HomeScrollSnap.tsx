@@ -44,7 +44,17 @@ export default function HomeScrollSnap() {
       return closest;
     }
 
-    function isTall(section: HTMLElement): boolean {
+    // Poniżej breakpointu `lg` stopka ma `min-h-svh` (może być wyższa od ekranu),
+    // od `lg` w górę jest dokładnie na jeden ekran — swobodne przewijanie
+    // dotyczy więc tylko urządzeń mobilnych.
+    const mobileMq = window.matchMedia("(max-width: 1023px)");
+
+    // Sekcja przewijana swobodnie (bez przyciągania w środku): każda wyższa
+    // od viewportu oraz — na mobile — stopka oznaczona `data-snap-free`, nawet
+    // gdy akurat mieści się na ekranie. Przyciąganie działa tylko na jej
+    // krawędziach, czyli płynny ruch pojawia się dopiero przy wyjściu z sekcji.
+    function isFree(section: HTMLElement): boolean {
+      if (mobileMq.matches && section.hasAttribute("data-snap-free")) return true;
       return section.offsetHeight > window.innerHeight + 20;
     }
 
@@ -74,7 +84,7 @@ export default function HomeScrollSnap() {
       const section = sections[idx];
       const sectionTop = getSectionTop(section);
 
-      if (isTall(section)) {
+      if (isFree(section)) {
         const sectionBottom = sectionTop + section.offsetHeight;
         const viewportBottom = window.scrollY + window.innerHeight;
         const atBottom = e.deltaY > 0 && viewportBottom >= sectionBottom - 20;
@@ -127,7 +137,7 @@ export default function HomeScrollSnap() {
       // Blokuj natywne pionowe przewijanie tylko na sekcjach pełnoekranowych
       if (touchIsVertical === true) {
         const idx = getIndexByScrollY(touchStartScrollY);
-        if (!isTall(sections[idx])) {
+        if (!isFree(sections[idx])) {
           e.preventDefault();
         }
       }
@@ -145,7 +155,7 @@ export default function HomeScrollSnap() {
       const section = sections[startIdx];
       const sectionTop = getSectionTop(section);
 
-      if (isTall(section)) {
+      if (isFree(section)) {
         const sectionBottom = sectionTop + section.offsetHeight;
         const viewportBottom = window.scrollY + window.innerHeight;
         const atBottom = diffY > 0 && viewportBottom >= sectionBottom - 60;
@@ -170,6 +180,9 @@ export default function HomeScrollSnap() {
       sections = Array.from(document.querySelectorAll<HTMLElement>("[data-snap]"));
       if (isScrolling) return;
       const idx = getIndexByScrollY(window.scrollY);
+      // Nie wyrywaj użytkownika ze swobodnie przewijanej sekcji (stopka) —
+      // na mobile resize odpala też samo zwijanie paska adresu.
+      if (isFree(sections[idx])) return;
       window.scrollTo({ top: getSectionTop(sections[idx]), behavior: "instant" });
     }
 

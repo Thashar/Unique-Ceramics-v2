@@ -9,6 +9,11 @@ import { ShoppingBag, Menu, X, User, Package, LogOut, ChevronDown } from "lucide
 import { AnimatePresence, motion } from "framer-motion";
 import { useCart } from "@/lib/cart";
 
+// Dystans (px) zjazdu poniżej górnej krawędzi stopki, na którym header
+// płynnie zanika do zera — dobrany tak, by zniknął zanim zacznie zasłaniać
+// treść (stopka ma pt-20, czyli 80 px zapasu pod headerem).
+const FADE_DISTANCE = 150;
+
 const ALL_NAV_LINKS = [
   { href: "/sklep",         label: "Sklep",          always: true  },
   { href: "/o-mnie",        label: "O mnie",          always: true  },
@@ -106,6 +111,10 @@ export default function Header({ topOffset = false, showProjects = true }: { top
   const pathname = usePathname();
   const isHome = pathname === "/";
 
+  const headerRef = useRef<HTMLElement>(null);
+  const menuOpenRef = useRef(menuOpen);
+  const scheduleRef = useRef<() => void>(() => {});
+
   // Wzorzec "reset stanu przy zmianie props/pochodnych" — setState podczas renderowania
   // (nie w efekcie) jest dozwolony wg React docs i nie triggeruje cascading renders.
   const [prevIsHome, setPrevIsHome] = useState(isHome);
@@ -130,6 +139,8 @@ export default function Header({ topOffset = false, showProjects = true }: { top
 
     let raf = 0;
     let retries = 0;
+    const mobileMq = window.matchMedia("(max-width: 1023px)");
+    const headerNode = headerRef.current;
 
     function measure() {
       const sections = document.querySelectorAll<HTMLElement>('[data-header-theme="transparent"]');
@@ -151,6 +162,28 @@ export default function Header({ topOffset = false, showProjects = true }: { top
         if (el.offsetHeight && vis / el.offsetHeight >= 0.3) { visible = true; break; }
       }
       setTransparentVisible(visible);
+      fade();
+    }
+
+    // Zanikanie headera po zjechaniu poniżej „punktu zero" stopki (jej górnej
+    // krawędzi), żeby nie zasłaniał treści stopki; przy powrocie w górę
+    // pojawia się tą samą drogą. Wyłącznie na urządzeniach mobilnych — od `lg`
+    // stopka ma dokładnie jeden ekran i header nie ma czego zasłaniać.
+    // Przezroczystość ustawiamy prosto na węźle DOM (bez setState), bo wartość
+    // zmienia się w każdej klatce przewijania.
+    function fade() {
+      const node = headerRef.current;
+      if (!node) return;
+
+      const target = document.querySelector<HTMLElement>("[data-header-fade]");
+      let opacity = 1;
+      if (target && mobileMq.matches && !menuOpenRef.current) {
+        const past = -target.getBoundingClientRect().top;
+        if (past > 0) opacity = Math.max(0, 1 - past / FADE_DISTANCE);
+      }
+
+      node.style.opacity = String(opacity);
+      node.style.pointerEvents = opacity < 0.05 ? "none" : "";
     }
 
     // Pomiar zawsze w kolejnej klatce — po ustabilizowaniu układu, nie w trakcie
@@ -160,6 +193,7 @@ export default function Header({ topOffset = false, showProjects = true }: { top
       raf = requestAnimationFrame(measure);
     }
 
+    scheduleRef.current = schedule;
     schedule();
 
     // scroll — zwykłe przewijanie
@@ -176,13 +210,25 @@ export default function Header({ topOffset = false, showProjects = true }: { top
 
     return () => {
       cancelAnimationFrame(raf);
+      scheduleRef.current = () => {};
       window.removeEventListener("scroll", schedule);
       window.removeEventListener("resize", schedule);
       window.removeEventListener("orientationchange", schedule);
       window.removeEventListener("pageshow", schedule);
       window.removeEventListener("load", schedule);
+      // Poza stroną główną header musi być w pełni widoczny
+      if (headerNode) {
+        headerNode.style.opacity = "";
+        headerNode.style.pointerEvents = "";
+      }
     };
   }, [isHome]);
+
+  // Otwarte menu mobilne zawsze w pełni widoczne — nawet gdy jesteśmy w stopce
+  useEffect(() => {
+    menuOpenRef.current = menuOpen;
+    scheduleRef.current();
+  }, [menuOpen]);
 
   return (
     <>
@@ -194,7 +240,10 @@ export default function Header({ topOffset = false, showProjects = true }: { top
         />
       )}
     <header
-      className={`fixed ${topOffset ? "top-5" : "top-0"} left-0 right-0 z-50 transition-all duration-500 ${
+      ref={headerRef}
+      // Bez `transition-all`: przezroczystość headera w stopce jest sterowana
+      // pozycją scrolla klatka po klatce, a 500 ms przejście by ją opóźniało.
+      className={`fixed ${topOffset ? "top-5" : "top-0"} left-0 right-0 z-50 transition-[background-color,box-shadow] duration-500 ${
         dark || menuOpen
           ? "bg-espresso shadow-sm"
           : "bg-transparent"
