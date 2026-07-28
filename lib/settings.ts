@@ -237,6 +237,8 @@ const DEFAULTS: Record<string, string> = {
   // Generowanie zdjęć produktów przez Google AI (przyciski AI / AI+)
   ai_image_model: AI_MODEL_DEFAULT.ai,
   ai_image_model_plus: AI_MODEL_DEFAULT.ai_plus,
+  // Kurs do przeliczenia kosztów AI (Google rozlicza w USD) – edytowalny w panelu
+  ai_usd_pln_rate: "4.00",
   // Działalność nierejestrowana – minimalne wynagrodzenie (aktualizuj co rok!)
   // 2026: 4806 zł (ustawa z 25.07.2025 r. o ograniczeniu biurokracji i wsparciu przedsiębiorczości)
   dzn_min_wage: "4806",

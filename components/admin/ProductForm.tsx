@@ -6,7 +6,7 @@ import Image from "next/image";
 import { Upload, X, Trash2, MoveLeft, MoveRight, Sparkles, Loader2 } from "lucide-react";
 import { uploadErrorMessage } from "@/lib/upload-error";
 import { PRODUCT_MAX_IMAGES } from "@/lib/product-validation";
-import { AI_VARIANT_LABEL, type AiVariant } from "@/lib/ai-image";
+import { AI_VARIANT_LABEL, isAiGeneratedImage, type AiVariant } from "@/lib/ai-image";
 
 /** Treść potwierdzenia przed płatnym wywołaniem modelu. */
 const AI_CONFIRM: Record<AiVariant, string> = {
@@ -233,6 +233,13 @@ export default function ProductForm({ product, categories }: { product?: Product
                   <X size={14} />
                 </button>
               </div>
+              {/* Zdjęcia z AI nie idą do modelu ponownie – kolejne pokolenie gubi produkt */}
+              {isAiGeneratedImage(url) ? (
+                <p className="mt-1 flex items-center justify-center gap-1 text-[10px] tracking-wide uppercase text-charcoal/80">
+                  <Sparkles size={11} aria-hidden="true" />
+                  Z AI
+                </p>
+              ) : (
               <div className="flex gap-1 mt-1">
                 {(["ai", "ai_plus"] as AiVariant[]).map((variant) => {
                   const busy = generating?.idx === i && generating.variant === variant;
@@ -260,6 +267,7 @@ export default function ProductForm({ product, categories }: { product?: Product
                   );
                 })}
               </div>
+              )}
             </div>
           ))}
           {images.length < PRODUCT_MAX_IMAGES && (
@@ -277,8 +285,9 @@ export default function ProductForm({ product, categories }: { product?: Product
         <p className="text-[11px] text-charcoal/80 mt-1">
           <strong className="font-medium">AI</strong> tworzy wersję zdjęcia na jednolitym, matowym tle,{" "}
           <strong className="font-medium">AI+</strong> – w wystylizowanej scenie. Wynik dodaje się jako
-          nowe zdjęcie na końcu listy (oryginał zostaje). Model dla obu wariantów wybierzesz
-          w Ustawieniach → AI (zdjęcia).
+          nowe zdjęcie na końcu listy (oryginał zostaje). Zdjęcia już wygenerowane przez AI
+          (oznaczone „Z AI”) nie mają tych przycisków – powtórne przetworzenie gubi wygląd produktu.
+          Model dla obu wariantów wybierzesz w Ustawieniach → AI (zdjęcia).
         </p>
         {generating && (
           <p className="text-[11px] text-clay mt-1">

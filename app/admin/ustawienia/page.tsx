@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { redirect } from "next/navigation";
 import { getSettings } from "@/lib/settings";
+import { getAiUsageStats } from "@/lib/ai-usage";
 import SettingsForm from "@/components/admin/SettingsForm";
 
 const VALID_SECTIONS = new Set([
@@ -78,13 +79,17 @@ export default async function AdminSettingsPage({
     "custom_order_notify_email_enabled",
     "ai_image_model",
     "ai_image_model_plus",
+    "ai_usd_pln_rate",
   ]);
+
+  // Statystyki zużycia AI potrzebne tylko na jednej zakładce – nie odpytuj bazy poza nią
+  const aiUsage = section === "ai" ? await getAiUsageStats() : null;
 
   return (
     <div className="max-w-2xl">
       <h1 className="font-serif text-3xl text-espresso mb-8">Ustawienia</h1>
       {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-      <SettingsForm section={section} initial={settings as any} />
+      <SettingsForm section={section} initial={settings as any} aiUsage={aiUsage} />
     </div>
   );
 }
