@@ -86,7 +86,7 @@ export default function ProductGallery({
 
   if (images.length === 0) {
     return (
-      <div className="relative aspect-[4/5] overflow-hidden bg-cream">
+      <div className="relative aspect-[4/3] overflow-hidden bg-cream">
         <div className="w-full h-full flex items-center justify-center">
           <ShoppingBag size={64} strokeWidth={1} className="text-sand" />
         </div>
@@ -98,7 +98,7 @@ export default function ProductGallery({
     <div className="flex flex-col gap-4">
       <div
         ref={frameRef}
-        className="relative aspect-[4/5] overflow-hidden bg-cream group"
+        className="relative aspect-[4/3] overflow-hidden bg-cream group"
         // pan-y: gest w pionie przewija stronę, w poziomie obsługujemy sami
         style={{ touchAction: "pan-y" }}
         onTouchStart={handleTouchStart}
@@ -126,7 +126,10 @@ export default function ProductGallery({
                 alt={images.length > 1 ? `${name} – zdjęcie ${i + 1}` : name}
                 fill
                 priority={i === 0}
-                className="object-cover"
+                // contain, nie cover – na karcie produktu ma być widoczne całe
+                // zdjęcie, a nie wycinek; kadr 4/3 odpowiada proporcjom, w których
+                // robiona jest większość zdjęć, więc pustego tła jest minimum
+                className="object-contain"
                 sizes="(max-width: 1024px) 100vw, 50vw"
                 draggable={false}
               />
@@ -180,7 +183,7 @@ export default function ProductGallery({
                 src={img}
                 alt={`${name} ${i + 1}`}
                 fill
-                className="object-cover"
+                className="object-contain"
                 sizes="80px"
               />
             </button>
