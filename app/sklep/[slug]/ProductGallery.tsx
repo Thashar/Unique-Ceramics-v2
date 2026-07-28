@@ -13,7 +13,7 @@ const SWIPE_MIN_RATIO = 0.15;
 const EDGE_RESISTANCE = 3;
 
 /** Lupa: ile trzeba przytrzymać, jak duże jest szkło i jak mocno powiększa. */
-const HOLD_MS = 1000;
+const HOLD_MS = 500;
 const LENS_SIZE = 176;
 const LENS_ZOOM = 2.6;
 
@@ -268,7 +268,7 @@ export default function ProductGallery({
         {lensStyle && (
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute rounded-full border-2 border-warm-white bg-cream shadow-xl"
+            className="pointer-events-none absolute rounded-sm border-2 border-warm-white bg-cream shadow-xl"
             style={lensStyle}
           />
         )}
