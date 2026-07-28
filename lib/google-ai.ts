@@ -70,25 +70,99 @@ function num(value: unknown): number {
   return typeof value === "number" && Number.isFinite(value) && value > 0 ? Math.round(value) : 0;
 }
 
+// Liczniki tokenów przychodzą pod różnymi nazwami – Interactions API używa
+// snake_case (`usage.input_tokens`), starsze `generateContent` camelCase
+// (`usageMetadata.promptTokenCount`), a część odpowiedzi miesza konwencje
+// (`prompt_token_count`). Dlatego zamiast kilku sztywnych pól sprawdzamy pełną
+// listę aliasów po obu stronach – wcześniej lista wejściowa była krótsza niż
+// wyjściowa, więc przy nietrafionej nazwie wejście liczyło się jako zero
+// i koszt tokenów wejściowych przepadał.
+const PROMPT_KEYS = [
+  "input_tokens", "inputTokens", "input_token_count", "inputTokenCount",
+  "prompt_tokens", "promptTokens", "prompt_token_count", "promptTokenCount",
+];
+const OUTPUT_KEYS = [
+  "output_tokens", "outputTokens", "output_token_count", "outputTokenCount",
+  "completion_tokens", "completionTokens",
+  "candidates_tokens", "candidatesTokens", "candidates_token_count", "candidatesTokenCount",
+];
+/** Tokeny „myślenia” są rozliczane jak wyjściowe, a bywają podane osobno. */
+const THOUGHT_KEYS = [
+  "thoughts_token_count", "thoughtsTokenCount",
+  "reasoning_tokens", "reasoningTokens", "thinking_tokens", "thinkingTokens",
+];
+const TOTAL_KEYS = [
+  "total_tokens", "totalTokens", "total_token_count", "totalTokenCount",
+];
+
+function pick(usage: Record<string, unknown>, keys: string[]): number {
+  for (const key of keys) {
+    const value = num(usage[key]);
+    if (value) return value;
+  }
+  return 0;
+}
+
+/** Zbiera obiekty z licznikami z miejsc, w których API potrafi je umieścić. */
+function collectUsageObjects(body: unknown): Record<string, unknown>[] {
+  const root = (body ?? {}) as Record<string, unknown>;
+  const found: Record<string, unknown>[] = [];
+
+  const push = (value: unknown) => {
+    if (value && typeof value === "object") found.push(value as Record<string, unknown>);
+  };
+
+  push(root.usage);
+  push(root.usageMetadata);
+  push(root.usage_metadata);
+  push((root.response as Record<string, unknown> | undefined)?.usageMetadata);
+
+  // Interactions API potrafi rozbić zużycie na poszczególne kroki
+  if (found.length === 0 && Array.isArray(root.steps)) {
+    for (const step of root.steps) {
+      const s = step as Record<string, unknown>;
+      push(s?.usage);
+      push(s?.usageMetadata);
+    }
+  }
+  return found;
+}
+
 /**
- * Liczniki tokenów bywają pod różnymi nazwami: Interactions API zwraca `usage`
- * (snake_case), starsze `generateContent` – `usageMetadata` (camelCase).
- * Czytamy oba warianty; brak liczników sygnalizujemy przez `estimated`.
+ * Wyciąga liczniki tokenów z odpowiedzi modelu. Sumuje wejście i wyjście
+ * (tokeny „myślenia” doliczamy do wyjścia, bo tak są rozliczane), a gdy API
+ * poda tylko sumę i jedną ze stron – drugą wylicza z różnicy.
+ * `estimated` oznacza, że nie było żadnych liczników i koszt jest z szacunku.
  */
 function readUsage(body: unknown, fallbackOutputTokens: number): AiUsage {
-  const root = (body ?? {}) as Record<string, unknown>;
-  const usage = (root.usage ?? root.usageMetadata ?? {}) as Record<string, unknown>;
+  let promptTokens = 0;
+  let outputTokens = 0;
+  let totalTokens = 0;
 
-  const promptTokens =
-    num(usage.input_tokens) || num(usage.inputTokens) ||
-    num(usage.prompt_tokens) || num(usage.promptTokenCount);
-  const outputTokens =
-    num(usage.output_tokens) || num(usage.outputTokens) ||
-    num(usage.candidates_token_count) || num(usage.candidatesTokenCount);
+  for (const usage of collectUsageObjects(body)) {
+    promptTokens += pick(usage, PROMPT_KEYS);
+    outputTokens += pick(usage, OUTPUT_KEYS) + pick(usage, THOUGHT_KEYS);
+    totalTokens += pick(usage, TOTAL_KEYS);
+  }
+
+  // Gdy znamy sumę i tylko jedną stronę, druga wynika z różnicy
+  if (totalTokens > 0) {
+    if (!outputTokens && promptTokens && totalTokens > promptTokens) {
+      outputTokens = totalTokens - promptTokens;
+    } else if (!promptTokens && outputTokens && totalTokens > outputTokens) {
+      promptTokens = totalTokens - outputTokens;
+    }
+  }
 
   if (promptTokens || outputTokens) {
     return { promptTokens, outputTokens: outputTokens || fallbackOutputTokens, estimated: false };
   }
+
+  // Nic nie rozpoznaliśmy – zapisz kształt odpowiedzi, żeby dało się dopisać alias
+  console.error(
+    "[google-ai] brak liczników tokenów w odpowiedzi:",
+    JSON.stringify(collectUsageObjects(body))?.slice(0, 300) || "(brak obiektu usage)"
+  );
   return { promptTokens: 0, outputTokens: fallbackOutputTokens, estimated: true };
 }
 
