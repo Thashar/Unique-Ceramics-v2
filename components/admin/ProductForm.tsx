@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Upload, X, Trash2 } from "lucide-react";
+import { Upload, X, Trash2, MoveLeft, MoveRight } from "lucide-react";
 import { uploadErrorMessage } from "@/lib/upload-error";
+import { PRODUCT_MAX_IMAGES } from "@/lib/product-validation";
 
 type Product = {
   id: string;
@@ -54,24 +55,46 @@ export default function ProductForm({ product, categories }: { product?: Product
       .replace(/^-|-$/g, "");
   }
 
+  function removeImage(idx: number) {
+    if (!confirm("Usunąć to zdjęcie z produktu?")) return;
+    setImages((prev) => prev.filter((_, i) => i !== idx));
+  }
+
+  /** Zamiana zdjęcia z sąsiadem – kolejność decyduje, które jest główne (pierwsze). */
+  function moveImage(idx: number, dir: -1 | 1) {
+    const target = idx + dir;
+    setImages((prev) => {
+      if (target < 0 || target >= prev.length) return prev;
+      const next = [...prev];
+      [next[idx], next[target]] = [next[target], next[idx]];
+      return next;
+    });
+  }
+
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.target.files;
     if (!files?.length) return;
     setUploading(true);
     setError("");
 
+    let added: string[] = [];
     for (const file of Array.from(files)) {
+      if (images.length + added.length >= PRODUCT_MAX_IMAGES) {
+        setError(`Do produktu można dodać maksymalnie ${PRODUCT_MAX_IMAGES} zdjęć.`);
+        break;
+      }
       const formData = new FormData();
       formData.append("file", file);
       const res = await fetch("/api/admin/upload", { method: "POST", body: formData });
       const data = await res.json().catch(() => null);
       if (res.ok && data?.url) {
-        setImages((prev) => [...prev, data.url]);
+        added = [...added, data.url];
       } else {
         setError(uploadErrorMessage(res.status, data?.error, file.name));
         break;
       }
     }
+    if (added.length > 0) setImages((prev) => [...prev, ...added]);
     setUploading(false);
     e.target.value = "";
   }
@@ -125,25 +148,62 @@ export default function ProductForm({ product, categories }: { product?: Product
       {/* Zdjęcia */}
       <div>
         <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-3">Zdjęcia produktu</label>
-        <div className="flex flex-wrap gap-3 mb-3">
+        <div className="flex flex-wrap items-start gap-3 mb-3">
           {images.map((url, i) => (
-            <div key={i} className="relative w-24 h-24 bg-cream overflow-hidden group">
-              <Image src={url} alt={`Zdjęcie ${i + 1}`} fill className="object-cover" sizes="96px" />
-              <button
-                type="button"
-                onClick={() => setImages((prev) => prev.filter((_, idx) => idx !== i))}
-                className="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-full items-center justify-center hidden group-hover:flex"
-              >
-                <X size={12} />
-              </button>
+            <div key={`${i}-${url}`} className="w-24 border border-sand bg-warm-white p-1.5">
+              <div className="relative w-full aspect-square bg-cream overflow-hidden">
+                <Image src={url} alt={`Zdjęcie ${i + 1}`} fill className="object-cover" sizes="96px" />
+                {i === 0 && images.length > 1 && (
+                  <span className="absolute inset-x-0 bottom-0 bg-espresso/90 text-cream text-[9px] tracking-widest uppercase text-center py-0.5">
+                    Główne
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center justify-between mt-1.5">
+                <button
+                  type="button"
+                  onClick={() => moveImage(i, -1)}
+                  disabled={i === 0}
+                  title="Przesuń w lewo"
+                  aria-label={`Przesuń zdjęcie ${i + 1} w lewo`}
+                  className="p-1 text-charcoal hover:text-espresso disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <MoveLeft size={14} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => moveImage(i, 1)}
+                  disabled={i === images.length - 1}
+                  title="Przesuń w prawo"
+                  aria-label={`Przesuń zdjęcie ${i + 1} w prawo`}
+                  className="p-1 text-charcoal hover:text-espresso disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <MoveRight size={14} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => removeImage(i)}
+                  title="Usuń zdjęcie"
+                  aria-label={`Usuń zdjęcie ${i + 1}`}
+                  className="p-1 text-red-700 hover:bg-red-50"
+                >
+                  <X size={14} />
+                </button>
+              </div>
             </div>
           ))}
-          <label className={`w-24 h-24 border-2 border-dashed border-sand flex flex-col items-center justify-center cursor-pointer hover:border-clay transition-colors ${uploading ? "opacity-50 pointer-events-none" : ""}`}>
-            <Upload size={20} strokeWidth={1.5} className="text-charcoal/80 mb-1" />
-            <span className="text-[10px] text-charcoal/80">{uploading ? "Upload..." : "Dodaj"}</span>
-            <input type="file" accept="image/*" multiple className="hidden" onChange={handleImageUpload} />
-          </label>
+          {images.length < PRODUCT_MAX_IMAGES && (
+            <label className={`w-24 h-24 border-2 border-dashed border-sand flex flex-col items-center justify-center cursor-pointer hover:border-clay transition-colors ${uploading ? "opacity-50 pointer-events-none" : ""}`}>
+              <Upload size={20} strokeWidth={1.5} className="text-charcoal/80 mb-1" />
+              <span className="text-[10px] text-charcoal/80">{uploading ? "Upload..." : "Dodaj"}</span>
+              <input type="file" accept="image/*" multiple className="hidden" onChange={handleImageUpload} disabled={uploading} />
+            </label>
+          )}
         </div>
+        <p className="text-[11px] text-charcoal/80">
+          Pierwsze zdjęcie jest główne – widać je na liście produktów i w koszyku. Strzałki zmieniają
+          kolejność, krzyżyk usuwa zdjęcie (maks. {PRODUCT_MAX_IMAGES}).
+        </p>
       </div>
 
       {/* Podstawowe */}
