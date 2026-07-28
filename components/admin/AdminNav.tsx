@@ -31,6 +31,7 @@ const settingsItems = [
   { id: "wysylka",   label: "Wysyłka" },
   { id: "urlop",            label: "Urlop" },
   { id: "zam_indywidualne", label: "Zam. indywidualne" },
+  { id: "ai",               label: "AI (zdjęcia)" },
 ];
 
 const paymentItems = [

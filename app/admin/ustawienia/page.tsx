@@ -6,7 +6,7 @@ import SettingsForm from "@/components/admin/SettingsForm";
 
 const VALID_SECTIONS = new Set([
   "strona_glowna", "omnie", "warsztaty", "regulamin", "polityka",
-  "kontakt", "wysylka", "urlop", "zam_indywidualne",
+  "kontakt", "wysylka", "urlop", "zam_indywidualne", "ai",
   "platnosci_przelew", "platnosci_stripe",
 ]);
 
@@ -76,6 +76,8 @@ export default async function AdminSettingsPage({
     "vacation_end_date",
     "vacation_message",
     "custom_order_notify_email_enabled",
+    "ai_image_model",
+    "ai_image_model_plus",
   ]);
 
   return (
