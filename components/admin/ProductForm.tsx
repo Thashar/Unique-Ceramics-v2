@@ -6,7 +6,7 @@ import Image from "next/image";
 import { Upload, X, Trash2, MoveLeft, MoveRight, Sparkles, Loader2 } from "lucide-react";
 import { uploadErrorMessage } from "@/lib/upload-error";
 import { PRODUCT_MAX_IMAGES } from "@/lib/product-validation";
-import { AI_VARIANT_LABEL, isAiGeneratedImage, type AiVariant } from "@/lib/ai-image";
+import { AI_VARIANT_LABEL, isAiGeneratedImage, type AiVariant } from "@/lib/ai";
 
 /** Treść potwierdzenia przed płatnym wywołaniem modelu. */
 const AI_CONFIRM: Record<AiVariant, string> = {
@@ -48,6 +48,7 @@ export default function ProductForm({ product, categories }: { product?: Product
   const [uploading, setUploading] = useState(false);
   // Które zdjęcie jest właśnie przerabiane przez AI (indeks + wariant)
   const [generating, setGenerating] = useState<{ idx: number; variant: AiVariant } | null>(null);
+  const [filling, setFilling] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -111,6 +112,53 @@ export default function ProductForm({ product, categories }: { product?: Product
       setError("Brak połączenia z serwerem – spróbuj ponownie.");
     } finally {
       setGenerating(null);
+    }
+  }
+
+  /**
+   * Uzupełnia nazwę, slug, kategorię i opis na podstawie zdjęcia głównego.
+   * Nadpisuje te pola – dlatego pytamy o potwierdzenie.
+   */
+  async function fillWithAi() {
+    if (filling || generating) return;
+    const main = images[0];
+    if (!main) {
+      setError("Najpierw dodaj zdjęcie produktu – AI uzupełnia dane na jego podstawie.");
+      return;
+    }
+    if (
+      !confirm(
+        "Uzupełnić dane produktu przez AI na podstawie zdjęcia głównego?\n\nNadpisze to nazwę, slug, kategorię i opis."
+      )
+    ) {
+      return;
+    }
+
+    setFilling(true);
+    setError("");
+    try {
+      const res = await fetch("/api/admin/ai-text", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: main }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data) {
+        setError(data?.error ?? "Nie udało się uzupełnić danych produktu.");
+        return;
+      }
+      setForm((prev) => ({
+        ...prev,
+        name: data.name || prev.name,
+        slug: data.slug || prev.slug,
+        // Kategoria przychodzi tylko wtedy, gdy model trafił w istniejącą
+        category: data.category || prev.category,
+        description: data.description || prev.description,
+      }));
+    } catch {
+      setError("Brak połączenia z serwerem – spróbuj ponownie.");
+    } finally {
+      setFilling(false);
     }
   }
 
@@ -336,6 +384,28 @@ export default function ProductForm({ product, categories }: { product?: Product
           <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">Opis</label>
           <textarea value={form.description} onChange={(e) => set("description", e.target.value)}
             rows={4} className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm resize-none" />
+          <div className="mt-2 flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={fillWithAi}
+              disabled={filling || generating !== null || images.length === 0}
+              className="inline-flex items-center gap-2 border border-sand bg-cream hover:bg-sand text-espresso text-xs tracking-widest uppercase px-4 py-2.5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {filling ? (
+                <Loader2 size={14} className="animate-spin" aria-hidden="true" />
+              ) : (
+                <Sparkles size={14} aria-hidden="true" />
+              )}
+              Uzupełnij przy użyciu AI
+            </button>
+            <span className="text-[11px] text-charcoal/80">
+              {images.length === 0
+                ? "Najpierw dodaj zdjęcie – AI czyta dane z pierwszego zdjęcia."
+                : filling
+                  ? "Czytam zdjęcie i przygotowuję dane..."
+                  : "Ze zdjęcia głównego uzupełni nazwę, slug, kategorię i opis (nadpisze te pola)."}
+            </span>
+          </div>
         </div>
       </div>
 

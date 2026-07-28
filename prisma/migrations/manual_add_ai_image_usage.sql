@@ -7,6 +7,7 @@
 CREATE TABLE IF NOT EXISTS "AiImageUsage" (
     "id"           TEXT NOT NULL,
     "createdAt"    TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "kind"         TEXT NOT NULL DEFAULT 'image',
     "variant"      TEXT NOT NULL,
     "model"        TEXT NOT NULL,
     "promptTokens" INTEGER NOT NULL DEFAULT 0,

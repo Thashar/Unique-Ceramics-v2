@@ -110,43 +110,67 @@ async function postJson(path: string, payload: unknown, apiKey: string) {
   }
 }
 
+/** Tekst z odpowiedzi Interactions API (skrót `output_text` albo bloki w krokach). */
+function readInteractionsText(body: unknown): string {
+  const root = body as Record<string, unknown> | null;
+  if (typeof root?.output_text === "string" && root.output_text.trim()) return root.output_text;
+
+  const steps = Array.isArray(root?.steps) ? root.steps : [];
+  const parts: string[] = [];
+  for (const step of steps) {
+    const content = (step as Record<string, unknown>)?.content;
+    if (!Array.isArray(content)) continue;
+    for (const block of content) {
+      const b = block as Record<string, unknown>;
+      // Bloki „thought” nie są odpowiedzią – bierzemy tylko zwykły tekst
+      if (b?.type === "text" && typeof b.text === "string") parts.push(b.text);
+    }
+  }
+  return parts.join("\n").trim();
+}
+
+/** Tekst z odpowiedzi starszego `models/*:generateContent`. */
+function readGenerateContentText(body: unknown): string {
+  const candidates = (body as Record<string, unknown>)?.candidates;
+  if (!Array.isArray(candidates)) return "";
+  const parts: string[] = [];
+  for (const candidate of candidates) {
+    const list = (candidate as Record<string, Record<string, unknown>>)?.content?.parts;
+    if (!Array.isArray(list)) continue;
+    for (const part of list) {
+      const text = (part as Record<string, unknown>)?.text;
+      if (typeof text === "string") parts.push(text);
+    }
+  }
+  return parts.join("\n").trim();
+}
+
 /**
- * Przerabia zdjęcie promptem i zwraca wygenerowany obraz.
+ * Wysyła prompt i zdjęcie do modelu, zwraca surową odpowiedź.
  *
  * Podstawą jest Interactions API (`/v1beta/interactions`) – to endpoint opisany
- * dziś w dokumentacji modeli obrazowych. Starsze modele bywają wystawione tylko
- * pod `models/{model}:generateContent`, więc przy odmowie 400/404 powtarzamy
+ * dziś w dokumentacji modeli. Część modeli bywa wystawiona tylko pod
+ * `models/{model}:generateContent`, więc przy odmowie 400/404 powtarzamy
  * żądanie tamtą drogą, zamiast zwracać adminowi błąd.
  */
-export async function generateProductImage(opts: {
-  model: string;
-  prompt: string;
-  image: GeneratedImage;
-  /** Ile tokenów przyjąć za obraz, gdy API nie zwróci liczników. */
-  fallbackOutputTokens: number;
-}): Promise<GenerationResult> {
+async function callGemini(model: string, prompt: string, image: GeneratedImage) {
   const apiKey = process.env.GOOGLE_AI_API_KEY?.trim();
   if (!apiKey) throw new Error("Brak klucza GOOGLE_AI_API_KEY.");
 
-  const base64 = opts.image.data.toString("base64");
+  const base64 = image.data.toString("base64");
 
   const first = await postJson(
     "/interactions",
     {
-      model: opts.model,
+      model,
       input: [
-        { type: "text", text: opts.prompt },
-        { type: "image", mime_type: opts.image.mimeType, data: base64 },
+        { type: "text", text: prompt },
+        { type: "image", mime_type: image.mimeType, data: base64 },
       ],
     },
     apiKey
   );
-
-  if (first.ok) {
-    const image = readInteractionsImage(first.body);
-    if (image) return { image, usage: readUsage(first.body, opts.fallbackOutputTokens) };
-    throw new Error("Model nie zwrócił obrazu.");
-  }
+  if (first.ok) return { body: first.body, viaInteractions: true };
 
   if (first.status !== 400 && first.status !== 404) {
     console.error("[google-ai] interactions:", first.status, JSON.stringify(first.body)?.slice(0, 500));
@@ -154,14 +178,14 @@ export async function generateProductImage(opts: {
   }
 
   const fallback = await postJson(
-    `/models/${encodeURIComponent(opts.model)}:generateContent`,
+    `/models/${encodeURIComponent(model)}:generateContent`,
     {
       contents: [
         {
           role: "user",
           parts: [
-            { text: opts.prompt },
-            { inline_data: { mime_type: opts.image.mimeType, data: base64 } },
+            { text: prompt },
+            { inline_data: { mime_type: image.mimeType, data: base64 } },
           ],
         },
       ],
@@ -177,8 +201,32 @@ export async function generateProductImage(opts: {
     );
     throw new Error(`Google AI odpowiedziało błędem (${fallback.status}).`);
   }
+  return { body: fallback.body, viaInteractions: false };
+}
 
-  const image = readGenerateContentImage(fallback.body);
+/** Przerabia zdjęcie promptem i zwraca wygenerowany obraz. */
+export async function generateProductImage(opts: {
+  model: string;
+  prompt: string;
+  image: GeneratedImage;
+  /** Ile tokenów przyjąć za obraz, gdy API nie zwróci liczników. */
+  fallbackOutputTokens: number;
+}): Promise<GenerationResult> {
+  const { body, viaInteractions } = await callGemini(opts.model, opts.prompt, opts.image);
+  const image = viaInteractions ? readInteractionsImage(body) : readGenerateContentImage(body);
   if (!image) throw new Error("Model nie zwrócił obrazu.");
-  return { image, usage: readUsage(fallback.body, opts.fallbackOutputTokens) };
+  return { image, usage: readUsage(body, opts.fallbackOutputTokens) };
+}
+
+/** Opisuje zdjęcie tekstem (uzupełnianie danych produktu). */
+export async function generateProductText(opts: {
+  model: string;
+  prompt: string;
+  image: GeneratedImage;
+}): Promise<{ text: string; usage: AiUsage }> {
+  const { body, viaInteractions } = await callGemini(opts.model, opts.prompt, opts.image);
+  const text = viaInteractions ? readInteractionsText(body) : readGenerateContentText(body);
+  if (!text) throw new Error("Model nie zwrócił tekstu.");
+  // Przy tekście nie ma sensownego szacunku tokenów – 0 oznacza „koszt nieznany”
+  return { text, usage: readUsage(body, 0) };
 }

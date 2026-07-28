@@ -79,6 +79,7 @@ export default async function AdminSettingsPage({
     "custom_order_notify_email_enabled",
     "ai_image_model",
     "ai_image_model_plus",
+    "ai_text_model",
     "ai_usd_pln_rate",
   ]);
 
