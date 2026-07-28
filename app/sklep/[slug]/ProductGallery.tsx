@@ -214,9 +214,9 @@ export default function ProductGallery({
     <div className="flex flex-col gap-4">
       <div
         ref={frameRef}
-        className="relative aspect-[4/3] overflow-hidden bg-cream group"
+        className="relative aspect-[4/3] overflow-hidden bg-cream group select-none"
         // pan-y: gest w pionie przewija stronę, w poziomie obsługujemy sami
-        style={{ touchAction: "pan-y" }}
+        style={{ touchAction: "pan-y", WebkitTouchCallout: "none" }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -225,6 +225,9 @@ export default function ProductGallery({
         onMouseMove={handleMouseMove}
         onMouseUp={closeLens}
         onMouseLeave={closeLens}
+        // Bez tego długie przytrzymanie otwiera menu przeglądarki („Otwórz grafikę
+        // w nowej karcie…”), które zasłania kadr i przerywa gest lupy
+        onContextMenu={(e) => e.preventDefault()}
         onKeyDown={handleKeyDown}
         tabIndex={hasMany ? 0 : -1}
         role={hasMany ? "group" : undefined}
@@ -299,10 +302,6 @@ export default function ProductGallery({
           </>
         )}
       </div>
-
-      <p className="text-[11px] text-charcoal/80">
-        Przytrzymaj zdjęcie przez sekundę palcem lub kursorem, żeby powiększyć fragment – przesuwaj, aby obejrzeć detale.
-      </p>
 
       {hasMany && (
         <div className="flex gap-3 overflow-x-auto">
