@@ -177,7 +177,7 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` – zwracają wartość z DB l
 |-------|-------|------|
 | `/` | ISR 3600 s | Strona główna (scroll-snap, hero, wybrane prace, stopka z IG) + ukryta sekcja SEO „Obszar obsługi" (`sr-only` – indeksowalna, niewidoczna wizualnie; uzupełnia `areaServed` w JSON-LD) |
 | `/sklep` | dynamic + dane z cache 60 s | Katalog produktów (searchParams `kategoria`); kategorie renderują się natychmiast, siatka produktów streamuje przez `<Suspense>` z `ProductGrid` + `ProductGridSkeleton` |
-| `/sklep/[slug]` | ISR 60 s (pre-generated) | Szczegóły produktu (**server component**, JSON-LD Product); `generateStaticParams` pre-generuje wszystkie aktywne produkty przy budowaniu. Galeria: `ProductGallery` (client) |
+| `/sklep/[slug]` | ISR 60 s (pre-generated) | Szczegóły produktu (**server component**, JSON-LD Product, pełne Open Graph + Twitter card – zdjęcie z `/api/og/[slug]`; pamiętaj, że `openGraph` ze strony **zastępuje** ten z layoutu, więc `siteName`/`locale`/`type` są powtórzone); `generateStaticParams` pre-generuje wszystkie aktywne produkty przy budowaniu. Galeria: `ProductGallery` (client) |
 | `/koszyk` | static (client) | Koszyk |
 | `/zamowienie` | force-dynamic | Formularz zamówienia (server) → `CheckoutForm` (client) |
 | `/zamowienie/potwierdzenie` | force-dynamic | Potwierdzenie + dane do przelewu |
@@ -241,6 +241,7 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` – zwracają wartość z DB l
 | PATCH/POST | `/api/admin/settings` | Zapis ustawień (ADMIN; sanityzacja HTML + `revalidatePath("/", "layout")`) |
 | GET | `/api/admin/settings/[key]` | Pojedyncze ustawienie (ADMIN) |
 | GET | `/api/admin/reports/[year]/[month]` | Generuje i pobiera raport PDF za dany miesiąc (ADMIN; pdfkit; czcionka Lato z Google Fonts CDN z cachem; fallback Helvetica). Tylko opłacone zamówienia rozpoznane wg daty wpłaty (`paidAt`/`createdAt`). Liczy podatek PIT od przychodu z produktów (bez wysyłki – koszt uzyskania przychodu); stawka 12% lub 32% wg ustawienia `tax_high_{rok}_{miesiac}` |
+| GET | `/api/og/[slug]` | Zdjęcie do podglądu linku produktu (publiczne): bierze `images[0]` aktywnego produktu i oddaje **JPEG 1200×630** (`fit: contain` na tle `cream`). Powód: zdjęcia trzymamy w WebP, którego **WhatsApp nie renderuje** w podglądach linków. Wskazywane z `generateMetadata` w `/sklep/[slug]` razem z `width`/`height`/`type` – bez nich część komunikatorów pokazuje mały kafelek. Cache: `s-maxage=86400` |
 | GET | `/api/ping` | Health check (wymaga `Authorization: Bearer CRON_SECRET`; cron Vercel 8:00) |
 
 ---

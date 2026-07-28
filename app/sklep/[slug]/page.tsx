@@ -36,14 +36,46 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const product = await getProduct(slug);
   if (!product) return { title: "Produkt nie istnieje" };
+
+  const url = `https://uniqueceramics.pl/sklep/${slug}`;
+  const description =
+    product.description?.trim() ||
+    `${product.name} – ręcznie robiona ceramika artystyczna. Każdy egzemplarz jest niepowtarzalny.`;
+
+  // Podgląd linku bierze zdjęcie z /api/og/[slug]: zdjęcia produktów są w WebP,
+  // którego WhatsApp nie renderuje, a trasa oddaje kadr 1200×630 w JPEG.
+  // Wymiary i typ podajemy jawnie – bez nich część komunikatorów pokazuje
+  // mały kafelek zamiast dużego podglądu.
+  const image = product.images[0]
+    ? [{
+        url: `https://uniqueceramics.pl/api/og/${slug}`,
+        width: 1200,
+        height: 630,
+        type: "image/jpeg",
+        alt: product.name,
+      }]
+    : [];
+
   return {
     title: `${product.name} – Unique Ceramics`,
-    description: product.description ?? `${product.name} – ręcznie robiona ceramika. Kup online.`,
-    alternates: { canonical: `https://uniqueceramics.pl/sklep/${slug}` },
+    description,
+    alternates: { canonical: url },
+    // Uwaga: `openGraph` ze strony zastępuje ten z layoutu w całości,
+    // więc siteName/locale/type trzeba powtórzyć tutaj
     openGraph: {
+      type: "website",
+      siteName: "Unique Ceramics",
+      locale: "pl_PL",
+      url,
       title: product.name,
-      description: product.description ?? "",
-      images: product.images[0] ? [{ url: product.images[0] }] : [],
+      description,
+      images: image,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: product.name,
+      description,
+      images: image.map((i) => i.url),
     },
   };
 }
