@@ -4,21 +4,17 @@ import ClayRule from "@/components/ui/ClayRule";
 import { getProjects } from "@/lib/portfolio";
 import Image from "next/image";
 import { sanitizeRichHtml } from "@/lib/sanitize-html";
+import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 
 export const revalidate = 300;
 
-export const metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Moje projekty",
   description:
     "Prace ceramiczne wykonywane w pracowni Unique Ceramics – każdy projekt to unikalne dzieło stworzone ręcznie z lokalnej gliny.",
-  alternates: { canonical: "https://uniqueceramics.pl/moje-projekty" },
-  openGraph: {
-    title: "Moje projekty – Unique Ceramics",
-    description:
-      "Prace ceramiczne tworzone ręcznie z lokalnej gliny. Poznaj moje projekty.",
-    url: "https://uniqueceramics.pl/moje-projekty",
-  },
-};
+  path: "/moje-projekty",
+});
 
 export default async function ProjectsPage() {
   const projects = await getProjects();

@@ -7,13 +7,15 @@ import { sanitizeRichHtml } from "@/lib/sanitize-html";
 import Header from "@/components/layout/HeaderWrapper";
 import Footer from "@/components/layout/Footer";
 import ClayRule from "@/components/ui/ClayRule";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Regulamin",
-  description: "Regulamin sklepu internetowego Unique Ceramics.",
-  alternates: { canonical: "https://uniqueceramics.pl/regulamin" },
-  robots: { index: false, follow: false },
-};
+  description:
+    "Regulamin sklepu internetowego Unique Ceramics – zamówienia, płatności, dostawa, reklamacje i zwroty.",
+  path: "/regulamin",
+  noIndex: true,
+});
 
 export default async function RegulaminPage() {
   const content = await getSetting("regulamin");
