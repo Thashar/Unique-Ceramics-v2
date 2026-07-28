@@ -31,7 +31,7 @@ const settingsItems = [
   { id: "wysylka",   label: "Wysyłka" },
   { id: "urlop",            label: "Urlop" },
   { id: "zam_indywidualne", label: "Zam. indywidualne" },
-  { id: "ai",               label: "AI (zdjęcia)" },
+  { id: "ai",               label: "AI (zdjęcia i opisy)" },
 ];
 
 const paymentItems = [
@@ -72,11 +72,12 @@ function AdminNavInner({ onClose }: { onClose?: () => void }) {
           );
         })}
 
-        {/* Ustawienia – rozwijane */}
-        <div className="pt-1">
+        {/* Ustawienia – rozwijane. Kliknięcie NIE zamyka panelu na telefonie:
+            zamknięcie chowałoby dopiero co rozwiniętą listę sekcji. Panel zamykają
+            dopiero pozycje z listy, bo one kończą wybór. */}
+        <div>
           <Link
             href="/admin/ustawienia?s=strona_glowna"
-            onClick={onClose}
             className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-all duration-150 ${
               onSettings
                 ? "bg-white/12 text-white font-medium"
@@ -91,7 +92,7 @@ function AdminNavInner({ onClose }: { onClose?: () => void }) {
           </Link>
 
           {onSettings && (
-            <div className="mt-0.5 ml-4 border-l border-white/10 pl-3 space-y-0.5">
+            <div className="ml-4 border-l border-white/10 pl-3 space-y-0.5">
               {settingsItems.map(({ id, label }) => (
                 <Link
                   key={id}

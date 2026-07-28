@@ -12,12 +12,17 @@ import WorkshopsOffersEditor from "@/components/admin/WorkshopsOffersEditor";
 import { parseGallery, galleryHead } from "@/lib/gallery";
 import {
   AI_IMAGE_MODELS,
+  AI_MODEL_PRICING,
   AI_MODEL_SETTING_KEY,
   AI_PROMPTS,
+  AI_TEXT_MODELS,
+  AI_TEXT_MODEL_SETTING_KEY,
   aiCostPerImageUsd,
+  buildProductFillPrompt,
   resolveAiModel,
-} from "@/lib/ai-image";
-import type { AiUsageStats } from "@/lib/ai-usage";
+  resolveAiTextModel,
+} from "@/lib/ai";
+import type { AiUsagePeriod, AiUsageStats } from "@/lib/ai-usage";
 
 interface Props {
   section: string;
@@ -80,13 +85,33 @@ interface Props {
     custom_order_notify_email_enabled: string;
     ai_image_model: string;
     ai_image_model_plus: string;
+    ai_text_model: string;
     ai_usd_pln_rate: string;
   };
   /** Statystyki zużycia AI – liczone tylko dla zakładki „AI (zdjęcia)” */
   aiUsage?: AiUsageStats | null;
 }
 
-const MODEL_LABEL = new Map(AI_IMAGE_MODELS.map((m) => [m.id as string, m.label as string]));
+const MODEL_LABEL = new Map<string, string>([
+  ...AI_IMAGE_MODELS.map((m) => [m.id, m.label] as [string, string]),
+  ...AI_TEXT_MODELS.map((m) => [m.id, m.label] as [string, string]),
+]);
+
+/** Przykładowa kategoria tylko do podglądu promptu – realna lista idzie z bazy. */
+const PROMPT_PREVIEW_CATEGORIES = [{ slug: "kubki", label: "Kubki" }];
+
+/** Etykieta stawki modelu tekstowego: wejście / wyjście za 1 mln tokenów. */
+function tokenRate(model: string): string {
+  const price = AI_MODEL_PRICING[model];
+  if (!price) return "stawka nieznana";
+  return `$${price.inputPer1M} / $${price.outputPer1M} za 1 mln tokenów`;
+}
+
+const VARIANT_LABEL: Record<string, string> = {
+  ai: "AI (zdjęcie)",
+  ai_plus: "AI+ (zdjęcie)",
+  product_fill: "Uzupełnianie opisu",
+};
 
 /** Kwoty AI bywają rzędu setnych centa – pokazujemy tyle miejsc, ile ma sens. */
 function usd(value: number): string {
@@ -99,17 +124,23 @@ function pln(value: number, rate: number): string {
   return `${converted.toFixed(converted < 0.01 && converted > 0 ? 4 : 2).replace(".", ",")} zł`;
 }
 
-function UsageCard({ title, count, costUsd, rate }: {
-  title: string; count: number; costUsd: number; rate: number;
-}) {
+/** Kafelek okresu: łączny koszt na wierzchu, pod spodem rozbicie zdjęcia / teksty. */
+function UsageCard({ period, rate }: { period: AiUsagePeriod; rate: number }) {
   return (
     <div className="border border-sand bg-warm-white p-4">
-      <p className="text-xs tracking-widest uppercase text-charcoal/80">{title}</p>
-      <p className="font-serif text-2xl text-espresso mt-1">{count}</p>
-      <p className="text-xs text-charcoal/80">
-        {count === 1 ? "zdjęcie" : "zdjęć"} · {usd(costUsd)}
-        {rate > 0 && <> · {pln(costUsd, rate)}</>}
-      </p>
+      <p className="text-xs tracking-widest uppercase text-charcoal/80">{period.label}</p>
+      <p className="font-serif text-2xl text-espresso mt-1">{usd(period.costUsd)}</p>
+      {rate > 0 && <p className="text-xs text-charcoal/80">{pln(period.costUsd, rate)}</p>}
+      <dl className="mt-2 space-y-0.5 text-[11px] text-charcoal/80">
+        <div className="flex justify-between gap-2">
+          <dt>Zdjęcia ({period.image.count})</dt>
+          <dd className="tabular-nums">{usd(period.image.costUsd)}</dd>
+        </div>
+        <div className="flex justify-between gap-2">
+          <dt>Teksty ({period.text.count})</dt>
+          <dd className="tabular-nums">{usd(period.text.costUsd)}</dd>
+        </div>
+      </dl>
     </div>
   );
 }
@@ -375,6 +406,7 @@ export default function SettingsForm({ section, initial, aiUsage }: Props) {
   const [aiModelPlus, setAiModelPlus] = useState(() =>
     resolveAiModel("ai_plus", initial.ai_image_model_plus)
   );
+  const [aiTextModel, setAiTextModel] = useState(() => resolveAiTextModel(initial.ai_text_model));
   const [aiRate, setAiRate] = useState(initial.ai_usd_pln_rate);
   const aiRateNumber = Math.max(0, parseFloat(aiRate.replace(",", ".")) || 0);
 
@@ -850,12 +882,13 @@ export default function SettingsForm({ section, initial, aiUsage }: Props) {
 
       {section === "ai" && (
         <div className="max-w-2xl space-y-6">
-          <h2 className="font-serif text-2xl text-espresso">AI – generowanie zdjęć produktów</h2>
+          <h2 className="font-serif text-2xl text-espresso">AI – zdjęcia i opisy produktów</h2>
           <p className="text-xs text-charcoal/80 leading-relaxed">
             W edycji produktu pod każdym zdjęciem są przyciski <strong className="font-medium">AI</strong> i{" "}
-            <strong className="font-medium">AI+</strong>. Wysyłają one zdjęcie do Google AI i dokładają
-            wynik jako nowe zdjęcie produktu – oryginał zostaje bez zmian. Tutaj wybierasz, który model
-            odpowiada za każdy wariant.
+            <strong className="font-medium">AI+</strong> (nowe zdjęcie na podstawie istniejącego), a pod
+            opisem przycisk <strong className="font-medium">Uzupełnij przy użyciu AI</strong> (nazwa, slug,
+            kategoria i opis ze zdjęcia głównego). Tutaj wybierasz model dla każdego z tych zadań –
+            przy nazwie modelu widać jego stawkę.
           </p>
 
           {[
@@ -880,7 +913,9 @@ export default function SettingsForm({ section, initial, aiUsage }: Props) {
                 className="w-full bg-warm-white border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors"
               >
                 {AI_IMAGE_MODELS.map((m) => (
-                  <option key={m.id} value={m.id}>{m.label}</option>
+                  <option key={m.id} value={m.id}>
+                    {m.label} – {usd(aiCostPerImageUsd(m.id))} / zdjęcie
+                  </option>
                 ))}
               </select>
               <p className="text-[11px] text-charcoal/80">
@@ -895,6 +930,38 @@ export default function SettingsForm({ section, initial, aiUsage }: Props) {
               </details>
             </div>
           ))}
+
+          <div className="space-y-2 border border-sand bg-warm-white p-4">
+            <label className="block text-xs tracking-widest uppercase text-charcoal/80">
+              Uzupełnianie opisu – model tekstowy
+            </label>
+            <select
+              value={aiTextModel}
+              onChange={(e) => setAiTextModel(e.target.value)}
+              className="w-full bg-warm-white border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors"
+            >
+              {AI_TEXT_MODELS.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.label} – {tokenRate(m.id)}
+                </option>
+              ))}
+            </select>
+            <p className="text-[11px] text-charcoal/80">
+              Stawka za 1 mln tokenów (wejście / wyjście): {tokenRate(aiTextModel)}. Jedno uzupełnienie
+              to zdjęcie plus kilkaset tokenów, więc koszt jest ułamkiem centa – dokładna kwota trafia
+              do statystyk poniżej.
+            </p>
+            <details className="text-[11px] text-charcoal/80">
+              <summary className="cursor-pointer">Pokaż prompt wysyłany do modelu</summary>
+              <p className="mt-2 bg-cream border border-sand p-3 leading-5 whitespace-pre-line">
+                {buildProductFillPrompt(PROMPT_PREVIEW_CATEGORIES)}
+              </p>
+              <p className="mt-1">
+                W prawdziwym wywołaniu lista kategorii jest podstawiana z kategorii sklepu –
+                model może wybrać tylko istniejącą.
+              </p>
+            </details>
+          </div>
 
           <div className="max-w-xs">
             <Field
@@ -911,6 +978,7 @@ export default function SettingsForm({ section, initial, aiUsage }: Props) {
             onClick={() => save([
               { key: AI_MODEL_SETTING_KEY.ai, value: aiModel },
               { key: AI_MODEL_SETTING_KEY.ai_plus, value: aiModelPlus },
+              { key: AI_TEXT_MODEL_SETTING_KEY, value: aiTextModel },
               { key: "ai_usd_pln_rate", value: aiRate },
             ])}
             label="Zapisz ustawienia AI"
@@ -941,30 +1009,15 @@ export default function SettingsForm({ section, initial, aiUsage }: Props) {
               </p>
             ) : aiUsage.total.count === 0 ? (
               <p className="text-xs text-charcoal/80 bg-cream border border-sand p-4 leading-relaxed">
-                Nie wygenerowano jeszcze żadnego zdjęcia. Statystyki pojawią się po pierwszym użyciu
-                przycisków AI w edycji produktu.
+                AI nie było jeszcze używane. Statystyki pojawią się po pierwszym wygenerowaniu zdjęcia
+                lub uzupełnieniu opisu w edycji produktu.
               </p>
             ) : (
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <UsageCard
-                    title={aiUsage.currentMonth.label}
-                    count={aiUsage.currentMonth.count}
-                    costUsd={aiUsage.currentMonth.costUsd}
-                    rate={aiRateNumber}
-                  />
-                  <UsageCard
-                    title={aiUsage.previousMonth.label}
-                    count={aiUsage.previousMonth.count}
-                    costUsd={aiUsage.previousMonth.costUsd}
-                    rate={aiRateNumber}
-                  />
-                  <UsageCard
-                    title="Łącznie"
-                    count={aiUsage.total.count}
-                    costUsd={aiUsage.total.costUsd}
-                    rate={aiRateNumber}
-                  />
+                  <UsageCard period={aiUsage.currentMonth} rate={aiRateNumber} />
+                  <UsageCard period={aiUsage.previousMonth} rate={aiRateNumber} />
+                  <UsageCard period={aiUsage.total} rate={aiRateNumber} />
                 </div>
 
                 <div className="overflow-x-auto">
@@ -972,7 +1025,8 @@ export default function SettingsForm({ section, initial, aiUsage }: Props) {
                     <thead className="bg-cream text-charcoal/80">
                       <tr>
                         <th className="text-left font-medium px-3 py-2">Model</th>
-                        <th className="text-right font-medium px-3 py-2">Zdjęć</th>
+                        <th className="text-left font-medium px-3 py-2">Rodzaj</th>
+                        <th className="text-right font-medium px-3 py-2">Wywołań</th>
                         <th className="text-right font-medium px-3 py-2">Tokeny (wej./wyj.)</th>
                         <th className="text-right font-medium px-3 py-2">Koszt</th>
                       </tr>
@@ -981,6 +1035,9 @@ export default function SettingsForm({ section, initial, aiUsage }: Props) {
                       {aiUsage.byModel.map((row) => (
                         <tr key={row.model} className="border-t border-sand">
                           <td className="px-3 py-2">{MODEL_LABEL.get(row.model) ?? row.model}</td>
+                          <td className="px-3 py-2 text-charcoal/80">
+                            {row.kind === "text" ? "Tekst" : "Zdjęcia"}
+                          </td>
                           <td className="px-3 py-2 text-right tabular-nums">{row.count}</td>
                           <td className="px-3 py-2 text-right tabular-nums text-charcoal/80">
                             {row.promptTokens.toLocaleString("pl-PL")} / {row.outputTokens.toLocaleString("pl-PL")}
@@ -1002,7 +1059,7 @@ export default function SettingsForm({ section, initial, aiUsage }: Props) {
                 <div className="flex flex-wrap gap-x-6 gap-y-1 text-[11px] text-charcoal/80">
                   {aiUsage.byVariant.map((v) => (
                     <span key={v.variant}>
-                      {v.variant === "ai" ? "AI" : "AI+"}: {v.count} × ({usd(v.costUsd)})
+                      {VARIANT_LABEL[v.variant] ?? v.variant}: {v.count} × ({usd(v.costUsd)})
                     </span>
                   ))}
                   {aiUsage.lastUsedAt && (

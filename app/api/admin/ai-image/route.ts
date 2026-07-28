@@ -14,7 +14,7 @@ import {
   AI_PROMPTS,
   isAiVariant,
   resolveAiModel,
-} from "@/lib/ai-image";
+} from "@/lib/ai";
 
 // Generowanie obrazu trwa dłużej niż zwykłe żądanie – domyślne 10 s to za mało.
 export const maxDuration = 60;
@@ -83,7 +83,7 @@ export async function POST(req: Request) {
     });
     // Zużycie zapisujemy od razu po udanym wywołaniu – od tego momentu jest płatne,
     // niezależnie od tego, czy dalsza obróbka i zapis do Storage się powiodą
-    await recordAiUsage({ variant, model, ...result.usage });
+    await recordAiUsage({ kind: "image", variant, model, ...result.usage });
     // Ten sam format co upload i obrót – WebP, maks. 1920 px, maksymalna jakość
     generated = await sharp(result.image.data)
       .resize({ width: 1920, withoutEnlargement: true })

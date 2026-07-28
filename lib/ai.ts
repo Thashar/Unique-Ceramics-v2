@@ -1,0 +1,176 @@
+// Wywołania Google AI (Gemini) – wspólne definicje dla panelu admina
+// (wybór modeli, przyciski AI / AI+ i „Uzupełnij przy użyciu AI”) oraz tras serwerowych.
+// Moduł jest neutralny (same stałe) – może trafić do bundle klienta.
+
+/** Rodzaj wywołania – rozdziela koszty zdjęć od kosztów tekstu. */
+export type AiKind = "image" | "text";
+
+/** Warianty generowania dostępne przy każdym zdjęciu produktu. */
+export type AiVariant = "ai" | "ai_plus";
+
+/** Wariant zapisywany dla uzupełniania danych produktu tekstem. */
+export const AI_TEXT_VARIANT = "product_fill";
+
+/**
+ * Modele Gemini z wyjściem obrazowym. Lista jest allowlistą – wartość z ustawień
+ * spoza niej jest ignorowana (do bazy trafia zwykły string, a nazwa modelu idzie
+ * prosto do URL-a API).
+ */
+export const AI_IMAGE_MODELS = [
+  { id: "gemini-3.1-flash-image", label: "Gemini 3.1 Flash Image (szybki)" },
+  { id: "gemini-3.1-flash-lite-image", label: "Gemini 3.1 Flash Lite Image (najtańszy)" },
+  { id: "gemini-3-pro-image", label: "Gemini 3 Pro Image (najlepsza jakość)" },
+  { id: "gemini-2.5-flash-image", label: "Gemini 2.5 Flash Image (starszy)" },
+] as const;
+
+export const AI_MODEL_IDS: string[] = AI_IMAGE_MODELS.map((m) => m.id);
+
+/** Klucze ustawień z wybranym modelem dla każdego wariantu. */
+export const AI_MODEL_SETTING_KEY: Record<AiVariant, string> = {
+  ai: "ai_image_model",
+  ai_plus: "ai_image_model_plus",
+};
+
+export const AI_MODEL_DEFAULT: Record<AiVariant, string> = {
+  ai: "gemini-3.1-flash-image",
+  // Wariant „AI+” buduje całą scenę wokół produktu – tu jakość modelu widać najbardziej
+  ai_plus: "gemini-3-pro-image",
+};
+
+/** Zwraca model z ustawień, o ile jest na allowliście – inaczej domyślny. */
+export function resolveAiModel(variant: AiVariant, fromSettings: string): string {
+  const value = fromSettings?.trim();
+  return value && AI_MODEL_IDS.includes(value) ? value : AI_MODEL_DEFAULT[variant];
+}
+
+/**
+ * „AI” – produkt na jednolitym, matowym tle (zdjęcie katalogowe).
+ * Kolor tła celowo odpowiada kolorowi `sand` (#E8DFD0) z palety sklepu –
+ * tym samym, co przycisk „Wyprzedano”. Zmieniając odcień, popraw też paletę w opisie.
+ */
+export const AI_PROMPT = `A photorealistic, detailed portrait of the specific ceramic product, centrally placed and perfectly sharp, isolated and resting on a seamless, solid matte background surface in a light warm sand beige tone (hex #E8DFD0) - a pale, soft, light background, definitely not dark, not brown and not grey. Natural, soft, diffused daylight from the side highlights the glaze and texture of the main ceramic piece. Clean, high-end catalog quality, 8k resolution.`;
+
+/** „AI+” – produkt w wystylizowanej scenie (len, eukaliptus, kamienie). */
+export const AI_PLUS_PROMPT = `HIGH-RESOLUTION STUDIO PRODUCT PHOTOGRAPHY. A photorealistic, detailed portrait of the specific ceramic product shown in the original image, which must remain EXACTLY unchanged in shape, color, glaze texture, and pattern. The ceramic piece is centrally placed, perfectly sharp. The background is a professionally styled, soft-focus natural studio environment. The ceramic rests on a subtly textured, raw linen tablecloth (cream/natural beige color). Around it, in the softly blurred background, are artfully arranged organic elements: a delicate sprig of eucalyptus, a raw wooden coaster, and a small collection of natural, smooth river pebbles in grey and brown tones. Natural, soft, diffused daylight is coming from the side (softbox effect), highlighting the glaze and texture of the main ceramic piece. Shallow depth of field (bokeh). Clean, high-end catalog quality, 8k resolution, photorealistic, cinematic lighting.`;
+
+export const AI_PROMPTS: Record<AiVariant, string> = {
+  ai: AI_PROMPT,
+  ai_plus: AI_PLUS_PROMPT,
+};
+
+export const AI_VARIANT_LABEL: Record<AiVariant, string> = {
+  ai: "AI",
+  ai_plus: "AI+",
+};
+
+export function isAiVariant(value: unknown): value is AiVariant {
+  return value === "ai" || value === "ai_plus";
+}
+
+/**
+ * Sufiks nazwy pliku nadawany przez `/api/admin/ai-image`. Po nim poznajemy,
+ * że zdjęcie już powstało z AI – takiego nie puszczamy przez model po raz drugi
+ * (kolejne pokolenie gubi wierność produktu), więc panel ukrywa pod nim przyciski.
+ * Nazwy z uploadu i obrotu to `{timestamp}-{losowe}.webp` bez myślnika przed „ai”.
+ */
+export const AI_IMAGE_SUFFIX = "-ai.webp";
+
+export function isAiGeneratedImage(url: string): boolean {
+  return url.split("?")[0].endsWith(AI_IMAGE_SUFFIX);
+}
+
+// ── Opis produktu z AI (tekst) ───────────────────────────────────────────────
+
+/**
+ * Modele tekstowe (multimodalne – dostają zdjęcie i odpowiadają tekstem).
+ * Jak wyżej: allowlista, bo nazwa modelu trafia do adresu API.
+ */
+export const AI_TEXT_MODELS = [
+  { id: "gemini-3.5-flash-lite", label: "Gemini 3.5 Flash Lite (tani, zalecany)" },
+  { id: "gemini-3.1-flash-lite", label: "Gemini 3.1 Flash Lite" },
+  { id: "gemini-3.6-flash", label: "Gemini 3.6 Flash (najlepszy opis)" },
+  { id: "gemini-2.5-flash", label: "Gemini 2.5 Flash" },
+  { id: "gemini-2.5-flash-lite", label: "Gemini 2.5 Flash Lite (najtańszy)" },
+] as const;
+
+const AI_TEXT_MODEL_IDS: string[] = AI_TEXT_MODELS.map((m) => m.id);
+
+export const AI_TEXT_MODEL_SETTING_KEY = "ai_text_model";
+export const AI_TEXT_MODEL_DEFAULT = "gemini-3.5-flash-lite";
+
+export function resolveAiTextModel(fromSettings: string): string {
+  const value = fromSettings?.trim();
+  return value && AI_TEXT_MODEL_IDS.includes(value) ? value : AI_TEXT_MODEL_DEFAULT;
+}
+
+/** Maksymalne długości pól zwracanych przez model (i tak walidowane serwerowo). */
+export const AI_TEXT_LIMITS = { name: 200, slug: 200, description: 600 };
+
+/**
+ * Prompt do uzupełnienia danych produktu ze zdjęcia. Kategorie podajemy modelowi,
+ * bo ma wybrać istniejącą – wymyślona i tak zostałaby odrzucona przy walidacji.
+ */
+export function buildProductFillPrompt(categories: { slug: string; label: string }[]): string {
+  const list = categories.map((c) => `- ${c.slug} (${c.label})`).join("\n");
+  return `Jesteś asystentem sklepu z ręcznie robioną ceramiką artystyczną (Unique Ceramics).
+Na podstawie zdjęcia produktu przygotuj dane do karty produktu w sklepie.
+
+Zasady:
+- Pisz po polsku, w tonie spokojnym i rzeczowym, bez marketingowego przesadzania.
+- "name": krótka nazwa produktu (2-5 słów), bez cudzysłowów i bez ceny.
+- "slug": nazwa zapisana małymi literami, bez polskich znaków, wyrazy połączone myślnikami (tylko a-z, 0-9 i myślnik).
+- "category": wybierz dokładnie jedną wartość slug z poniższej listy kategorii. Jeśli żadna nie pasuje, wpisz pusty ciąg.
+- "description": 1-2 zdania opisujące, co to za przedmiot, jak wygląda (kształt, kolor, szkliwo, faktura) i do czego służy. Nie wymyślaj wymiarów, pojemności ani ceny.
+
+Dostępne kategorie:
+${list || "- (brak zdefiniowanych kategorii)"}
+
+Odpowiedz wyłącznie obiektem JSON, bez komentarzy i bez bloków kodu:
+{"name":"...","slug":"...","category":"...","description":"..."}`;
+}
+
+// ── Koszty ────────────────────────────────────────────────────────────────────
+
+/**
+ * Stawki Google AI (paid tier, USD za 1 mln tokenów) – stan na 07.2026.
+ * Wejście obejmuje prompt i zdjęcie źródłowe, wyjście to wygenerowany obraz lub tekst.
+ * `tokensPerImage` służy do oszacowania kosztu modeli obrazowych, gdy API nie zwróci liczników.
+ */
+export const AI_MODEL_PRICING: Record<
+  string,
+  { inputPer1M: number; outputPer1M: number; tokensPerImage: number; kind: AiKind }
+> = {
+  // Modele obrazowe
+  "gemini-3.1-flash-image": { inputPer1M: 0.5, outputPer1M: 60, tokensPerImage: 1120, kind: "image" },
+  "gemini-3.1-flash-lite-image": { inputPer1M: 0.25, outputPer1M: 30, tokensPerImage: 1120, kind: "image" },
+  "gemini-3-pro-image": { inputPer1M: 2, outputPer1M: 120, tokensPerImage: 1120, kind: "image" },
+  "gemini-2.5-flash-image": { inputPer1M: 0.3, outputPer1M: 30, tokensPerImage: 1290, kind: "image" },
+  // Modele tekstowe
+  "gemini-3.6-flash": { inputPer1M: 1.5, outputPer1M: 7.5, tokensPerImage: 0, kind: "text" },
+  "gemini-3.5-flash-lite": { inputPer1M: 0.3, outputPer1M: 2.5, tokensPerImage: 0, kind: "text" },
+  "gemini-3.1-flash-lite": { inputPer1M: 0.25, outputPer1M: 1.5, tokensPerImage: 0, kind: "text" },
+  "gemini-2.5-flash": { inputPer1M: 0.3, outputPer1M: 2.5, tokensPerImage: 0, kind: "text" },
+  "gemini-2.5-flash-lite": { inputPer1M: 0.1, outputPer1M: 0.4, tokensPerImage: 0, kind: "text" },
+};
+
+/** Rodzaj modelu wg cennika; nieznany traktujemy jak obrazowy (tak było wcześniej). */
+export function aiModelKind(model: string): AiKind {
+  return AI_MODEL_PRICING[model]?.kind ?? "image";
+}
+
+/** Koszt jednego generowania w USD. Nieznany model → 0 (lepiej niż zmyślona kwota). */
+export function aiCostUsd(model: string, promptTokens: number, outputTokens: number): number {
+  const price = AI_MODEL_PRICING[model];
+  if (!price) return 0;
+  const usd =
+    (promptTokens / 1_000_000) * price.inputPer1M +
+    (outputTokens / 1_000_000) * price.outputPer1M;
+  return Math.round(usd * 1_000_000) / 1_000_000;
+}
+
+/** Orientacyjny koszt jednego zdjęcia – do podglądu stawek w panelu. */
+export function aiCostPerImageUsd(model: string): number {
+  const price = AI_MODEL_PRICING[model];
+  if (!price) return 0;
+  return aiCostUsd(model, 0, price.tokensPerImage);
+}
