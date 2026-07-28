@@ -175,7 +175,7 @@ export default function ProductGallery({
               onClick={() => setActiveImage(i)}
               aria-label={`Pokaż zdjęcie ${i + 1}`}
               aria-current={activeImage === i}
-              className={`relative aspect-square w-20 overflow-hidden bg-cream flex-shrink-0 border-2 transition-colors ${
+              className={`relative aspect-[4/3] w-24 overflow-hidden bg-cream flex-shrink-0 border-2 transition-colors ${
                 activeImage === i ? "border-clay" : "border-transparent"
               }`}
             >
@@ -184,7 +184,7 @@ export default function ProductGallery({
                 alt={`${name} ${i + 1}`}
                 fill
                 className="object-contain"
-                sizes="80px"
+                sizes="96px"
               />
             </button>
           ))}

@@ -241,9 +241,10 @@ export default function ProductForm({ product, categories }: { product?: Product
         <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-3">Zdjęcia produktu</label>
         <div className="flex flex-wrap items-start gap-3 mb-3">
           {images.map((url, i) => (
-            <div key={`${i}-${url}`} className="w-28 border border-sand bg-warm-white p-1.5">
-              <div className="relative w-full aspect-square bg-cream overflow-hidden">
-                <Image src={url} alt={`Zdjęcie ${i + 1}`} fill className="object-cover" sizes="112px" />
+            <div key={`${i}-${url}`} className="w-32 border border-sand bg-warm-white p-1.5">
+              <div className="relative w-full aspect-[4/3] bg-cream overflow-hidden">
+                {/* contain, nie cover – w edycji ma być widoczne całe zdjęcie */}
+                <Image src={url} alt={`Zdjęcie ${i + 1}`} fill className="object-contain" sizes="128px" />
                 {i === 0 && images.length > 1 && (
                   <span className="absolute inset-x-0 bottom-0 bg-espresso/90 text-cream text-[9px] tracking-widest uppercase text-center py-0.5">
                     Główne
@@ -281,14 +282,16 @@ export default function ProductForm({ product, categories }: { product?: Product
                   <X size={14} />
                 </button>
               </div>
+              {/* Stopka kafelka ma stałą wysokość, żeby kafelki z przyciskami AI
+                  i te z plakietką stały równo w jednym rzędzie */}
               {/* Zdjęcia z AI nie idą do modelu ponownie – kolejne pokolenie gubi produkt */}
               {isAiGeneratedImage(url) ? (
-                <p className="mt-1 flex items-center justify-center gap-1 text-[10px] tracking-wide uppercase text-charcoal/80">
+                <p className="mt-1 h-6 flex items-center justify-center gap-1 text-[10px] tracking-wide uppercase text-charcoal/80">
                   <Sparkles size={11} aria-hidden="true" />
-                  Z AI
+                  Wygenerowane
                 </p>
               ) : (
-              <div className="flex gap-1 mt-1">
+              <div className="flex gap-1 mt-1 h-6">
                 {(["ai", "ai_plus"] as AiVariant[]).map((variant) => {
                   const busy = generating?.idx === i && generating.variant === variant;
                   return (
@@ -303,7 +306,7 @@ export default function ProductForm({ product, categories }: { product?: Product
                           : "AI+ – produkt w wystylizowanej scenie"
                       }
                       aria-label={`Wygeneruj wersję ${AI_VARIANT_LABEL[variant]} ze zdjęcia ${i + 1}`}
-                      className="flex-1 inline-flex items-center justify-center gap-0.5 border border-sand bg-cream hover:bg-sand text-espresso text-[10px] tracking-wide uppercase py-1 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                      className="flex-1 inline-flex items-center justify-center gap-0.5 border border-sand bg-cream hover:bg-sand text-espresso text-[10px] tracking-wide uppercase transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       {busy ? (
                         <Loader2 size={11} className="animate-spin" aria-hidden="true" />
@@ -319,7 +322,7 @@ export default function ProductForm({ product, categories }: { product?: Product
             </div>
           ))}
           {images.length < PRODUCT_MAX_IMAGES && (
-            <label className={`w-24 h-24 border-2 border-dashed border-sand flex flex-col items-center justify-center cursor-pointer hover:border-clay transition-colors ${uploading ? "opacity-50 pointer-events-none" : ""}`}>
+            <label className={`w-32 aspect-[4/3] border-2 border-dashed border-sand flex flex-col items-center justify-center cursor-pointer hover:border-clay transition-colors ${uploading ? "opacity-50 pointer-events-none" : ""}`}>
               <Upload size={20} strokeWidth={1.5} className="text-charcoal/80 mb-1" />
               <span className="text-[10px] text-charcoal/80">{uploading ? "Upload..." : "Dodaj"}</span>
               <input type="file" accept="image/*" multiple className="hidden" onChange={handleImageUpload} disabled={uploading} />
@@ -334,7 +337,7 @@ export default function ProductForm({ product, categories }: { product?: Product
           <strong className="font-medium">AI</strong> tworzy wersję zdjęcia na jednolitym, matowym tle,{" "}
           <strong className="font-medium">AI+</strong> – w wystylizowanej scenie. Wynik dodaje się jako
           nowe zdjęcie na końcu listy (oryginał zostaje). Zdjęcia już wygenerowane przez AI
-          (oznaczone „Z AI”) nie mają tych przycisków – powtórne przetworzenie gubi wygląd produktu.
+          (oznaczone „Wygenerowane”) nie mają tych przycisków – powtórne przetworzenie gubi wygląd produktu.
           Model dla obu wariantów wybierzesz w Ustawieniach → AI (zdjęcia).
         </p>
         {generating && (
