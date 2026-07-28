@@ -6,27 +6,16 @@ import { getShopProducts } from "@/lib/products";
 import { getSetting } from "@/lib/settings";
 import ProductGrid from "./ProductGrid";
 import FloatingOrderButton from "./FloatingOrderButton";
+import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Sklep ceramiczny – ceramika ręcznie robiona",
   description:
-    "Sklep z ceramiką ręcznie robioną z okolic Gliwic. Miski, kubki, talerze, wazony – każdy przedmiot tworzony jest ręcznie z lokalnej gliny. Sklep ceramiczny Unique Ceramics.",
-  alternates: { canonical: "https://uniqueceramics.pl/sklep" },
-  openGraph: {
-    title: "Sklep ceramiczny – Unique Ceramics",
-    description:
-      "Sklep z ceramiką ręcznie robioną. Miski, kubki, talerze, wazony – każdy przedmiot unikalny, tworzony z pasji.",
-    url: "https://uniqueceramics.pl/sklep",
-    images: [
-      {
-        url: "/images/OpenGraph.webp",
-        width: 1200,
-        height: 630,
-        alt: "Sklep ceramiczny – Unique Ceramics Gliwice",
-      },
-    ],
-  },
-};
+    "Sklep z ceramiką ręcznie robioną z okolic Gliwic. Miski, kubki, talerze, wazony – każdy przedmiot tworzony jest ręcznie z lokalnej gliny.",
+  path: "/sklep",
+  ogTitle: "Sklep ceramiczny – Unique Ceramics",
+});
 
 export default async function ShopPage({
   searchParams,

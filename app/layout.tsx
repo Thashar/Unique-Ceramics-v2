@@ -74,9 +74,10 @@ export const metadata: Metadata = {
       "Ceramika użytkowa ręcznie robiona w Gliwicach – kubki, filiżanki, miski i naczynia. Każdy egzemplarz jest niepowtarzalny. Zamów z dostawą w całej Polsce.",
     images: [
       {
-        url: "/images/OpenGraph.webp",
+        url: "/images/OpenGraph.jpg",
         width: 1200,
         height: 630,
+        type: "image/jpeg",
         alt: "Unique Ceramics – ręcznie robiona ceramika",
       },
     ],
@@ -86,7 +87,7 @@ export const metadata: Metadata = {
     title: "Unique Ceramics – Ceramika Gliwice | ręcznie robiona",
     description:
       "Ceramika użytkowa ręcznie robiona w Gliwicach. Kubki, filiżanki, miski i naczynia – każdy egzemplarz niepowtarzalny.",
-    images: ["/images/OpenGraph.webp"],
+    images: ["/images/OpenGraph.jpg"],
   },
   robots: {
     index: true,

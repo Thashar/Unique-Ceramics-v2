@@ -14,27 +14,14 @@ import { getSettings } from "@/lib/settings";
 import { sanitizeRichHtml } from "@/lib/sanitize-html";
 import { hexToRgba } from "@/lib/overlay";
 import { parseGallery } from "@/lib/gallery";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Warsztaty ceramiczne",
   description:
     "Warsztaty ceramiczne w małych grupach w okolicach Gliwic – dla początkujących i zaawansowanych. Lepienie z gliny, toczenie, szkliwienie.",
-  alternates: { canonical: "https://uniqueceramics.pl/warsztaty" },
-  openGraph: {
-    title: "Warsztaty ceramiczne – Unique Ceramics",
-    description:
-      "Warsztaty ceramiczne w małych grupach w okolicach Gliwic. Lepienie z gliny, toczenie na kole, szkliwienie – dla każdego poziomu.",
-    url: "https://uniqueceramics.pl/warsztaty",
-    images: [
-      {
-        url: "/images/OpenGraph.webp",
-        width: 1200,
-        height: 630,
-        alt: "Warsztaty ceramiczne – Unique Ceramics Gliwice",
-      },
-    ],
-  },
-};
+  path: "/warsztaty",
+});
 
 type WorkshopOffer = {
   id: number;
