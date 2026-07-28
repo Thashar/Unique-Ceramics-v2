@@ -303,10 +303,6 @@ export default function ProductGallery({
         )}
       </div>
 
-      <p className="text-[11px] text-charcoal/80">
-        Przytrzymaj zdjęcie przez sekundę palcem lub kursorem, żeby powiększyć fragment – przesuwaj, aby obejrzeć detale.
-      </p>
-
       {hasMany && (
         <div className="flex gap-3 overflow-x-auto">
           {images.map((img, i) => (
