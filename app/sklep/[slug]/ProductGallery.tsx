@@ -13,7 +13,7 @@ const SWIPE_MIN_RATIO = 0.15;
 const EDGE_RESISTANCE = 3;
 
 /** Lupa: ile trzeba przytrzymać, jak duże jest szkło i jak mocno powiększa. */
-const HOLD_MS = 260;
+const HOLD_MS = 1000;
 const LENS_SIZE = 176;
 const LENS_ZOOM = 2.6;
 
@@ -301,7 +301,7 @@ export default function ProductGallery({
       </div>
 
       <p className="text-[11px] text-charcoal/80">
-        Przytrzymaj zdjęcie palcem lub kursorem, żeby powiększyć fragment – przesuwaj, aby obejrzeć detale.
+        Przytrzymaj zdjęcie przez sekundę palcem lub kursorem, żeby powiększyć fragment – przesuwaj, aby obejrzeć detale.
       </p>
 
       {hasMany && (
