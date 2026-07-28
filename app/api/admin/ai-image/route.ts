@@ -6,7 +6,10 @@ import { getSetting } from "@/lib/settings";
 import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 import { resolveOwnImageSource, fetchOwnImage } from "@/lib/image-source";
 import { generateProductImage, hasGoogleAiKey } from "@/lib/google-ai";
+import { recordAiUsage } from "@/lib/ai-usage";
 import {
+  AI_IMAGE_SUFFIX,
+  AI_MODEL_PRICING,
   AI_MODEL_SETTING_KEY,
   AI_PROMPTS,
   isAiVariant,
@@ -76,9 +79,13 @@ export async function POST(req: Request) {
       model,
       prompt: AI_PROMPTS[variant],
       image: { data: input, mimeType: "image/jpeg" },
+      fallbackOutputTokens: AI_MODEL_PRICING[model]?.tokensPerImage ?? 0,
     });
+    // Zużycie zapisujemy od razu po udanym wywołaniu – od tego momentu jest płatne,
+    // niezależnie od tego, czy dalsza obróbka i zapis do Storage się powiodą
+    await recordAiUsage({ variant, model, ...result.usage });
     // Ten sam format co upload i obrót – WebP, maks. 1920 px, maksymalna jakość
-    generated = await sharp(result.data)
+    generated = await sharp(result.image.data)
       .resize({ width: 1920, withoutEnlargement: true })
       .webp({ quality: 100 })
       .toBuffer();
@@ -95,7 +102,9 @@ export async function POST(req: Request) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
-  const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}-ai.webp`;
+  // Sufiks `-ai.webp` jest znaczący: po nim panel poznaje zdjęcia z AI i nie
+  // pozwala puścić ich przez model drugi raz (patrz `isAiGeneratedImage`)
+  const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}${AI_IMAGE_SUFFIX}`;
 
   // Blob, nie Buffer – patrz komentarz w /api/admin/upload
   const blob = new Blob([new Uint8Array(generated)], { type: "image/webp" });

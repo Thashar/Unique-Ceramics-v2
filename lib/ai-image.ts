@@ -56,3 +56,49 @@ export const AI_VARIANT_LABEL: Record<AiVariant, string> = {
 export function isAiVariant(value: unknown): value is AiVariant {
   return value === "ai" || value === "ai_plus";
 }
+
+/**
+ * Sufiks nazwy pliku nadawany przez `/api/admin/ai-image`. Po nim poznajemy,
+ * że zdjęcie już powstało z AI – takiego nie puszczamy przez model po raz drugi
+ * (kolejne pokolenie gubi wierność produktu), więc panel ukrywa pod nim przyciski.
+ * Nazwy z uploadu i obrotu to `{timestamp}-{losowe}.webp` bez myślnika przed „ai”.
+ */
+export const AI_IMAGE_SUFFIX = "-ai.webp";
+
+export function isAiGeneratedImage(url: string): boolean {
+  return url.split("?")[0].endsWith(AI_IMAGE_SUFFIX);
+}
+
+// ── Koszty ────────────────────────────────────────────────────────────────────
+
+/**
+ * Stawki Google AI (paid tier, USD za 1 mln tokenów) – stan na 07.2026.
+ * Wejście obejmuje prompt i zdjęcie źródłowe, wyjście to wygenerowany obraz.
+ * `tokensPerImage` służy do oszacowania kosztu, gdy API nie zwróci liczników.
+ */
+export const AI_MODEL_PRICING: Record<
+  string,
+  { inputPer1M: number; outputPer1M: number; tokensPerImage: number }
+> = {
+  "gemini-3.1-flash-image": { inputPer1M: 0.5, outputPer1M: 60, tokensPerImage: 1120 },
+  "gemini-3.1-flash-lite-image": { inputPer1M: 0.25, outputPer1M: 30, tokensPerImage: 1120 },
+  "gemini-3-pro-image": { inputPer1M: 2, outputPer1M: 120, tokensPerImage: 1120 },
+  "gemini-2.5-flash-image": { inputPer1M: 0.3, outputPer1M: 30, tokensPerImage: 1290 },
+};
+
+/** Koszt jednego generowania w USD. Nieznany model → 0 (lepiej niż zmyślona kwota). */
+export function aiCostUsd(model: string, promptTokens: number, outputTokens: number): number {
+  const price = AI_MODEL_PRICING[model];
+  if (!price) return 0;
+  const usd =
+    (promptTokens / 1_000_000) * price.inputPer1M +
+    (outputTokens / 1_000_000) * price.outputPer1M;
+  return Math.round(usd * 1_000_000) / 1_000_000;
+}
+
+/** Orientacyjny koszt jednego zdjęcia – do podglądu stawek w panelu. */
+export function aiCostPerImageUsd(model: string): number {
+  const price = AI_MODEL_PRICING[model];
+  if (!price) return 0;
+  return aiCostUsd(model, 0, price.tokensPerImage);
+}

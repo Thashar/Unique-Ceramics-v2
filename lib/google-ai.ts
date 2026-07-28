@@ -8,6 +8,11 @@ const REQUEST_TIMEOUT_MS = 55_000;
 
 export type GeneratedImage = { data: Buffer; mimeType: string };
 
+/** Liczniki tokenów; `estimated` gdy API ich nie podało i policzyliśmy z szacunku. */
+export type AiUsage = { promptTokens: number; outputTokens: number; estimated: boolean };
+
+export type GenerationResult = { image: GeneratedImage; usage: AiUsage };
+
 export function hasGoogleAiKey(): boolean {
   return Boolean(process.env.GOOGLE_AI_API_KEY?.trim());
 }
@@ -61,6 +66,32 @@ function readGenerateContentImage(body: unknown): GeneratedImage | null {
   return null;
 }
 
+function num(value: unknown): number {
+  return typeof value === "number" && Number.isFinite(value) && value > 0 ? Math.round(value) : 0;
+}
+
+/**
+ * Liczniki tokenów bywają pod różnymi nazwami: Interactions API zwraca `usage`
+ * (snake_case), starsze `generateContent` – `usageMetadata` (camelCase).
+ * Czytamy oba warianty; brak liczników sygnalizujemy przez `estimated`.
+ */
+function readUsage(body: unknown, fallbackOutputTokens: number): AiUsage {
+  const root = (body ?? {}) as Record<string, unknown>;
+  const usage = (root.usage ?? root.usageMetadata ?? {}) as Record<string, unknown>;
+
+  const promptTokens =
+    num(usage.input_tokens) || num(usage.inputTokens) ||
+    num(usage.prompt_tokens) || num(usage.promptTokenCount);
+  const outputTokens =
+    num(usage.output_tokens) || num(usage.outputTokens) ||
+    num(usage.candidates_token_count) || num(usage.candidatesTokenCount);
+
+  if (promptTokens || outputTokens) {
+    return { promptTokens, outputTokens: outputTokens || fallbackOutputTokens, estimated: false };
+  }
+  return { promptTokens: 0, outputTokens: fallbackOutputTokens, estimated: true };
+}
+
 async function postJson(path: string, payload: unknown, apiKey: string) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
@@ -91,7 +122,9 @@ export async function generateProductImage(opts: {
   model: string;
   prompt: string;
   image: GeneratedImage;
-}): Promise<GeneratedImage> {
+  /** Ile tokenów przyjąć za obraz, gdy API nie zwróci liczników. */
+  fallbackOutputTokens: number;
+}): Promise<GenerationResult> {
   const apiKey = process.env.GOOGLE_AI_API_KEY?.trim();
   if (!apiKey) throw new Error("Brak klucza GOOGLE_AI_API_KEY.");
 
@@ -111,7 +144,7 @@ export async function generateProductImage(opts: {
 
   if (first.ok) {
     const image = readInteractionsImage(first.body);
-    if (image) return image;
+    if (image) return { image, usage: readUsage(first.body, opts.fallbackOutputTokens) };
     throw new Error("Model nie zwrócił obrazu.");
   }
 
@@ -147,5 +180,5 @@ export async function generateProductImage(opts: {
 
   const image = readGenerateContentImage(fallback.body);
   if (!image) throw new Error("Model nie zwrócił obrazu.");
-  return image;
+  return { image, usage: readUsage(fallback.body, opts.fallbackOutputTokens) };
 }
