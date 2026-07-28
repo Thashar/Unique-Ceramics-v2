@@ -47,8 +47,12 @@ function parseJsonObject(text: string): Record<string, unknown> | null {
   }
 }
 
+// Model bywa głuchy na prośbę o półpauzę, a długi myślnik łamie typografię sklepu
+// (patrz CLAUDE.md) – zamieniamy go niezależnie od tego, co przyjdzie z modelu.
 const str = (value: unknown, max: number): string =>
-  typeof value === "string" ? value.trim().replace(/\s+/g, " ").slice(0, max) : "";
+  typeof value === "string"
+    ? value.trim().replace(/\s+/g, " ").replace(/[—―]/g, "–").slice(0, max)
+    : "";
 
 export async function POST(req: Request) {
   if (!await requireAdmin()) {
