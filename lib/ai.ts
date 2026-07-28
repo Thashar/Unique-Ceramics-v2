@@ -44,14 +44,22 @@ export function resolveAiModel(variant: AiVariant, fromSettings: string): string
 }
 
 /**
+ * Zasada kompletu – wspólna dla obu wariantów. Zdjęcie źródłowe bywa zestawem
+ * (np. dzbanek z kubkami), a model albo gubił część sztuk, albo dokładał własne.
+ * Sformułowana tak, żeby nie kolidowała z rekwizytami sceny w wariancie „AI+”:
+ * zakaz dotyczy ceramiki i elementów produktu, nie lnu czy eukaliptusa.
+ */
+const SET_RULE = `CRITICAL - keep the set complete and unchanged: the generated image must show EVERY ceramic item visible in the original photo, all of them together, with the same number of pieces, the same shapes, colors, glaze and decorations. Do not drop, merge or hide any piece, and do not invent or add any extra ceramic items, tableware, lids, saucers or product parts that are not present in the original photo.`;
+
+/**
  * „AI” – produkt na jednolitym, matowym tle (zdjęcie katalogowe).
  * Kolor tła celowo odpowiada kolorowi `sand` (#E8DFD0) z palety sklepu –
  * tym samym, co przycisk „Wyprzedano”. Zmieniając odcień, popraw też paletę w opisie.
  */
-export const AI_PROMPT = `A photorealistic, detailed portrait of the specific ceramic product, centrally placed and perfectly sharp, isolated and resting on a seamless, solid matte background surface in a light warm sand beige tone (hex #E8DFD0) - a pale, soft, light background, definitely not dark, not brown and not grey. Natural, soft, diffused daylight from the side highlights the glaze and texture of the main ceramic piece. Clean, high-end catalog quality, 8k resolution.`;
+export const AI_PROMPT = `A photorealistic, detailed portrait of the specific ceramic product, centrally placed and perfectly sharp, isolated and resting on a seamless, solid matte background surface in a light warm sand beige tone (hex #E8DFD0) - a pale, soft, light background, definitely not dark, not brown and not grey. Natural, soft, diffused daylight from the side highlights the glaze and texture of the main ceramic piece. Clean, high-end catalog quality, 8k resolution. ${SET_RULE} If the original photo shows several pieces, arrange them all together in one balanced composition on that same background.`;
 
 /** „AI+” – produkt w wystylizowanej scenie (len, eukaliptus, kamienie). */
-export const AI_PLUS_PROMPT = `HIGH-RESOLUTION STUDIO PRODUCT PHOTOGRAPHY. A photorealistic, detailed portrait of the specific ceramic product shown in the original image, which must remain EXACTLY unchanged in shape, color, glaze texture, and pattern. The ceramic piece is centrally placed, perfectly sharp. The background is a professionally styled, soft-focus natural studio environment. The ceramic rests on a subtly textured, raw linen tablecloth (cream/natural beige color). Around it, in the softly blurred background, are artfully arranged organic elements: a delicate sprig of eucalyptus, a raw wooden coaster, and a small collection of natural, smooth river pebbles in grey and brown tones. Natural, soft, diffused daylight is coming from the side (softbox effect), highlighting the glaze and texture of the main ceramic piece. Shallow depth of field (bokeh). Clean, high-end catalog quality, 8k resolution, photorealistic, cinematic lighting.`;
+export const AI_PLUS_PROMPT = `HIGH-RESOLUTION STUDIO PRODUCT PHOTOGRAPHY. A photorealistic, detailed portrait of the specific ceramic product shown in the original image, which must remain EXACTLY unchanged in shape, color, glaze texture, and pattern. The ceramic piece is centrally placed, perfectly sharp. The background is a professionally styled, soft-focus natural studio environment. The ceramic rests on a subtly textured, raw linen tablecloth (cream/natural beige color). Around it, in the softly blurred background, are artfully arranged organic elements: a delicate sprig of eucalyptus, a raw wooden coaster, and a small collection of natural, smooth river pebbles in grey and brown tones. Natural, soft, diffused daylight is coming from the side (softbox effect), highlighting the glaze and texture of the main ceramic piece. Shallow depth of field (bokeh). Clean, high-end catalog quality, 8k resolution, photorealistic, cinematic lighting. ${SET_RULE} If the original photo shows several pieces, place them all together in the scene as one set; the eucalyptus, wooden coaster and pebbles are the only added props and they must stay in the blurred background.`;
 
 export const AI_PROMPTS: Record<AiVariant, string> = {
   ai: AI_PROMPT,
