@@ -115,12 +115,21 @@ export function buildProductFillPrompt(categories: { slug: string; label: string
   return `Jesteś asystentem sklepu z ręcznie robioną ceramiką artystyczną (Unique Ceramics).
 Na podstawie zdjęcia produktu przygotuj dane do karty produktu w sklepie.
 
+Najpierw przyjrzyj się uważnie samej ceramice i rozpoznaj, co się na niej znajduje:
+- motyw lub wizerunek (np. zwierzę, roślina, twarz, postać, pejzaż, ornament, wzór geometryczny),
+- napis, litery, cyfry, symbol lub znak,
+- charakterystyczny kształt i detale formy (np. wytłoczenia, żłobienia, uchwyt, nóżki, falowana krawędź, nieregularny brzeg).
+To, co widzisz na przedmiocie, jest najważniejszą cechą produktu – musi trafić i do nazwy, i do opisu.
+Nazywaj to wprost i konkretnie ("kubek z sową", "miska z liściem monstery", "talerz z napisem Dzień dobry"),
+a nie ogólnikami w rodzaju "z motywem" czy "ze wzorem". Jeśli nie masz pewności, co przedstawia motyw,
+opisz go tak, jak wygląda, zamiast zgadywać konkretną nazwę.
+
 Zasady:
 - Pisz po polsku, w tonie spokojnym i rzeczowym, bez marketingowego przesadzania.
-- "name": krótka nazwa produktu (2-5 słów), bez cudzysłowów i bez ceny.
+- "name": krótka nazwa produktu (2-5 słów), bez cudzysłowów i bez ceny; jeśli na ceramice jest motyw, wizerunek, znak lub napis, nazwa musi go zawierać.
 - "slug": nazwa zapisana małymi literami, bez polskich znaków, wyrazy połączone myślnikami (tylko a-z, 0-9 i myślnik).
 - "category": wybierz dokładnie jedną wartość slug z poniższej listy kategorii. Jeśli żadna nie pasuje, wpisz pusty ciąg.
-- "description": 1-2 zdania opisujące, co to za przedmiot, jak wygląda (kształt, kolor, szkliwo, faktura) i do czego służy. Nie wymyślaj wymiarów, pojemności ani ceny.
+- "description": 1-2 zdania. Zacznij od tego, co to za przedmiot i co go zdobi (motyw, wizerunek, znak, napis) oraz gdzie to zdobienie jest umieszczone, a potem dodaj kształt, kolor, szkliwo i fakturę. Gdy przedmiot jest gładki i bez zdobień, napisz o formie i wykończeniu. Nie wymyślaj wymiarów, pojemności ani ceny.
 
 Dostępne kategorie:
 ${list || "- (brak zdefiniowanych kategorii)"}
