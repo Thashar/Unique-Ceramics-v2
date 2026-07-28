@@ -7,7 +7,9 @@ const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 const MAX_PRICE = 1_000_000;
 const MAX_STOCK = 1_000_000;
-const MAX_IMAGES = 30;
+/** Limit zdjęć na produkt – używany też przez formularz w panelu admina. */
+export const PRODUCT_MAX_IMAGES = 30;
+const MAX_IMAGES = PRODUCT_MAX_IMAGES;
 const MAX_IMAGE_LEN = 1000;
 
 export type ValidProduct = {
