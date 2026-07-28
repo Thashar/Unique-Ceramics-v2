@@ -126,6 +126,7 @@ opisz go tak, jak wygląda, zamiast zgadywać konkretną nazwę.
 
 Zasady:
 - Pisz po polsku, w tonie spokojnym i rzeczowym, bez marketingowego przesadzania.
+- Jako myślnika używaj wyłącznie półpauzy "–" (krótki myślnik). Nigdy nie używaj pauzy "—" (długi myślnik, em dash) ani encji &mdash;.
 - "name": krótka nazwa produktu (2-5 słów), bez cudzysłowów i bez ceny; jeśli na ceramice jest motyw, wizerunek, znak lub napis, nazwa musi go zawierać.
 - "slug": nazwa zapisana małymi literami, bez polskich znaków, wyrazy połączone myślnikami (tylko a-z, 0-9 i myślnik).
 - "category": wybierz dokładnie jedną wartość slug z poniższej listy kategorii. Jeśli żadna nie pasuje, wpisz pusty ciąg.
