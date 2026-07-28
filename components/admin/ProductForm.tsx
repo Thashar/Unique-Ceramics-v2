@@ -3,9 +3,17 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Upload, X, Trash2, MoveLeft, MoveRight } from "lucide-react";
+import { Upload, X, Trash2, MoveLeft, MoveRight, Sparkles, Loader2 } from "lucide-react";
 import { uploadErrorMessage } from "@/lib/upload-error";
 import { PRODUCT_MAX_IMAGES } from "@/lib/product-validation";
+import { AI_VARIANT_LABEL, type AiVariant } from "@/lib/ai-image";
+
+/** Treść potwierdzenia przed płatnym wywołaniem modelu. */
+const AI_CONFIRM: Record<AiVariant, string> = {
+  ai: "Wygenerować przez AI zdjęcie tego produktu na jednolitym, matowym tle?\n\nPowstanie nowe zdjęcie dodane na końcu listy – oryginał zostaje bez zmian.",
+  ai_plus:
+    "Wygenerować przez AI zdjęcie tego produktu w wystylizowanej scenie (len, eukaliptus, kamienie)?\n\nPowstanie nowe zdjęcie dodane na końcu listy – oryginał zostaje bez zmian.",
+};
 
 type Product = {
   id: string;
@@ -38,6 +46,8 @@ export default function ProductForm({ product, categories }: { product?: Product
   });
   const [images, setImages] = useState<string[]>(product?.images ?? []);
   const [uploading, setUploading] = useState(false);
+  // Które zdjęcie jest właśnie przerabiane przez AI (indeks + wariant)
+  const [generating, setGenerating] = useState<{ idx: number; variant: AiVariant } | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -69,6 +79,39 @@ export default function ProductForm({ product, categories }: { product?: Product
       [next[idx], next[target]] = [next[target], next[idx]];
       return next;
     });
+  }
+
+  /**
+   * Wysyła zdjęcie do Google AI i dokłada wynik na koniec listy.
+   * Oryginał zostaje – wygenerowana wersja to osobny plik w Storage.
+   */
+  async function generateWithAi(idx: number, variant: AiVariant) {
+    if (generating || uploading) return;
+    if (images.length >= PRODUCT_MAX_IMAGES) {
+      setError(`Do produktu można dodać maksymalnie ${PRODUCT_MAX_IMAGES} zdjęć.`);
+      return;
+    }
+    if (!confirm(AI_CONFIRM[variant])) return;
+
+    setGenerating({ idx, variant });
+    setError("");
+    try {
+      const res = await fetch("/api/admin/ai-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: images[idx], variant }),
+      });
+      const data = await res.json().catch(() => null);
+      if (res.ok && data?.url) {
+        setImages((prev) => [...prev, data.url]);
+      } else {
+        setError(data?.error ?? "Nie udało się wygenerować zdjęcia.");
+      }
+    } catch {
+      setError("Brak połączenia z serwerem – spróbuj ponownie.");
+    } finally {
+      setGenerating(null);
+    }
   }
 
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -150,9 +193,9 @@ export default function ProductForm({ product, categories }: { product?: Product
         <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-3">Zdjęcia produktu</label>
         <div className="flex flex-wrap items-start gap-3 mb-3">
           {images.map((url, i) => (
-            <div key={`${i}-${url}`} className="w-24 border border-sand bg-warm-white p-1.5">
+            <div key={`${i}-${url}`} className="w-28 border border-sand bg-warm-white p-1.5">
               <div className="relative w-full aspect-square bg-cream overflow-hidden">
-                <Image src={url} alt={`Zdjęcie ${i + 1}`} fill className="object-cover" sizes="96px" />
+                <Image src={url} alt={`Zdjęcie ${i + 1}`} fill className="object-cover" sizes="112px" />
                 {i === 0 && images.length > 1 && (
                   <span className="absolute inset-x-0 bottom-0 bg-espresso/90 text-cream text-[9px] tracking-widest uppercase text-center py-0.5">
                     Główne
@@ -190,6 +233,33 @@ export default function ProductForm({ product, categories }: { product?: Product
                   <X size={14} />
                 </button>
               </div>
+              <div className="flex gap-1 mt-1">
+                {(["ai", "ai_plus"] as AiVariant[]).map((variant) => {
+                  const busy = generating?.idx === i && generating.variant === variant;
+                  return (
+                    <button
+                      key={variant}
+                      type="button"
+                      onClick={() => generateWithAi(i, variant)}
+                      disabled={generating !== null}
+                      title={
+                        variant === "ai"
+                          ? "AI – produkt na jednolitym tle"
+                          : "AI+ – produkt w wystylizowanej scenie"
+                      }
+                      aria-label={`Wygeneruj wersję ${AI_VARIANT_LABEL[variant]} ze zdjęcia ${i + 1}`}
+                      className="flex-1 inline-flex items-center justify-center gap-0.5 border border-sand bg-cream hover:bg-sand text-espresso text-[10px] tracking-wide uppercase py-1 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      {busy ? (
+                        <Loader2 size={11} className="animate-spin" aria-hidden="true" />
+                      ) : (
+                        <Sparkles size={11} aria-hidden="true" />
+                      )}
+                      {AI_VARIANT_LABEL[variant]}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           ))}
           {images.length < PRODUCT_MAX_IMAGES && (
@@ -204,6 +274,18 @@ export default function ProductForm({ product, categories }: { product?: Product
           Pierwsze zdjęcie jest główne – widać je na liście produktów i w koszyku. Strzałki zmieniają
           kolejność, krzyżyk usuwa zdjęcie (maks. {PRODUCT_MAX_IMAGES}).
         </p>
+        <p className="text-[11px] text-charcoal/80 mt-1">
+          <strong className="font-medium">AI</strong> tworzy wersję zdjęcia na jednolitym, matowym tle,{" "}
+          <strong className="font-medium">AI+</strong> – w wystylizowanej scenie. Wynik dodaje się jako
+          nowe zdjęcie na końcu listy (oryginał zostaje). Model dla obu wariantów wybierzesz
+          w Ustawieniach → AI (zdjęcia).
+        </p>
+        {generating && (
+          <p className="text-[11px] text-clay mt-1">
+            Generuję wersję {AI_VARIANT_LABEL[generating.variant]} ze zdjęcia {generating.idx + 1} –
+            to może potrwać kilkadziesiąt sekund.
+          </p>
+        )}
       </div>
 
       {/* Podstawowe */}

@@ -10,6 +10,12 @@ import FocalPointPicker from "@/components/admin/FocalPointPicker";
 import GalleryEditor from "@/components/admin/GalleryEditor";
 import WorkshopsOffersEditor from "@/components/admin/WorkshopsOffersEditor";
 import { parseGallery, galleryHead } from "@/lib/gallery";
+import {
+  AI_IMAGE_MODELS,
+  AI_MODEL_SETTING_KEY,
+  AI_PROMPTS,
+  resolveAiModel,
+} from "@/lib/ai-image";
 
 interface Props {
   section: string;
@@ -70,6 +76,8 @@ interface Props {
     vacation_end_date: string;
     vacation_message: string;
     custom_order_notify_email_enabled: string;
+    ai_image_model: string;
+    ai_image_model_plus: string;
   };
 }
 
@@ -327,6 +335,12 @@ export default function SettingsForm({ section, initial }: Props) {
   // Zamówienia indywidualne
   const [customOrderNotifyEnabled, setCustomOrderNotifyEnabled] = useState(
     initial.custom_order_notify_email_enabled !== "false"
+  );
+
+  // AI (zdjęcia produktów) – model spoza allowlisty wraca do domyślnego
+  const [aiModel, setAiModel] = useState(() => resolveAiModel("ai", initial.ai_image_model));
+  const [aiModelPlus, setAiModelPlus] = useState(() =>
+    resolveAiModel("ai_plus", initial.ai_image_model_plus)
   );
 
   const save = async (pairs: { key: string; value: string }[]) => {
@@ -795,6 +809,73 @@ export default function SettingsForm({ section, initial }: Props) {
               { key: "custom_order_notify_email_enabled", value: customOrderNotifyEnabled ? "true" : "false" },
             ])}
             label="Zapisz"
+          />
+        </div>
+      )}
+
+      {section === "ai" && (
+        <div className="max-w-2xl space-y-6">
+          <h2 className="font-serif text-2xl text-espresso">AI – generowanie zdjęć produktów</h2>
+          <p className="text-xs text-charcoal/80 leading-relaxed">
+            W edycji produktu pod każdym zdjęciem są przyciski <strong className="font-medium">AI</strong> i{" "}
+            <strong className="font-medium">AI+</strong>. Wysyłają one zdjęcie do Google AI i dokładają
+            wynik jako nowe zdjęcie produktu – oryginał zostaje bez zmian. Tutaj wybierasz, który model
+            odpowiada za każdy wariant.
+          </p>
+
+          {[
+            {
+              variant: "ai" as const,
+              title: "AI – produkt na jednolitym tle",
+              value: aiModel,
+              setter: setAiModel,
+            },
+            {
+              variant: "ai_plus" as const,
+              title: "AI+ – produkt w wystylizowanej scenie",
+              value: aiModelPlus,
+              setter: setAiModelPlus,
+            },
+          ].map(({ variant, title, value, setter }) => (
+            <div key={variant} className="space-y-2 border border-sand bg-warm-white p-4">
+              <label className="block text-xs tracking-widest uppercase text-charcoal/80">{title}</label>
+              <select
+                value={value}
+                onChange={(e) => setter(e.target.value)}
+                className="w-full bg-warm-white border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors"
+              >
+                {AI_IMAGE_MODELS.map((m) => (
+                  <option key={m.id} value={m.id}>{m.label}</option>
+                ))}
+              </select>
+              <details className="text-[11px] text-charcoal/80">
+                <summary className="cursor-pointer">Pokaż prompt wysyłany do modelu</summary>
+                <p className="mt-2 bg-cream border border-sand p-3 leading-5 whitespace-pre-line">
+                  {AI_PROMPTS[variant]}
+                </p>
+              </details>
+            </div>
+          ))}
+
+          <div className="p-4 bg-cream border border-sand text-xs text-charcoal/80 leading-relaxed space-y-2">
+            <p className="font-medium">Konfiguracja klucza API</p>
+            <p>
+              Klucz do Google AI ustawiasz w pliku <span className="font-mono">.env.local</span> – nie jest
+              przechowywany w bazie danych:
+            </p>
+            <pre className="font-mono text-[11px] bg-warm-white border border-sand p-3 leading-5 overflow-x-auto">GOOGLE_AI_API_KEY=...</pre>
+            <p>
+              Klucz wygenerujesz w Google AI Studio. Bez niego przyciski AI zwrócą komunikat o braku
+              konfiguracji. Każde kliknięcie to płatne wywołanie modelu.
+            </p>
+          </div>
+
+          <SaveButton
+            onClick={() => save([
+              { key: AI_MODEL_SETTING_KEY.ai, value: aiModel },
+              { key: AI_MODEL_SETTING_KEY.ai_plus, value: aiModelPlus },
+            ])}
+            label="Zapisz modele AI"
           />
         </div>
       )}
