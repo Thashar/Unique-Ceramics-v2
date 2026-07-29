@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ShoppingBag, ArrowRight, Trash2, Plus, Minus } from "lucide-react";
 import { useCart } from "@/lib/cart";
+import ClayRule from "@/components/ui/ClayRule";
 
 type ShippingSettings = {
   cost: number;
@@ -40,6 +41,7 @@ export default function CartPage() {
       <div className="min-h-[100svh] bg-warm-white">
         <div className="bg-cream pt-32 pb-12 px-6 text-center">
           <h1 className="font-serif text-5xl text-espresso">Koszyk</h1>
+          <ClayRule align="center" className="max-w-[220px] mx-auto mt-6" />
         </div>
         <div className="text-center py-24">
           <ShoppingBag size={56} strokeWidth={1} className="mx-auto text-sand mb-6" />
@@ -62,6 +64,7 @@ export default function CartPage() {
       <div className="bg-cream pt-32 pb-12 px-6 text-center">
         <h1 className="font-serif text-5xl text-espresso">Koszyk</h1>
         <p className="text-charcoal/80 mt-2 text-sm">{items.length} {items.length === 1 ? "produkt" : "produkty"}</p>
+        <ClayRule align="center" className="max-w-[220px] mx-auto mt-6" />
       </div>
 
       <div className="max-w-5xl mx-auto px-6 lg:px-10 py-16 grid grid-cols-1 lg:grid-cols-3 gap-12">
