@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Truck, Package, MapPin } from "lucide-react";
 import { useCart } from "@/lib/cart";
 import { validateAddress } from "@/lib/address-validation";
+import ClayRule from "@/components/ui/ClayRule";
 import dynamic from "next/dynamic";
 
 const InPostWidget = dynamic(() => import("@/components/checkout/InPostWidget"), { ssr: false });
@@ -203,6 +204,7 @@ export default function CheckoutForm({
         <div className="max-w-5xl mx-auto">
           <p className="text-xs tracking-[0.3em] uppercase text-clay mb-3">Sklep</p>
           <h1 className="font-serif text-4xl md:text-5xl text-espresso">Zamówienie</h1>
+          <ClayRule className="mt-6" />
         </div>
       </div>
 
@@ -253,7 +255,7 @@ export default function CheckoutForm({
                   <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">
                     Telefon {phoneRequired && "*"}
                   </label>
-                  <input required={phoneRequired} type="tel" value={form.phone} onChange={(e) => set("phone", e.target.value)} autoComplete="tel" placeholder="668443706" className={inputCls("phone")} />
+                  <input required={phoneRequired} type="tel" value={form.phone} onChange={(e) => set("phone", e.target.value)} autoComplete="tel" className={inputCls("phone")} />
                   <FieldError msg={fieldErrors.phone} />
                 </div>
               </div>
@@ -372,8 +374,9 @@ export default function CheckoutForm({
               <h2 className="font-serif text-xl text-espresso mb-6">Twoje zamówienie</h2>
               <div className="space-y-3 mb-6 text-sm">
                 {items.map((item) => (
-                  <div key={item.id} className="flex justify-between text-charcoal/80">
-                    <span className="truncate pr-2">{item.name} × {item.quantity}</span>
+                  <div key={item.id} className="flex justify-between gap-2 text-charcoal/80">
+                    {/* Długie nazwy zawijamy zamiast ucinać – klient musi widzieć, co zamawia */}
+                    <span className="min-w-0 break-words">{item.name} × {item.quantity}</span>
                     <span className="shrink-0">{(item.price * item.quantity).toFixed(2).replace(".", ",")} zł</span>
                   </div>
                 ))}
