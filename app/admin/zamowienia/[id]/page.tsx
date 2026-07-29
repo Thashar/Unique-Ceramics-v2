@@ -87,9 +87,9 @@ export default async function AdminOrderDetailPage({
           <p className="text-sm font-medium text-espresso">{order.firstName} {order.lastName}</p>
           <p className="text-sm text-charcoal/80 mt-1">{order.email}</p>
           {order.phone && <p className="text-sm text-charcoal/80">{order.phone}</p>}
-          {order.user && (
-            <p className="text-xs text-clay mt-2">Zarejestrowany klient</p>
-          )}
+          <p className="text-xs text-clay mt-2">
+            {order.user ? "Zarejestrowany klient" : "Zamówienie bez konta (gość)"}
+          </p>
         </div>
         <div className="bg-cream p-5">
           <div className="flex items-center gap-2 mb-3">

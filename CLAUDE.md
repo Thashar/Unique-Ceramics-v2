@@ -82,7 +82,7 @@ UPSTASH_REDIS_REST_TOKEN="xxxx"                   # token Upstash REST; bez obu 
 ### Sklep
 - **Category** – `id`, `slug` (unique, używany w URL i w `Product.category`), `label` (nazwa wyświetlana), `order` (kolejność filtrów)
 - **Product** – `id`, `slug` (unique), `name`, `description`, `price`, `images[]`, `category`, `stock`, `featured`, `active`
-- **Order** – `id`, `userId` (nullable), `status`, `total`, `shippingCost`, pola adresowe, `paymentMethod` (`transfer`/`stripe`), `paymentStatus` (`pending`/`PAID`/`expired`), `shippingMethod` (`courier`/`parcel_locker`/`pickup`), `parcelLockerCode` (nullable), `trackingNumber` (nullable), `trackingCarrier` (nullable – `dpd`/`dhl`/`inpost`/`poczta`), `paidAt` (nullable – data i godzina wpłaty)
+- **Order** – `id`, `userId` (nullable – `null` = zamówienie bez konta lub konto usunięte), `status`, `total`, `shippingCost`, pola adresowe, `paymentMethod` (`transfer`/`stripe`), `paymentStatus` (`pending`/`PAID`/`expired`), `shippingMethod` (`courier`/`parcel_locker`/`pickup`), `parcelLockerCode` (nullable), `trackingNumber` (nullable), `trackingCarrier` (nullable – `dpd`/`dhl`/`inpost`/`poczta`), `paidAt` (nullable – data i godzina wpłaty)
   - **Rozpoznanie przychodu wg daty wpłaty (`paidAt`):** raporty i analityki (sklep) liczą tylko opłacone (`paymentStatus='PAID'`) wg `COALESCE(paidAt, createdAt)` – zamówienie opłacone w nowym miesiącu trafia do tego miesiąca. Przy przejściu statusu na „Opłacone" admin podaje datę/godzinę wpłaty w modalu (`OrderStatusSelect`); webhook Stripe ustawia `paidAt` = chwila opłacenia. Datę można później zmienić w karcie zamówienia (`PaidAtEditor`, z potwierdzeniem `window.confirm`). Walidacja: nie z przyszłości, nie przed złożeniem zamówienia.
 - **OrderItem** – referencja do Order, `productId`, `name`, `price`, `quantity`
 - **CustomOrder** – `id`, `orderNumber` (auto-increment, wyświetlany jako `IND-{n}`), `customerName`, `customerEmail`, `customerPhone`, `street`, `city`, `postcode`, `orderType`, `description`, `deadline`, `budget`, `price` (cena zamówienia admina), `shippingCost` (koszt wysyłki), `paidAmount` (kwota wpłacona), `status`, `adminNotes`
@@ -179,8 +179,8 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` – zwracają wartość z DB l
 | `/sklep` | dynamic + dane z cache 60 s | Katalog produktów (searchParams `kategoria`); kategorie renderują się natychmiast, siatka produktów streamuje przez `<Suspense>` z `ProductGrid` + `ProductGridSkeleton` |
 | `/sklep/[slug]` | ISR 60 s (pre-generated) | Szczegóły produktu (**server component**, JSON-LD Product, pełne Open Graph + Twitter card – zdjęcie z `/api/og/[slug]`; pamiętaj, że `openGraph` ze strony **zastępuje** ten z layoutu, więc `siteName`/`locale`/`type` są powtórzone); `generateStaticParams` pre-generuje wszystkie aktywne produkty przy budowaniu. Galeria: `ProductGallery` (client) |
 | `/koszyk` | static (client) | Koszyk |
-| `/zamowienie` | force-dynamic | Formularz zamówienia (server) → `CheckoutForm` (client) |
-| `/zamowienie/potwierdzenie` | force-dynamic | Potwierdzenie + dane do przelewu |
+| `/zamowienie` | force-dynamic | Formularz zamówienia (server) → `CheckoutForm` (client). **Dostępne bez logowania** – patrz „Zamówienie bez konta (checkout gościa)" |
+| `/zamowienie/potwierdzenie` | force-dynamic | Potwierdzenie – zależnie od stanu zamówienia: dane do przelewu, informacja o płatności kartą, „oczekuje na płatność" z przyciskiem ponowienia (`StripeResumeButton`) albo informacja o anulowaniu. Dla zamówienia gościa dokłada blok „Zamówienie bez konta" i zamienia CTA „Moje zamówienia" na „Załóż konto" |
 | `/zamowienie-indywidualne` | static (client) | Zamówienie na miarę |
 | `/logowanie`, `/rejestracja` | static (client) | Auth |
 | `/warsztaty` | ISR 300 s | Wprowadzenie (galeria po prawej), oferty, „Co zawiera warsztat?" jako **lista + galeria** (`workshops_includes_gallery`; nagłówek jest **w lewej kolumnie** siatki, a nad siatką zostaje sam `ClayRule` – dzięki temu górna krawędź galerii wypada równo z nagłówkiem, nie z pierwszym podpunktem; bez zdjęć lista zwęża się do `max-w-xl` i zostaje wyśrodkowana) oraz FAQ w **dwóch kolumnach** (`md:grid-cols-2`) zakończone kafelkiem z odesłaniem do `/kontakt`. Mapa ikon jest w `app/warsztaty/icons.ts` – zwykły moduł, bo korzysta z niej i strona serwerowa, i kliencki `WorkshopIncludes` |
@@ -216,10 +216,10 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` – zwracają wartość z DB l
 | GET | `/api/public/contacts` | Dane kontaktowe (phone, email, instagram, facebook, youtube, whatsapp, hours, addressStreet/City/Region) |
 | GET | `/api/public/shipping` | Ustawienia wysyłki (cost, freeEnabled, freeFrom) |
 | POST | `/api/register` | Rejestracja (rate limit, hasło 8–128 znaków) |
-| POST | `/api/checkout` | Zamówienie: walidacja, kwoty serwerowo, **transakcja stock+order**, e-mail / sesja Stripe |
+| POST | `/api/checkout` | Zamówienie: walidacja, kwoty serwerowo, **transakcja stock+order**, e-mail / sesja Stripe. Działa z sesją i bez niej (`userId` = `null` dla gościa); gość musi przesłać `acceptTerms: true`, a przy wysyłce (kurier/paczkomat) wymagany jest telefon. E-mail potwierdzający idzie do klienta przy **obu** metodach płatności (`buildOrderEmail`) |
 | POST | `/api/contact` | Formularz kontaktowy → e-mail Resend (rate limit) |
 | POST | `/api/custom-order` | Zamówienie indywidualne (rate limit) |
-| POST | `/api/stripe/resume` | Wznowienie nieopłaconej płatności Stripe (własność + blokada CANCELLED) |
+| POST | `/api/stripe/resume` | Wznowienie nieopłaconej płatności Stripe (blokada CANCELLED, rate limit 10/min na IP). Zamówienie z konta – tylko właściciel; zamówienie gościa (`userId = null`) – bez sesji, identyfikator zamówienia pełni rolę tokenu |
 | POST | `/api/stripe/webhook` | Webhook Stripe: `completed`→PAID (gdy `payment_status=paid`), `expired`→anulacja + zwrot stocku |
 | POST | `/api/account/update-name` | Zmiana imienia (maks. 100 znaków) |
 | PATCH | `/api/account/change-password` | Zmiana hasła (rate limit 5/15 min, 8–128 znaków; bumpuje `tokenVersion` → wylogowuje wszystkie sesje, także bieżącą) |
@@ -408,7 +408,7 @@ W treściach interfejsu, komentarzach i dokumentacji używaj **półpauzy `–`*
 ## Autoryzacja
 
 - **auth.ts** – NextAuth v5 beta, strategia JWT; providery: Google OAuth + Credentials (bcryptjs); rate limit logowania (5/min na konto + 30/min globalnie); `callbacks` dołączają `id`/`role` do tokena/sesji. Callback `jwt` przy każdym żądaniu weryfikuje `tokenVersion` i istnienie konta w DB – zwrócenie `null` unieważnia sesję (rewokacja po zmianie hasła, wylogowanie z usuniętego konta); odświeża też rolę. Błąd DB = fail-open (nie wylogowuje)
-- **middleware.ts** – wymaga sesji na `/konto`, `/zamowienie`, `/admin` (redirect na `/logowanie?callbackUrl=...`) oraz na `/api/admin/*` (zwraca `401 JSON` – druga warstwa obok `requireAdmin` w handlerach)
+- **middleware.ts** – wymaga sesji na `/konto` i `/admin` (redirect na `/logowanie?callbackUrl=...`) oraz na `/api/admin/*` (zwraca `401 JSON` – druga warstwa obok `requireAdmin` w handlerach). **`/zamowienie` jest celowo poza ochroną** – zamówienie można złożyć bez konta; nie dopisuj go z powrotem
 - **Admin:** rola sprawdzana przez `requireAdmin()` z `lib/admin-auth.ts` – **zawsze z bazy**, nie z JWT. Używaj go w każdej nowej trasie/stronie admina.
 
 ## Bezpieczeństwo – zasady
@@ -507,6 +507,30 @@ jak ciemny header na stronie głównej.
 ### Metody płatności
 - Przelew bankowy (+ opcjonalnie BLIK na telefon): zawsze dostępny
 - Stripe (karta): tylko gdy `payment_stripe_enabled === "true"` **i** ustawiony `STRIPE_SECRET_KEY`; przepływ: checkout → sesja Stripe → webhook `completed` ustawia PAID; `expired` anuluje zamówienie i zwraca stock
+- Porzucona płatność kartą wraca na `/zamowienie/potwierdzenie?id=…&platnosc=anulowana` (nie na pusty koszyk) – stamtąd można ją ponowić przez `/api/stripe/resume`
+
+### Zamówienie bez konta (checkout gościa)
+
+Konto **nie jest** wymagane do zakupu. Gość i zalogowany klient idą tą samą ścieżką
+(`/koszyk` → `/zamowienie` → `/api/checkout` → `/zamowienie/potwierdzenie`), różnice:
+
+| | Gość | Zalogowany |
+|---|---|---|
+| `Order.userId` | `null` | id użytkownika |
+| Adres | wpisywany w formularzu | podpowiadany z `user_address_{userId}`; **brak kompletnego adresu blokuje zamówienie** (poza odbiorem osobistym) |
+| Regulamin | checkbox przy zamówieniu (`acceptTerms`, walidowany też serwerowo) | zaakceptowany przy rejestracji |
+| Dostęp do zamówienia po złożeniu | link `/zamowienie/potwierdzenie?id={orderId}` (id = token, wysyłany e-mailem) | `/konto/zamowienia/{id}` |
+
+- **Telefon jest wymagany** przy wysyłce kurierem i do paczkomatu (kurier dzwoni, InPost wysyła SMS);
+  przy odbiorze osobistym pozostaje opcjonalny. Walidacja po obu stronach (`CheckoutForm`, `/api/checkout`).
+- **Każdy klient dostaje e-mail potwierdzający** (`buildOrderEmail`) – przy przelewie z danymi do wpłaty,
+  przy karcie z informacją o płatności Stripe. E-mail zawiera przycisk „Podgląd zamówienia" (dla gościa
+  to jedyny dostęp do zamówienia, więc wysyłka jest `await`-owana, nie fire-and-forget).
+- Zamówienia gości **wchodzą do wszystkich zestawień** – lista i karta zamówienia w adminie (karta oznacza
+  je jako „Zamówienie bez konta (gość)"), dashboard, `/admin/analityki`, raporty PDF i limit działalności
+  nierejestrowanej liczą po `Order` bez filtra na `userId`. E-maile o zmianie statusu idą na `Order.email`.
+- Zamówienia gościa **nie są** automatycznie podpinane pod konto o tym samym adresie e-mail – rejestracja
+  nie weryfikuje e-maila, więc takie podpięcie odsłaniałoby cudze zamówienia.
 
 ### Tabela Setting – autokonfiguracja
 - Przy operacjach na `Setting` poza Prismą używaj `$executeRaw`/`$queryRaw` z tagged template (parametryzacja!)

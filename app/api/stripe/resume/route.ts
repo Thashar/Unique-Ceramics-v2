@@ -2,21 +2,39 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
+import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 
 export async function POST(req: Request) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Wymagane logowanie" }, { status: 401 });
+  // Trasa jest dostępna bez sesji (zamówienia gości), więc limitujemy po IP
+  if (await isRateLimited(`stripe-resume:${getClientIp(req)}`, 10, 60_000)) {
+    return NextResponse.json({ error: "Zbyt wiele żądań. Spróbuj za chwilę." }, { status: 429 });
   }
 
-  const { orderId } = await req.json();
+  const session = await auth();
+
+  let orderId: unknown;
+  try {
+    ({ orderId } = await req.json());
+  } catch {
+    return NextResponse.json({ error: "Nieprawidłowe dane żądania" }, { status: 400 });
+  }
+  if (typeof orderId !== "string" || !orderId) {
+    return NextResponse.json({ error: "Nie znaleziono zamówienia" }, { status: 404 });
+  }
 
   const order = await db.order.findUnique({
     where: { id: orderId },
     include: { items: true },
   });
 
-  if (!order || order.userId !== session.user.id) {
+  // Zamówienie z konta – tylko właściciel. Zamówienie gościa – identyfikator
+  // zamówienia pełni rolę tokenu dostępu (tak samo jak na stronie potwierdzenia);
+  // wznowienie i tak prowadzi wyłącznie do zapłaty za to zamówienie.
+  const allowed = order
+    ? (order.userId ? order.userId === session?.user?.id : true)
+    : false;
+
+  if (!order || !allowed) {
     return NextResponse.json({ error: "Nie znaleziono zamówienia" }, { status: 404 });
   }
 
@@ -70,7 +88,10 @@ export async function POST(req: Request) {
     ],
     metadata: { orderId: order.id },
     success_url: `${baseUrl}/zamowienie/potwierdzenie?id=${order.id}`,
-    cancel_url: `${baseUrl}/konto/zamowienia/${order.id}`,
+    // Gość nie ma panelu konta – wraca na stronę potwierdzenia z tym samym linkiem
+    cancel_url: order.userId
+      ? `${baseUrl}/konto/zamowienia/${order.id}`
+      : `${baseUrl}/zamowienie/potwierdzenie?id=${order.id}&platnosc=anulowana`,
   });
 
   return NextResponse.json({ url: stripeSession.url });

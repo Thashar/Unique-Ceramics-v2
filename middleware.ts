@@ -9,9 +9,10 @@ export default auth((req) => {
   // brak sesji, by błąd w pojedynczym handlerze nie odsłaniał trasy.)
   const isAdminApi = nextUrl.pathname.startsWith("/api/admin");
 
+  // /zamowienie jest celowo POZA ochroną – zamówienie można złożyć bez konta
+  // (checkout gościa). Dane zamówienia walidowane są w /api/checkout.
   const isProtectedPage =
     nextUrl.pathname.startsWith("/konto") ||
-    nextUrl.pathname.startsWith("/zamowienie") ||
     nextUrl.pathname.startsWith("/admin");
 
   if (!session) {
@@ -31,7 +32,6 @@ export default auth((req) => {
 export const config = {
   matcher: [
     "/konto/:path*",
-    "/zamowienie/:path*",
     "/admin/:path*",
     "/api/admin/:path*",
   ],

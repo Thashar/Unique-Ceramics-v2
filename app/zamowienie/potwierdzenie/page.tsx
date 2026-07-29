@@ -8,17 +8,28 @@ export const metadata: Metadata = {
   description: "Dziękujemy za złożenie zamówienia w Unique Ceramics.",
   robots: { index: false, follow: false },
 };
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, Clock, XCircle } from "lucide-react";
 import { db } from "@/lib/db";
 import { getSettings } from "@/lib/settings";
 import { auth } from "@/auth";
+import StripeResumeButton from "@/components/account/StripeResumeButton";
+
+// Webhook Stripe z potwierdzeniem płatności potrafi dotrzeć chwilę po powrocie
+// na tę stronę – przez pierwsze minuty nie traktujemy zamówienia jako nieopłaconego.
+// Odczyt zegara jest tu celowy (strona jest force-dynamic) i trzymany poza
+// komponentem, żeby render pozostał czysty.
+const WEBHOOK_GRACE_MS = 5 * 60_000;
+
+function olderThanWebhookGrace(createdAt: Date): boolean {
+  return Date.now() - new Date(createdAt).getTime() > WEBHOOK_GRACE_MS;
+}
 
 export default async function ConfirmationPage({
   searchParams,
 }: {
-  searchParams: Promise<{ id?: string }>;
+  searchParams: Promise<{ id?: string; platnosc?: string }>;
 }) {
-  const { id } = await searchParams;
+  const { id, platnosc } = await searchParams;
   const session = await auth();
 
   let order = null;
@@ -58,17 +69,37 @@ export default async function ConfirmationPage({
   const orderNumber = id ? id.slice(-8).toUpperCase() : "";
   const transferTitle = `${bankSettings.payment_bank_transfer_title || "Zamówienie"} #${orderNumber}`;
 
+  // Zamówienie gościa – brak konta, do którego można by odesłać
+  const isGuestOrder = !!order && !order.userId;
+  const cancelled = order?.status === "CANCELLED";
+  // Płatność kartą porzucona (powrót ze Stripe przez cancel_url) albo wejście
+  // z linku w e-mailu do wciąż nieopłaconego zamówienia – można ją ponowić
+  const olderThanGrace = order ? olderThanWebhookGrace(order.createdAt) : false;
+  const awaitingStripe =
+    order?.paymentMethod === "stripe" &&
+    order.paymentStatus !== "PAID" &&
+    !cancelled &&
+    (platnosc === "anulowana" || olderThanGrace);
+
+  const Icon = cancelled ? XCircle : awaitingStripe ? Clock : CheckCircle;
+  const iconColor = cancelled ? "text-red-700" : awaitingStripe ? "text-clay" : "text-green-700";
+  const heading = cancelled
+    ? "Zamówienie zostało anulowane"
+    : awaitingStripe
+      ? "Zamówienie oczekuje na płatność"
+      : "Dziękuję za zamówienie!";
+
   return (
-    <div className="min-h-[100svh] bg-warm-white flex items-center justify-center px-6">
+    <div className="min-h-[100svh] bg-warm-white flex items-center justify-center px-6 py-16">
       <div className="max-w-lg w-full">
         <div className="text-center mb-10">
-          <CheckCircle
+          <Icon
             size={64}
             strokeWidth={1}
-            className="mx-auto text-green-700 mb-8"
+            className={`mx-auto ${iconColor} mb-8`}
           />
           <h1 className="font-serif text-4xl text-espresso mb-4">
-            Dziękuję za zamówienie!
+            {heading}
           </h1>
           {orderNumber && (
             <p className="text-xs text-charcoal/80 mb-2">
@@ -78,8 +109,18 @@ export default async function ConfirmationPage({
           )}
         </div>
 
+        {/* Zamówienie anulowane – np. wygasła sesja płatności */}
+        {cancelled && (
+          <div className="bg-cream border-l-4 border-red-700 p-6 mb-8">
+            <p className="text-sm text-charcoal/80 leading-relaxed">
+              To zamówienie zostało anulowane, a zarezerwowane produkty wróciły do sprzedaży.
+              Jeśli nadal chcesz je kupić, złóż zamówienie ponownie w sklepie.
+            </p>
+          </div>
+        )}
+
         {/* Bank transfer + BLIK details */}
-        {order?.paymentMethod === "transfer" && (
+        {order?.paymentMethod === "transfer" && !cancelled && (
           <div className="bg-cream border-l-4 border-terracotta p-6 mb-8">
             <p className="text-xs tracking-widest uppercase text-clay mb-4">
               Dane do płatności
@@ -136,8 +177,8 @@ export default async function ConfirmationPage({
           </div>
         )}
 
-        {/* Stripe – payment processed */}
-        {order?.paymentMethod === "stripe" && (
+        {/* Stripe – płatność zrealizowana */}
+        {order?.paymentMethod === "stripe" && !awaitingStripe && !cancelled && (
           <div className="bg-cream border-l-4 border-terracotta p-6 mb-8">
             <p className="text-xs tracking-widest uppercase text-clay mb-3">
               Płatność kartą
@@ -145,6 +186,21 @@ export default async function ConfirmationPage({
             <p className="text-sm text-charcoal/80 leading-relaxed">
               Płatność kartą została zrealizowana. Potwierdzenie otrzymasz na podany adres e-mail.
             </p>
+          </div>
+        )}
+
+        {/* Stripe – płatność porzucona lub jeszcze niezaksięgowana */}
+        {awaitingStripe && order && (
+          <div className="bg-cream border-l-4 border-terracotta p-6 mb-8">
+            <p className="text-xs tracking-widest uppercase text-clay mb-3">
+              Płatność kartą
+            </p>
+            <p className="text-sm text-charcoal/80 leading-relaxed">
+              Zamówienie zostało zapisane, ale płatność nie została jeszcze zaksięgowana.
+              Produkty są zarezerwowane przez <strong>24 godziny</strong> – po tym czasie
+              zamówienie zostanie anulowane, a produkty wrócą do sprzedaży.
+            </p>
+            <StripeResumeButton orderId={order.id} />
           </div>
         )}
 
@@ -181,6 +237,22 @@ export default async function ConfirmationPage({
           </div>
         )}
 
+        {/* Zamówienie bez konta – link do tej strony jest jedynym dostępem */}
+        {order && isGuestOrder && !cancelled && (
+          <div className="bg-mist border border-sand p-6 mb-8 text-sm text-charcoal/80 leading-relaxed">
+            <p className="text-espresso font-medium mb-2">Zamówienie bez konta</p>
+            <p>
+              Szczegóły wysłaliśmy na adres <strong className="text-espresso">{order.email}</strong>.
+              Zachowaj tę wiadomość – zawiera link do podglądu zamówienia. O statusie realizacji
+              informujemy e-mailem. W razie pytań napisz na{" "}
+              <a href="mailto:kontakt@uniqueceramics.pl" className="text-clay hover:text-espresso underline">
+                kontakt@uniqueceramics.pl
+              </a>{" "}
+              i podaj numer zamówienia.
+            </p>
+          </div>
+        )}
+
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Link
             href="/sklep"
@@ -188,12 +260,21 @@ export default async function ConfirmationPage({
           >
             Wróć do sklepu
           </Link>
-          <Link
-            href="/konto/zamowienia"
-            className="px-8 py-4 border border-sand hover:border-clay text-espresso text-xs tracking-widest uppercase transition-colors text-center"
-          >
-            Moje zamówienia
-          </Link>
+          {isGuestOrder ? (
+            <Link
+              href="/rejestracja"
+              className="px-8 py-4 border border-sand hover:border-clay text-espresso text-xs tracking-widest uppercase transition-colors text-center"
+            >
+              Załóż konto
+            </Link>
+          ) : (
+            <Link
+              href="/konto/zamowienia"
+              className="px-8 py-4 border border-sand hover:border-clay text-espresso text-xs tracking-widest uppercase transition-colors text-center"
+            >
+              Moje zamówienia
+            </Link>
+          )}
         </div>
       </div>
     </div>

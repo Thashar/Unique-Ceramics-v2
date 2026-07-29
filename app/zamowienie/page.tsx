@@ -75,6 +75,7 @@ export default async function CheckoutPage() {
 
   return (
     <CheckoutForm
+      isLoggedIn={!!session?.user?.id}
       userEmail={session?.user?.email ?? ""}
       savedAddress={savedAddress}
       paymentMethods={paymentMethods}
