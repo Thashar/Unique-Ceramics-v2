@@ -214,6 +214,26 @@ model Category {
   updatedAt DateTime @updatedAt
 }
 
+// ─── Zużycie AI (generowanie zdjęć produktów) ────────────────────────────────
+
+model AiImageUsage {
+  id           String   @id @default(cuid())
+  createdAt    DateTime @default(now())
+  /// "image" (zdjęcia) | "text" (opisy produktów) – rozdziela koszty w panelu
+  kind         String   @default("image")
+  variant      String // zdjęcia: "ai" | "ai_plus"; tekst: "product_fill"
+  model        String
+  promptTokens Int      @default(0)
+  outputTokens Int      @default(0)
+  /// Koszt w USD wyliczony ze stawek modelu (rozliczenie Google jest w USD)
+  costUsd      Float    @default(0)
+  /// true = model nie zwrócił licznika tokenów, koszt policzony z szacunku
+  estimated    Boolean  @default(false)
+
+  @@index([createdAt])
+  @@index([model])
+}
+
 // ─── Ustawienia sklepu ────────────────────────────────────────────────────────
 
 model Setting {

@@ -70,7 +70,7 @@ export default async function LocalBusinessSchema() {
       "Pracownia ceramiki artystycznej tworząca ręcznie robione naczynia użytkowe i dekoracyjne. Kubki, filiżanki, miski, talerze i świeczniki wykonywane z pasją – każdy egzemplarz jest niepowtarzalny.",
     url: BASE,
     logo: `${BASE}/images/logo.webp`,
-    image: `${BASE}/images/OpenGraph.webp`,
+    image: `${BASE}/images/OpenGraph.jpg`,
     telephone: s.contact_phone.replace(/\s/g, ""),
     email: s.contact_email,
     address: {

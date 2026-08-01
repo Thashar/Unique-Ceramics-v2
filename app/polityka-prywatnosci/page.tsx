@@ -7,13 +7,15 @@ import { sanitizeRichHtml } from "@/lib/sanitize-html";
 import Header from "@/components/layout/HeaderWrapper";
 import Footer from "@/components/layout/Footer";
 import ClayRule from "@/components/ui/ClayRule";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Polityka prywatności",
-  description: "Polityka prywatności sklepu internetowego Unique Ceramics.",
-  alternates: { canonical: "https://uniqueceramics.pl/polityka-prywatnosci" },
-  robots: { index: false, follow: false },
-};
+  description:
+    "Polityka prywatności sklepu Unique Ceramics – jakie dane zbieramy, w jakim celu i jakie masz prawa.",
+  path: "/polityka-prywatnosci",
+  noIndex: true,
+});
 
 export default async function PolitykaPrywatnosci() {
   const content = await getSetting("polityka_prywatnosci");

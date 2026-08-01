@@ -1,5 +1,6 @@
 import { unstable_cache } from "next/cache";
 import { db } from "@/lib/db";
+import { AI_MODEL_DEFAULT, AI_TEXT_MODEL_DEFAULT } from "@/lib/ai";
 
 /** Klucze kontaktowe używane w stopce i w danych strukturalnych. */
 export const CONTACT_KEYS = [
@@ -233,6 +234,12 @@ const DEFAULTS: Record<string, string> = {
   vacation_message: "",
   // Zamówienia indywidualne
   custom_order_notify_email_enabled: "true",
+  // Generowanie zdjęć produktów przez Google AI (przyciski AI / AI+)
+  ai_image_model: AI_MODEL_DEFAULT.ai,
+  ai_image_model_plus: AI_MODEL_DEFAULT.ai_plus,
+  ai_text_model: AI_TEXT_MODEL_DEFAULT,
+  // Kurs do przeliczenia kosztów AI (Google rozlicza w USD) – edytowalny w panelu
+  ai_usd_pln_rate: "4.00",
   // Działalność nierejestrowana – minimalne wynagrodzenie (aktualizuj co rok!)
   // 2026: 4806 zł (ustawa z 25.07.2025 r. o ograniczeniu biurokracji i wsparciu przedsiębiorczości)
   dzn_min_wage: "4806",

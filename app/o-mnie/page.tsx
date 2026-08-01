@@ -13,27 +13,14 @@ import { getSettings } from "@/lib/settings";
 import { sanitizeRichHtml } from "@/lib/sanitize-html";
 import { hexToRgba } from "@/lib/overlay";
 import { parseGallery } from "@/lib/gallery";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "O mnie",
   description:
     "Poznaj historię Unique Ceramics – pracowni ceramicznej z okolic Gliwic. Ręcznie robiona ceramika tworzona z pasji do gliny na Śląsku.",
-  alternates: { canonical: "https://uniqueceramics.pl/o-mnie" },
-  openGraph: {
-    title: "O mnie – Unique Ceramics",
-    description:
-      "Poznaj historię pracowni ceramicznej Unique Ceramics z okolic Gliwic. Ręcznie robiona ceramika tworzona z pasji do gliny.",
-    url: "https://uniqueceramics.pl/o-mnie",
-    images: [
-      {
-        url: "/images/OpenGraph.webp",
-        width: 1200,
-        height: 630,
-        alt: "Pracownia ceramiczna Unique Ceramics – Gliwice",
-      },
-    ],
-  },
-};
+  path: "/o-mnie",
+});
 
 export default async function AboutPage() {
   const s = await getSettings([

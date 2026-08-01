@@ -36,6 +36,7 @@ async function sendAdminNotification(params: {
   vacationNote?: string;
   shippingMethod?: string;
   parcelLockerCode?: string | null;
+  isGuest: boolean;
 }) {
   const resendApiKey = process.env.RESEND_API_KEY;
   if (!resendApiKey) return;
@@ -44,7 +45,7 @@ async function sendAdminNotification(params: {
     orderNumber, firstName, lastName, email, phone,
     street, city, postcode, note, paymentMethod,
     items, shippingCost, total, orderId, vacationNote,
-    shippingMethod, parcelLockerCode,
+    shippingMethod, parcelLockerCode, isGuest,
   } = params;
 
   const shippingLabel = SHIPPING_LABEL[shippingMethod ?? "courier"] ?? shippingMethod ?? "Kurier";
@@ -69,7 +70,7 @@ async function sendAdminNotification(params: {
         `Nowe zamówienie #${orderNumber}`,
         ...(vacationNote ? [``, `⚠️ URLOP: ${vacationNote}`] : []),
         ``,
-        `Klient: ${firstName} ${lastName}`,
+        `Klient: ${firstName} ${lastName}${isGuest ? " (zamówienie bez konta)" : " (konto w sklepie)"}`,
         `E-mail: ${email}`,
         `Telefon: ${phone || "–"}`,
         `Adres: ${shippingMethod === "pickup" ? "Odbiór osobisty" : `${street}, ${postcode} ${city}`}`,
@@ -92,25 +93,31 @@ async function sendAdminNotification(params: {
   }
 }
 
-function buildTransferEmail(params: {
+// Wspólny e-mail potwierdzający zamówienie dla klienta. Przy przelewie zawiera
+// dane do wpłaty, przy płatności kartą – informację o płatności Stripe.
+// Wysyłany niezależnie od metody, bo dla gościa jest to jedyny ślad zamówienia.
+function buildOrderEmail(params: {
   orderNumber: string;
   firstName: string;
-  email: string;
+  paymentMethod: "transfer" | "stripe";
   items: { name: string; price: number; quantity: number }[];
   shippingCost: number;
   total: number;
-  bankAccountName: string;
-  bankAccountNumber: string;
-  bankName: string;
-  transferTitle: string;
+  bankAccountName?: string;
+  bankAccountNumber?: string;
+  bankName?: string;
+  transferTitle?: string;
   blikPhone?: string;
   vacationNote?: string;
   shippingMethod?: string;
   parcelLockerCode?: string | null;
+  orderUrl: string;
+  isGuest: boolean;
 }): string {
   const {
     orderNumber,
     firstName,
+    paymentMethod,
     items,
     shippingCost,
     total,
@@ -122,7 +129,11 @@ function buildTransferEmail(params: {
     vacationNote,
     shippingMethod,
     parcelLockerCode,
+    orderUrl,
+    isGuest,
   } = params;
+
+  const isTransfer = paymentMethod === "transfer";
 
   const shippingLabel = SHIPPING_LABEL[shippingMethod ?? "courier"] ?? "Kurier";
   const shippingInfo = shippingMethod === "parcel_locker" && parcelLockerCode
@@ -153,7 +164,9 @@ function buildTransferEmail(params: {
       <p style="color:#4a3728;font-size:15px;margin:0 0 24px;">Cześć ${firstName},</p>
       <p style="color:#6b5748;font-size:14px;line-height:1.6;margin:0 0 24px;">
         Twoje zamówienie <strong style="color:#3d2b1f;">#${orderNumber}</strong> zostało przyjęte.
-        Aby je zrealizować, prosimy o dokonanie przelewu na poniższe dane:
+        ${isTransfer
+          ? "Aby je zrealizować, prosimy o dokonanie przelewu na poniższe dane:"
+          : "Płatność kartą realizujemy przez Stripe – potwierdzenie transakcji otrzymasz od operatora płatności."}
       </p>
       ${vacationNote ? `
       <div style="background:#fff8f0;border-left:3px solid #c87941;padding:16px 20px;margin:0 0 24px;">
@@ -166,6 +179,7 @@ function buildTransferEmail(params: {
         ${shippingInfo}
       </div>
 
+      ${isTransfer ? `
       <div style="background:#f5f0eb;border-left:3px solid #c87941;padding:20px 24px;margin:0 0 ${blikPhone ? "16px" : "28px"};">
         <p style="margin:0 0 6px;font-family:Arial,sans-serif;font-size:11px;color:#6b5748;letter-spacing:0.15em;text-transform:uppercase;">Przelew bankowy</p>
         ${bankAccountName ? `<p style="margin:4px 0;font-size:14px;color:#3d2b1f;"><strong>Odbiorca:</strong> ${bankAccountName}</p>` : ""}
@@ -173,8 +187,15 @@ function buildTransferEmail(params: {
         ${bankName ? `<p style="margin:4px 0;font-size:14px;color:#3d2b1f;"><strong>Bank:</strong> ${bankName}</p>` : ""}
         <p style="margin:4px 0;font-size:14px;color:#3d2b1f;"><strong>Kwota:</strong> ${total.toFixed(2).replace(".", ",")} zł</p>
         <p style="margin:4px 0;font-size:14px;color:#3d2b1f;"><strong>Tytuł przelewu:</strong> ${transferTitle} #${orderNumber}</p>
-      </div>
-      ${blikPhone ? `
+      </div>` : `
+      <div style="background:#f5f0eb;border-left:3px solid #c87941;padding:20px 24px;margin:0 0 28px;">
+        <p style="margin:0 0 6px;font-family:Arial,sans-serif;font-size:11px;color:#6b5748;letter-spacing:0.15em;text-transform:uppercase;">Płatność kartą</p>
+        <p style="margin:4px 0;font-size:14px;color:#3d2b1f;"><strong>Kwota:</strong> ${total.toFixed(2).replace(".", ",")} zł</p>
+        <p style="margin:8px 0 0;font-size:12px;color:#6b5748;line-height:1.6;">
+          Jeśli płatność nie została dokończona, możesz ją ponowić przyciskiem „Podgląd zamówienia” poniżej.
+        </p>
+      </div>`}
+      ${isTransfer && blikPhone ? `
       <div style="background:#f5f0eb;border-left:3px solid #c87941;padding:20px 24px;margin:0 0 28px;">
         <p style="margin:0 0 6px;font-family:Arial,sans-serif;font-size:11px;color:#6b5748;letter-spacing:0.15em;text-transform:uppercase;">Przelew BLIK na telefon</p>
         <p style="margin:4px 0;font-size:14px;color:#3d2b1f;"><strong>Numer telefonu:</strong> <span style="font-family:monospace;">${blikPhone}</span></p>
@@ -205,9 +226,19 @@ function buildTransferEmail(params: {
 
       <div style="background:#fff8f0;border-left:3px solid #e07b39;padding:14px 20px;margin:28px 0 0;">
         <p style="margin:0;font-size:13px;color:#7a4a1e;line-height:1.6;">
-          Prosimy o dokonanie płatności w ciągu <strong>48 godzin</strong>.
+          Prosimy o dokonanie płatności w ciągu <strong>${isTransfer ? "48 godzin" : "24 godzin"}</strong>.
           Po upływie tego czasu zamówienie zostanie automatycznie anulowane, a zarezerwowane produkty wrócą do sprzedaży.
         </p>
+      </div>
+
+      <div style="text-align:center;margin:28px 0 0;">
+        <a href="${orderUrl}" style="display:inline-block;background:#755F44;color:#faf8f5;text-decoration:none;font-family:Arial,sans-serif;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;padding:14px 28px;">
+          Podgląd zamówienia
+        </a>
+        ${isGuest ? `
+        <p style="margin:12px 0 0;font-size:12px;color:#6b5748;line-height:1.6;">
+          Zamówienie złożono bez zakładania konta – zachowaj tego e-maila, to jedyny dostęp do podglądu zamówienia.
+        </p>` : ""}
       </div>
     </div>
     <div style="background:#f5f0eb;padding:20px 40px;text-align:center;">
@@ -277,8 +308,18 @@ export async function POST(req: Request) {
     paymentMethod,
     shippingMethod,
     parcelLockerCode,
+    acceptTerms,
     items,
   } = body;
+
+  // Zamówienie bez konta – akceptacja regulaminu składana jest przy zamówieniu
+  // (zalogowany użytkownik zaakceptował go przy rejestracji)
+  if (!session?.user?.id && acceptTerms !== true) {
+    return NextResponse.json(
+      { error: "Zaakceptuj regulamin i politykę prywatności" },
+      { status: 400 }
+    );
+  }
 
   const ALLOWED_SHIPPING_METHODS = ["courier", "parcel_locker", "pickup"];
   if (!ALLOWED_SHIPPING_METHODS.includes(shippingMethod)) {
@@ -296,6 +337,11 @@ export async function POST(req: Request) {
 
   if (shippingMethod !== "pickup" && (!street?.trim() || !city?.trim() || !postcode?.trim())) {
     return NextResponse.json({ error: "Brakuje wymaganych pól adresu" }, { status: 400 });
+  }
+
+  // Telefon jest niezbędny do doręczenia (kurier dzwoni, InPost wysyła SMS)
+  if (shippingMethod !== "pickup" && !phone?.trim()) {
+    return NextResponse.json({ error: "Telefon jest wymagany przy wysyłce" }, { status: 400 });
   }
 
   const ALLOWED_PAYMENT_METHODS = ["transfer", "stripe"];
@@ -455,6 +501,13 @@ export async function POST(req: Request) {
 
   // Powiadomienie dla właściciela sklepu – używamy zweryfikowanych danych z serwera
   const orderNumber = order.id.slice(-8).toUpperCase();
+  const isGuest = !session?.user?.id;
+  const appUrl = process.env.AUTH_URL ?? "https://uniqueceramics.pl";
+  // Gość nie ma panelu konta – linkiem do zamówienia jest strona potwierdzenia
+  // (id zamówienia pełni rolę tokenu dostępu, tak jak w /zamowienie/potwierdzenie)
+  const orderUrl = isGuest
+    ? `${appUrl}/zamowienie/potwierdzenie?id=${order.id}`
+    : `${appUrl}/konto/zamowienia/${order.id}`;
   const verifiedItems = typedItems.map((item) => {
     const product = productMap.get(item.productId)!;
     return { name: product.name, price: product.price, quantity: item.quantity };
@@ -463,9 +516,64 @@ export async function POST(req: Request) {
     orderNumber, firstName, lastName, email, phone: phone?.trim() || null,
     street, city, postcode, note: note?.trim() || null, paymentMethod,
     items: verifiedItems, shippingCost, total, orderId: order.id, vacationNote,
+    isGuest,
     shippingMethod: shippingMethod ?? "courier",
     parcelLockerCode: shippingMethod === "parcel_locker" ? String(parcelLockerCode ?? "").trim() : null,
   });
+
+  // E-mail potwierdzający dla klienta – wysyłany przy obu metodach płatności.
+  // Dla zamówienia bez konta jest jedynym potwierdzeniem i jedynym linkiem do zamówienia.
+  async function sendCustomerEmail() {
+    const resendApiKey = process.env.RESEND_API_KEY;
+    if (!resendApiKey) return;
+    try {
+      const bankSettings = paymentMethod === "transfer"
+        ? await getSettings([
+            "payment_bank_account_name",
+            "payment_bank_account_number",
+            "payment_bank_name",
+            "payment_bank_transfer_title",
+            "payment_blik_enabled",
+            "payment_blik_phone",
+          ])
+        : null;
+
+      const { Resend } = await import("resend");
+      const resend = new Resend(resendApiKey);
+
+      await resend.emails.send({
+        from:
+          process.env.RESEND_FROM_EMAIL ??
+          "Unique Ceramics <onboarding@resend.dev>",
+        to: email,
+        subject: bankSettings
+          ? `Zamówienie #${orderNumber} – dane do przelewu`
+          : `Zamówienie #${orderNumber} – potwierdzenie`,
+        html: buildOrderEmail({
+          orderNumber,
+          firstName,
+          paymentMethod: paymentMethod === "stripe" ? "stripe" : "transfer",
+          items: verifiedItems,
+          shippingCost,
+          total,
+          bankAccountName: bankSettings?.payment_bank_account_name,
+          bankAccountNumber: bankSettings?.payment_bank_account_number,
+          bankName: bankSettings?.payment_bank_name,
+          transferTitle: bankSettings?.payment_bank_transfer_title || "Zamówienie",
+          blikPhone: bankSettings?.payment_blik_enabled === "true"
+            ? (bankSettings.payment_blik_phone || undefined)
+            : undefined,
+          vacationNote,
+          shippingMethod: shippingMethod ?? "courier",
+          parcelLockerCode: shippingMethod === "parcel_locker" ? String(parcelLockerCode ?? "").trim() : null,
+          orderUrl,
+          isGuest,
+        }),
+      });
+    } catch {
+      // Błąd wysyłki nie blokuje zamówienia
+    }
+  }
 
   // Stripe – create Checkout session and redirect
   if (paymentMethod === "stripe") {
@@ -501,58 +609,19 @@ export async function POST(req: Request) {
       ],
       metadata: { orderId: order.id },
       success_url: `${baseUrl}/zamowienie/potwierdzenie?id=${order.id}`,
-      cancel_url: `${baseUrl}/zamowienie`,
+      // Porzucona płatność wraca na potwierdzenie z flagą – koszyk jest już
+      // wyczyszczony, a zamówienie czeka na wpłatę; stamtąd można ją ponowić
+      cancel_url: `${baseUrl}/zamowienie/potwierdzenie?id=${order.id}&platnosc=anulowana`,
     });
+
+    // Czekamy na wysyłkę – dla gościa ten e-mail jest jedynym śladem zamówienia,
+    // a po zwróceniu odpowiedzi funkcja serverless może zostać uśpiona
+    await sendCustomerEmail();
 
     return NextResponse.json({ orderId: order.id, stripeUrl: session.url });
   }
 
-  // Send confirmation email for bank transfer orders
-  if (paymentMethod === "transfer") {
-    const resendApiKey = process.env.RESEND_API_KEY;
-    if (resendApiKey) {
-      try {
-        const bankSettings = await getSettings([
-          "payment_bank_account_name",
-          "payment_bank_account_number",
-          "payment_bank_name",
-          "payment_bank_transfer_title",
-          "payment_blik_enabled",
-          "payment_blik_phone",
-        ]);
-
-        const { Resend } = await import("resend");
-        const resend = new Resend(resendApiKey);
-
-        await resend.emails.send({
-          from:
-            process.env.RESEND_FROM_EMAIL ??
-            "Unique Ceramics <onboarding@resend.dev>",
-          to: email,
-          subject: `Zamówienie #${orderNumber} – dane do przelewu`,
-          html: buildTransferEmail({
-            orderNumber,
-            firstName,
-            email,
-            items: verifiedItems,
-            shippingCost,
-            total,
-            bankAccountName: bankSettings.payment_bank_account_name,
-            bankAccountNumber: bankSettings.payment_bank_account_number,
-            bankName: bankSettings.payment_bank_name,
-            transferTitle:
-              bankSettings.payment_bank_transfer_title || "Zamówienie",
-            blikPhone: bankSettings.payment_blik_enabled === "true" ? (bankSettings.payment_blik_phone || undefined) : undefined,
-            vacationNote,
-            shippingMethod: shippingMethod ?? "courier",
-            parcelLockerCode: shippingMethod === "parcel_locker" ? String(parcelLockerCode ?? "").trim() : null,
-          }),
-        });
-      } catch {
-        // Email failure doesn't block the order
-      }
-    }
-  }
+  await sendCustomerEmail();
 
   return NextResponse.json({ orderId: order.id });
 }

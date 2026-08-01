@@ -11,27 +11,14 @@ import Footer from "@/components/layout/Footer";
 import { getSettings } from "@/lib/settings";
 import { normalizeHours } from "@/lib/opening-hours";
 import ContactForm from "@/components/contact/ContactForm";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Kontakt",
   description:
     "Skontaktuj się z pracownią ceramiczną Unique Ceramics – Familijna 23, 44-164 Kleszczów (k. Gliwic). Telefon, e-mail, Instagram.",
-  alternates: { canonical: "https://uniqueceramics.pl/kontakt" },
-  openGraph: {
-    title: "Kontakt – Unique Ceramics",
-    description:
-      "Skontaktuj się z pracownią ceramiczną Unique Ceramics z okolic Gliwic. Telefon, e-mail, formularz kontaktowy.",
-    url: "https://uniqueceramics.pl/kontakt",
-    images: [
-      {
-        url: "/images/OpenGraph.webp",
-        width: 1200,
-        height: 630,
-        alt: "Kontakt – pracownia ceramiczna Unique Ceramics",
-      },
-    ],
-  },
-};
+  path: "/kontakt",
+});
 
 function parseWorkshopTitles(json: string): string[] {
   try {

@@ -10,6 +10,19 @@ import FocalPointPicker from "@/components/admin/FocalPointPicker";
 import GalleryEditor from "@/components/admin/GalleryEditor";
 import WorkshopsOffersEditor from "@/components/admin/WorkshopsOffersEditor";
 import { parseGallery, galleryHead } from "@/lib/gallery";
+import {
+  AI_IMAGE_MODELS,
+  AI_MODEL_PRICING,
+  AI_MODEL_SETTING_KEY,
+  AI_PROMPTS,
+  AI_TEXT_MODELS,
+  AI_TEXT_MODEL_SETTING_KEY,
+  aiCostPerImageUsd,
+  buildProductFillPrompt,
+  resolveAiModel,
+  resolveAiTextModel,
+} from "@/lib/ai";
+import type { AiUsagePeriod, AiUsageStats } from "@/lib/ai-usage";
 
 interface Props {
   section: string;
@@ -70,7 +83,66 @@ interface Props {
     vacation_end_date: string;
     vacation_message: string;
     custom_order_notify_email_enabled: string;
+    ai_image_model: string;
+    ai_image_model_plus: string;
+    ai_text_model: string;
+    ai_usd_pln_rate: string;
   };
+  /** Statystyki zużycia AI – liczone tylko dla zakładki „AI (zdjęcia)” */
+  aiUsage?: AiUsageStats | null;
+}
+
+const MODEL_LABEL = new Map<string, string>([
+  ...AI_IMAGE_MODELS.map((m) => [m.id, m.label] as [string, string]),
+  ...AI_TEXT_MODELS.map((m) => [m.id, m.label] as [string, string]),
+]);
+
+/** Przykładowa kategoria tylko do podglądu promptu – realna lista idzie z bazy. */
+const PROMPT_PREVIEW_CATEGORIES = [{ slug: "kubki", label: "Kubki" }];
+
+/** Etykieta stawki modelu tekstowego: wejście / wyjście za 1 mln tokenów. */
+function tokenRate(model: string): string {
+  const price = AI_MODEL_PRICING[model];
+  if (!price) return "stawka nieznana";
+  return `$${price.inputPer1M} / $${price.outputPer1M} za 1 mln tokenów`;
+}
+
+const VARIANT_LABEL: Record<string, string> = {
+  ai: "AI (zdjęcie)",
+  ai_plus: "AI+ (zdjęcie)",
+  product_fill: "Uzupełnianie opisu",
+};
+
+/** Kwoty AI bywają rzędu setnych centa – pokazujemy tyle miejsc, ile ma sens. */
+function usd(value: number): string {
+  if (value === 0) return "$0";
+  return value < 0.01 ? `$${value.toFixed(4)}` : `$${value.toFixed(2)}`;
+}
+
+function pln(value: number, rate: number): string {
+  const converted = value * rate;
+  return `${converted.toFixed(converted < 0.01 && converted > 0 ? 4 : 2).replace(".", ",")} zł`;
+}
+
+/** Kafelek okresu: łączny koszt na wierzchu, pod spodem rozbicie zdjęcia / teksty. */
+function UsageCard({ period, rate }: { period: AiUsagePeriod; rate: number }) {
+  return (
+    <div className="border border-sand bg-warm-white p-4">
+      <p className="text-xs tracking-widest uppercase text-charcoal/80">{period.label}</p>
+      <p className="font-serif text-2xl text-espresso mt-1">{usd(period.costUsd)}</p>
+      {rate > 0 && <p className="text-xs text-charcoal/80">{pln(period.costUsd, rate)}</p>}
+      <dl className="mt-2 space-y-0.5 text-[11px] text-charcoal/80">
+        <div className="flex justify-between gap-2">
+          <dt>Zdjęcia ({period.image.count})</dt>
+          <dd className="tabular-nums">{usd(period.image.costUsd)}</dd>
+        </div>
+        <div className="flex justify-between gap-2">
+          <dt>Teksty ({period.text.count})</dt>
+          <dd className="tabular-nums">{usd(period.text.costUsd)}</dd>
+        </div>
+      </dl>
+    </div>
+  );
 }
 
 function hexToRgba(hex: string, opacity: string): string {
@@ -239,7 +311,7 @@ function OverlayControl({
   );
 }
 
-export default function SettingsForm({ section, initial }: Props) {
+export default function SettingsForm({ section, initial, aiUsage }: Props) {
   const [toast, setToast] = useState<"ok" | false>(false);
   const [errMsg, setErrMsg] = useState("");
 
@@ -328,6 +400,15 @@ export default function SettingsForm({ section, initial }: Props) {
   const [customOrderNotifyEnabled, setCustomOrderNotifyEnabled] = useState(
     initial.custom_order_notify_email_enabled !== "false"
   );
+
+  // AI (zdjęcia produktów) – model spoza allowlisty wraca do domyślnego
+  const [aiModel, setAiModel] = useState(() => resolveAiModel("ai", initial.ai_image_model));
+  const [aiModelPlus, setAiModelPlus] = useState(() =>
+    resolveAiModel("ai_plus", initial.ai_image_model_plus)
+  );
+  const [aiTextModel, setAiTextModel] = useState(() => resolveAiTextModel(initial.ai_text_model));
+  const [aiRate, setAiRate] = useState(initial.ai_usd_pln_rate);
+  const aiRateNumber = Math.max(0, parseFloat(aiRate.replace(",", ".")) || 0);
 
   const save = async (pairs: { key: string; value: string }[]) => {
     setErrMsg("");
@@ -796,6 +877,216 @@ export default function SettingsForm({ section, initial }: Props) {
             ])}
             label="Zapisz"
           />
+        </div>
+      )}
+
+      {section === "ai" && (
+        <div className="max-w-2xl space-y-6">
+          <h2 className="font-serif text-2xl text-espresso">AI – zdjęcia i opisy produktów</h2>
+          <p className="text-xs text-charcoal/80 leading-relaxed">
+            W edycji produktu pod każdym zdjęciem są przyciski <strong className="font-medium">AI</strong> i{" "}
+            <strong className="font-medium">AI+</strong> (nowe zdjęcie na podstawie istniejącego), a pod
+            opisem przycisk <strong className="font-medium">Uzupełnij przy użyciu AI</strong> (nazwa, slug,
+            kategoria i opis ze zdjęcia głównego). Tutaj wybierasz model dla każdego z tych zadań –
+            przy nazwie modelu widać jego stawkę.
+          </p>
+
+          {[
+            {
+              variant: "ai" as const,
+              title: "AI – produkt na jednolitym tle",
+              value: aiModel,
+              setter: setAiModel,
+            },
+            {
+              variant: "ai_plus" as const,
+              title: "AI+ – produkt w wystylizowanej scenie",
+              value: aiModelPlus,
+              setter: setAiModelPlus,
+            },
+          ].map(({ variant, title, value, setter }) => (
+            <div key={variant} className="space-y-2 border border-sand bg-warm-white p-4">
+              <label className="block text-xs tracking-widest uppercase text-charcoal/80">{title}</label>
+              <select
+                value={value}
+                onChange={(e) => setter(e.target.value)}
+                className="w-full bg-warm-white border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors"
+              >
+                {AI_IMAGE_MODELS.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.label} – {usd(aiCostPerImageUsd(m.id))} / zdjęcie
+                  </option>
+                ))}
+              </select>
+              <p className="text-[11px] text-charcoal/80">
+                Orientacyjny koszt jednego zdjęcia: {usd(aiCostPerImageUsd(value))}
+                {aiRateNumber > 0 && <> (~{pln(aiCostPerImageUsd(value), aiRateNumber)})</>}
+              </p>
+              <details className="text-[11px] text-charcoal/80">
+                <summary className="cursor-pointer">Pokaż prompt wysyłany do modelu</summary>
+                <p className="mt-2 bg-cream border border-sand p-3 leading-5 whitespace-pre-line">
+                  {AI_PROMPTS[variant]}
+                </p>
+              </details>
+            </div>
+          ))}
+
+          <div className="space-y-2 border border-sand bg-warm-white p-4">
+            <label className="block text-xs tracking-widest uppercase text-charcoal/80">
+              Uzupełnianie opisu – model tekstowy
+            </label>
+            <select
+              value={aiTextModel}
+              onChange={(e) => setAiTextModel(e.target.value)}
+              className="w-full bg-warm-white border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors"
+            >
+              {AI_TEXT_MODELS.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.label} – {tokenRate(m.id)}
+                </option>
+              ))}
+            </select>
+            <p className="text-[11px] text-charcoal/80">
+              Stawka za 1 mln tokenów (wejście / wyjście): {tokenRate(aiTextModel)}. Jedno uzupełnienie
+              to zdjęcie plus kilkaset tokenów, więc koszt jest ułamkiem centa – dokładna kwota trafia
+              do statystyk poniżej.
+            </p>
+            <details className="text-[11px] text-charcoal/80">
+              <summary className="cursor-pointer">Pokaż prompt wysyłany do modelu</summary>
+              <p className="mt-2 bg-cream border border-sand p-3 leading-5 whitespace-pre-line">
+                {buildProductFillPrompt(PROMPT_PREVIEW_CATEGORIES)}
+              </p>
+              <p className="mt-1">
+                W prawdziwym wywołaniu lista kategorii jest podstawiana z kategorii sklepu –
+                model może wybrać tylko istniejącą.
+              </p>
+            </details>
+          </div>
+
+          <div className="max-w-xs">
+            <Field
+              label="Kurs USD → PLN (do przeliczania kosztów)"
+              value={aiRate}
+              setter={setAiRate}
+            />
+            <p className="text-[11px] text-charcoal/80 mt-1">
+              Google rozlicza AI w dolarach – kurs służy tylko do pokazania kosztu w złotówkach.
+            </p>
+          </div>
+
+          <SaveButton
+            onClick={() => save([
+              { key: AI_MODEL_SETTING_KEY.ai, value: aiModel },
+              { key: AI_MODEL_SETTING_KEY.ai_plus, value: aiModelPlus },
+              { key: AI_TEXT_MODEL_SETTING_KEY, value: aiTextModel },
+              { key: "ai_usd_pln_rate", value: aiRate },
+            ])}
+            label="Zapisz ustawienia AI"
+          />
+
+          <div className="p-4 bg-cream border border-sand text-xs text-charcoal/80 leading-relaxed space-y-2">
+            <p className="font-medium">Konfiguracja klucza API</p>
+            <p>
+              Klucz do Google AI ustawiasz w pliku <span className="font-mono">.env.local</span> – nie jest
+              przechowywany w bazie danych:
+            </p>
+            <pre className="font-mono text-[11px] bg-warm-white border border-sand p-3 leading-5 overflow-x-auto">GOOGLE_AI_API_KEY=...</pre>
+            <p>
+              Klucz wygenerujesz w Google AI Studio. Bez niego przyciski AI zwrócą komunikat o braku
+              konfiguracji. Każde kliknięcie to płatne wywołanie modelu.
+            </p>
+          </div>
+
+          {/* ── Statystyki zużycia ── */}
+          <div className="space-y-4 pt-6 border-t border-sand">
+            <h3 className="font-serif text-xl text-espresso">Zużycie i koszty</h3>
+
+            {!aiUsage?.available ? (
+              <p className="text-xs text-charcoal/80 bg-cream border border-sand p-4 leading-relaxed">
+                Statystyki są niedostępne – prawdopodobnie brakuje tabeli zużycia w bazie.
+                Wykonaj migrację <span className="font-mono">manual_add_ai_image_usage.sql</span> na
+                Supabase, a licznik zacznie zbierać dane od kolejnego generowania.
+              </p>
+            ) : aiUsage.total.count === 0 ? (
+              <p className="text-xs text-charcoal/80 bg-cream border border-sand p-4 leading-relaxed">
+                AI nie było jeszcze używane. Statystyki pojawią się po pierwszym wygenerowaniu zdjęcia
+                lub uzupełnieniu opisu w edycji produktu.
+              </p>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <UsageCard period={aiUsage.currentMonth} rate={aiRateNumber} />
+                  <UsageCard period={aiUsage.previousMonth} rate={aiRateNumber} />
+                  <UsageCard period={aiUsage.total} rate={aiRateNumber} />
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs border border-sand">
+                    <thead className="bg-cream text-charcoal/80">
+                      <tr>
+                        <th className="text-left font-medium px-3 py-2">Model</th>
+                        <th className="text-left font-medium px-3 py-2">Rodzaj</th>
+                        <th className="text-right font-medium px-3 py-2">Wywołań</th>
+                        <th className="text-right font-medium px-3 py-2">Tokeny (wej./wyj.)</th>
+                        <th className="text-right font-medium px-3 py-2">Koszt</th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-espresso">
+                      {aiUsage.byModel.map((row) => (
+                        <tr key={row.model} className="border-t border-sand">
+                          <td className="px-3 py-2">{MODEL_LABEL.get(row.model) ?? row.model}</td>
+                          <td className="px-3 py-2 text-charcoal/80">
+                            {row.kind === "text" ? "Tekst" : "Zdjęcia"}
+                          </td>
+                          <td className="px-3 py-2 text-right tabular-nums">{row.count}</td>
+                          <td className="px-3 py-2 text-right tabular-nums text-charcoal/80">
+                            {row.promptTokens.toLocaleString("pl-PL")} / {row.outputTokens.toLocaleString("pl-PL")}
+                          </td>
+                          <td className="px-3 py-2 text-right tabular-nums">
+                            {usd(row.costUsd)}
+                            {aiRateNumber > 0 && (
+                              <span className="block text-[11px] text-charcoal/80">
+                                {pln(row.costUsd, aiRateNumber)}
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="flex flex-wrap gap-x-6 gap-y-1 text-[11px] text-charcoal/80">
+                  {aiUsage.byVariant.map((v) => (
+                    <span key={v.variant}>
+                      {VARIANT_LABEL[v.variant] ?? v.variant}: {v.count} × ({usd(v.costUsd)})
+                    </span>
+                  ))}
+                  {aiUsage.lastUsedAt && (
+                    <span>
+                      Ostatnie generowanie:{" "}
+                      {new Date(aiUsage.lastUsedAt).toLocaleString("pl-PL", {
+                        dateStyle: "short",
+                        timeStyle: "short",
+                      })}
+                    </span>
+                  )}
+                </div>
+
+                {aiUsage.estimatedCount > 0 && (
+                  <p className="text-[11px] text-charcoal/80">
+                    {aiUsage.estimatedCount} z {aiUsage.total.count} wpisów ma koszt oszacowany –
+                    model nie zwrócił wtedy liczników tokenów, więc przyjęto typowe zużycie na zdjęcie.
+                  </p>
+                )}
+              </>
+            )}
+
+            <p className="text-[11px] text-charcoal/80">
+              Koszty liczone są ze stawek Google AI (stan 07.2026) i mają charakter orientacyjny –
+              wiążące jest rozliczenie w Google Cloud / AI Studio.
+            </p>
+          </div>
         </div>
       )}
 

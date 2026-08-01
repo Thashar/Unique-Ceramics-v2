@@ -3,8 +3,17 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Upload, X, Trash2 } from "lucide-react";
+import { Upload, X, Trash2, MoveLeft, MoveRight, Sparkles, Loader2 } from "lucide-react";
 import { uploadErrorMessage } from "@/lib/upload-error";
+import { PRODUCT_MAX_IMAGES } from "@/lib/product-validation";
+import { AI_VARIANT_LABEL, isAiGeneratedImage, type AiVariant } from "@/lib/ai";
+
+/** Treść potwierdzenia przed płatnym wywołaniem modelu. */
+const AI_CONFIRM: Record<AiVariant, string> = {
+  ai: "Wygenerować przez AI zdjęcie tego produktu na jednolitym, matowym tle?\n\nPowstanie nowe zdjęcie dodane na końcu listy – oryginał zostaje bez zmian.",
+  ai_plus:
+    "Wygenerować przez AI zdjęcie tego produktu w wystylizowanej scenie (len, eukaliptus, kamienie)?\n\nPowstanie nowe zdjęcie dodane na końcu listy – oryginał zostaje bez zmian.",
+};
 
 type Product = {
   id: string;
@@ -37,6 +46,9 @@ export default function ProductForm({ product, categories }: { product?: Product
   });
   const [images, setImages] = useState<string[]>(product?.images ?? []);
   const [uploading, setUploading] = useState(false);
+  // Które zdjęcie jest właśnie przerabiane przez AI (indeks + wariant)
+  const [generating, setGenerating] = useState<{ idx: number; variant: AiVariant } | null>(null);
+  const [filling, setFilling] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -54,24 +66,126 @@ export default function ProductForm({ product, categories }: { product?: Product
       .replace(/^-|-$/g, "");
   }
 
+  function removeImage(idx: number) {
+    if (!confirm("Usunąć to zdjęcie z produktu?")) return;
+    setImages((prev) => prev.filter((_, i) => i !== idx));
+  }
+
+  /** Zamiana zdjęcia z sąsiadem – kolejność decyduje, które jest główne (pierwsze). */
+  function moveImage(idx: number, dir: -1 | 1) {
+    const target = idx + dir;
+    setImages((prev) => {
+      if (target < 0 || target >= prev.length) return prev;
+      const next = [...prev];
+      [next[idx], next[target]] = [next[target], next[idx]];
+      return next;
+    });
+  }
+
+  /**
+   * Wysyła zdjęcie do Google AI i dokłada wynik na koniec listy.
+   * Oryginał zostaje – wygenerowana wersja to osobny plik w Storage.
+   */
+  async function generateWithAi(idx: number, variant: AiVariant) {
+    if (generating || uploading) return;
+    if (images.length >= PRODUCT_MAX_IMAGES) {
+      setError(`Do produktu można dodać maksymalnie ${PRODUCT_MAX_IMAGES} zdjęć.`);
+      return;
+    }
+    if (!confirm(AI_CONFIRM[variant])) return;
+
+    setGenerating({ idx, variant });
+    setError("");
+    try {
+      const res = await fetch("/api/admin/ai-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: images[idx], variant }),
+      });
+      const data = await res.json().catch(() => null);
+      if (res.ok && data?.url) {
+        setImages((prev) => [...prev, data.url]);
+      } else {
+        setError(data?.error ?? "Nie udało się wygenerować zdjęcia.");
+      }
+    } catch {
+      setError("Brak połączenia z serwerem – spróbuj ponownie.");
+    } finally {
+      setGenerating(null);
+    }
+  }
+
+  /**
+   * Uzupełnia nazwę, slug, kategorię i opis na podstawie zdjęcia głównego.
+   * Nadpisuje te pola – dlatego pytamy o potwierdzenie.
+   */
+  async function fillWithAi() {
+    if (filling || generating) return;
+    const main = images[0];
+    if (!main) {
+      setError("Najpierw dodaj zdjęcie produktu – AI uzupełnia dane na jego podstawie.");
+      return;
+    }
+    if (
+      !confirm(
+        "Uzupełnić dane produktu przez AI na podstawie zdjęcia głównego?\n\nNadpisze to nazwę, slug, kategorię i opis."
+      )
+    ) {
+      return;
+    }
+
+    setFilling(true);
+    setError("");
+    try {
+      const res = await fetch("/api/admin/ai-text", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: main }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data) {
+        setError(data?.error ?? "Nie udało się uzupełnić danych produktu.");
+        return;
+      }
+      setForm((prev) => ({
+        ...prev,
+        name: data.name || prev.name,
+        slug: data.slug || prev.slug,
+        // Kategoria przychodzi tylko wtedy, gdy model trafił w istniejącą
+        category: data.category || prev.category,
+        description: data.description || prev.description,
+      }));
+    } catch {
+      setError("Brak połączenia z serwerem – spróbuj ponownie.");
+    } finally {
+      setFilling(false);
+    }
+  }
+
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.target.files;
     if (!files?.length) return;
     setUploading(true);
     setError("");
 
+    let added: string[] = [];
     for (const file of Array.from(files)) {
+      if (images.length + added.length >= PRODUCT_MAX_IMAGES) {
+        setError(`Do produktu można dodać maksymalnie ${PRODUCT_MAX_IMAGES} zdjęć.`);
+        break;
+      }
       const formData = new FormData();
       formData.append("file", file);
       const res = await fetch("/api/admin/upload", { method: "POST", body: formData });
       const data = await res.json().catch(() => null);
       if (res.ok && data?.url) {
-        setImages((prev) => [...prev, data.url]);
+        added = [...added, data.url];
       } else {
         setError(uploadErrorMessage(res.status, data?.error, file.name));
         break;
       }
     }
+    if (added.length > 0) setImages((prev) => [...prev, ...added]);
     setUploading(false);
     e.target.value = "";
   }
@@ -125,25 +239,113 @@ export default function ProductForm({ product, categories }: { product?: Product
       {/* Zdjęcia */}
       <div>
         <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-3">Zdjęcia produktu</label>
-        <div className="flex flex-wrap gap-3 mb-3">
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 items-start gap-2 sm:gap-3 mb-3">
           {images.map((url, i) => (
-            <div key={i} className="relative w-24 h-24 bg-cream overflow-hidden group">
-              <Image src={url} alt={`Zdjęcie ${i + 1}`} fill className="object-cover" sizes="96px" />
-              <button
-                type="button"
-                onClick={() => setImages((prev) => prev.filter((_, idx) => idx !== i))}
-                className="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-full items-center justify-center hidden group-hover:flex"
-              >
-                <X size={12} />
-              </button>
+            <div key={`${i}-${url}`} className="border border-sand bg-warm-white p-1.5">
+              <div className="relative w-full aspect-[4/3] bg-cream overflow-hidden">
+                {/* contain, nie cover – w edycji ma być widoczne całe zdjęcie */}
+                <Image src={url} alt={`Zdjęcie ${i + 1}`} fill className="object-contain" sizes="(max-width: 640px) 33vw, 160px" />
+                {i === 0 && images.length > 1 && (
+                  <span className="absolute inset-x-0 bottom-0 bg-espresso/90 text-cream text-[9px] tracking-widest uppercase text-center py-0.5">
+                    Główne
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center justify-between mt-1.5">
+                <button
+                  type="button"
+                  onClick={() => moveImage(i, -1)}
+                  disabled={i === 0}
+                  title="Przesuń w lewo"
+                  aria-label={`Przesuń zdjęcie ${i + 1} w lewo`}
+                  className="p-1 text-charcoal hover:text-espresso disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <MoveLeft size={14} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => moveImage(i, 1)}
+                  disabled={i === images.length - 1}
+                  title="Przesuń w prawo"
+                  aria-label={`Przesuń zdjęcie ${i + 1} w prawo`}
+                  className="p-1 text-charcoal hover:text-espresso disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <MoveRight size={14} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => removeImage(i)}
+                  title="Usuń zdjęcie"
+                  aria-label={`Usuń zdjęcie ${i + 1}`}
+                  className="p-1 text-red-700 hover:bg-red-50"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+              {/* Stopka kafelka ma stałą wysokość, żeby kafelki z przyciskami AI
+                  i te z plakietką stały równo w jednym rzędzie */}
+              {/* Zdjęcia z AI nie idą do modelu ponownie – kolejne pokolenie gubi produkt */}
+              {isAiGeneratedImage(url) ? (
+                <p className="mt-1 h-6 flex items-center justify-center gap-1 text-[9px] sm:text-[10px] uppercase whitespace-nowrap text-charcoal/80">
+                  <Sparkles size={11} aria-hidden="true" />
+                  Wygenerowane
+                </p>
+              ) : (
+              <div className="flex gap-1 mt-1 h-6">
+                {(["ai", "ai_plus"] as AiVariant[]).map((variant) => {
+                  const busy = generating?.idx === i && generating.variant === variant;
+                  return (
+                    <button
+                      key={variant}
+                      type="button"
+                      onClick={() => generateWithAi(i, variant)}
+                      disabled={generating !== null}
+                      title={
+                        variant === "ai"
+                          ? "AI – produkt na jednolitym tle"
+                          : "AI+ – produkt w wystylizowanej scenie"
+                      }
+                      aria-label={`Wygeneruj wersję ${AI_VARIANT_LABEL[variant]} ze zdjęcia ${i + 1}`}
+                      className="flex-1 inline-flex items-center justify-center gap-0.5 border border-sand bg-cream hover:bg-sand text-espresso text-[9px] sm:text-[10px] uppercase transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      {busy ? (
+                        <Loader2 size={11} className="animate-spin" aria-hidden="true" />
+                      ) : (
+                        <Sparkles size={11} aria-hidden="true" />
+                      )}
+                      {AI_VARIANT_LABEL[variant]}
+                    </button>
+                  );
+                })}
+              </div>
+              )}
             </div>
           ))}
-          <label className={`w-24 h-24 border-2 border-dashed border-sand flex flex-col items-center justify-center cursor-pointer hover:border-clay transition-colors ${uploading ? "opacity-50 pointer-events-none" : ""}`}>
-            <Upload size={20} strokeWidth={1.5} className="text-charcoal/80 mb-1" />
-            <span className="text-[10px] text-charcoal/80">{uploading ? "Upload..." : "Dodaj"}</span>
-            <input type="file" accept="image/*" multiple className="hidden" onChange={handleImageUpload} />
-          </label>
+          {images.length < PRODUCT_MAX_IMAGES && (
+            <label className={`w-full aspect-[4/3] border-2 border-dashed border-sand flex flex-col items-center justify-center cursor-pointer hover:border-clay transition-colors ${uploading ? "opacity-50 pointer-events-none" : ""}`}>
+              <Upload size={20} strokeWidth={1.5} className="text-charcoal/80 mb-1" />
+              <span className="text-[10px] text-charcoal/80">{uploading ? "Upload..." : "Dodaj"}</span>
+              <input type="file" accept="image/*" multiple className="hidden" onChange={handleImageUpload} disabled={uploading} />
+            </label>
+          )}
         </div>
+        <p className="text-[11px] text-charcoal/80">
+          Pierwsze zdjęcie jest główne – widać je na liście produktów i w koszyku. Strzałki zmieniają
+          kolejność, krzyżyk usuwa zdjęcie (maks. {PRODUCT_MAX_IMAGES}).
+        </p>
+        <p className="text-[11px] text-charcoal/80 mt-1">
+          <strong className="font-medium">AI</strong> tworzy wersję zdjęcia na jednolitym, matowym tle,{" "}
+          <strong className="font-medium">AI+</strong> – w wystylizowanej scenie. Wynik dodaje się jako
+          nowe zdjęcie na końcu listy (oryginał zostaje). Zdjęcia już wygenerowane przez AI
+          (oznaczone „Wygenerowane”) nie mają tych przycisków – powtórne przetworzenie gubi wygląd produktu.
+          Model dla obu wariantów wybierzesz w Ustawieniach → AI (zdjęcia).
+        </p>
+        {generating && (
+          <p className="text-[11px] text-clay mt-1">
+            Generuję wersję {AI_VARIANT_LABEL[generating.variant]} ze zdjęcia {generating.idx + 1} –
+            to może potrwać kilkadziesiąt sekund.
+          </p>
+        )}
       </div>
 
       {/* Podstawowe */}
@@ -185,6 +387,28 @@ export default function ProductForm({ product, categories }: { product?: Product
           <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">Opis</label>
           <textarea value={form.description} onChange={(e) => set("description", e.target.value)}
             rows={4} className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm resize-none" />
+          <div className="mt-2 flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={fillWithAi}
+              disabled={filling || generating !== null || images.length === 0}
+              className="inline-flex items-center gap-2 border border-sand bg-cream hover:bg-sand text-espresso text-xs tracking-widest uppercase px-4 py-2.5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {filling ? (
+                <Loader2 size={14} className="animate-spin" aria-hidden="true" />
+              ) : (
+                <Sparkles size={14} aria-hidden="true" />
+              )}
+              Uzupełnij przy użyciu AI
+            </button>
+            <span className="text-[11px] text-charcoal/80">
+              {images.length === 0
+                ? "Najpierw dodaj zdjęcie – AI czyta dane z pierwszego zdjęcia."
+                : filling
+                  ? "Czytam zdjęcie i przygotowuję dane..."
+                  : "Ze zdjęcia głównego uzupełni nazwę, slug, kategorię i opis (nadpisze te pola)."}
+            </span>
+          </div>
         </div>
       </div>
 

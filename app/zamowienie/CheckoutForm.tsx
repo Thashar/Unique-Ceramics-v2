@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Truck, Package, MapPin } from "lucide-react";
 import { useCart } from "@/lib/cart";
 import { validateAddress } from "@/lib/address-validation";
+import ClayRule from "@/components/ui/ClayRule";
 import dynamic from "next/dynamic";
 
 const InPostWidget = dynamic(() => import("@/components/checkout/InPostWidget"), { ssr: false });
@@ -26,6 +27,7 @@ export interface SavedAddress {
 }
 
 interface Props {
+  isLoggedIn: boolean;
   userEmail: string;
   savedAddress: SavedAddress | null;
   paymentMethods: PaymentMethod[];
@@ -49,6 +51,7 @@ const SHIPPING_METHODS = [
 ] as const;
 
 export default function CheckoutForm({
+  isLoggedIn,
   userEmail,
   savedAddress,
   paymentMethods,
@@ -93,6 +96,8 @@ export default function CheckoutForm({
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<string, string>>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  // Gość akceptuje regulamin przy zamówieniu (zalogowany zrobił to przy rejestracji)
+  const [acceptTerms, setAcceptTerms] = useState(false);
 
   function set(field: string, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -100,6 +105,10 @@ export default function CheckoutForm({
       setFieldErrors((prev) => { const n = { ...prev }; delete n[field]; return n; });
     }
   }
+
+  // Telefon jest wymagany przy dostawie – kurier dzwoni przed doręczeniem,
+  // a InPost wysyła powiadomienie o paczce SMS-em. Przy odbiorze osobistym opcjonalny.
+  const phoneRequired = shippingMethod !== "pickup";
 
   function validateForm(): boolean {
     const result = validateAddress({
@@ -115,12 +124,20 @@ export default function CheckoutForm({
     const errors: Record<string, string> = { ...result.errors };
     if (!emailOk) errors.email = "Nieprawidłowy adres e-mail";
 
+    if (phoneRequired && !form.phone.trim()) {
+      errors.phone = "Telefon jest wymagany przy wysyłce";
+    }
+
     if (shippingMethod === "parcel_locker" && !parcelLockerCode.trim()) {
       errors.parcelLocker = "Wybierz lub wpisz kod paczkomatu";
     }
 
+    if (!isLoggedIn && !acceptTerms) {
+      errors.terms = "Zaakceptuj regulamin i politykę prywatności";
+    }
+
     setFieldErrors(errors);
-    return Object.keys(errors).length === 0 && emailOk;
+    return Object.keys(errors).length === 0;
   }
 
   if (items.length === 0) {
@@ -153,6 +170,7 @@ export default function CheckoutForm({
         postcode,
         city,
         shippingMethod,
+        acceptTerms: isLoggedIn ? true : acceptTerms,
         parcelLockerCode: shippingMethod === "parcel_locker" ? parcelLockerCode.trim() : null,
         items: items.map((i) => ({ productId: i.id, name: i.name, price: i.price, quantity: i.quantity })),
         subtotal,
@@ -186,6 +204,7 @@ export default function CheckoutForm({
         <div className="max-w-5xl mx-auto">
           <p className="text-xs tracking-[0.3em] uppercase text-clay mb-3">Sklep</p>
           <h1 className="font-serif text-4xl md:text-5xl text-espresso">Zamówienie</h1>
+          <ClayRule className="mt-6" />
         </div>
       </div>
 
@@ -194,6 +213,21 @@ export default function CheckoutForm({
           <div className="lg:col-span-2 space-y-8">
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3">{error}</div>
+            )}
+
+            {/* Zamówienie bez konta – logowanie jest opcjonalne */}
+            {!isLoggedIn && (
+              <div className="bg-cream border border-sand px-5 py-4 text-sm text-charcoal/80">
+                <p className="text-espresso font-medium mb-1">Zamawiasz jako gość</p>
+                <p className="leading-relaxed">
+                  Nie musisz zakładać konta – wystarczy, że podasz dane do wysyłki.
+                  Potwierdzenie zamówienia wyślemy na podany adres e-mail.{" "}
+                  <Link href="/logowanie?callbackUrl=/zamowienie" className="text-clay hover:text-espresso underline">
+                    Masz konto? Zaloguj się
+                  </Link>
+                  .
+                </p>
+              </div>
             )}
 
             {/* Dane kontaktowe */}
@@ -218,8 +252,10 @@ export default function CheckoutForm({
                   <FieldError msg={fieldErrors.email} />
                 </div>
                 <div>
-                  <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">Telefon</label>
-                  <input type="tel" value={form.phone} onChange={(e) => set("phone", e.target.value)} autoComplete="tel" placeholder="668443706" className={inputCls("phone")} />
+                  <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">
+                    Telefon {phoneRequired && "*"}
+                  </label>
+                  <input required={phoneRequired} type="tel" value={form.phone} onChange={(e) => set("phone", e.target.value)} autoComplete="tel" className={inputCls("phone")} />
                   <FieldError msg={fieldErrors.phone} />
                 </div>
               </div>
@@ -338,8 +374,9 @@ export default function CheckoutForm({
               <h2 className="font-serif text-xl text-espresso mb-6">Twoje zamówienie</h2>
               <div className="space-y-3 mb-6 text-sm">
                 {items.map((item) => (
-                  <div key={item.id} className="flex justify-between text-charcoal/80">
-                    <span className="truncate pr-2">{item.name} × {item.quantity}</span>
+                  <div key={item.id} className="flex justify-between gap-2 text-charcoal/80">
+                    {/* Długie nazwy zawijamy zamiast ucinać – klient musi widzieć, co zamawia */}
+                    <span className="min-w-0 break-words">{item.name} × {item.quantity}</span>
                     <span className="shrink-0">{(item.price * item.quantity).toFixed(2).replace(".", ",")} zł</span>
                   </div>
                 ))}
@@ -358,6 +395,32 @@ export default function CheckoutForm({
                   <span>{total.toFixed(2).replace(".", ",")} zł</span>
                 </div>
               </div>
+              {!isLoggedIn && (
+                <div className="mt-6 border-t border-sand pt-4">
+                  <label className="flex items-start gap-3 text-xs text-charcoal/80 leading-relaxed cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={acceptTerms}
+                      onChange={(e) => {
+                        setAcceptTerms(e.target.checked);
+                        if (e.target.checked) {
+                          setFieldErrors((prev) => { const n = { ...prev }; delete n.terms; return n; });
+                        }
+                      }}
+                      className="mt-0.5 accent-clay shrink-0"
+                    />
+                    <span>
+                      Akceptuję{" "}
+                      <Link href="/regulamin" target="_blank" className="text-clay hover:text-espresso underline">regulamin</Link>
+                      {" "}i{" "}
+                      <Link href="/polityka-prywatnosci" target="_blank" className="text-clay hover:text-espresso underline">politykę prywatności</Link>
+                      . *
+                    </span>
+                  </label>
+                  <FieldError msg={fieldErrors.terms} />
+                </div>
+              )}
+
               <button
                 type="submit"
                 disabled={loading || addressBlocked}
