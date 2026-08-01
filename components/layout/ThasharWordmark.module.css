@@ -3,7 +3,7 @@
    Bazuje na komponencie z thashar-wordmark (lipiec 2026), ale kolory są
    dopasowane do palety Unique Ceramics:
    - filtr `saturate/hue-rotate/brightness` zamienia tealowy `.DEV`
-     (#57A4B1 w pliku źródłowym) na terracottę #C4A882; białe litery
+     (#4F9EA5 w pliku źródłowym) na terracottę #C4A883; białe litery
      THASHAR pozostają białe (filtry hue/saturate nie ruszają szarości,
      a brightness i tak przycina biel do 255),
    - smuga błysku: rdzeń cream #F5F0E8 + otoczka terracotta.
@@ -65,12 +65,12 @@
   display: block;
   width: var(--thb-width, 77px);
   height: auto;
-  /* teal .DEV → terracotta #C4A882 */
-  filter: saturate(0.6) hue-rotate(214deg) brightness(1.15);
+  /* teal .DEV → terracotta #C4A883 */
+  filter: saturate(0.58) hue-rotate(218.5deg) brightness(1.21);
 }
 
 .thb:hover .img {
-  filter: saturate(0.6) hue-rotate(214deg) brightness(1.15)
+  filter: saturate(0.58) hue-rotate(218.5deg) brightness(1.21)
     drop-shadow(0 0 6px rgba(196, 168, 130, 0.55));
 }
 
