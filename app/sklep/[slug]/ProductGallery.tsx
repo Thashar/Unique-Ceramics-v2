@@ -12,7 +12,7 @@ const SWIPE_MIN_RATIO = 0.15;
 /** Opór na krańcach taśmy – palec jedzie, ale wyraźnie wolniej. */
 const EDGE_RESISTANCE = 3;
 
-/** Lupa: ile trzeba przytrzymać, jak duże jest szkło i jak mocno powiększa. */
+/** Lupa: ile trzeba przytrzymać palcem, jak duże jest szkło i jak mocno powiększa. */
 const HOLD_MS = 500;
 const LENS_SIZE = 176;
 const LENS_ZOOM = 2.6;
@@ -34,17 +34,52 @@ export default function ProductGallery({
   const frameRef = useRef<HTMLDivElement>(null);
   const gesture = useRef<Gesture | null>(null);
 
-  // Lupa: aktywna dopiero po przytrzymaniu, potem jedzie za palcem/kursorem.
-  // W stanie trzymamy gotowy styl szkła, bo wymiary kadru i zdjęcia czytamy
-  // z refów – a te wolno ruszać tylko w zdarzeniach i efektach, nie przy renderze.
+  // Lupa: na myszy włącza ją kliknięcie w zdjęcie, na dotyku przytrzymanie;
+  // potem jedzie za kursorem/palcem. W stanie trzymamy gotowy styl szkła, bo
+  // wymiary kadru i zdjęcia czytamy z refów – a te wolno ruszać tylko
+  // w zdarzeniach i efektach, nie przy renderze.
   const [lensStyle, setLensStyle] = useState<React.CSSProperties | null>(null);
   const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Wymiary źródłowe zdjęć – potrzebne, bo przy `object-contain` obraz nie
   // wypełnia kadru i tło lupy musi trafić dokładnie w to, co widać
   const naturalSize = useRef<Record<number, { w: number; h: number }>>({});
 
+  // Tło szkła bierzemy z ORYGINAŁU zdjęcia, nie z wariantu wygenerowanego przez
+  // `next/image` – tylko oryginał ma dość pikseli na powiększenie 2,6×. Ten plik
+  // nie jest jednak wtedy w cache przeglądarki, więc szkło przez chwilę świeciło
+  // pustym polem. Dlatego wczytujemy go w tle (kursor wchodzi na kadr / palec
+  // dotyka zdjęcia), a lupę pokazujemy dopiero z gotowym zdjęciem.
+  const loaded = useRef<Set<string>>(new Set());
+  const loading = useRef<Map<string, Promise<void>>>(new Map());
+  /** Punkt, w którym ma się pojawić lupa, gdy zdjęcie jeszcze się wczytuje. */
+  const pending = useRef<Lens | null>(null);
+
   const lensActive = lensStyle !== null;
   const hasMany = images.length > 1;
+
+  const preload = (src: string): Promise<void> => {
+    if (loaded.current.has(src)) return Promise.resolve();
+    const started = loading.current.get(src);
+    if (started) return started;
+
+    const task = new Promise<void>((resolve) => {
+      const img = new window.Image();
+      const done = () => {
+        loaded.current.add(src);
+        resolve();
+      };
+      // `decode()` czeka też na dekompresję – bez tego pierwsze malowanie szkła
+      // potrafi jeszcze mrugnąć pustym polem
+      img.onload = () => {
+        if (img.decode) img.decode().catch(() => {}).finally(done);
+        else done();
+      };
+      img.onerror = done; // przy błędzie nie ma na co czekać
+      img.src = src;
+    });
+    loading.current.set(src, task);
+    return task;
+  };
 
   const cancelHold = () => {
     if (holdTimer.current) {
@@ -90,13 +125,33 @@ export default function ProductGallery({
     };
   };
 
+  /** Włącza lupę; gdy oryginał zdjęcia jeszcze się wczytuje – czeka na niego. */
+  const showLens = (clientX: number, clientY: number) => {
+    const src = images[activeImage];
+    if (loaded.current.has(src)) {
+      pending.current = null;
+      setLensStyle(computeLensStyle(clientX, clientY));
+      return;
+    }
+    // Lepiej pokazać szkło ułamek sekundy później niż na chwilę puste. Kursor
+    // może się w tym czasie ruszyć – `pending` jest aktualizowane w ruchu myszy.
+    pending.current = { x: clientX, y: clientY };
+    void preload(src).then(() => {
+      const point = pending.current;
+      if (!point) return; // lupa w międzyczasie odwołana
+      pending.current = null;
+      setLensStyle(computeLensStyle(point.x, point.y));
+    });
+  };
+
   const armLens = (clientX: number, clientY: number) => {
     cancelHold();
-    holdTimer.current = setTimeout(() => setLensStyle(computeLensStyle(clientX, clientY)), HOLD_MS);
+    holdTimer.current = setTimeout(() => showLens(clientX, clientY), HOLD_MS);
   };
 
   const closeLens = () => {
     cancelHold();
+    pending.current = null;
     setLensStyle(null);
   };
 
@@ -123,12 +178,17 @@ export default function ProductGallery({
   useEffect(() => cancelHold, []);
 
   const go = (dir: -1 | 1) => {
+    // Zmiana zdjęcia zamyka lupę – inaczej szkło pokazywałoby poprzedni kadr
+    closeLens();
     setActiveImage((prev) => Math.min(images.length - 1, Math.max(0, prev + dir)));
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
     const t = e.touches[0];
     if (!t) return;
+    // Oryginał zaczyna się wczytywać już przy dotknięciu – przytrzymanie trwa pół
+    // sekundy, więc szkło ma zwykle czym się wypełnić od razu
+    void preload(images[activeImage]);
     // Lupa działa też przy jednym zdjęciu – przesuwanie taśmy tylko przy wielu
     armLens(t.clientX, t.clientY);
     if (!hasMany) return;
@@ -145,7 +205,10 @@ export default function ProductGallery({
     const dy = t.clientY - g.y;
 
     // Ruch palca to gest przewijania, nie przytrzymanie – odwołaj lupę
-    if (Math.abs(dx) > AXIS_LOCK_PX || Math.abs(dy) > AXIS_LOCK_PX) cancelHold();
+    if (Math.abs(dx) > AXIS_LOCK_PX || Math.abs(dy) > AXIS_LOCK_PX) {
+      cancelHold();
+      pending.current = null;
+    }
 
     // Kierunek ustalamy raz: pionowe przewijanie strony ma pierwszeństwo
     if (g.axis === "none") {
@@ -177,14 +240,31 @@ export default function ProductGallery({
     go(offset < 0 ? 1 : -1);
   };
 
-  const handleMouseDown = (e: React.MouseEvent) => {
+  // Na myszy lupę włącza i wyłącza samo kliknięcie w zdjęcie. Na dotyku zostaje
+  // przytrzymanie – tam kliknięcie kolidowałoby z przesuwaniem taśmy palcem,
+  // dlatego warunek na `pointerType`.
+  const handlePointerDown = (e: React.PointerEvent) => {
+    if (e.pointerType !== "mouse" || e.button !== 0) return;
     // Strzałki na kadrze mają zmieniać zdjęcie, a nie włączać lupę
     if ((e.target as HTMLElement).closest("button")) return;
-    if (e.button !== 0) return;
-    armLens(e.clientX, e.clientY);
+    if (lensActive || pending.current) {
+      closeLens();
+      return;
+    }
+    showLens(e.clientX, e.clientY);
+  };
+
+  const handleMouseEnter = () => {
+    // Wczytujemy oryginał, zanim padnie kliknięcie – szkło ma być gotowe od razu
+    void preload(images[activeImage]);
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
+    // Czekamy na wczytanie zdjęcia – zapamiętaj, gdzie kursor jest teraz
+    if (pending.current) {
+      pending.current = { x: e.clientX, y: e.clientY };
+      return;
+    }
     if (!lensActive) return;
     setLensStyle(computeLensStyle(e.clientX, e.clientY));
   };
@@ -214,16 +294,19 @@ export default function ProductGallery({
     <div className="flex flex-col gap-4">
       <div
         ref={frameRef}
-        className="relative aspect-video overflow-hidden bg-cream group select-none"
+        className={`relative aspect-video overflow-hidden bg-cream group select-none ${
+          lensActive ? "md:cursor-zoom-out" : "md:cursor-zoom-in"
+        }`}
         // pan-y: gest w pionie przewija stronę, w poziomie obsługujemy sami
         style={{ touchAction: "pan-y", WebkitTouchCallout: "none" }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         onTouchCancel={handleTouchEnd}
-        onMouseDown={handleMouseDown}
+        onPointerDown={handlePointerDown}
+        onMouseEnter={handleMouseEnter}
         onMouseMove={handleMouseMove}
-        onMouseUp={closeLens}
+        // Kursor poza kadrem = koniec oglądania przez lupę
         onMouseLeave={closeLens}
         // Bez tego długie przytrzymanie otwiera menu przeglądarki („Otwórz grafikę
         // w nowej karcie…”), które zasłania kadr i przerywa gest lupy
@@ -264,11 +347,12 @@ export default function ProductGallery({
           ))}
         </div>
 
-        {/* Lupa – pojawia się po przytrzymaniu palcem lub kursorem */}
+        {/* Lupa – kliknięcie kursorem, przytrzymanie palcem. Szkło nie ma własnego
+            tła: pojawia się dopiero z wczytanym zdjęciem, więc nie ma czego zakrywać */}
         {lensStyle && (
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute rounded-sm border-2 border-warm-white bg-cream shadow-xl"
+            className="pointer-events-none absolute rounded-sm border-2 border-warm-white shadow-xl"
             style={lensStyle}
           />
         )}
@@ -308,7 +392,10 @@ export default function ProductGallery({
           {images.map((img, i) => (
             <button
               key={i}
-              onClick={() => setActiveImage(i)}
+              onClick={() => {
+                closeLens();
+                setActiveImage(i);
+              }}
               aria-label={`Pokaż zdjęcie ${i + 1}`}
               aria-current={activeImage === i}
               className={`relative aspect-video w-28 overflow-hidden bg-cream flex-shrink-0 border-2 transition-colors ${
