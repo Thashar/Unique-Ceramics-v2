@@ -1,5 +1,5 @@
 import { MetadataRoute } from "next";
-import { db } from "@/lib/db";
+import { db, withDbRetry } from "@/lib/db";
 
 // Odświeżaj sitemapę co godzinę – nowe produkty trafiają do niej bez deployu
 export const revalidate = 3600;
@@ -20,10 +20,12 @@ const staticRoutes: MetadataRoute.Sitemap = [
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let products: { slug: string; updatedAt: Date }[] = [];
   try {
-    products = await db.product.findMany({
-      where: { active: true },
-      select: { slug: true, updatedAt: true },
-    });
+    products = await withDbRetry(() =>
+      db.product.findMany({
+        where: { active: true },
+        select: { slug: true, updatedAt: true },
+      })
+    );
   } catch {
     // DB not available – return static routes only
   }

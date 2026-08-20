@@ -1,3 +1,8 @@
+// Konwencja `proxy` zastąpiła `middleware` w Next 16 (stara nazwa jest
+// przestarzała i ostrzega przy budowaniu). Plik działa tak samo: wykonuje się
+// przed wyrenderowaniem trasy, ale zawsze w runtime `nodejs` – runtime `edge`
+// nie jest tu obsługiwany. Domyślny eksport jest dozwolony (alternatywa: nazwany
+// eksport `proxy`), więc opakowanie z NextAuth zostaje bez zmian.
 import { auth } from "@/auth";
 import { NextResponse } from "next/server";
 

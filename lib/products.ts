@@ -1,5 +1,5 @@
 import { unstable_cache, revalidatePath, revalidateTag } from "next/cache";
-import { db } from "@/lib/db";
+import { db, withDbRetry } from "@/lib/db";
 
 /**
  * Katalog sklepu cache'owany 60 s pod tagiem "products".
@@ -9,10 +9,14 @@ import { db } from "@/lib/db";
  */
 export const getShopProducts = unstable_cache(
   async () => {
-    const products = await db.product.findMany({
-      where: { active: true },
-      orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
-    });
+    // Bez fallbacku: gdy baza milczy mimo ponowień, lepiej przerwać build niż
+    // opublikować pusty sklep na 60 s cache'u
+    const products = await withDbRetry(() =>
+      db.product.findMany({
+        where: { active: true },
+        orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
+      })
+    );
     return {
       inStock: products.filter((p) => p.stock > 0),
       soldOut:  products.filter((p) => p.stock <= 0),
@@ -28,10 +32,12 @@ export const getShopProducts = unstable_cache(
  */
 export const getFeaturedProducts = unstable_cache(
   async () =>
-    db.product.findMany({
-      where: { featured: true, active: true, stock: { gt: 0 } },
-      orderBy: { createdAt: "desc" },
-    }),
+    withDbRetry(() =>
+      db.product.findMany({
+        where: { featured: true, active: true, stock: { gt: 0 } },
+        orderBy: { createdAt: "desc" },
+      })
+    ),
   ["featured-products"],
   { revalidate: 3600, tags: ["products"] }
 );

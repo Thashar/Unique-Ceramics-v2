@@ -8,17 +8,21 @@ import Footer from "@/components/layout/Footer";
 import DishwasherIcon from "@/components/ui/DishwasherIcon";
 import ProductGallery from "./ProductGallery";
 import AddToCartSection from "./AddToCartSection";
-import { db } from "@/lib/db";
+import { db, withDbRetry } from "@/lib/db";
 import { getSettings } from "@/lib/settings";
 
 export const revalidate = 60;
 
 export async function generateStaticParams() {
   try {
-    const products = await db.product.findMany({
-      where: { active: true },
-      select: { slug: true },
-    });
+    // Ponowienia, bo przy wyczerpanym poolerze pusta lista oznacza brak
+    // pre-generowanych kart produktów w całym buildzie
+    const products = await withDbRetry(() =>
+      db.product.findMany({
+        where: { active: true },
+        select: { slug: true },
+      })
+    );
     return products.map((p) => ({ slug: p.slug }));
   } catch {
     return [];

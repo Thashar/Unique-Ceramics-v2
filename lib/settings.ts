@@ -1,5 +1,5 @@
 import { unstable_cache } from "next/cache";
-import { db } from "@/lib/db";
+import { db, withDbRetry } from "@/lib/db";
 import { AI_MODEL_DEFAULT, AI_TEXT_MODEL_DEFAULT } from "@/lib/ai";
 
 /** Klucze kontaktowe używane w stopce i w danych strukturalnych. */
@@ -255,26 +255,21 @@ async function querySettings(keys: string[]): Promise<Record<string, string>> {
 }
 
 export async function getSetting(key: string): Promise<string> {
-  for (let i = 0; i < 2; i++) {
-    try {
-      const row = await db.setting.findUnique({ where: { key } });
-      return row?.value ?? DEFAULTS[key] ?? "";
-    } catch {
-      if (i === 0) await new Promise((r) => setTimeout(r, 300));
-    }
+  try {
+    const row = await withDbRetry(() => db.setting.findUnique({ where: { key } }));
+    return row?.value ?? DEFAULTS[key] ?? "";
+  } catch {
+    return DEFAULTS[key] ?? "";
   }
-  return DEFAULTS[key] ?? "";
 }
 
 export async function getSettings(
   keys: string[]
 ): Promise<Record<string, string>> {
-  for (let i = 0; i < 2; i++) {
-    try {
-      return await querySettings(keys);
-    } catch {
-      if (i === 0) await new Promise((r) => setTimeout(r, 300));
-    }
+  try {
+    return await withDbRetry(() => querySettings(keys));
+  } catch {
+    // Build bez dostępu do bazy ma się udać – oddajemy wartości domyślne
   }
   const map: Record<string, string> = {};
   for (const key of keys) map[key] = DEFAULTS[key] ?? "";
