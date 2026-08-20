@@ -2,8 +2,28 @@ import { PrismaClient } from "@prisma/client";
 
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
 
+/**
+ * Pooler Supabase w trybie **session** trzyma jedno połączenie do Postgresa na
+ * każdego klienta, więc `pool_size` (domyślnie 15) wyczerpuje się już przy
+ * kilkunastu instancjach serverless naraz – wtedy wszystko sypie się błędem
+ * `FATAL: (EMAXCONNSESSION) max clients reached in session mode`. Tryb
+ * **transaction** (port 6543 + `pgbouncer=true`) multipleksuje i takiego limitu
+ * praktycznie nie ma. Ostrzeżenie w logach, bo to konfiguracja poza kodem
+ * (zmienna środowiskowa na Vercelu / tryb puli w panelu Supabase).
+ */
+function warnAboutSessionPooler(url: string) {
+  if (/pooler.supabase.com:5432/.test(url)) {
+    console.warn(
+      "[db] DATABASE_URL wskazuje pooler Supabase na porcie 5432 (tryb session). " +
+        "Użyj portu 6543 z ?pgbouncer=true (tryb transaction) – inaczej pula 15 klientów " +
+        "wyczerpuje się przy kilkunastu instancjach i baza zwraca EMAXCONNSESSION."
+    );
+  }
+}
+
 function buildUrl() {
   let url = process.env.DATABASE_URL ?? "";
+  warnAboutSessionPooler(url);
   const sep = url.includes("?") ? "&" : "?";
   // connection_limit=1 zawsze – jeden klient Prisma na instancję serverless
   if (!url.includes("connection_limit=")) url += `${sep}connection_limit=1`;
