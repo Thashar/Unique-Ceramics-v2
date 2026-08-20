@@ -78,7 +78,7 @@ const COLOR_RULE = `COLOR FIDELITY IS MANDATORY: reproduce the exact colors of t
 const SIZE_RULE = `SIZE FIDELITY IS MANDATORY: the ceramic product must keep the exact same real-world scale and proportions as in the original photo, relative to its own height and width - do not enlarge it, shrink it, zoom in on it or zoom out from it. Do not fill more or less of the frame with the product than a proportional recomposition of the original would require; only the amount of empty background or surrounding props may change to fit the new frame, never the size of the product itself. If several pieces are shown, keep their sizes relative to each other exactly as in the original photo.`;
 
 /**
- * Zasada tła wariantu „AI”. Kolor `#DDCEBC` pochodzi ze zdjęcia wzorcowego
+ * Zasada tła wariantu „AI”. Kolor `#E2D8CC` pochodzi ze zdjęcia wzorcowego
  * wskazanego przez właściciela (20.08.2026) – to **nie** jest `sand` #E8DFD0
  * z palety sklepu, więc nie „poprawiaj” go na wartość z palety.
  *
@@ -87,7 +87,7 @@ const SIZE_RULE = `SIZE FIDELITY IS MANDATORY: the ceramic product must keep the
  * zakazanych, zakaz gradientu i winiety oraz regułę rozstrzygającą wątpliwość
  * na korzyść jaśniejszego tła. Zmieniając odcień, popraw hex i RGB naraz.
  */
-const BACKGROUND_RULE = `BACKGROUND COLOR IS MANDATORY: a soft, light, warm beige - hex #DDCEBC, RGB (221, 206, 188) - a pale, gently warm neutral with low saturation, distinctly lighter than tan or camel. Fill the whole backdrop with that single flat tone, identical behind and underneath the product: no gradient, no vignette, no darker corners or edges, no backdrop falling off into shadow. The background must NOT drift into tan, camel, khaki, ochre, taupe, warm brown, dark sand or any deeper beige, and it must not pick up a warm orange cast from the lighting. If in doubt, make the background lighter rather than darker. The only shadow allowed is a soft, subtle contact shadow directly beneath the product.`;
+const BACKGROUND_RULE = `BACKGROUND COLOR IS MANDATORY: a soft, light, warm beige - hex #E2D8CC, RGB (226, 216, 204) - a pale, gently warm neutral with low saturation, distinctly lighter than tan or camel. Fill the whole backdrop with that single flat tone, identical behind and underneath the product: no gradient, no vignette, no darker corners or edges, no backdrop falling off into shadow. The background must NOT drift into tan, camel, khaki, ochre, taupe, warm brown, dark sand or any deeper beige, and it must not pick up a warm orange cast from the lighting. If in doubt, make the background lighter rather than darker. The only shadow allowed is a soft, subtle contact shadow directly beneath the product.`;
 
 /**
  * „AI” – produkt na jednolitym, matowym tle (zdjęcie katalogowe).
