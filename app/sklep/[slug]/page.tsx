@@ -196,10 +196,18 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             {product.description && (
               // whitespace-pre-line: opis wpisywany jest w zwykłym textarea w panelu,
               // więc entery z kreatora muszą zostać enterami także tutaj
-              <p className="text-charcoal/80 leading-relaxed text-sm mb-6 whitespace-pre-line">
+              <p className="text-charcoal/80 leading-relaxed text-sm mb-3 whitespace-pre-line">
                 {product.description}
               </p>
             )}
+
+            {/* Mycie w zmywarce – tuż pod opisem i nieco większe niż informacje
+                o wysyłce niżej (tam ikona 14 i text-xs), bo to cecha produktu,
+                o którą klienci pytają najczęściej */}
+            <div className="mb-6 flex items-center gap-2.5 text-sm text-charcoal/80">
+              <DishwasherIcon size={18} className="shrink-0 text-clay" />
+              <span>Można myć w zmywarce</span>
+            </div>
 
             {/* Komunikat o unikalności ceramiki */}
             {product.variesFromPhoto && (
@@ -261,10 +269,6 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               <div className="flex items-center gap-3 text-xs text-charcoal/80">
                 <Clock size={14} strokeWidth={1.5} className="shrink-0 text-clay" />
                 <span>Czas realizacji: {shippingTime}</span>
-              </div>
-              <div className="flex items-center gap-3 text-xs text-charcoal/80">
-                <DishwasherIcon size={14} className="shrink-0 text-clay" />
-                <span>Można myć w zmywarce</span>
               </div>
             </div>
           </div>
