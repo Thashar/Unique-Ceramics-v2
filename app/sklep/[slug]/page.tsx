@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ChevronLeft, Truck, Clock, AlertTriangle } from "lucide-react";
 import Header from "@/components/layout/HeaderWrapper";
 import Footer from "@/components/layout/Footer";
+import DishwasherIcon from "@/components/ui/DishwasherIcon";
 import ProductGallery from "./ProductGallery";
 import AddToCartSection from "./AddToCartSection";
 import { db } from "@/lib/db";
@@ -189,7 +190,9 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             </p>
 
             {product.description && (
-              <p className="text-charcoal/80 leading-relaxed text-sm mb-6">
+              // whitespace-pre-line: opis wpisywany jest w zwykłym textarea w panelu,
+              // więc entery z kreatora muszą zostać enterami także tutaj
+              <p className="text-charcoal/80 leading-relaxed text-sm mb-6 whitespace-pre-line">
                 {product.description}
               </p>
             )}
@@ -254,6 +257,10 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               <div className="flex items-center gap-3 text-xs text-charcoal/80">
                 <Clock size={14} strokeWidth={1.5} className="shrink-0 text-clay" />
                 <span>Czas realizacji: {shippingTime}</span>
+              </div>
+              <div className="flex items-center gap-3 text-xs text-charcoal/80">
+                <DishwasherIcon size={14} className="shrink-0 text-clay" />
+                <span>Można myć w zmywarce</span>
               </div>
             </div>
           </div>
