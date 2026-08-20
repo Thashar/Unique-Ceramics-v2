@@ -282,7 +282,7 @@ export default function ProductGallery({
 
   if (images.length === 0) {
     return (
-      <div className="relative aspect-video overflow-hidden bg-cream">
+      <div className="relative aspect-[4/3] overflow-hidden bg-cream">
         <div className="w-full h-full flex items-center justify-center">
           <ShoppingBag size={64} strokeWidth={1} className="text-sand" />
         </div>
@@ -294,7 +294,7 @@ export default function ProductGallery({
     <div className="flex flex-col gap-4">
       <div
         ref={frameRef}
-        className={`relative aspect-video overflow-hidden bg-cream group select-none ${
+        className={`relative aspect-[4/3] overflow-hidden bg-cream group select-none ${
           lensActive ? "md:cursor-zoom-out" : "md:cursor-zoom-in"
         }`}
         // pan-y: gest w pionie przewija stronę, w poziomie obsługujemy sami
@@ -333,8 +333,8 @@ export default function ProductGallery({
                 fill
                 priority={i === 0}
                 // contain, nie cover – na karcie produktu ma być widoczne całe
-                // zdjęcie, a nie wycinek; kadr 16/9 odpowiada Full HD (1920×1080),
-                // w którym robione są zdjęcia, więc nie zostaje puste tło
+                // zdjęcie, a nie wycinek. Kadr jest poziomy 4:3; materiał w innych
+                // proporcjach dostaje pasy tła zamiast obcięcia
                 className="object-contain"
                 sizes="(max-width: 1024px) 100vw, 50vw"
                 draggable={false}
@@ -398,7 +398,7 @@ export default function ProductGallery({
               }}
               aria-label={`Pokaż zdjęcie ${i + 1}`}
               aria-current={activeImage === i}
-              className={`relative aspect-video w-28 overflow-hidden bg-cream flex-shrink-0 border-2 transition-colors ${
+              className={`relative aspect-[4/3] w-28 overflow-hidden bg-cream flex-shrink-0 border-2 transition-colors ${
                 activeImage === i ? "border-clay" : "border-transparent"
               }`}
             >
