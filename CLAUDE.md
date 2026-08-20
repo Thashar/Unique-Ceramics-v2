@@ -493,6 +493,22 @@ jak ciemny header na stronie głównej.
 ### Koszyk i zgoda cookies (client state)
 - Store'y modułowe czytane przez `useSyncExternalStore` – **nie** dodawaj setState w `useEffect` do hydratacji localStorage (reguła `react-hooks/set-state-in-effect`)
 
+### sharp na produkcji – śledzenie plików (NFT)
+
+Binarka sharpa (`@img/sharp-linux-x64`) ładuje `libvips-cpp.so` z **sąsiedniej**
+paczki (`@img/sharp-libvips-linux-x64`) przez `dlopen`, a nie przez `require`.
+Śledzenie plików Next/Vercel (NFT) widzi tylko `require`, więc wycinało .so z paczki
+funkcji – trasy używające sharpa padały na produkcji **przy ładowaniu modułu**
+(`ERR_DLOPEN_FAILED: libvips-cpp.so.8.18.3: cannot open shared object file`),
+czyli **zanim** wykona się jakikolwiek `try/catch` w handlerze. W panelu wyglądało to
+na „nie udało się wgrać zdjęcia (błąd 500)".
+
+Dlatego `next.config.ts` ma `outputFileTracingIncludes` z `node_modules/sharp/**/*`
+i `node_modules/@img/**/*` dla wszystkich tras z sharpem: `/api/admin/upload`,
+`/api/admin/rotate`, `/api/admin/ai-image`, `/api/admin/ai-text`, `/api/og/[slug]`.
+**Dodając nową trasę korzystającą z sharpa, dopisz ją do tej listy** – inaczej zadziała
+lokalnie i wywali się dopiero na produkcji.
+
 ### Upload plików binarnych (Supabase Storage)
 - **Nigdy nie przekazuj `Buffer`a bezpośrednio do `supabase.storage.upload()`** – trafia wtedy jako surowe ciało żądania i w środowisku serverless bajty potrafią przejść przez konwersję na tekst UTF-8 (każdy bajt spoza ASCII → `EF BF BD`), przez co plik w Storage jest uszkodzony i optymalizator obrazów Next zwraca `INVALID_IMAGE_OPTIMIZE_REQUEST`. Wysyłaj `new Blob([new Uint8Array(buf)], { type })` – supabase-js użyje wtedy multipart/form-data
 - Po uploadzie route porównuje rozmiar zapisanego obiektu (`storage.info()`) z rozmiarem wysłanego bufora; przy rozbieżności kasuje plik i zwraca błąd

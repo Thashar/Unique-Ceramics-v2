@@ -29,8 +29,23 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
-  // pdfkit i sharp to paczki natywne — nie mogą przechodzić przez bundler
+  // pdfkit i sharp to paczki natywne – nie mogą przechodzić przez bundler
   serverExternalPackages: ["pdfkit", "sharp"],
+
+  // Binarka sharpa (`@img/sharp-linux-x64`) ładuje bibliotekę `libvips-cpp.so`
+  // z sąsiedniej paczki (`@img/sharp-libvips-linux-x64`) przez dlopen, a nie
+  // przez `require`. Śledzenie plików (NFT) tego nie widzi i wycinało .so
+  // z funkcji na produkcji – trasy padały wtedy na starcie z
+  // `ERR_DLOPEN_FAILED: libvips-cpp.so.8.18.3: cannot open shared object file`
+  // (w panelu: „nie udało się wgrać zdjęcia (błąd 500)"). Dokładamy więc obie
+  // paczki jawnie do śladu tras, które używają sharpa.
+  outputFileTracingIncludes: {
+    "/api/admin/upload": ["node_modules/sharp/**/*", "node_modules/@img/**/*"],
+    "/api/admin/rotate": ["node_modules/sharp/**/*", "node_modules/@img/**/*"],
+    "/api/admin/ai-image": ["node_modules/sharp/**/*", "node_modules/@img/**/*"],
+    "/api/admin/ai-text": ["node_modules/sharp/**/*", "node_modules/@img/**/*"],
+    "/api/og/[slug]": ["node_modules/sharp/**/*", "node_modules/@img/**/*"],
+  },
   experimental: {
     optimizePackageImports: ["framer-motion", "lucide-react"],
   },
