@@ -31,20 +31,34 @@ type Product = {
 
 type Category = { slug: string; label: string };
 
-export default function ProductForm({ product, categories }: { product?: Product; categories: Category[] }) {
+/** Dane początkowe bez identyfikatora – formularz zostaje w trybie dodawania (duplikowanie produktu). */
+export type ProductDraft = Omit<Product, "id">;
+
+export default function ProductForm({
+  product,
+  initial,
+  categories,
+}: {
+  product?: Product;
+  initial?: ProductDraft;
+  categories: Category[];
+}) {
   const router = useRouter();
+  // `product` = edycja istniejącego (PUT + możliwość usunięcia),
+  // `initial` = wypełnione pola nowego produktu (kopia) – zapis idzie przez POST
+  const base = product ?? initial;
   const [form, setForm] = useState({
-    name: product?.name ?? "",
-    slug: product?.slug ?? "",
-    description: product?.description ?? "",
-    price: product?.price?.toString() ?? "",
-    category: product?.category ?? categories[0]?.slug ?? "",
-    stock: product?.stock?.toString() ?? "0",
-    featured: product?.featured ?? false,
-    active: product?.active ?? true,
-    variesFromPhoto: product?.variesFromPhoto ?? false,
+    name: base?.name ?? "",
+    slug: base?.slug ?? "",
+    description: base?.description ?? "",
+    price: base?.price?.toString() ?? "",
+    category: base?.category ?? categories[0]?.slug ?? "",
+    stock: base?.stock?.toString() ?? "0",
+    featured: base?.featured ?? false,
+    active: base?.active ?? true,
+    variesFromPhoto: base?.variesFromPhoto ?? false,
   });
-  const [images, setImages] = useState<string[]>(product?.images ?? []);
+  const [images, setImages] = useState<string[]>(base?.images ?? []);
   const [uploading, setUploading] = useState(false);
   // Które zdjęcie jest właśnie przerabiane przez AI (indeks + wariant)
   const [generating, setGenerating] = useState<{ idx: number; variant: AiVariant } | null>(null);

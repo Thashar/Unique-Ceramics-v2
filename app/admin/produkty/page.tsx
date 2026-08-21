@@ -4,18 +4,21 @@ import { db } from "@/lib/db";
 import Link from "next/link";
 import Image from "next/image";
 import { Suspense } from "react";
-import { Plus, Pencil, ShoppingBag, Star } from "lucide-react";
+import { Plus, ShoppingBag, Star } from "lucide-react";
 import ProductsSearch from "@/components/admin/ProductsSearch";
+import ProductRowActions from "@/components/admin/ProductRowActions";
 import { getCategories } from "@/lib/categories";
+import { productOrderBy, resolveProductSort, sortByName } from "@/lib/product-sort";
 
 export default async function AdminProductsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; kat?: string; status?: string }>;
+  searchParams: Promise<{ q?: string; kat?: string; status?: string; sort?: string }>;
 }) {
-  const { q, kat, status } = await searchParams;
+  const { q, kat, status, sort: sortParam } = await searchParams;
+  const sort = resolveProductSort(sortParam);
 
-  const [categories, products] = await Promise.all([
+  const [categories, rows] = await Promise.all([
     getCategories(),
     db.product.findMany({
     where: {
@@ -25,9 +28,12 @@ export default async function AdminProductsPage({
       ...(status === "inactive" ? { active: false } : {}),
       ...(status === "outofstock" ? { active: true, stock: 0 } : {}),
     },
-    orderBy: { createdAt: "desc" },
+    // Sortowanie po nazwie dokłada sortByName (polska kolejność), więc baza
+    // zwraca wtedy domyślną kolejność
+    orderBy: productOrderBy(sort) ?? { createdAt: "desc" },
   }),
   ]);
+  const products = sortByName(rows, sort);
 
   return (
     <div>
@@ -63,13 +69,13 @@ export default async function AdminProductsPage({
       ) : (
         <div className="bg-cream border border-sand/60">
           {/* Nagłówek tabeli – tylko desktop */}
-          <div className="hidden md:grid md:grid-cols-[72px_1fr_120px_96px_100px_72px] text-[11px] tracking-widest uppercase text-charcoal/80 px-4 py-3 border-b border-sand">
+          <div className="hidden md:grid md:grid-cols-[72px_1fr_120px_96px_100px_56px] text-[11px] tracking-widest uppercase text-charcoal/80 px-4 py-3 border-b border-sand">
             <span>Zdjęcie</span>
             <span>Nazwa</span>
             <span className="text-right">Cena</span>
             <span className="text-center">Stan</span>
             <span className="text-center">Status</span>
-            <span className="text-right">Akcja</span>
+            <span className="text-right">Opcje</span>
           </div>
 
           {products.map((product) => (
@@ -88,7 +94,12 @@ export default async function AdminProductsPage({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <p className="text-sm font-medium text-espresso truncate">{product.name}</p>
+                    <Link
+                      href={`/admin/produkty/${product.id}`}
+                      className="text-sm font-medium text-espresso truncate hover:text-clay transition-colors"
+                    >
+                      {product.name}
+                    </Link>
                     {product.featured && <Star size={11} className="text-clay shrink-0 fill-clay" />}
                   </div>
                   <p className="text-xs text-charcoal/80 capitalize">{product.category}</p>
@@ -107,14 +118,13 @@ export default async function AdminProductsPage({
                     </span>
                   </div>
                 </div>
-                <Link href={`/admin/produkty/${product.id}`}
-                  className="shrink-0 p-2 text-clay hover:text-espresso transition-colors">
-                  <Pencil size={16} />
-                </Link>
+                <div className="shrink-0">
+                  <ProductRowActions productId={product.id} productName={product.name} />
+                </div>
               </div>
 
               {/* Desktop */}
-              <div className="hidden md:grid md:grid-cols-[72px_1fr_120px_96px_100px_72px] items-center px-4 py-3 gap-x-2">
+              <div className="hidden md:grid md:grid-cols-[72px_1fr_120px_96px_100px_56px] items-center px-4 py-3 gap-x-2">
                 <div className="w-14 h-12 bg-warm-white relative overflow-hidden">
                   {product.images[0] ? (
                     <Image src={product.images[0]} alt={product.name} fill className="object-cover" sizes="56px" />
@@ -126,7 +136,12 @@ export default async function AdminProductsPage({
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <p className="text-sm font-medium text-espresso truncate">{product.name}</p>
+                    <Link
+                      href={`/admin/produkty/${product.id}`}
+                      className="text-sm font-medium text-espresso truncate hover:text-clay transition-colors"
+                    >
+                      {product.name}
+                    </Link>
                     {product.featured && <Star size={11} className="text-clay shrink-0 fill-clay" />}
                   </div>
                   <p className="text-xs text-charcoal/80 capitalize mt-0.5">{product.category}</p>
@@ -149,13 +164,7 @@ export default async function AdminProductsPage({
                   </span>
                 </div>
                 <div className="text-right">
-                  <Link
-                    href={`/admin/produkty/${product.id}`}
-                    className="inline-flex items-center gap-1.5 text-xs text-clay hover:text-espresso transition-colors"
-                  >
-                    <Pencil size={12} />
-                    Edytuj
-                  </Link>
+                  <ProductRowActions productId={product.id} productName={product.name} />
                 </div>
               </div>
             </div>
