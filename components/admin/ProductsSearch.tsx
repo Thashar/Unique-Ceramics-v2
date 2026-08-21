@@ -4,6 +4,7 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Search } from "lucide-react";
 import { useRef, useTransition } from "react";
 import type { Category } from "@/lib/categories";
+import { PRODUCT_SORTS } from "@/lib/product-sort";
 
 export default function ProductsSearch({ categories = [] }: { categories?: Category[] }) {
   const router = useRouter();
@@ -15,6 +16,7 @@ export default function ProductsSearch({ categories = [] }: { categories?: Categ
   const currentQuery = searchParams.get("q") ?? "";
   const currentCategory = searchParams.get("kat") ?? "";
   const currentStatus = searchParams.get("status") ?? "";
+  const currentSort = searchParams.get("sort") ?? "";
 
   function updateParams(updates: Record<string, string>, debounce = false) {
     const doUpdate = () => {
@@ -73,6 +75,16 @@ export default function ProductsSearch({ categories = [] }: { categories?: Categ
           <option value="outofstock">Brak w magazynie</option>
         </select>
       </div>
+      <select
+        value={currentSort}
+        onChange={(e) => updateParams({ sort: e.target.value })}
+        aria-label="Sortowanie produktów"
+        className="sm:flex-none bg-cream border border-sand focus:border-clay outline-none px-4 py-2.5 text-sm text-espresso transition-colors"
+      >
+        {PRODUCT_SORTS.map((s) => (
+          <option key={s.value} value={s.value}>{s.label}</option>
+        ))}
+      </select>
     </div>
   );
 }
