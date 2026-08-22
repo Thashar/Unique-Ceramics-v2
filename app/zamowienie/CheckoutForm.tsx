@@ -393,12 +393,20 @@ export default function CheckoutForm({
                   </div>
                 ))}
                 {bundle.enabled && summary.discountTotal > 0 && (
-                  <div className="flex justify-between gap-2 text-green-700">
-                    <span>Rabat {summary.discountPercent > 0 && `−${summary.discountPercent}%`}</span>
-                    <span className="shrink-0">
-                      −{summary.discountTotal.toFixed(2).replace(".", ",")} zł
-                    </span>
-                  </div>
+                  <>
+                    <div className="flex justify-between gap-2 text-charcoal/80">
+                      <span>Produkty przed rabatem</span>
+                      <span className="shrink-0">
+                        {summary.catalogTotal.toFixed(2).replace(".", ",")} zł
+                      </span>
+                    </div>
+                    <div className="flex justify-between gap-2 text-green-700">
+                      <span>Rabat {summary.discountPercent > 0 && `−${summary.discountPercent}%`}</span>
+                      <span className="shrink-0">
+                        −{summary.discountTotal.toFixed(2).replace(".", ",")} zł
+                      </span>
+                    </div>
+                  </>
                 )}
               </div>
               <div className="border-t border-sand pt-4 space-y-2 text-sm">

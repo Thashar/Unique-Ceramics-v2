@@ -85,9 +85,23 @@ export default function CartView({ shipping }: { shipping: ShippingSettings }) {
                   {item.name}
                 </Link>
                 <p className="text-sm text-charcoal/80 mt-1">
-                  {/* Pozycje po cenach katalogowych – rabat pokazujemy raz,
-                      w podsumowaniu całego koszyka */}
-                  {(lineFor.get(item.id)?.unitPrice ?? item.price).toFixed(2).replace(".", ",")} zł / szt.
+                  {(() => {
+                    const line = lineFor.get(item.id);
+                    const zl = (v: number) => `${v.toFixed(2).replace(".", ",")} zł`;
+                    // Rabat dostaje każda sztuka – także pierwsza
+                    if (bundle.enabled && line && line.discountPercent > 0) {
+                      return (
+                        <>
+                          <span className="line-through decoration-charcoal/40">
+                            {zl(line.catalogUnitPrice)}
+                          </span>{" "}
+                          <span className="text-espresso">{zl(line.unitPrice)}</span>{" "}
+                          <span className="text-green-700">−{line.discountPercent}%</span> / szt.
+                        </>
+                      );
+                    }
+                    return <>{zl(line?.unitPrice ?? item.price)} / szt.</>;
+                  })()}
                 </p>
                 <div className="flex items-center gap-4 mt-3">
                   <div className="flex items-center border border-sand">
@@ -134,9 +148,8 @@ export default function CartView({ shipping }: { shipping: ShippingSettings }) {
             <h2 className="font-serif text-2xl text-espresso mb-6">Podsumowanie</h2>
             <div className="space-y-3 mb-6">
               <div className="flex justify-between text-sm text-charcoal/80">
-                <span>Produkty</span>
+                <span>{bundle.enabled ? "Produkty przed rabatem" : "Produkty"}</span>
                 <span>
-                  {/* Ceny widoczne na liście – każda sztuka po cenie katalogowej */}
                   {(bundle.enabled ? summary.catalogTotal : subtotal).toFixed(2).replace(".", ",")} zł
                 </span>
               </div>
@@ -145,6 +158,14 @@ export default function CartView({ shipping }: { shipping: ShippingSettings }) {
                   <span>Rabat {summary.discountPercent > 0 && `−${summary.discountPercent}%`}</span>
                   <span>−{summary.discountTotal.toFixed(2).replace(".", ",")} zł</span>
                 </div>
+              )}
+              {/* Warunek promocji podany wprost – klient musi wiedzieć, kiedy
+                  rabat przysługuje i czego dotyczy */}
+              {bundle.enabled && (
+                <p className="text-xs text-charcoal/80">
+                  Rabat naliczamy przy zakupie od 2 sztuk – obejmuje wszystkie produkty
+                  w zamówieniu.
+                </p>
               )}
               <div className="flex justify-between text-sm text-charcoal/80">
                 <span>Wysyłka</span>

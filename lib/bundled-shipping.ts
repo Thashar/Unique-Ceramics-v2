@@ -70,21 +70,20 @@ export function bundleDiscountPercent(base: number, cfg: BundleConfig): number {
 export type BundleLine<T> = {
   item: T;
   /** Cena katalogowa sztuki (baza + narzut) – ta sama, którą klient widział w sklepie. */
+  catalogUnitPrice: number;
+  /** Cena sztuki po rabacie – rabat dostaje **każda** sztuka, także pierwsza. */
   unitPrice: number;
-  /** Wartość pozycji po cenach katalogowych. */
+  /** Rabat na sztuce w procentach ceny katalogowej. */
+  discountPercent: number;
+  /** Wartość pozycji po rabacie. */
   lineTotal: number;
 };
 
 export type BundleSummary<T> = {
   lines: BundleLine<T>[];
-  /** Suma pozycji po cenach katalogowych (z narzutem w każdej sztuce). */
+  /** Suma pozycji po cenach katalogowych (przed rabatem). */
   catalogTotal: number;
-  /**
-   * Rabat naliczany **na cały koszyk**: wysyłkę płaci się raz, więc nadmiarowe
-   * narzuty z pozostałych sztuk wracają do klienta jako jedna kwota. Pozycje
-   * zostają przy cenach katalogowych – dzięki temu klient widzi jeden rabat,
-   * a nie osobny przy każdym produkcie.
-   */
+  /** Łączny rabat rozdzielony po równo na wszystkie sztuki w koszyku. */
   discountTotal: number;
   /** Rabat wyrażony w procentach wartości katalogowej (0 = brak). */
   discountPercent: number;
@@ -97,8 +96,14 @@ export type BundleSummary<T> = {
 };
 
 /**
- * Rozkłada koszyk na pozycje pokazywane klientowi: każda po cenie katalogowej,
- * a cała oszczędność wychodzi jednym wierszem rabatu w podsumowaniu.
+ * Rozkłada koszyk na pozycje pokazywane klientowi.
+ *
+ * Wysyłkę płaci się raz, więc nadmiarowe narzuty wracają jako rabat – i to
+ * rabat **na każdą sztukę, również pierwszą**: po podziale każda sztuka niesie
+ * `narzut / liczba sztuk` zamiast pełnego narzutu. Suma pozycji po rabacie to
+ * nadal `ceny produktów + jedna wysyłka`, czyli dokładnie tyle, ile policzy
+ * serwer; ewentualna reszta z dzielenia (np. 18 zł na 7 sztuk) ląduje na
+ * ostatniej pozycji, żeby kwoty zgadzały się co do grosza.
  */
 export function bundleSummary<T extends { price: number; quantity: number }>(
   items: T[],
@@ -107,18 +112,37 @@ export function bundleSummary<T extends { price: number; quantity: number }>(
   const itemsTotal = money(items.reduce((sum, i) => sum + i.price * i.quantity, 0));
   const pieces = items.reduce((sum, i) => sum + i.quantity, 0);
   const surcharge = cfg.enabled && pieces > 0 ? cfg.surcharge : 0;
-
-  const lines = items.map((item) => ({
-    item,
-    unitPrice: bundlePrice(item.price, cfg),
-    lineTotal: money(bundlePrice(item.price, cfg) * item.quantity),
-  }));
-
-  const catalogTotal = money(lines.reduce((sum, l) => sum + l.lineTotal, 0));
-  // Narzut zapłacony w każdej sztuce minus ta jedna wysyłka, którą klient
-  // realnie ponosi – reszta wraca jako rabat na koszyk
-  const discountTotal = cfg.enabled && pieces > 1 ? money((pieces - 1) * cfg.surcharge) : 0;
   const total = money(itemsTotal + surcharge);
+
+  // Ile z wysyłki przypada na jedną sztukę po rozłożeniu jej na cały koszyk
+  const surchargePerPiece = cfg.enabled && pieces > 0 ? cfg.surcharge / pieces : 0;
+
+  const lines: BundleLine<T>[] = items.map((item) => {
+    const catalogUnitPrice = bundlePrice(item.price, cfg);
+    const unitPrice = cfg.enabled ? money(item.price + surchargePerPiece) : money(item.price);
+    return {
+      item,
+      catalogUnitPrice,
+      unitPrice,
+      discountPercent:
+        catalogUnitPrice > unitPrice
+          ? Math.round(((catalogUnitPrice - unitPrice) / catalogUnitPrice) * 100)
+          : 0,
+      lineTotal: money(unitPrice * item.quantity),
+    };
+  });
+
+  // Reszta z zaokrągleń trafia na ostatnią pozycję – suma musi się zgadzać
+  // z kwotą liczoną przez serwer, nawet gdy narzut nie dzieli się równo
+  const linesTotal = money(lines.reduce((sum, l) => sum + l.lineTotal, 0));
+  const remainder = money(total - linesTotal);
+  if (remainder !== 0 && lines.length > 0) {
+    const last = lines[lines.length - 1];
+    lines[lines.length - 1] = { ...last, lineTotal: money(last.lineTotal + remainder) };
+  }
+
+  const catalogTotal = money(lines.reduce((sum, l) => sum + l.catalogUnitPrice * l.item.quantity, 0));
+  const discountTotal = money(catalogTotal - total);
 
   return {
     lines,
