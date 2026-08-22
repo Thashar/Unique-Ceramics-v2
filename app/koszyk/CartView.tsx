@@ -85,35 +85,9 @@ export default function CartView({ shipping }: { shipping: ShippingSettings }) {
                   {item.name}
                 </Link>
                 <p className="text-sm text-charcoal/80 mt-1">
-                  {(() => {
-                    const line = lineFor.get(item.id);
-                    const zl = (v: number) => `${v.toFixed(2).replace(".", ",")} zł`;
-
-                    // Pozycja bez narzutu – cała jest tańsza
-                    if (bundle.enabled && line?.wasPrice) {
-                      return (
-                        <>
-                          <span className="line-through decoration-charcoal/40">{zl(line.wasPrice)}</span>{" "}
-                          <span className="text-espresso">{zl(line.unitPrice)}</span>{" "}
-                          <span className="text-green-700">−{line.discountPercent}%</span> / szt.
-                        </>
-                      );
-                    }
-
-                    // Pozycja niosąca wysyłkę, kupowana w kilku sztukach:
-                    // pierwsza z narzutem, kolejne już bez niego
-                    if (bundle.enabled && line?.restUnitPrice !== null && line?.restUnitPrice !== undefined) {
-                      return (
-                        <>
-                          1 szt. {zl(line.unitPrice)}, kolejne{" "}
-                          <span className="text-espresso">{zl(line.restUnitPrice)}</span>{" "}
-                          <span className="text-green-700">−{line.discountPercent}%</span>
-                        </>
-                      );
-                    }
-
-                    return <>{zl(line?.unitPrice ?? item.price)} / szt.</>;
-                  })()}
+                  {/* Pozycje po cenach katalogowych – rabat pokazujemy raz,
+                      w podsumowaniu całego koszyka */}
+                  {(lineFor.get(item.id)?.unitPrice ?? item.price).toFixed(2).replace(".", ",")} zł / szt.
                 </p>
                 <div className="flex items-center gap-4 mt-3">
                   <div className="flex items-center border border-sand">
@@ -162,11 +136,16 @@ export default function CartView({ shipping }: { shipping: ShippingSettings }) {
               <div className="flex justify-between text-sm text-charcoal/80">
                 <span>Produkty</span>
                 <span>
-                  {/* W teście wysyłka siedzi już w cenie pierwszej pozycji,
-                      więc wiersz „Produkty" sumuje ceny widoczne na liście */}
-                  {(bundle.enabled ? summary.total : subtotal).toFixed(2).replace(".", ",")} zł
+                  {/* Ceny widoczne na liście – każda sztuka po cenie katalogowej */}
+                  {(bundle.enabled ? summary.catalogTotal : subtotal).toFixed(2).replace(".", ",")} zł
                 </span>
               </div>
+              {bundle.enabled && summary.discountTotal > 0 && (
+                <div className="flex justify-between text-sm text-green-700">
+                  <span>Rabat {summary.discountPercent > 0 && `−${summary.discountPercent}%`}</span>
+                  <span>−{summary.discountTotal.toFixed(2).replace(".", ",")} zł</span>
+                </div>
+              )}
               <div className="flex justify-between text-sm text-charcoal/80">
                 <span>Wysyłka</span>
                 <span>

@@ -385,18 +385,21 @@ export default function CheckoutForm({
             <div className="bg-cream p-8 sticky top-28">
               <h2 className="font-serif text-xl text-espresso mb-6">Twoje zamówienie</h2>
               <div className="space-y-3 mb-6 text-sm">
-                {summary.lines.map(({ item, lineTotal, discountPercent }) => (
+                {summary.lines.map(({ item, lineTotal }) => (
                   <div key={item.id} className="flex justify-between gap-2 text-charcoal/80">
                     {/* Długie nazwy zawijamy zamiast ucinać – klient musi widzieć, co zamawia */}
-                    <span className="min-w-0 break-words">
-                      {item.name} × {item.quantity}
-                      {discountPercent > 0 && (
-                        <span className="text-green-700"> · −{discountPercent}%</span>
-                      )}
-                    </span>
+                    <span className="min-w-0 break-words">{item.name} × {item.quantity}</span>
                     <span className="shrink-0">{lineTotal.toFixed(2).replace(".", ",")} zł</span>
                   </div>
                 ))}
+                {bundle.enabled && summary.discountTotal > 0 && (
+                  <div className="flex justify-between gap-2 text-green-700">
+                    <span>Rabat {summary.discountPercent > 0 && `−${summary.discountPercent}%`}</span>
+                    <span className="shrink-0">
+                      −{summary.discountTotal.toFixed(2).replace(".", ",")} zł
+                    </span>
+                  </div>
+                )}
               </div>
               <div className="border-t border-sand pt-4 space-y-2 text-sm">
                 <div className="flex justify-between text-charcoal/80">

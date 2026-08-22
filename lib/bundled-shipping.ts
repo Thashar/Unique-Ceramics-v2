@@ -69,63 +69,67 @@ export function bundleDiscountPercent(base: number, cfg: BundleConfig): number {
 
 export type BundleLine<T> = {
   item: T;
-  /** Cena pierwszej sztuki tej pozycji (ta jedna może nieść wysyłkę). */
+  /** Cena katalogowa sztuki (baza + narzut) – ta sama, którą klient widział w sklepie. */
   unitPrice: number;
-  /**
-   * Cena kolejnych sztuk **tej samej pozycji** – wypełniona tylko wtedy, gdy
-   * różni się od pierwszej, czyli gdy pozycja niesie wysyłkę i ma więcej niż
-   * jedną sztukę. Bez tego dwie sztuki tego samego produktu wyglądały jak
-   * dwa razy cena z narzutem, choć wysyłka liczy się raz.
-   */
-  restUnitPrice: number | null;
-  /** Cena przekreślona – tylko dla pozycji, które straciły narzut. */
-  wasPrice: number | null;
-  /** Rabat w procentach dla sztuk bez narzutu (0 = pozycja go nie ma). */
-  discountPercent: number;
-  /** Wartość pozycji: `unitPrice` × pierwsza sztuka + cena bazowa × reszta. */
+  /** Wartość pozycji po cenach katalogowych. */
   lineTotal: number;
 };
 
 export type BundleSummary<T> = {
   lines: BundleLine<T>[];
+  /** Suma pozycji po cenach katalogowych (z narzutem w każdej sztuce). */
+  catalogTotal: number;
+  /**
+   * Rabat naliczany **na cały koszyk**: wysyłkę płaci się raz, więc nadmiarowe
+   * narzuty z pozostałych sztuk wracają do klienta jako jedna kwota. Pozycje
+   * zostają przy cenach katalogowych – dzięki temu klient widzi jeden rabat,
+   * a nie osobny przy każdym produkcie.
+   */
+  discountTotal: number;
+  /** Rabat wyrażony w procentach wartości katalogowej (0 = brak). */
+  discountPercent: number;
   /** Suma cen produktów bez narzutu. */
   itemsTotal: number;
-  /** Doliczona raz wysyłka (0 przy pustym koszyku albo wyłączonym teście). */
+  /** Doliczona raz wysyłka (0 przy pustym koszyku albo wyłączonej promocji). */
   surcharge: number;
-  /** Do zapłaty: `itemsTotal + surcharge` – tyle samo policzy serwer. */
+  /** Do zapłaty: `catalogTotal - discountTotal` = `itemsTotal + surcharge`. */
   total: number;
 };
 
 /**
- * Rozkłada koszyk na pozycje z cenami pokazywanymi klientowi.
- * Narzut niesie **pierwsza sztuka pierwszej pozycji** – kolejne sztuki tego
- * samego produktu też są już bez wysyłki.
+ * Rozkłada koszyk na pozycje pokazywane klientowi: każda po cenie katalogowej,
+ * a cała oszczędność wychodzi jednym wierszem rabatu w podsumowaniu.
  */
 export function bundleSummary<T extends { price: number; quantity: number }>(
   items: T[],
   cfg: BundleConfig
 ): BundleSummary<T> {
   const itemsTotal = money(items.reduce((sum, i) => sum + i.price * i.quantity, 0));
-  const surcharge = cfg.enabled && items.length > 0 ? cfg.surcharge : 0;
+  const pieces = items.reduce((sum, i) => sum + i.quantity, 0);
+  const surcharge = cfg.enabled && pieces > 0 ? cfg.surcharge : 0;
 
-  let surchargeUsed = false;
-  const lines = items.map((item) => {
-    const carriesShipping = cfg.enabled && !surchargeUsed;
-    if (carriesShipping) surchargeUsed = true;
+  const lines = items.map((item) => ({
+    item,
+    unitPrice: bundlePrice(item.price, cfg),
+    lineTotal: money(bundlePrice(item.price, cfg) * item.quantity),
+  }));
 
-    const unitPrice = carriesShipping ? money(item.price + cfg.surcharge) : money(item.price);
-    // Kolejne sztuki pozycji niosącej wysyłkę są już bez narzutu
-    const restDiffers = carriesShipping && item.quantity > 1;
-    const discounted = cfg.enabled && (!carriesShipping || restDiffers);
-    return {
-      item,
-      unitPrice,
-      restUnitPrice: restDiffers ? money(item.price) : null,
-      wasPrice: cfg.enabled && !carriesShipping ? bundlePrice(item.price, cfg) : null,
-      discountPercent: discounted ? bundleDiscountPercent(item.price, cfg) : 0,
-      lineTotal: money(item.price * item.quantity + (carriesShipping ? cfg.surcharge : 0)),
-    };
-  });
+  const catalogTotal = money(lines.reduce((sum, l) => sum + l.lineTotal, 0));
+  // Narzut zapłacony w każdej sztuce minus ta jedna wysyłka, którą klient
+  // realnie ponosi – reszta wraca jako rabat na koszyk
+  const discountTotal = cfg.enabled && pieces > 1 ? money((pieces - 1) * cfg.surcharge) : 0;
+  const total = money(itemsTotal + surcharge);
 
-  return { lines, itemsTotal, surcharge, total: money(itemsTotal + surcharge) };
+  return {
+    lines,
+    catalogTotal,
+    discountTotal,
+    discountPercent:
+      catalogTotal > 0 && discountTotal > 0
+        ? Math.round((discountTotal / catalogTotal) * 100)
+        : 0,
+    itemsTotal,
+    surcharge,
+    total,
+  };
 }
