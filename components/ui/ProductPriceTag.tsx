@@ -2,7 +2,7 @@ import { Truck, BadgePercent } from "lucide-react";
 import { bundlePrice, type BundleConfig } from "@/lib/bundled-shipping";
 
 /**
- * Cena produktu w teście „wysyłka w cenie”.
+ * Cena produktu w promocji „Wielosztuki”.
  *
  * W katalogu pod ceną stoją zielone dopiski „Darmowa wysyłka” i „Uzyskaj
  * rabat”. Na karcie produktu (`size="lg"`) zostaje sama cena – tam te same

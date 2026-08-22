@@ -1,16 +1,17 @@
-// Test cenowy „wysyłka w cenie produktu” (zakładka Test w panelu admina).
+// Promocja „Wielosztuki” – wysyłka wliczona w cenę produktu
+// (zakładka Promocje w panelu admina).
 //
-// Zasada: dopóki koszyk jest pusty, produkt kosztuje `cena + wysyłka` i ma
-// etykietę „Darmowa wysyłka”. Wysyłkę płaci się raz – pierwsza pozycja
-// w koszyku niesie narzut, każda kolejna jest już bez niego. Suma zamówienia
-// to zawsze `suma cen produktów + jedna wysyłka`, czyli dokładnie tyle, ile
-// liczy serwer w `/api/checkout`. **To warstwa prezentacji – kwot po stronie
-// serwera nie zmieniamy**, dzięki czemu test nie otwiera nowej drogi do
-// manipulowania ceną zamówienia.
+// Zasada: w katalogu produkt kosztuje `cena + wysyłka` i ma etykietę „Darmowa
+// wysyłka”. Wysyłkę płaci się raz, więc nadwyżkę z pozostałych sztuk oddajemy
+// w koszyku jako rabat rozłożony po równo na **wszystkie** sztuki, także
+// pierwszą. Suma zamówienia to zawsze `suma cen produktów + jedna wysyłka`,
+// czyli dokładnie tyle, ile liczy serwer w `/api/checkout`. **To warstwa
+// prezentacji – kwot po stronie serwera nie zmieniamy**, dzięki czemu promocja
+// nie otwiera nowej drogi do manipulowania ceną zamówienia.
 //
 // Moduł jest neutralny (same funkcje) – używa go serwer i komponenty klienckie.
 
-/** Klucz ustawienia włączającego test. */
+/** Klucz ustawienia włączającego promocję. */
 export const BUNDLED_SHIPPING_KEY = "bundled_shipping_enabled";
 
 export type BundleConfig = {
@@ -19,7 +20,7 @@ export type BundleConfig = {
   surcharge: number;
 };
 
-/** Test wyłączony – ceny zachowują się jak dotąd. */
+/** Promocja wyłączona – ceny zachowują się jak dotąd. */
 export const BUNDLE_OFF: BundleConfig = { enabled: false, surcharge: 0 };
 
 /** Kwoty są typu Float – każdy wynik zaokrąglamy do groszy (patrz CLAUDE.md). */
@@ -39,7 +40,7 @@ export function bundleFromSettings(settings: {
   const courier = Number(settings.shipping_cost) || 0;
   const parcel = Number(settings.shipping_cost_parcel_locker) || 0;
   const surcharge = money(Math.max(courier, parcel, 0));
-  // Zerowy narzut oznaczałby test bez żadnego efektu – traktujemy jak wyłączony
+  // Zerowy narzut oznaczałby promocję bez żadnego efektu – traktujemy jak wyłączoną
   return surcharge > 0 ? { enabled: true, surcharge } : BUNDLE_OFF;
 }
 

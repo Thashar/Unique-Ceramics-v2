@@ -35,7 +35,7 @@ export default function ProductCard({
   compact?: boolean;
   /** Etykieta kategorii z panelu; bez niej pokazujemy slug (traci polskie znaki). */
   categoryLabel?: string;
-  /** Konfiguracja testu „wysyłka w cenie”; domyślnie test wyłączony. */
+  /** Konfiguracja promocji „Wielosztuki”; domyślnie wyłączona. */
   bundle?: BundleConfig;
 }) {
   return (

@@ -11,7 +11,7 @@ export type ShippingSettings = {
   cost: number;
   freeEnabled: boolean;
   freeFrom: number;
-  /** Test „wysyłka w cenie” – wysyłkę niesie pierwsza pozycja koszyka. */
+  /** Promocja „Wielosztuki” – rabat rozłożony na wszystkie sztuki w koszyku. */
   bundle: BundleConfig;
 };
 
@@ -24,15 +24,15 @@ export type ShippingSettings = {
 export default function CartView({ shipping }: { shipping: ShippingSettings }) {
   const { items, removeItem, updateQuantity, subtotal } = useCart();
 
-  // W teście „wysyłka w cenie” próg darmowej wysyłki nie działa – wysyłka jest
-  // doliczona raz, w pierwszej pozycji koszyka
+  // W promocji „Wielosztuki” próg darmowej wysyłki nie działa – wysyłka jest
+  // doliczona raz, a nadwyżka wraca jako rabat na wszystkie sztuki
   const bundle = shipping.bundle;
   const summary = bundleSummary(items, bundle);
   const shippingCost = bundle.enabled
     ? bundle.surcharge
     : (shipping.freeEnabled && subtotal >= shipping.freeFrom ? 0 : shipping.cost);
   const total = bundle.enabled ? summary.total : subtotal + shippingCost;
-  /** Ceny pozycji po uwzględnieniu testu – klucz to id produktu. */
+  /** Ceny pozycji po uwzględnieniu promocji – klucz to id produktu. */
   const lineFor = new Map(summary.lines.map((l) => [l.item.id, l]));
 
   if (items.length === 0) {

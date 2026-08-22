@@ -128,7 +128,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     offers: {
       "@type": "Offer",
       url: `${BASE}/sklep/${product.slug}`,
-      // W teście „wysyłka w cenie” dane strukturalne muszą podawać tę samą
+      // W promocji „Wielosztuki” dane strukturalne muszą podawać tę samą
       // cenę, którą widzi odwiedzający z pustym koszykiem
       price: bundlePrice(product.price, bundle).toFixed(2),
       priceCurrency: "PLN",
@@ -207,8 +207,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               {product.name}
             </h1>
             <p className="font-serif text-2xl text-espresso mb-6">
-              {/* W teście „wysyłka w cenie” cena zależy od zawartości koszyka,
-                  więc renderuje ją komponent kliencki */}
+              {/* W promocji „Wielosztuki” cena katalogowa zawiera narzut na wysyłkę */}
               <ProductPriceTag price={product.price} bundle={bundle} size="lg" />
             </p>
 

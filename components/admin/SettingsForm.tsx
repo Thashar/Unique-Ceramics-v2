@@ -818,12 +818,13 @@ export default function SettingsForm({ section, initial, aiUsage }: Props) {
           <h2 className="font-serif text-2xl text-espresso">Promocje</h2>
           <p className="text-xs text-charcoal/80 leading-relaxed">
             <strong className="font-medium">Wielosztuki</strong> – po włączeniu każdy produkt w sklepie
-            pokazuje cenę powiększoną o koszt wysyłki
-            i zieloną etykietę <strong className="font-medium">Darmowa wysyłka</strong>. Wysyłkę
-            klient płaci raz: pierwsza pozycja w koszyku niesie narzut, każda kolejna jest bez
-            niego – ze starą ceną przekreśloną i widoczną różnicą w procentach. Suma zamówienia
-            to zawsze <strong className="font-medium">ceny produktów + jedna wysyłka</strong>,
-            czyli tyle samo, ile sklep policzyłby bez testu.
+            kosztuje o koszt wysyłki więcej, a klient dostaje w zamian zieloną informację{" "}
+            <strong className="font-medium">Darmowa wysyłka</strong> i zachętę{" "}
+            <strong className="font-medium">Uzyskaj rabat</strong>. Wysyłkę płaci raz: nadwyżkę
+            z pozostałych sztuk oddajemy w koszyku jako rabat rozłożony na{" "}
+            <strong className="font-medium">wszystkie sztuki, także pierwszą</strong>. Suma
+            zamówienia to zawsze <strong className="font-medium">ceny produktów + jedna wysyłka</strong>,
+            czyli tyle samo, ile sklep policzyłby bez promocji.
           </p>
 
           <div className="flex items-center justify-between border border-sand bg-warm-white p-4">
@@ -831,27 +832,53 @@ export default function SettingsForm({ section, initial, aiUsage }: Props) {
             <Toggle checked={bundledShipping} onChange={setBundledShipping} />
           </div>
 
-          <div className="border border-sand bg-cream p-4 text-xs text-charcoal/80 leading-relaxed space-y-2">
-            <p className="font-medium text-espresso">Jak liczą się kwoty</p>
-            <p>
-              Narzut to wyższy z kosztów wysyłki (kurier {shippingCost || "18"} zł,
-              paczkomat {shippingCostParcel || "18"} zł), żeby klient przy kasie nigdy nie
-              zapłacił więcej, niż zapowiadała cena w katalogu.
-            </p>
-            <p>
-              Przykład dla produktów 100 zł i 80 zł: katalog pokazuje 118 zł i 98 zł, w koszyku
-              pierwszy zostaje 118 zł, drugi wraca do 80 zł, razem 198 zł – tyle samo co 180 zł
-              produktów plus 18 zł wysyłki.
-            </p>
-            <p>
-              Przy odbiorze osobistym wysyłki nie ma, więc kwota jest niższa o narzut –
-              klient widzi o tym informację w podsumowaniu zamówienia.
-            </p>
-            <p>
-              W trakcie testu <strong className="font-medium">próg darmowej wysyłki nie działa</strong>{" "}
-              (wysyłka jest już w cenie). Ceny w bazie i kwoty zapisywane w zamówieniach
-              pozostają bez zmian – zmienia się wyłącznie sposób pokazania ceny.
-            </p>
+          <div className="border border-sand bg-cream p-4 text-xs text-charcoal/80 leading-relaxed space-y-3">
+            <div className="space-y-1">
+              <p className="font-medium text-espresso">Co widzi klient</p>
+              <p>
+                <strong className="font-medium">Sklep i karta produktu:</strong> jedna cena – bez
+                przekreśleń i przeliczeń. Pod nią, na zielono, „Darmowa wysyłka” i „Uzyskaj rabat”
+                (na karcie produktu te informacje stoją pod przyciskiem dodania do koszyka).
+              </p>
+              <p>
+                <strong className="font-medium">Koszyk:</strong> każda pozycja z przekreśloną ceną
+                katalogową, ceną po rabacie i procentem, a w podsumowaniu wiersze „Produkty przed
+                rabatem”, „Rabat” i „Darmowa wysyłka”. Pod nimi warunek promocji: rabat naliczamy
+                przy zakupie od 2 sztuk.
+              </p>
+              <p>
+                Klient <strong className="font-medium">nie dowiaduje się</strong>, że przesyłka jest
+                wliczona w cenę – nigdzie nie pokazujemy kwoty 0 zł ani wyjaśnień mechaniki.
+              </p>
+            </div>
+
+            <div className="space-y-1">
+              <p className="font-medium text-espresso">Jak liczą się kwoty</p>
+              <p>
+                Narzut to wyższy z kosztów wysyłki (kurier {shippingCost || "18"} zł, paczkomat{" "}
+                {shippingCostParcel || "18"} zł), żeby klient przy kasie nigdy nie zapłacił więcej,
+                niż zapowiadała cena w katalogu.
+              </p>
+              <p>
+                Przykład dla dwóch sztuk po 95 zł przy wysyłce 18 zł: katalog pokazuje 113 zł,
+                w koszyku każda sztuka schodzi do 104 zł (−8%), razem 208 zł – tyle samo co 190 zł
+                produktów plus 18 zł wysyłki.
+              </p>
+              <p>
+                Rabat dzieli się po równo na wszystkie sztuki; reszta z zaokrągleń (np. 18 zł na
+                7 sztuk) trafia na ostatnią pozycję, żeby suma zgadzała się co do grosza.
+              </p>
+              <p>
+                Przy odbiorze osobistym wysyłki nie ma, więc kwota jest po prostu niższa.
+                W trakcie promocji{" "}
+                <strong className="font-medium">próg darmowej wysyłki nie działa</strong>.
+              </p>
+              <p>
+                Ceny w bazie i kwoty zapisywane w zamówieniach{" "}
+                <strong className="font-medium">pozostają bez zmian</strong> – zmienia się wyłącznie
+                sposób pokazania ceny, więc raporty i analityka liczą jak dotąd.
+              </p>
+            </div>
           </div>
 
           <SaveButton
