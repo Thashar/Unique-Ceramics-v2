@@ -260,7 +260,9 @@ export default async function ConfirmationPage({
                 <span>Wysyłka</span>
                 <span>
                   {bundleLines ? (
-                    <span className="text-green-700">Darmowa wysyłka</span>
+                    <span className="text-green-700">
+                      {order.shippingMethod === "pickup" ? "Odbiór osobisty" : "Darmowa wysyłka"}
+                    </span>
                   ) : order.shippingCost === 0 ? (
                     "Gratis"
                   ) : (

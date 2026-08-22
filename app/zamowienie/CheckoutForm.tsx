@@ -75,21 +75,20 @@ export default function CheckoutForm({
   // W promocji „Wielosztuki" próg nie działa – wysyłka jest już doliczona
   // do ceny pierwszego produktu (tak samo liczy serwer w /api/checkout)
   function methodShippingCost(method: string): number {
+    // Promocja „Wielosztuki”: narzut siedzi w cenach katalogowych, więc kwota
+    // jest ta sama dla każdej metody – także dla odbioru osobistego. Inaczej
+    // wybór dostawy korygowałby rachunek, choć wysyłka ma być darmowa
+    if (bundle.enabled) return bundle.surcharge;
     if (method === "pickup") return 0;
     const raw = method === "parcel_locker" ? shippingCostParcelLocker : shippingCostCourier;
-    if (bundle.enabled) return raw;
     return shippingFreeEnabled && subtotal >= shippingFreeFrom ? 0 : raw;
   }
 
   const shipping = methodShippingCost(shippingMethod);
   const total = subtotal + shipping;
   // Rozbicie pozycji na ceny pokazywane klientowi: przy promocji „Wielosztuki”
-  // rabat schodzi w tym samym procencie z każdej pozycji, a przy odbiorze
-  // osobistym narzutu nie ma wcale
-  const summary = bundleSummary(
-    items,
-    bundle.enabled && shipping > 0 ? bundle : { enabled: false, surcharge: 0 }
-  );
+  // rabat schodzi w tym samym procencie z każdej pozycji
+  const summary = bundleSummary(items, bundle);
 
   // Zablokuj złożenie zamówienia jeśli zalogowany użytkownik nie ma kompletnego adresu
   // (null = gość – brak blokady; false = niekompletny; true = OK)

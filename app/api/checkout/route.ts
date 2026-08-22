@@ -445,14 +445,18 @@ export async function POST(req: Request) {
     }, 0) * 100
   ) / 100;
 
-  // Promocja „Wielosztuki": koszt przesyłki jest już doliczony do ceny
-  // pierwszego produktu w katalogu, więc próg darmowej wysyłki nie działa –
-  // inaczej klient zapłaciłby mniej, niż pokazywał koszyk
+  // Promocja „Wielosztuki”: narzut na wysyłkę jest już w cenach katalogowych,
+  // więc próg darmowej wysyłki nie działa – inaczej klient zapłaciłby mniej,
+  // niż pokazywał koszyk
   const bundle = bundleFromSettings(shippingSettings);
   const rawCost = shippingMethod === "parcel_locker" ? shippingCostParcel : shippingCostCourier;
-  const shippingCost = shippingMethod === "pickup"
-    ? 0
-    : (!bundle.enabled && freeEnabled && subtotal >= freeFrom ? 0 : rawCost);
+  // W promocji narzut jest ten sam dla każdej metody – także dla odbioru
+  // osobistego – bo siedzi w cenach katalogowych, które widział klient
+  const shippingCost = bundle.enabled
+    ? bundle.surcharge
+    : shippingMethod === "pickup"
+      ? 0
+      : (freeEnabled && subtotal >= freeFrom ? 0 : rawCost);
   const total = Math.round((subtotal + shippingCost) * 100) / 100;
 
   const typedItems = items as { productId: string; quantity: number }[];

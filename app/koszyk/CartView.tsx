@@ -28,10 +28,11 @@ export default function CartView({ shipping }: { shipping: ShippingSettings }) {
   // doliczona raz, a nadwyżka wraca jako rabat o tym samym procencie na każdej pozycji
   const bundle = shipping.bundle;
   const summary = bundleSummary(items, bundle);
-  const shippingCost = bundle.enabled
-    ? bundle.surcharge
-    : (shipping.freeEnabled && subtotal >= shipping.freeFrom ? 0 : shipping.cost);
-  const total = bundle.enabled ? summary.total : subtotal + shippingCost;
+  // Koszyk **nigdy** nie pokazuje kwoty dostawy ani nie dolicza jej do sumy –
+  // koszt zależy od metody, którą klient wybiera dopiero przy zamówieniu.
+  // W promocji „Wielosztuki” narzut siedzi już w cenach katalogowych, więc suma
+  // koszyka jest tam kwotą końcową.
+  const total = bundle.enabled ? summary.total : subtotal;
   /** Ceny pozycji po uwzględnieniu promocji – klucz to id produktu. */
   const lineFor = new Map(summary.lines.map((l) => [l.item.id, l]));
 
@@ -172,10 +173,8 @@ export default function CartView({ shipping }: { shipping: ShippingSettings }) {
                 <span>
                   {bundle.enabled ? (
                     <span className="text-green-700">Darmowa wysyłka</span>
-                  ) : shippingCost === 0 ? (
-                    <span className="text-green-700">Gratis</span>
                   ) : (
-                    `${shippingCost.toFixed(2).replace(".", ",")} zł`
+                    "przy wyborze dostawy"
                   )}
                 </span>
               </div>
