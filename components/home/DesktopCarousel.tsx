@@ -3,6 +3,7 @@
 import { useRef, useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import ProductCard from "@/components/ui/ProductCard";
+import { categoryLabel, type Category } from "@/lib/category-defaults";
 
 const DURATION = 520;
 const GAP = 32; // gap-8
@@ -17,7 +18,7 @@ type Product = {
   price: number; images: string[]; stock: number;
 };
 
-export default function DesktopCarousel({ products }: { products: Product[] }) {
+export default function DesktopCarousel({ products, categories }: { products: Product[]; categories: Category[] }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const innerRef = useRef<HTMLDivElement>(null);
   const leftArrowRef = useRef<HTMLButtonElement>(null);
@@ -124,7 +125,7 @@ export default function DesktopCarousel({ products }: { products: Product[] }) {
         >
           {products.map((product) => (
             <div key={product.id} style={{ flexShrink: 0, width: cardW }}>
-              <ProductCard product={product} />
+              <ProductCard product={product} categoryLabel={categoryLabel(product.category, categories)} />
             </div>
           ))}
         </div>

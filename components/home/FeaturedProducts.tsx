@@ -1,13 +1,15 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { getFeaturedProducts } from "@/lib/products";
+import { getCategories, type Category } from "@/lib/categories";
 import ProductCarousel from "@/components/home/ProductCarousel";
 import DesktopCarousel from "@/components/home/DesktopCarousel";
 
 export default async function FeaturedProducts() {
   let products: Awaited<ReturnType<typeof getFeaturedProducts>> = [];
+  let categories: Category[] = [];
   try {
-    products = await getFeaturedProducts();
+    [products, categories] = await Promise.all([getFeaturedProducts(), getCategories()]);
   } catch {
     // Baza niedostępna – sekcja nie wyświetla produktów
   }
@@ -45,12 +47,12 @@ export default async function FeaturedProducts() {
 
         {/* Mobile: karuzel z sinusoidalną animacją, wyśrodkowane karty */}
         <div className="lg:hidden">
-          <ProductCarousel products={products} />
+          <ProductCarousel products={products} categories={categories} />
         </div>
 
         {/* Desktop: 4 kolumny, gdy >4 produktów – carousel z nawigacją */}
         <div className="hidden lg:block max-w-7xl mx-auto w-full px-16">
-          <DesktopCarousel products={products} />
+          <DesktopCarousel products={products} categories={categories} />
         </div>
       </div>
     </section>

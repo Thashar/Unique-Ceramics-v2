@@ -10,6 +10,7 @@ import ProductGallery from "./ProductGallery";
 import AddToCartSection from "./AddToCartSection";
 import { db, withDbRetry } from "@/lib/db";
 import { getSettings } from "@/lib/settings";
+import { getCategories, categoryLabel } from "@/lib/categories";
 
 export const revalidate = 60;
 
@@ -87,9 +88,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const [product, settings] = await Promise.all([
+  const [product, settings, categories] = await Promise.all([
     getProduct(slug),
     getSettings(["shipping_time", "shipping_cost", "shipping_free_enabled", "shipping_free_from"]),
+    getCategories(),
   ]);
 
   if (!product) notFound();
@@ -183,8 +185,10 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
           {/* Informacje */}
           <div className="lg:pt-4 flex flex-col">
-            <p className="text-xs tracking-[0.25em] uppercase text-clay mb-3 capitalize">
-              {product.category}
+            {/* Etykieta kategorii z panelu – w `Product.category` siedzi slug,
+                więc bez tego mapowania nazwa traciła polskie znaki */}
+            <p className="text-xs tracking-[0.25em] uppercase text-clay mb-3">
+              {categoryLabel(product.category, categories)}
             </p>
             <h1 className="font-serif text-3xl md:text-4xl text-espresso leading-tight mb-4">
               {product.name}
