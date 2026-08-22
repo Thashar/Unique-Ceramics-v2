@@ -4,6 +4,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { ShoppingBag } from "lucide-react";
+import AiImageBadge from "@/components/ui/AiImageBadge";
+import { isAiGeneratedImage } from "@/lib/ai";
 
 type ProductCardProduct = {
   id: string;
@@ -85,13 +87,19 @@ export default function ProductCard({
 
         {/* Info */}
         <div>
-          <p
-            className={`tracking-widest uppercase text-clay ${
-              compact ? "text-[9px] mb-0.5" : "text-[11px] mb-1.5"
-            }`}
-          >
-            {product.category}
-          </p>
+          {/* Kategoria, a przy zdjęciu z AI – oznaczenie po prawej stronie wiersza */}
+          <div className={`flex items-center justify-between gap-2 ${compact ? "mb-0.5" : "mb-1.5"}`}>
+            <p
+              className={`tracking-widest uppercase text-clay truncate ${
+                compact ? "text-[9px]" : "text-[11px]"
+              }`}
+            >
+              {product.category}
+            </p>
+            {product.images[0] && isAiGeneratedImage(product.images[0]) && (
+              <AiImageBadge size={compact ? "sm" : "md"} className="shrink-0" />
+            )}
+          </div>
           <h3
             className={`font-serif text-espresso group-hover:text-clay transition-colors leading-snug mb-1 ${
               compact ? "text-sm" : "text-lg"
