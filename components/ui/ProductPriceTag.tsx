@@ -59,11 +59,13 @@ export default function ProductPriceTag({
         </span>
         <span className="inline-flex items-center gap-1">
           <BadgePercent className={iconClass} strokeWidth={1.75} aria-hidden="true" />
-          {discountAvailable
-            ? size === "lg"
-              ? "Dodaj produkt do koszyka, aby uzyskać rabat"
-              : "Uzyskaj rabat"
-            : "Dodaj drugą sztukę lub więcej, by otrzymać dodatkowy rabat"}
+          {/* W katalogu zawsze krótka zachęta; pełne zdanie mieści się dopiero
+              na karcie produktu i zależy tam od tego, czy koszyk jest pusty */}
+          {size !== "lg"
+            ? "Uzyskaj rabat"
+            : discountAvailable
+              ? "Dodaj produkt do koszyka, aby uzyskać dodatkowy rabat"
+              : "Dodaj drugą sztukę lub więcej, by otrzymać rabat"}
         </span>
       </span>
     </span>
