@@ -11,7 +11,7 @@ export type ShippingSettings = {
   cost: number;
   freeEnabled: boolean;
   freeFrom: number;
-  /** Promocja „Wielosztuki” – rabat rozłożony na wszystkie sztuki w koszyku. */
+  /** Promocja „Wielosztuki” – rabat proporcjonalny na wszystkie pozycje koszyka. */
   bundle: BundleConfig;
 };
 
@@ -25,7 +25,7 @@ export default function CartView({ shipping }: { shipping: ShippingSettings }) {
   const { items, removeItem, updateQuantity, subtotal } = useCart();
 
   // W promocji „Wielosztuki” próg darmowej wysyłki nie działa – wysyłka jest
-  // doliczona raz, a nadwyżka wraca jako rabat na wszystkie sztuki
+  // doliczona raz, a nadwyżka wraca jako rabat o tym samym procencie na każdej pozycji
   const bundle = shipping.bundle;
   const summary = bundleSummary(items, bundle);
   const shippingCost = bundle.enabled
@@ -88,7 +88,7 @@ export default function CartView({ shipping }: { shipping: ShippingSettings }) {
                   {(() => {
                     const line = lineFor.get(item.id);
                     const zl = (v: number) => `${v.toFixed(2).replace(".", ",")} zł`;
-                    // Rabat dostaje każda sztuka – także pierwsza
+                    // Rabat dostaje każda sztuka – także pierwsza, w tym samym procencie
                     if (bundle.enabled && line && line.discountPercent > 0) {
                       return (
                         <>

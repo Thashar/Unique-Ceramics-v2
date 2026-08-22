@@ -3,8 +3,8 @@
 //
 // Zasada: w katalogu produkt kosztuje `cena + wysyłka` i ma etykietę „Darmowa
 // wysyłka”. Wysyłkę płaci się raz, więc nadwyżkę z pozostałych sztuk oddajemy
-// w koszyku jako rabat rozłożony po równo na **wszystkie** sztuki, także
-// pierwszą. Suma zamówienia to zawsze `suma cen produktów + jedna wysyłka`,
+// w koszyku jako rabat **proporcjonalny** – każda pozycja, także pierwsza,
+// tanieje o ten sam procent. Suma zamówienia to zawsze `suma cen produktów + jedna wysyłka`,
 // czyli dokładnie tyle, ile liczy serwer w `/api/checkout`. **To warstwa
 // prezentacji – kwot po stronie serwera nie zmieniamy**, dzięki czemu promocja
 // nie otwiera nowej drogi do manipulowania ceną zamówienia.
@@ -49,32 +49,13 @@ export function bundlePrice(base: number, cfg: BundleConfig): number {
   return cfg.enabled ? money(base + cfg.surcharge) : money(base);
 }
 
-/**
- * Cena, jaką klient realnie zapłaci za sztukę.
- * `shippingCovered` = w koszyku jest już inna pozycja, która niesie wysyłkę.
- */
-export function bundleUnitPrice(
-  base: number,
-  cfg: BundleConfig,
-  shippingCovered: boolean
-): number {
-  return cfg.enabled && !shippingCovered ? money(base + cfg.surcharge) : money(base);
-}
-
-/** O ile procent taniej wypada produkt, gdy wysyłkę pokrywa inna pozycja. */
-export function bundleDiscountPercent(base: number, cfg: BundleConfig): number {
-  const full = bundlePrice(base, cfg);
-  if (!cfg.enabled || full <= 0) return 0;
-  return Math.round((cfg.surcharge / full) * 100);
-}
-
 export type BundleLine<T> = {
   item: T;
   /** Cena katalogowa sztuki (baza + narzut) – ta sama, którą klient widział w sklepie. */
   catalogUnitPrice: number;
   /** Cena sztuki po rabacie – rabat dostaje **każda** sztuka, także pierwsza. */
   unitPrice: number;
-  /** Rabat na sztuce w procentach ceny katalogowej. */
+  /** Rabat na sztuce w procentach – ten sam dla wszystkich pozycji w koszyku. */
   discountPercent: number;
   /** Wartość pozycji po rabacie. */
   lineTotal: number;
@@ -84,7 +65,7 @@ export type BundleSummary<T> = {
   lines: BundleLine<T>[];
   /** Suma pozycji po cenach katalogowych (przed rabatem). */
   catalogTotal: number;
-  /** Łączny rabat rozdzielony po równo na wszystkie sztuki w koszyku. */
+  /** Łączny rabat rozdzielony proporcjonalnie na wszystkie pozycje koszyka. */
   discountTotal: number;
   /** Rabat wyrażony w procentach wartości katalogowej (0 = brak). */
   discountPercent: number;
@@ -100,11 +81,13 @@ export type BundleSummary<T> = {
  * Rozkłada koszyk na pozycje pokazywane klientowi.
  *
  * Wysyłkę płaci się raz, więc nadmiarowe narzuty wracają jako rabat – i to
- * rabat **na każdą sztukę, również pierwszą**: po podziale każda sztuka niesie
- * `narzut / liczba sztuk` zamiast pełnego narzutu. Suma pozycji po rabacie to
- * nadal `ceny produktów + jedna wysyłka`, czyli dokładnie tyle, ile policzy
- * serwer; ewentualna reszta z dzielenia (np. 18 zł na 7 sztuk) ląduje na
- * ostatniej pozycji, żeby kwoty zgadzały się co do grosza.
+ * rabat **na każdą sztukę, również pierwszą**. Rabat jest **proporcjonalny**:
+ * ceny katalogowe mnożymy przez wspólny współczynnik `total / catalogTotal`,
+ * dzięki czemu każda pozycja tanieje o ten sam procent (podział kwotowy
+ * `narzut / liczba sztuk` dawał tańszym produktom wyraźnie większy rabat
+ * procentowy niż droższym). Suma pozycji po rabacie to nadal `ceny produktów +
+ * jedna wysyłka`, czyli dokładnie tyle, ile policzy serwer; reszta z zaokrągleń
+ * ląduje na ostatniej pozycji, żeby kwoty zgadzały się co do grosza.
  */
 export function bundleSummary<T extends { price: number; quantity: number }>(
   items: T[],
@@ -115,20 +98,27 @@ export function bundleSummary<T extends { price: number; quantity: number }>(
   const surcharge = cfg.enabled && pieces > 0 ? cfg.surcharge : 0;
   const total = money(itemsTotal + surcharge);
 
-  // Ile z wysyłki przypada na jedną sztukę po rozłożeniu jej na cały koszyk
-  const surchargePerPiece = cfg.enabled && pieces > 0 ? cfg.surcharge / pieces : 0;
+  const catalogTotal = money(
+    items.reduce((sum, i) => sum + bundlePrice(i.price, cfg) * i.quantity, 0)
+  );
+  const discountTotal = money(catalogTotal - total);
+  // Jeden współczynnik dla całego koszyka = ten sam % rabatu na każdej pozycji
+  const ratio = cfg.enabled && catalogTotal > 0 ? total / catalogTotal : 1;
+  const discountPercent =
+    catalogTotal > 0 && discountTotal > 0
+      ? Math.round((discountTotal / catalogTotal) * 100)
+      : 0;
 
   const lines: BundleLine<T>[] = items.map((item) => {
     const catalogUnitPrice = bundlePrice(item.price, cfg);
-    const unitPrice = cfg.enabled ? money(item.price + surchargePerPiece) : money(item.price);
+    const unitPrice = money(catalogUnitPrice * ratio);
     return {
       item,
       catalogUnitPrice,
       unitPrice,
-      discountPercent:
-        catalogUnitPrice > unitPrice
-          ? Math.round(((catalogUnitPrice - unitPrice) / catalogUnitPrice) * 100)
-          : 0,
+      // Procent bierzemy wspólny, a nie liczony z zaokrąglonej ceny sztuki –
+      // inaczej grosz zaokrąglenia rozjeżdżałby etykiety między pozycjami
+      discountPercent: catalogUnitPrice > unitPrice ? discountPercent : 0,
       lineTotal: money(unitPrice * item.quantity),
     };
   });
@@ -142,17 +132,11 @@ export function bundleSummary<T extends { price: number; quantity: number }>(
     lines[lines.length - 1] = { ...last, lineTotal: money(last.lineTotal + remainder) };
   }
 
-  const catalogTotal = money(lines.reduce((sum, l) => sum + l.catalogUnitPrice * l.item.quantity, 0));
-  const discountTotal = money(catalogTotal - total);
-
   return {
     lines,
     catalogTotal,
     discountTotal,
-    discountPercent:
-      catalogTotal > 0 && discountTotal > 0
-        ? Math.round((discountTotal / catalogTotal) * 100)
-        : 0,
+    discountPercent,
     itemsTotal,
     surcharge,
     total,

@@ -83,8 +83,9 @@ export default function CheckoutForm({
 
   const shipping = methodShippingCost(shippingMethod);
   const total = subtotal + shipping;
-  // Rozbicie pozycji na ceny pokazywane klientowi: przy promocji „Wielosztuki"
-  // narzut niesie pierwsza pozycja, przy odbiorze osobistym nie ma go wcale
+  // Rozbicie pozycji na ceny pokazywane klientowi: przy promocji „Wielosztuki”
+  // rabat schodzi w tym samym procencie z każdej pozycji, a przy odbiorze
+  // osobistym narzutu nie ma wcale
   const summary = bundleSummary(
     items,
     bundle.enabled && shipping > 0 ? bundle : { enabled: false, surcharge: 0 }
