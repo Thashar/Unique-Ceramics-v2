@@ -1,6 +1,6 @@
 import { unstable_cache } from "next/cache";
 import { db, withDbRetry } from "@/lib/db";
-import { AI_MODEL_DEFAULT, AI_TEXT_MODEL_DEFAULT } from "@/lib/ai";
+import { AI_MODEL_DEFAULT, AI_PRESET_DEFAULT, AI_TEXT_MODEL_DEFAULT } from "@/lib/ai";
 
 /** Klucze kontaktowe używane w stopce i w danych strukturalnych. */
 export const CONTACT_KEYS = [
@@ -238,6 +238,10 @@ const DEFAULTS: Record<string, string> = {
   ai_image_model: AI_MODEL_DEFAULT.ai,
   ai_image_model_plus: AI_MODEL_DEFAULT.ai_plus,
   ai_text_model: AI_TEXT_MODEL_DEFAULT,
+  // Presety promptów: własne (JSON) + preset wybrany dla każdego z przycisków
+  ai_prompt_presets: "[]",
+  ai_prompt_preset_ai: AI_PRESET_DEFAULT.ai,
+  ai_prompt_preset_ai_plus: AI_PRESET_DEFAULT.ai_plus,
   // Kurs do przeliczenia kosztów AI (Google rozlicza w USD) – edytowalny w panelu
   ai_usd_pln_rate: "4.00",
   // Działalność nierejestrowana – minimalne wynagrodzenie (aktualizuj co rok!)

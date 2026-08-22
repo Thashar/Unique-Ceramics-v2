@@ -81,6 +81,9 @@ export default async function AdminSettingsPage({
     "ai_image_model_plus",
     "ai_text_model",
     "ai_usd_pln_rate",
+    "ai_prompt_presets",
+    "ai_prompt_preset_ai",
+    "ai_prompt_preset_ai_plus",
   ]);
 
   // Statystyki zużycia AI potrzebne tylko na jednej zakładce – nie odpytuj bazy poza nią
