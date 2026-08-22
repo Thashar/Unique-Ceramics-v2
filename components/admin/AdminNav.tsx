@@ -49,6 +49,12 @@ function AdminNavInner({ onClose }: { onClose?: () => void }) {
   const [paymentsManualOpen, setPaymentsManualOpen] = useState(false);
   const paymentsOpen = paymentsManualOpen || onPayments;
 
+  // Ustawienia rozwijają się kliknięciem i nie przenoszą od razu na zakładkę –
+  // wybór sekcji należy do pozycji z listy. `null` = jeszcze nie ruszane ręcznie,
+  // wtedy lista jest otwarta, gdy jesteśmy na którejś z zakładek ustawień.
+  const [settingsManualOpen, setSettingsManualOpen] = useState<boolean | null>(null);
+  const settingsOpen = settingsManualOpen ?? onSettings;
+
   return (
     <>
       <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
@@ -72,26 +78,28 @@ function AdminNavInner({ onClose }: { onClose?: () => void }) {
           );
         })}
 
-        {/* Ustawienia – rozwijane. Kliknięcie NIE zamyka panelu na telefonie:
-            zamknięcie chowałoby dopiero co rozwiniętą listę sekcji. Panel zamykają
-            dopiero pozycje z listy, bo one kończą wybór. */}
+        {/* Ustawienia – sam przełącznik listy, bez przechodzenia na zakładkę.
+            Kliknięcie NIE zamyka panelu na telefonie: zamknięcie chowałoby dopiero
+            co rozwiniętą listę sekcji. Panel zamykają dopiero pozycje z listy. */}
         <div>
-          <Link
-            href="/admin/ustawienia?s=strona_glowna"
-            className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-all duration-150 ${
+          <button
+            type="button"
+            onClick={() => setSettingsManualOpen((v) => !(v ?? onSettings))}
+            aria-expanded={settingsOpen}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-all duration-150 ${
               onSettings
                 ? "bg-white/12 text-white font-medium"
                 : "text-white/60 hover:text-white hover:bg-white/8"
             }`}
           >
             <Settings size={16} strokeWidth={onSettings ? 2 : 1.5} />
-            <span className="flex-1">Ustawienia</span>
-            {onSettings
+            <span className="flex-1 text-left">Ustawienia</span>
+            {settingsOpen
               ? <ChevronDown size={13} className="opacity-70" />
               : <ChevronRight size={13} className="opacity-70" />}
-          </Link>
+          </button>
 
-          {onSettings && (
+          {settingsOpen && (
             <div className="ml-4 border-l border-white/10 pl-3 space-y-0.5">
               {settingsItems.map(({ id, label }) => (
                 <Link

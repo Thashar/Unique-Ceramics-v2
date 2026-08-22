@@ -227,11 +227,14 @@ function readGenerateContentText(body: unknown): string {
  * `models/{model}:generateContent`, więc przy odmowie 400/404 powtarzamy
  * żądanie tamtą drogą, zamiast zwracać adminowi błąd.
  */
-async function callGemini(model: string, prompt: string, image: GeneratedImage) {
+async function callGemini(model: string, prompt: string, image?: GeneratedImage) {
   const apiKey = process.env.GOOGLE_AI_API_KEY?.trim();
   if (!apiKey) throw new Error("Brak klucza GOOGLE_AI_API_KEY.");
 
-  const base64 = image.data.toString("base64");
+  // Zdjęcie jest opcjonalne – układanie promptu ze słownego opisu idzie bez niego
+  const imagePart = image
+    ? { type: "image", mime_type: image.mimeType, data: image.data.toString("base64") }
+    : null;
 
   const first = await postJson(
     "/interactions",
@@ -239,7 +242,7 @@ async function callGemini(model: string, prompt: string, image: GeneratedImage) 
       model,
       input: [
         { type: "text", text: prompt },
-        { type: "image", mime_type: image.mimeType, data: base64 },
+        ...(imagePart ? [imagePart] : []),
       ],
     },
     apiKey
@@ -259,7 +262,9 @@ async function callGemini(model: string, prompt: string, image: GeneratedImage) 
           role: "user",
           parts: [
             { text: prompt },
-            { inline_data: { mime_type: image.mimeType, data: base64 } },
+            ...(image
+              ? [{ inline_data: { mime_type: image.mimeType, data: image.data.toString("base64") } }]
+              : []),
           ],
         },
       ],
@@ -292,11 +297,14 @@ export async function generateProductImage(opts: {
   return { image, usage: readUsage(body, opts.fallbackOutputTokens) };
 }
 
-/** Opisuje zdjęcie tekstem (uzupełnianie danych produktu). */
+/**
+ * Odpowiedź tekstowa modelu. Zdjęcie jest opcjonalne: uzupełnianie danych
+ * produktu je przekazuje, układanie promptu ze słownego opisu – nie.
+ */
 export async function generateProductText(opts: {
   model: string;
   prompt: string;
-  image: GeneratedImage;
+  image?: GeneratedImage;
 }): Promise<{ text: string; usage: AiUsage }> {
   const { body, viaInteractions } = await callGemini(opts.model, opts.prompt, opts.image);
   const text = viaInteractions ? readInteractionsText(body) : readGenerateContentText(body);

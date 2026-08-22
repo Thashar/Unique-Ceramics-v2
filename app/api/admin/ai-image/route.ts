@@ -2,7 +2,7 @@ import sharp from "sharp";
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-auth";
-import { getSetting } from "@/lib/settings";
+import { getSettings } from "@/lib/settings";
 import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 import { resolveOwnImageSource, fetchOwnImage } from "@/lib/image-source";
 import { generateProductImage, hasGoogleAiKey } from "@/lib/google-ai";
@@ -11,9 +11,13 @@ import {
   AI_IMAGE_SUFFIX,
   AI_MODEL_PRICING,
   AI_MODEL_SETTING_KEY,
-  AI_PROMPTS,
+  AI_PRESET_SETTING_KEY,
+  AI_PRESETS_SETTING_KEY,
+  buildImagePrompt,
   isAiVariant,
+  parseAiPresets,
   resolveAiModel,
+  resolveAiPreset,
 } from "@/lib/ai";
 
 // Generowanie obrazu trwa dłużej niż zwykłe żądanie – domyślne 10 s to za mało.
@@ -71,13 +75,25 @@ export async function POST(req: Request) {
     );
   }
 
-  const model = resolveAiModel(variant, await getSetting(AI_MODEL_SETTING_KEY[variant]));
+  const settings = await getSettings([
+    AI_MODEL_SETTING_KEY[variant],
+    AI_PRESET_SETTING_KEY[variant],
+    AI_PRESETS_SETTING_KEY,
+  ]);
+  const model = resolveAiModel(variant, settings[AI_MODEL_SETTING_KEY[variant]]);
+  // Scena z presetu wybranego dla tego przycisku; reguły produktu (kadr, kolor,
+  // komplet, skala) dokłada buildImagePrompt – preset nie może ich pominąć
+  const preset = resolveAiPreset(
+    variant,
+    settings[AI_PRESET_SETTING_KEY[variant]],
+    parseAiPresets(settings[AI_PRESETS_SETTING_KEY])
+  );
 
   let generated: Buffer;
   try {
     const result = await generateProductImage({
       model,
-      prompt: AI_PROMPTS[variant],
+      prompt: buildImagePrompt(preset.scene),
       image: { data: input, mimeType: "image/jpeg" },
       fallbackOutputTokens: AI_MODEL_PRICING[model]?.tokensPerImage ?? 0,
     });

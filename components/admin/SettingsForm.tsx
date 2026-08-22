@@ -9,17 +9,22 @@ import ImageUploader from "@/components/admin/ImageUploader";
 import FocalPointPicker from "@/components/admin/FocalPointPicker";
 import GalleryEditor from "@/components/admin/GalleryEditor";
 import WorkshopsOffersEditor from "@/components/admin/WorkshopsOffersEditor";
+import AiPromptPresets from "@/components/admin/AiPromptPresets";
 import { parseGallery, galleryHead } from "@/lib/gallery";
 import {
   AI_IMAGE_MODELS,
   AI_MODEL_PRICING,
   AI_MODEL_SETTING_KEY,
-  AI_PROMPTS,
+  AI_PRESET_SETTING_KEY,
+  AI_PRESETS_SETTING_KEY,
   AI_TEXT_MODELS,
   AI_TEXT_MODEL_SETTING_KEY,
   aiCostPerImageUsd,
+  buildImagePrompt,
   buildProductFillPrompt,
+  parseAiPresets,
   resolveAiModel,
+  resolveAiPreset,
   resolveAiTextModel,
 } from "@/lib/ai";
 import type { AiUsagePeriod, AiUsageStats } from "@/lib/ai-usage";
@@ -87,6 +92,9 @@ interface Props {
     ai_image_model_plus: string;
     ai_text_model: string;
     ai_usd_pln_rate: string;
+    ai_prompt_presets: string;
+    ai_prompt_preset_ai: string;
+    ai_prompt_preset_ai_plus: string;
   };
   /** Statystyki zużycia AI – liczone tylko dla zakładki „AI (zdjęcia)” */
   aiUsage?: AiUsageStats | null;
@@ -408,6 +416,11 @@ export default function SettingsForm({ section, initial, aiUsage }: Props) {
   );
   const [aiTextModel, setAiTextModel] = useState(() => resolveAiTextModel(initial.ai_text_model));
   const [aiRate, setAiRate] = useState(initial.ai_usd_pln_rate);
+  // Presety promptów: własne trzymamy jako JSON (tak trafiają do ustawień),
+  // a osobno identyfikator presetu przypisanego do każdego z przycisków
+  const [aiPresets, setAiPresets] = useState(initial.ai_prompt_presets);
+  const [aiPresetAi, setAiPresetAi] = useState(initial.ai_prompt_preset_ai);
+  const [aiPresetAiPlus, setAiPresetAiPlus] = useState(initial.ai_prompt_preset_ai_plus);
   const aiRateNumber = Math.max(0, parseFloat(aiRate.replace(",", ".")) || 0);
 
   const save = async (pairs: { key: string; value: string }[]) => {
@@ -891,6 +904,17 @@ export default function SettingsForm({ section, initial, aiUsage }: Props) {
             przy nazwie modelu widać jego stawkę.
           </p>
 
+          <AiPromptPresets
+            presetsJson={aiPresets}
+            activeAi={aiPresetAi}
+            activeAiPlus={aiPresetAiPlus}
+            onChange={({ presetsJson, activeAi, activeAiPlus }) => {
+              setAiPresets(presetsJson);
+              setAiPresetAi(activeAi);
+              setAiPresetAiPlus(activeAiPlus);
+            }}
+          />
+
           {[
             {
               variant: "ai" as const,
@@ -922,10 +946,26 @@ export default function SettingsForm({ section, initial, aiUsage }: Props) {
                 Orientacyjny koszt jednego zdjęcia: {usd(aiCostPerImageUsd(value))}
                 {aiRateNumber > 0 && <> (~{pln(aiCostPerImageUsd(value), aiRateNumber)})</>}
               </p>
+              <p className="text-[11px] text-charcoal/80">
+                Preset:{" "}
+                <span className="text-espresso">
+                  {resolveAiPreset(
+                    variant,
+                    variant === "ai" ? aiPresetAi : aiPresetAiPlus,
+                    parseAiPresets(aiPresets)
+                  ).name}
+                </span>
+              </p>
               <details className="text-[11px] text-charcoal/80">
                 <summary className="cursor-pointer">Pokaż prompt wysyłany do modelu</summary>
                 <p className="mt-2 bg-cream border border-sand p-3 leading-5 whitespace-pre-line">
-                  {AI_PROMPTS[variant]}
+                  {buildImagePrompt(
+                    resolveAiPreset(
+                      variant,
+                      variant === "ai" ? aiPresetAi : aiPresetAiPlus,
+                      parseAiPresets(aiPresets)
+                    ).scene
+                  )}
                 </p>
               </details>
             </div>
@@ -980,6 +1020,9 @@ export default function SettingsForm({ section, initial, aiUsage }: Props) {
               { key: AI_MODEL_SETTING_KEY.ai_plus, value: aiModelPlus },
               { key: AI_TEXT_MODEL_SETTING_KEY, value: aiTextModel },
               { key: "ai_usd_pln_rate", value: aiRate },
+              { key: AI_PRESETS_SETTING_KEY, value: aiPresets },
+              { key: AI_PRESET_SETTING_KEY.ai, value: aiPresetAi },
+              { key: AI_PRESET_SETTING_KEY.ai_plus, value: aiPresetAiPlus },
             ])}
             label="Zapisz ustawienia AI"
           />

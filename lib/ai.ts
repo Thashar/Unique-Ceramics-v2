@@ -90,16 +90,27 @@ const SIZE_RULE = `SIZE FIDELITY IS MANDATORY: the ceramic product must keep the
 const BACKGROUND_RULE = `BACKGROUND COLOR IS MANDATORY: a soft, light, warm beige - hex #E2D8CC, RGB (226, 216, 204) - a pale, gently warm neutral with low saturation, distinctly lighter than tan or camel. Fill the whole backdrop with that single flat tone, identical behind and underneath the product: no gradient, no vignette, no darker corners or edges, no backdrop falling off into shadow. The background must NOT drift into tan, camel, khaki, ochre, taupe, warm brown, dark sand or any deeper beige, and it must not pick up a warm orange cast from the lighting. If in doubt, make the background lighter rather than darker. The only shadow allowed is a soft, subtle contact shadow directly beneath the product.`;
 
 /**
- * „AI” – produkt na jednolitym, matowym tle (zdjęcie katalogowe).
+ * Reguły dotyczące samego produktu. Doklejamy je do **każdego** promptu –
+ * także do tych wygenerowanych i zapisanych jako preset – bo to one pilnują,
+ * żeby zdjęcie nadal przedstawiało ten konkretny produkt: kadr, kolor szkliwa,
+ * komplet sztuk i skalę. Preset opisuje wyłącznie scenę wokół przedmiotu.
  */
-export const AI_PROMPT = `A photorealistic, detailed portrait of the specific ceramic product, centrally placed and perfectly sharp, isolated and resting on a seamless, solid matte background surface. ${BACKGROUND_RULE} Natural, soft, diffused daylight from the side highlights the glaze and texture of the main ceramic piece, without darkening the backdrop. Clean, high-end catalog quality, 8k resolution. ${ORIENTATION_RULE} ${COLOR_RULE} ${SET_RULE} ${SIZE_RULE} If the original photo shows several pieces, arrange them all together in one balanced composition on that same background.`;
+export const AI_PRODUCT_RULES = `${ORIENTATION_RULE} ${COLOR_RULE} ${SET_RULE} ${SIZE_RULE}`;
 
-/** „AI+” – produkt w wystylizowanej scenie (len, eukaliptus, kamienie). */
-export const AI_PLUS_PROMPT = `HIGH-RESOLUTION STUDIO PRODUCT PHOTOGRAPHY IN A 4:3 LANDSCAPE FRAME (1440 x 1080 pixels). A photorealistic, detailed product shot of the specific ceramic product shown in the original image, which must remain EXACTLY unchanged in shape, color, glaze texture, and pattern. The ceramic piece is centrally placed, perfectly sharp. The background is a professionally styled, soft-focus natural studio environment. The ceramic rests on a subtly textured, raw linen tablecloth (cream/natural beige color). Around it, in the softly blurred background, are artfully arranged organic elements: a delicate sprig of eucalyptus, a raw wooden coaster, and a small collection of natural, smooth river pebbles in grey and brown tones. Natural, soft, diffused daylight is coming from the side (softbox effect), highlighting the glaze and texture of the main ceramic piece. Shallow depth of field (bokeh). Clean, high-end catalog quality, 8k resolution, photorealistic, cinematic lighting. ${ORIENTATION_RULE} ${COLOR_RULE} ${SET_RULE} ${SIZE_RULE} If the original photo shows several pieces, place them all together in the scene as one set; the eucalyptus, wooden coaster and pebbles are the only added props and they must stay in the blurred background. Compose the whole scene for a horizontal 4:3 frame: the styled surface, the linen and the blurred props fill the extra width on both sides of the product, so the final image is 1440 x 1080 - never square, never vertical.`;
+/** Scena wariantu „AI” – produkt na jednolitym, matowym tle (zdjęcie katalogowe). */
+export const AI_SCENE_PLAIN = `A photorealistic, detailed portrait of the specific ceramic product, centrally placed and perfectly sharp, isolated and resting on a seamless, solid matte background surface. ${BACKGROUND_RULE} Natural, soft, diffused daylight from the side highlights the glaze and texture of the main ceramic piece, without darkening the backdrop. Clean, high-end catalog quality, 8k resolution. If the original photo shows several pieces, arrange them all together in one balanced composition on that same background.`;
+
+/** Scena wariantu „AI+” – produkt w wystylizowanej scenie (len, eukaliptus, kamienie). */
+export const AI_SCENE_STYLED = `HIGH-RESOLUTION STUDIO PRODUCT PHOTOGRAPHY IN A 4:3 LANDSCAPE FRAME (1440 x 1080 pixels). A photorealistic, detailed product shot of the specific ceramic product shown in the original image, which must remain EXACTLY unchanged in shape, color, glaze texture, and pattern. The ceramic piece is centrally placed, perfectly sharp. The background is a professionally styled, soft-focus natural studio environment. The ceramic rests on a subtly textured, raw linen tablecloth (cream/natural beige color). Around it, in the softly blurred background, are artfully arranged organic elements: a delicate sprig of eucalyptus, a raw wooden coaster, and a small collection of natural, smooth river pebbles in grey and brown tones. Natural, soft, diffused daylight is coming from the side (softbox effect), highlighting the glaze and texture of the main ceramic piece. Shallow depth of field (bokeh). Clean, high-end catalog quality, 8k resolution, photorealistic, cinematic lighting. If the original photo shows several pieces, place them all together in the scene as one set; the eucalyptus, wooden coaster and pebbles are the only added props and they must stay in the blurred background. Compose the whole scene for a horizontal 4:3 frame: the styled surface, the linen and the blurred props fill the extra width on both sides of the product.`;
+
+/** Składa prompt wysyłany do modelu: scena z presetu + niezmienne reguły produktu. */
+export function buildImagePrompt(scene: string): string {
+  return `${scene.trim()}\n\n${AI_PRODUCT_RULES}`;
+}
 
 export const AI_PROMPTS: Record<AiVariant, string> = {
-  ai: AI_PROMPT,
-  ai_plus: AI_PLUS_PROMPT,
+  ai: buildImagePrompt(AI_SCENE_PLAIN),
+  ai_plus: buildImagePrompt(AI_SCENE_STYLED),
 };
 
 export const AI_VARIANT_LABEL: Record<AiVariant, string> = {
@@ -109,6 +120,141 @@ export const AI_VARIANT_LABEL: Record<AiVariant, string> = {
 
 export function isAiVariant(value: unknown): value is AiVariant {
   return value === "ai" || value === "ai_plus";
+}
+
+// ── Presety promptów ─────────────────────────────────────────────────────────
+
+/**
+ * Preset to **sama scena** – tło, rekwizyty, światło, nastrój. Reguły dotyczące
+ * produktu (`AI_PRODUCT_RULES`) dokleja `buildImagePrompt`, więc żaden preset
+ * nie jest w stanie ich pominąć ani nadpisać.
+ */
+export type AiPromptPreset = {
+  id: string;
+  name: string;
+  scene: string;
+};
+
+export const AI_PRESETS_SETTING_KEY = "ai_prompt_presets";
+
+/** Klucze ustawień z presetem wybranym dla każdego z przycisków. */
+export const AI_PRESET_SETTING_KEY: Record<AiVariant, string> = {
+  ai: "ai_prompt_preset_ai",
+  ai_plus: "ai_prompt_preset_ai_plus",
+};
+
+/** Limity presetu – pilnowane w panelu i przy zapisie ustawień. */
+export const AI_PRESET_LIMITS = { name: 80, scene: 4000, count: 30, description: 1000 };
+
+/** Presety wbudowane: zawsze dostępne, nie do usunięcia ani edycji w miejscu. */
+export const AI_BUILTIN_PRESETS: AiPromptPreset[] = [
+  {
+    id: "builtin_plain",
+    // Dotychczasowy prompt przycisku „AI" – produkt na jednolitym tle
+    name: "Domyślny AI",
+    scene: AI_SCENE_PLAIN,
+  },
+  {
+    id: "builtin_styled",
+    // Dotychczasowy prompt przycisku „AI+" – scena z lnem i eukaliptusem
+    name: "Domyślny AI+",
+    scene: AI_SCENE_STYLED,
+  },
+];
+
+export const AI_PRESET_DEFAULT: Record<AiVariant, string> = {
+  ai: "builtin_plain",
+  ai_plus: "builtin_styled",
+};
+
+export function isBuiltinPreset(id: string): boolean {
+  return AI_BUILTIN_PRESETS.some((p) => p.id === id);
+}
+
+/** Bezpieczny odczyt presetów z ustawienia (JSON w bazie może być czymkolwiek). */
+export function parseAiPresets(json: string): AiPromptPreset[] {
+  if (!json?.trim()) return [];
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(json);
+  } catch {
+    return [];
+  }
+  if (!Array.isArray(parsed)) return [];
+
+  const seen = new Set<string>();
+  const out: AiPromptPreset[] = [];
+  for (const item of parsed) {
+    if (typeof item !== "object" || item === null) continue;
+    const raw = item as Record<string, unknown>;
+    const id = typeof raw.id === "string" ? raw.id.trim() : "";
+    const name = typeof raw.name === "string" ? raw.name.trim() : "";
+    const scene = typeof raw.scene === "string" ? raw.scene.trim() : "";
+    // Własny preset nie może przejąć identyfikatora wbudowanego – inaczej
+    // podmieniłby scenę, której panel nie pozwala edytować
+    if (!id || !name || !scene || seen.has(id) || isBuiltinPreset(id)) continue;
+    seen.add(id);
+    out.push({
+      id: id.slice(0, 64),
+      name: name.slice(0, AI_PRESET_LIMITS.name),
+      scene: scene.slice(0, AI_PRESET_LIMITS.scene),
+    });
+    if (out.length >= AI_PRESET_LIMITS.count) break;
+  }
+  return out;
+}
+
+/** Wbudowane + własne, w kolejności wyświetlania w panelu. */
+export function allAiPresets(custom: AiPromptPreset[]): AiPromptPreset[] {
+  return [...AI_BUILTIN_PRESETS, ...custom];
+}
+
+/**
+ * Preset użyty dla danego przycisku. Usunięty lub nieznany identyfikator wraca
+ * do wbudowanego domyślnego – generowanie ma działać także wtedy, gdy preset
+ * skasowano po ustawieniu.
+ */
+export function resolveAiPreset(
+  variant: AiVariant,
+  presetId: string,
+  custom: AiPromptPreset[]
+): AiPromptPreset {
+  const all = allAiPresets(custom);
+  const chosen = presetId?.trim() ? all.find((p) => p.id === presetId.trim()) : undefined;
+  return (
+    chosen ??
+    all.find((p) => p.id === AI_PRESET_DEFAULT[variant]) ??
+    AI_BUILTIN_PRESETS[0]
+  );
+}
+
+/** Wariant zapisywany w rejestrze zużycia dla generowania samego promptu. */
+export const AI_PROMPT_VARIANT = "prompt_build";
+
+/**
+ * Prompt dla modelu tekstowego, który z polskiego opisu stylistyki układa
+ * angielski opis sceny. Model ma pisać **wyłącznie o scenie**: reguły produktu
+ * (kadr, kolor, komplet, skala) dokleja `buildImagePrompt` i powtarzanie ich
+ * w presecie tylko rozmywa polecenie.
+ */
+export function buildScenePrompt(description: string): string {
+  return `Jesteś asystentem przygotowującym prompty do modelu generującego zdjęcia produktowe ceramiki (Google Gemini).
+Na podstawie opisu po polsku ułóż JEDEN prompt po angielsku, opisujący scenę wokół produktu.
+
+Opis stylistyki od użytkownika:
+"""
+${description}
+"""
+
+Zasady:
+- Pisz po angielsku, jednym akapitem ciągłego tekstu (bez list, bez nagłówków, bez cudzysłowów na początku i końcu).
+- Opisuj wyłącznie SCENĘ: tło, powierzchnię, rekwizyty, kolorystykę otoczenia, światło, głębię ostrości, nastrój i jakość zdjęcia.
+- NIE pisz nic o samym produkcie: o jego kolorze, kształcie, wielkości, liczbie sztuk, proporcjach kadru ani o rozdzielczości wyniku. Te reguły są dodawane osobno i nie wolno ich powtarzać ani zmieniać.
+- Nie każ modelowi zmieniać, stylizować ani „poprawiać" ceramiki – rekwizyty i tło mają jedynie otaczać produkt.
+- Zachowaj klasę zdjęcia katalogowego: fotorealizm, naturalne, miękkie światło, czysta kompozycja.
+- Maksymalnie ${AI_PRESET_LIMITS.scene} znaków.
+
+Odpowiedz samym promptem, bez komentarza i bez bloków kodu.`;
 }
 
 /**
