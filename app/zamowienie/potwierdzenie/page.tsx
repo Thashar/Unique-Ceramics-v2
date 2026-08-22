@@ -257,12 +257,12 @@ export default async function ConfirmationPage({
                 </>
               )}
               <div className="flex justify-between text-charcoal/80 border-t border-sand pt-2">
-                <span>Wysyłka</span>
+                <span>{order.shippingMethod === "pickup" ? "Odbiór osobisty" : "Wysyłka"}</span>
                 <span>
-                  {bundleLines ? (
-                    <span className="text-green-700">
-                      {order.shippingMethod === "pickup" ? "Odbiór osobisty" : "Darmowa wysyłka"}
-                    </span>
+                  {order.shippingMethod === "pickup" ? (
+                    <span className="text-green-700">Bezpłatnie</span>
+                  ) : bundleLines ? (
+                    <span className="text-green-700">Darmowa wysyłka</span>
                   ) : order.shippingCost === 0 ? (
                     "Gratis"
                   ) : (

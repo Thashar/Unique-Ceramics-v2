@@ -226,8 +226,8 @@ function buildOrderEmail(params: {
       </table>
       <table style="width:100%;font-size:14px;color:#4a3728;">
         <tr>
-          <td style="padding:6px 12px;text-align:right;color:#6b5748;">Wysyłka</td>
-          <td style="padding:6px 12px;text-align:right;width:120px;">${freeShipping ? "Darmowa wysyłka" : shippingCost === 0 ? "Gratis" : `${shippingCost.toFixed(2).replace(".", ",")} zł`}</td>
+          <td style="padding:6px 12px;text-align:right;color:#6b5748;">${shippingMethod === "pickup" ? "Odbiór osobisty" : "Wysyłka"}</td>
+          <td style="padding:6px 12px;text-align:right;width:120px;">${shippingMethod === "pickup" ? "Bezpłatnie" : freeShipping ? "Darmowa wysyłka" : shippingCost === 0 ? "Gratis" : `${shippingCost.toFixed(2).replace(".", ",")} zł`}</td>
         </tr>
         <tr style="border-top:2px solid #e8e0d6;">
           <td style="padding:10px 12px;text-align:right;font-size:16px;color:#3d2b1f;">Razem</td>

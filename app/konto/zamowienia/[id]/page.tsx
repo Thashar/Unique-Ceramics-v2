@@ -220,14 +220,14 @@ export default async function OrderDetailPage({
                 </div>
               )}
               <div className="flex justify-between text-sm text-charcoal/80">
-                <span>Wysyłka</span>
+                <span>{order.shippingMethod === "pickup" ? "Odbiór osobisty" : "Wysyłka"}</span>
                 <span>
-                  {bundleLines ? (
-                    <span className="text-green-700">
-                      {order.shippingMethod === "pickup" ? "Odbiór osobisty" : "Darmowa wysyłka"}
-                    </span>
+                  {order.shippingMethod === "pickup" ? (
+                    <span className="text-green-700">Bezpłatnie</span>
+                  ) : bundleLines ? (
+                    <span className="text-green-700">Darmowa wysyłka</span>
                   ) : order.shippingCost === 0 ? (
-                    order.shippingMethod === "pickup" ? "Odbiór osobisty" : "Gratis"
+                    "Gratis"
                   ) : (
                     order.shippingCost.toLocaleString("pl-PL", { style: "currency", currency: "PLN", minimumFractionDigits: 0 })
                   )}
