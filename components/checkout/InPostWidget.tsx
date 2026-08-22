@@ -228,8 +228,8 @@ function InPostSearch({ value, onChange }: { value: string; onChange: (code: str
 
       if (filtered.length === 0 && fromCache.length === 0) {
         setFetchError(
-          "Brak wyników. Wpisz pełną nazwę miasta (np. Gliwice) lub kod pocztowy (np. 44-113), " +
-          "a potem możesz zawęzić wyniki po fragmencie kodu, ulicy lub adresu."
+          "Brak wyników. Wpisz samą nazwę miasta (np. Gliwice) albo sam kod pocztowy " +
+          "(np. 44-113) – tylko jedno z dwóch, bez ulicy. Listę zawęzisz dopiero po jej załadowaniu."
         );
       }
     } catch (e: unknown) {
@@ -296,8 +296,14 @@ function InPostSearch({ value, onChange }: { value: string; onChange: (code: str
 
   return (
     <div className="space-y-2">
+      {/* API InPostu przyjmuje wyłącznie samą miejscowość albo sam kod pocztowy
+          (albo pełny kod paczkomatu) – każde inne zapytanie, np. z ulicą, wraca
+          puste. Podpowiedź musi to mówić wprost, inaczej klient szuka na oślep */}
       <label className="block text-xs text-charcoal/80 mb-1">
-        Wpisz pełną nazwę miasta lub kod pocztowy (XX-XXX), aby załadować listę – potem możesz zawęzić wyniki wpisując fragment kodu, ulicy lub adresu
+        Wpisz <strong className="font-medium">samą nazwę miasta</strong> (np. Gliwice)
+        albo <strong className="font-medium">sam kod pocztowy</strong> (np. 44-113) – tylko
+        jedno z dwóch, bez ulicy. Gdy lista się załaduje, zawęzisz ją, dopisując fragment
+        kodu paczkomatu, ulicy lub adresu.
       </label>
 
       <div className="relative">
