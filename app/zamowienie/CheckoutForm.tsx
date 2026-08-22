@@ -72,7 +72,7 @@ export default function CheckoutForm({
   const [parcelLockerCode, setParcelLockerCode] = useState("");
 
   // Koszt wysyłki zależy od wybranej metody; darmowa wysyłka stosuje się do obu.
-  // W teście „wysyłka w cenie" próg nie działa – wysyłka jest już doliczona
+  // W promocji „Wielosztuki" próg nie działa – wysyłka jest już doliczona
   // do ceny pierwszego produktu (tak samo liczy serwer w /api/checkout)
   function methodShippingCost(method: string): number {
     if (method === "pickup") return 0;
@@ -83,7 +83,7 @@ export default function CheckoutForm({
 
   const shipping = methodShippingCost(shippingMethod);
   const total = subtotal + shipping;
-  // Rozbicie pozycji na ceny pokazywane klientowi: przy teście „wysyłka w cenie"
+  // Rozbicie pozycji na ceny pokazywane klientowi: przy promocji „Wielosztuki"
   // narzut niesie pierwsza pozycja, przy odbiorze osobistym nie ma go wcale
   const summary = bundleSummary(
     items,

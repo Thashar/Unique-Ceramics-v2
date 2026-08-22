@@ -14,7 +14,7 @@ export async function GET() {
     cost: s.shipping_cost,
     freeEnabled: s.shipping_free_enabled,
     freeFrom: s.shipping_free_from,
-    // Test „wysyłka w cenie” – koszyk i checkout muszą liczyć tak samo jak katalog
+    // Promocja „Wielosztuki” – koszyk i checkout muszą liczyć tak samo jak katalog
     bundle: bundleFromSettings(s),
   });
 }

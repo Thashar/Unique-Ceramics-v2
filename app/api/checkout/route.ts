@@ -433,7 +433,7 @@ export async function POST(req: Request) {
     }, 0) * 100
   ) / 100;
 
-  // Test „wysyłka w cenie": koszt przesyłki jest już doliczony do ceny
+  // Promocja „Wielosztuki": koszt przesyłki jest już doliczony do ceny
   // pierwszego produktu w katalogu, więc próg darmowej wysyłki nie działa –
   // inaczej klient zapłaciłby mniej, niż pokazywał koszyk
   const bundle = bundleFromSettings(shippingSettings);

@@ -21,7 +21,7 @@ interface Props {
   dbError: boolean;
   /** Kategorie sklepu – potrzebne, bo produkt trzyma slug, a pokazujemy etykietę. */
   categories: Category[];
-  /** Test „wysyłka w cenie” – wpływa tylko na sposób pokazania ceny. */
+  /** Promocja „Wielosztuki” – wpływa tylko na sposób pokazania ceny. */
   bundle?: BundleConfig;
 }
 

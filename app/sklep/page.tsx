@@ -29,7 +29,7 @@ export default async function ShopPage({
   // co chroni przed wyczerpaniem puli (Supabase: 15 połączeń w trybie sesji).
   const vacationEnabled = (await getSetting("vacation_enabled")) === "true";
   const dbCategories = await getCategories();
-  // Test „wysyłka w cenie” – ceny w katalogu pokazujemy wtedy z narzutem
+  // Promocja „Wielosztuki” – ceny w katalogu pokazujemy wtedy z narzutem
   const bundle = bundleFromSettings(
     await getSettings([BUNDLED_SHIPPING_KEY, "shipping_cost", "shipping_cost_parcel_locker"])
   );
