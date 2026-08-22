@@ -1,24 +1,16 @@
-"use client";
-
-import { Truck } from "lucide-react";
-import { useCart } from "@/lib/cart";
-import {
-  bundleDiscountPercent,
-  bundlePrice,
-  bundleUnitPrice,
-  type BundleConfig,
-} from "@/lib/bundled-shipping";
+import { Truck, BadgePercent } from "lucide-react";
+import { bundlePrice, type BundleConfig } from "@/lib/bundled-shipping";
 
 /**
- * Cena produktu w teście „wysyłka w cenie” (zakładka Test w panelu).
+ * Cena produktu w teście „wysyłka w cenie”.
  *
- * Dopóki koszyk jest pusty, produkt kosztuje `cena + wysyłka` i ma zieloną
- * etykietę „Darmowa wysyłka”. Gdy w koszyku jest już inna pozycja, wysyłka
- * jest opłacona – ten produkt pokazuje cenę bez narzutu, ze starą ceną
- * przekreśloną i informacją, ile to mniej.
+ * W katalogu i na karcie produktu pokazujemy **zawsze tę samą cenę** – bez
+ * przekreśleń i przeliczeń zależnych od koszyka. Zamiast liczenia jest
+ * zachęta: „Uzyskaj rabat” na kafelku i pełne zdanie na karcie produktu.
+ * Rabat klient zobaczy dopiero w koszyku, gdzie kwoty są liczone naprawdę.
  *
- * Zawartość koszyka czytamy przez `useCart`, dlatego komponent jest kliencki:
- * ta sama strona ISR pokazuje różne ceny różnym odwiedzającym.
+ * Dzięki temu, że nic tu nie zależy od zawartości koszyka, komponent jest
+ * synchroniczny i renderuje się na serwerze – cena nie mruga po wczytaniu strony.
  */
 export default function ProductPriceTag({
   price,
@@ -26,17 +18,13 @@ export default function ProductPriceTag({
   size = "md",
   className = "",
 }: {
-  /** Cena bazowa produktu z bazy (bez narzutu). */
+  /** Cena bazowa produktu z bazy (bez narzutu na wysyłkę). */
   price: number;
   bundle: BundleConfig;
+  /** `lg` = karta produktu, `md`/`sm` = kafelek listy (kompaktowy). */
   size?: "sm" | "md" | "lg";
   className?: string;
 }) {
-  const { items } = useCart();
-  // Wysyłkę niesie pierwsza pozycja koszyka – jeśli coś już w nim jest,
-  // ten produkt dokłada się bez narzutu
-  const shippingCovered = items.length > 0;
-
   const format = (value: number) =>
     size === "lg"
       ? `${value.toFixed(2).replace(".", ",")} zł`
@@ -50,45 +38,25 @@ export default function ProductPriceTag({
     return <span className={className}>{format(price)}</span>;
   }
 
-  const unit = bundleUnitPrice(price, bundle, shippingCovered);
-  const full = bundlePrice(price, bundle);
-  const discount = bundleDiscountPercent(price, bundle);
-
-  const badgeClass =
-    size === "sm"
-      ? "text-[9px] px-1 py-0.5 gap-1"
-      : size === "lg"
-        ? "text-xs px-2.5 py-1 gap-1.5"
-        : "text-[10px] px-1.5 py-0.5 gap-1";
-  const iconSize = size === "lg" ? 13 : size === "sm" ? 9 : 11;
+  const noteClass =
+    size === "sm" ? "text-[9px] gap-1" : size === "lg" ? "text-xs gap-1.5" : "text-[10px] gap-1";
+  const iconClass = size === "sm" ? "w-2.5 h-2.5" : size === "lg" ? "w-3.5 h-3.5" : "w-3 h-3";
 
   return (
-    <span className={`inline-flex flex-wrap items-center gap-x-2 gap-y-1 ${className}`}>
-      {shippingCovered ? (
-        <>
-          <span className="text-charcoal/80 line-through decoration-charcoal/40">
-            {format(full)}
-          </span>
-          <span>{format(unit)}</span>
-          {discount > 0 && (
-            <span
-              className={`inline-flex items-center rounded-sm bg-green-50 text-green-700 ring-1 ring-green-200 tracking-wide uppercase ${badgeClass}`}
-            >
-              −{discount}%
-            </span>
-          )}
-        </>
-      ) : (
-        <>
-          <span>{format(unit)}</span>
-          <span
-            className={`inline-flex items-center rounded-sm bg-green-50 text-green-700 ring-1 ring-green-200 tracking-wide uppercase ${badgeClass}`}
-          >
-            <Truck size={iconSize} strokeWidth={1.75} aria-hidden="true" />
-            Darmowa wysyłka
-          </span>
-        </>
-      )}
+    <span className={`flex flex-col gap-1 ${className}`}>
+      <span>{format(bundlePrice(price, bundle))}</span>
+      {/* font-sans: na karcie produktu cena jest w serifie, a te dopiski mają
+          wyglądać jak reszta drobnych informacji */}
+      <span className={`flex flex-wrap items-center font-sans font-normal text-green-700 ${noteClass}`}>
+        <span className="inline-flex items-center gap-1">
+          <Truck className={iconClass} strokeWidth={1.75} aria-hidden="true" />
+          Darmowa wysyłka
+        </span>
+        <span className="inline-flex items-center gap-1">
+          <BadgePercent className={iconClass} strokeWidth={1.75} aria-hidden="true" />
+          {size === "lg" ? "Dodaj produkt do koszyka, aby uzyskać rabat" : "Uzyskaj rabat"}
+        </span>
+      </span>
     </span>
   );
 }
