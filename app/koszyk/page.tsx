@@ -6,14 +6,17 @@ import Image from "next/image";
 import { ShoppingBag, ArrowRight, Trash2, Plus, Minus } from "lucide-react";
 import { useCart } from "@/lib/cart";
 import ClayRule from "@/components/ui/ClayRule";
+import { BUNDLE_OFF, bundleSummary, type BundleConfig } from "@/lib/bundled-shipping";
 
 type ShippingSettings = {
   cost: number;
   freeEnabled: boolean;
   freeFrom: number;
+  /** Test „wysyłka w cenie” – wysyłkę niesie pierwsza pozycja koszyka. */
+  bundle: BundleConfig;
 };
 
-const SHIPPING_FALLBACK: ShippingSettings = { cost: 18, freeEnabled: true, freeFrom: 300 };
+const SHIPPING_FALLBACK: ShippingSettings = { cost: 18, freeEnabled: true, freeFrom: 300, bundle: BUNDLE_OFF };
 
 export default function CartPage() {
   const { items, removeItem, updateQuantity, subtotal } = useCart();
@@ -28,13 +31,24 @@ export default function CartPage() {
           cost:        Number(data.cost)     || 18,
           freeEnabled: data.freeEnabled      === "true",
           freeFrom:    Number(data.freeFrom) || 300,
+          bundle:      data.bundle?.enabled
+            ? { enabled: true, surcharge: Number(data.bundle.surcharge) || 0 }
+            : BUNDLE_OFF,
         });
       })
       .catch(() => {});
   }, []);
 
-  const shippingCost = shipping.freeEnabled && subtotal >= shipping.freeFrom ? 0 : shipping.cost;
-  const total = subtotal + shippingCost;
+  // W teście „wysyłka w cenie” próg darmowej wysyłki nie działa – wysyłka jest
+  // doliczona raz, w pierwszej pozycji koszyka
+  const bundle = shipping.bundle;
+  const summary = bundleSummary(items, bundle);
+  const shippingCost = bundle.enabled
+    ? bundle.surcharge
+    : (shipping.freeEnabled && subtotal >= shipping.freeFrom ? 0 : shipping.cost);
+  const total = bundle.enabled ? summary.total : subtotal + shippingCost;
+  /** Ceny pozycji po uwzględnieniu testu – klucz to id produktu. */
+  const lineFor = new Map(summary.lines.map((l) => [l.item.id, l]));
 
   if (items.length === 0) {
     return (
@@ -86,7 +100,25 @@ export default function CartPage() {
                   {item.name}
                 </Link>
                 <p className="text-sm text-charcoal/80 mt-1">
-                  {item.price.toFixed(2).replace(".", ",")} zł / szt.
+                  {bundle.enabled && lineFor.get(item.id)?.wasPrice ? (
+                    <>
+                      <span className="line-through decoration-charcoal/40">
+                        {lineFor.get(item.id)!.wasPrice!.toFixed(2).replace(".", ",")} zł
+                      </span>{" "}
+                      <span className="text-espresso">
+                        {lineFor.get(item.id)!.unitPrice.toFixed(2).replace(".", ",")} zł
+                      </span>{" "}
+                      <span className="text-green-700">
+                        −{lineFor.get(item.id)!.discountPercent}%
+                      </span>{" "}
+                      / szt.
+                    </>
+                  ) : (
+                    <>
+                      {(lineFor.get(item.id)?.unitPrice ?? item.price).toFixed(2).replace(".", ",")} zł / szt.
+                      {bundle.enabled && <span className="text-green-700"> · z wysyłką</span>}
+                    </>
+                  )}
                 </p>
                 <div className="flex items-center gap-4 mt-3">
                   <div className="flex items-center border border-sand">
@@ -118,7 +150,9 @@ export default function CartPage() {
               </div>
               <div className="text-right flex-shrink-0">
                 <p className="font-serif text-lg text-espresso">
-                  {(item.price * item.quantity).toFixed(2).replace(".", ",")} zł
+                  {(lineFor.get(item.id)?.lineTotal ?? item.price * item.quantity)
+                    .toFixed(2)
+                    .replace(".", ",")} zł
                 </p>
               </div>
             </div>
@@ -132,22 +166,34 @@ export default function CartPage() {
             <div className="space-y-3 mb-6">
               <div className="flex justify-between text-sm text-charcoal/80">
                 <span>Produkty</span>
-                <span>{subtotal.toFixed(2).replace(".", ",")} zł</span>
+                <span>
+                  {/* W teście wysyłka siedzi już w cenie pierwszej pozycji,
+                      więc wiersz „Produkty" sumuje ceny widoczne na liście */}
+                  {(bundle.enabled ? summary.total : subtotal).toFixed(2).replace(".", ",")} zł
+                </span>
               </div>
               <div className="flex justify-between text-sm text-charcoal/80">
                 <span>Wysyłka</span>
                 <span>
-                  {shippingCost === 0 ? (
+                  {bundle.enabled ? (
+                    <span className="text-green-700">0,00 zł · w cenie produktu</span>
+                  ) : shippingCost === 0 ? (
                     <span className="text-green-700">Gratis</span>
                   ) : (
                     `${shippingCost.toFixed(2).replace(".", ",")} zł`
                   )}
                 </span>
               </div>
-              {shipping.freeEnabled && subtotal < shipping.freeFrom && (
-                <p className="text-xs text-clay">
-                  Dodaj jeszcze {(shipping.freeFrom - subtotal).toFixed(2).replace(".", ",")} zł do darmowej wysyłki
+              {bundle.enabled ? (
+                <p className="text-xs text-green-700">
+                  Wysyłkę płacisz raz – każdy kolejny produkt dokładasz bez dopłaty za przesyłkę.
                 </p>
+              ) : (
+                shipping.freeEnabled && subtotal < shipping.freeFrom && (
+                  <p className="text-xs text-clay">
+                    Dodaj jeszcze {(shipping.freeFrom - subtotal).toFixed(2).replace(".", ",")} zł do darmowej wysyłki
+                  </p>
+                )
               )}
               <div className="border-t border-sand pt-3 flex justify-between font-serif text-xl text-espresso">
                 <span>Razem</span>

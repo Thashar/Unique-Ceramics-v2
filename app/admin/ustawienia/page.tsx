@@ -7,7 +7,7 @@ import SettingsForm from "@/components/admin/SettingsForm";
 
 const VALID_SECTIONS = new Set([
   "strona_glowna", "omnie", "warsztaty", "regulamin", "polityka",
-  "kontakt", "wysylka", "urlop", "zam_indywidualne", "ai",
+  "kontakt", "wysylka", "urlop", "zam_indywidualne", "ai", "test",
   "platnosci_przelew", "platnosci_stripe",
 ]);
 
@@ -84,6 +84,7 @@ export default async function AdminSettingsPage({
     "ai_prompt_presets",
     "ai_prompt_preset_ai",
     "ai_prompt_preset_ai_plus",
+    "bundled_shipping_enabled",
   ]);
 
   // Statystyki zużycia AI potrzebne tylko na jednej zakładce – nie odpytuj bazy poza nią

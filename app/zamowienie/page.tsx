@@ -10,6 +10,7 @@ export const metadata: Metadata = {
 };
 import { db } from "@/lib/db";
 import { getSettings } from "@/lib/settings";
+import { BUNDLED_SHIPPING_KEY, bundleFromSettings } from "@/lib/bundled-shipping";
 import { validateAddress } from "@/lib/address-validation";
 import CheckoutForm from "./CheckoutForm";
 
@@ -24,6 +25,7 @@ export default async function CheckoutPage() {
     "shipping_cost_parcel_locker",
     "shipping_free_enabled",
     "shipping_free_from",
+    BUNDLED_SHIPPING_KEY,
   ]);
 
   let savedAddress = null;
@@ -75,6 +77,7 @@ export default async function CheckoutPage() {
 
   return (
     <CheckoutForm
+      bundle={bundleFromSettings(settings)}
       isLoggedIn={!!session?.user?.id}
       userEmail={session?.user?.email ?? ""}
       savedAddress={savedAddress}

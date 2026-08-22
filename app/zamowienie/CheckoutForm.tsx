@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Truck, Package, MapPin } from "lucide-react";
 import { useCart } from "@/lib/cart";
+import { bundleSummary, type BundleConfig } from "@/lib/bundled-shipping";
 import { validateAddress } from "@/lib/address-validation";
 import ClayRule from "@/components/ui/ClayRule";
 import dynamic from "next/dynamic";
@@ -27,6 +28,7 @@ export interface SavedAddress {
 }
 
 interface Props {
+  bundle: BundleConfig;
   isLoggedIn: boolean;
   userEmail: string;
   savedAddress: SavedAddress | null;
@@ -51,6 +53,7 @@ const SHIPPING_METHODS = [
 ] as const;
 
 export default function CheckoutForm({
+  bundle,
   isLoggedIn,
   userEmail,
   savedAddress,
@@ -68,15 +71,24 @@ export default function CheckoutForm({
   const [shippingMethod, setShippingMethod] = useState<"courier" | "parcel_locker" | "pickup">("courier");
   const [parcelLockerCode, setParcelLockerCode] = useState("");
 
-  // Koszt wysyłki zależy od wybranej metody; darmowa wysyłka stosuje się do obu
+  // Koszt wysyłki zależy od wybranej metody; darmowa wysyłka stosuje się do obu.
+  // W teście „wysyłka w cenie" próg nie działa – wysyłka jest już doliczona
+  // do ceny pierwszego produktu (tak samo liczy serwer w /api/checkout)
   function methodShippingCost(method: string): number {
     if (method === "pickup") return 0;
     const raw = method === "parcel_locker" ? shippingCostParcelLocker : shippingCostCourier;
+    if (bundle.enabled) return raw;
     return shippingFreeEnabled && subtotal >= shippingFreeFrom ? 0 : raw;
   }
 
   const shipping = methodShippingCost(shippingMethod);
   const total = subtotal + shipping;
+  // Rozbicie pozycji na ceny pokazywane klientowi: przy teście „wysyłka w cenie"
+  // narzut niesie pierwsza pozycja, przy odbiorze osobistym nie ma go wcale
+  const summary = bundleSummary(
+    items,
+    bundle.enabled && shipping > 0 ? bundle : { enabled: false, surcharge: 0 }
+  );
 
   // Zablokuj złożenie zamówienia jeśli zalogowany użytkownik nie ma kompletnego adresu
   // (null = gość – brak blokady; false = niekompletny; true = OK)
@@ -373,11 +385,16 @@ export default function CheckoutForm({
             <div className="bg-cream p-8 sticky top-28">
               <h2 className="font-serif text-xl text-espresso mb-6">Twoje zamówienie</h2>
               <div className="space-y-3 mb-6 text-sm">
-                {items.map((item) => (
+                {summary.lines.map(({ item, lineTotal, wasPrice, discountPercent }) => (
                   <div key={item.id} className="flex justify-between gap-2 text-charcoal/80">
                     {/* Długie nazwy zawijamy zamiast ucinać – klient musi widzieć, co zamawia */}
-                    <span className="min-w-0 break-words">{item.name} × {item.quantity}</span>
-                    <span className="shrink-0">{(item.price * item.quantity).toFixed(2).replace(".", ",")} zł</span>
+                    <span className="min-w-0 break-words">
+                      {item.name} × {item.quantity}
+                      {wasPrice !== null && discountPercent > 0 && (
+                        <span className="text-green-700"> · −{discountPercent}%</span>
+                      )}
+                    </span>
+                    <span className="shrink-0">{lineTotal.toFixed(2).replace(".", ",")} zł</span>
                   </div>
                 ))}
               </div>
@@ -385,11 +402,21 @@ export default function CheckoutForm({
                 <div className="flex justify-between text-charcoal/80">
                   <span>Wysyłka</span>
                   <span>
-                    {shipping === 0
-                      ? <span className="text-green-700">{shippingMethod === "pickup" ? "Odbiór osobisty" : "Gratis"}</span>
-                      : `${shipping} zł`}
+                    {bundle.enabled && shipping > 0 ? (
+                      <span className="text-green-700">0,00 zł · w cenie produktu</span>
+                    ) : shipping === 0 ? (
+                      <span className="text-green-700">{shippingMethod === "pickup" ? "Odbiór osobisty" : "Gratis"}</span>
+                    ) : (
+                      `${shipping} zł`
+                    )}
                   </span>
                 </div>
+                {bundle.enabled && shippingMethod === "pickup" && (
+                  <p className="text-xs text-green-700">
+                    Przy odbiorze osobistym nie płacisz za przesyłkę – kwota jest niższa o{" "}
+                    {bundle.surcharge.toFixed(2).replace(".", ",")} zł.
+                  </p>
+                )}
                 <div className="flex justify-between font-serif text-xl text-espresso pt-2 border-t border-sand">
                   <span>Razem</span>
                   <span>{total.toFixed(2).replace(".", ",")} zł</span>

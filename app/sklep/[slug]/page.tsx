@@ -11,6 +11,8 @@ import AddToCartSection from "./AddToCartSection";
 import { db, withDbRetry } from "@/lib/db";
 import { getSettings } from "@/lib/settings";
 import { getCategories, categoryLabel } from "@/lib/categories";
+import ProductPriceTag from "@/components/ui/ProductPriceTag";
+import { BUNDLED_SHIPPING_KEY, bundleFromSettings, bundlePrice } from "@/lib/bundled-shipping";
 
 export const revalidate = 60;
 
@@ -90,12 +92,20 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const { slug } = await params;
   const [product, settings, categories] = await Promise.all([
     getProduct(slug),
-    getSettings(["shipping_time", "shipping_cost", "shipping_free_enabled", "shipping_free_from"]),
+    getSettings([
+      "shipping_time",
+      "shipping_cost",
+      "shipping_cost_parcel_locker",
+      "shipping_free_enabled",
+      "shipping_free_from",
+      BUNDLED_SHIPPING_KEY,
+    ]),
     getCategories(),
   ]);
 
   if (!product) notFound();
 
+  const bundle = bundleFromSettings(settings);
   const shippingTime = settings.shipping_time || "2–4 dni robocze";
   const shippingCost = parseFloat(settings.shipping_cost) || 18;
   const freeEnabled = settings.shipping_free_enabled === "true";
@@ -117,7 +127,9 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     offers: {
       "@type": "Offer",
       url: `${BASE}/sklep/${product.slug}`,
-      price: product.price.toFixed(2),
+      // W teście „wysyłka w cenie” dane strukturalne muszą podawać tę samą
+      // cenę, którą widzi odwiedzający z pustym koszykiem
+      price: bundlePrice(product.price, bundle).toFixed(2),
       priceCurrency: "PLN",
       availability: product.stock > 0
         ? "https://schema.org/InStock"
@@ -194,7 +206,9 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               {product.name}
             </h1>
             <p className="font-serif text-2xl text-espresso mb-6">
-              {product.price.toFixed(2).replace(".", ",")} zł
+              {/* W teście „wysyłka w cenie” cena zależy od zawartości koszyka,
+                  więc renderuje ją komponent kliencki */}
+              <ProductPriceTag price={product.price} bundle={bundle} size="lg" />
             </p>
 
             {product.description && (
@@ -266,8 +280,14 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               <div className="flex items-center gap-3 text-xs text-charcoal/80">
                 <Truck size={14} strokeWidth={1.5} className="shrink-0 text-clay" />
                 <span>
-                  Wysyłka {shippingCost.toFixed(0)} zł
-                  {freeEnabled && ` · bezpłatna od ${freeFrom.toFixed(0)} zł`}
+                  {bundle.enabled ? (
+                    <>Darmowa wysyłka – koszt przesyłki jest już w cenie</>
+                  ) : (
+                    <>
+                      Wysyłka {shippingCost.toFixed(0)} zł
+                      {freeEnabled && ` · bezpłatna od ${freeFrom.toFixed(0)} zł`}
+                    </>
+                  )}
                 </span>
               </div>
               <div className="flex items-center gap-3 text-xs text-charcoal/80">

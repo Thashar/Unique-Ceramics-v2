@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import { getSettings } from "@/lib/settings";
+import { BUNDLED_SHIPPING_KEY, bundleFromSettings } from "@/lib/bundled-shipping";
 import { validateAddress } from "@/lib/address-validation";
 import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 import { NextResponse } from "next/server";
@@ -397,6 +398,7 @@ export async function POST(req: Request) {
     "vacation_enabled",
     "vacation_end_date",
     "vacation_message",
+    BUNDLED_SHIPPING_KEY,
   ]);
   const shippingCostCourier = Number(shippingSettings.shipping_cost) || 18;
   const shippingCostParcel = Number(shippingSettings.shipping_cost_parcel_locker) || 18;
@@ -431,10 +433,14 @@ export async function POST(req: Request) {
     }, 0) * 100
   ) / 100;
 
+  // Test „wysyłka w cenie": koszt przesyłki jest już doliczony do ceny
+  // pierwszego produktu w katalogu, więc próg darmowej wysyłki nie działa –
+  // inaczej klient zapłaciłby mniej, niż pokazywał koszyk
+  const bundle = bundleFromSettings(shippingSettings);
   const rawCost = shippingMethod === "parcel_locker" ? shippingCostParcel : shippingCostCourier;
   const shippingCost = shippingMethod === "pickup"
     ? 0
-    : (freeEnabled && subtotal >= freeFrom ? 0 : rawCost);
+    : (!bundle.enabled && freeEnabled && subtotal >= freeFrom ? 0 : rawCost);
   const total = Math.round((subtotal + shippingCost) * 100) / 100;
 
   const typedItems = items as { productId: string; quantity: number }[];

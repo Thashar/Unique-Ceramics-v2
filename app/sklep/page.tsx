@@ -2,8 +2,9 @@
 import Header from "@/components/layout/HeaderWrapper";
 import Footer from "@/components/layout/Footer";
 import { getCategories } from "@/lib/categories";
+import { BUNDLED_SHIPPING_KEY, bundleFromSettings } from "@/lib/bundled-shipping";
 import { getShopProducts } from "@/lib/products";
-import { getSetting } from "@/lib/settings";
+import { getSetting, getSettings } from "@/lib/settings";
 import ProductGrid from "./ProductGrid";
 import FloatingOrderButton from "./FloatingOrderButton";
 import type { Metadata } from "next";
@@ -28,6 +29,10 @@ export default async function ShopPage({
   // co chroni przed wyczerpaniem puli (Supabase: 15 połączeń w trybie sesji).
   const vacationEnabled = (await getSetting("vacation_enabled")) === "true";
   const dbCategories = await getCategories();
+  // Test „wysyłka w cenie” – ceny w katalogu pokazujemy wtedy z narzutem
+  const bundle = bundleFromSettings(
+    await getSettings([BUNDLED_SHIPPING_KEY, "shipping_cost", "shipping_cost_parcel_locker"])
+  );
 
   let products: Awaited<ReturnType<typeof getShopProducts>>["inStock"] = [];
   let dbError = false;
@@ -86,7 +91,7 @@ export default async function ShopPage({
 
         {/* Siatka produktów */}
         <div className="max-w-7xl mx-auto px-6 lg:px-10 pt-3 pb-16 md:pt-8 md:pb-16">
-          <ProductGrid products={products} kategoria={kategoria} dbError={dbError} categories={dbCategories} />
+          <ProductGrid products={products} kategoria={kategoria} dbError={dbError} categories={dbCategories} bundle={bundle} />
         </div>
       </div>
 

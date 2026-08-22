@@ -5,6 +5,7 @@ import { LayoutGrid, Grid3X3, ShoppingBag } from "lucide-react";
 import ProductCard from "@/components/ui/ProductCard";
 import type { getShopProducts } from "@/lib/products";
 import { categoryLabel, type Category } from "@/lib/category-defaults";
+import { BUNDLE_OFF, type BundleConfig } from "@/lib/bundled-shipping";
 
 type Product = Awaited<ReturnType<typeof getShopProducts>>["inStock"][0];
 type Layout = "standard" | "compact";
@@ -20,6 +21,8 @@ interface Props {
   dbError: boolean;
   /** Kategorie sklepu – potrzebne, bo produkt trzyma slug, a pokazujemy etykietę. */
   categories: Category[];
+  /** Test „wysyłka w cenie” – wpływa tylko na sposób pokazania ceny. */
+  bundle?: BundleConfig;
 }
 
 /**
@@ -63,7 +66,7 @@ function usePerPagePreference(): number {
   );
 }
 
-export default function ProductGrid({ products, kategoria, dbError, categories }: Props) {
+export default function ProductGrid({ products, kategoria, dbError, categories, bundle = BUNDLE_OFF }: Props) {
   const storedLayout = useLayoutPreference();
   const storedPerPage = usePerPagePreference();
   // Nadpisania z bieżącej sesji – zapis do localStorage nie powiadamia własnej karty
@@ -186,6 +189,7 @@ export default function ProductGrid({ products, kategoria, dbError, categories }
             product={product}
             compact={compact}
             categoryLabel={categoryLabel(product.category, categories)}
+            bundle={bundle}
           />
         ))}
       </div>

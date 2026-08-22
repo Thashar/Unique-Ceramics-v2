@@ -4,6 +4,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { ShoppingBag } from "lucide-react";
+import ProductPriceTag from "@/components/ui/ProductPriceTag";
+import { BUNDLE_OFF, type BundleConfig } from "@/lib/bundled-shipping";
 
 type ProductCardProduct = {
   id: string;
@@ -27,11 +29,14 @@ export default function ProductCard({
   product,
   compact = false,
   categoryLabel,
+  bundle = BUNDLE_OFF,
 }: {
   product: ProductCardProduct;
   compact?: boolean;
   /** Etykieta kategorii z panelu; bez niej pokazujemy slug (traci polskie znaki). */
   categoryLabel?: string;
+  /** Konfiguracja testu „wysyłka w cenie”; domyślnie test wyłączony. */
+  bundle?: BundleConfig;
 }) {
   return (
     <motion.div
@@ -107,7 +112,15 @@ export default function ProductCard({
               compact ? "text-xs" : "text-sm"
             }`}
           >
-            {formatPrice(product.price)}
+            {bundle.enabled ? (
+              <ProductPriceTag
+                price={product.price}
+                bundle={bundle}
+                size={compact ? "sm" : "md"}
+              />
+            ) : (
+              formatPrice(product.price)
+            )}
           </p>
         </div>
       </Link>
