@@ -821,7 +821,7 @@ export default function SettingsForm({ section, initial, aiUsage }: Props) {
             kosztuje o koszt wysyłki więcej, a klient dostaje w zamian zieloną informację{" "}
             <strong className="font-medium">Darmowa wysyłka</strong> i zachętę{" "}
             <strong className="font-medium">Uzyskaj rabat</strong>. Wysyłkę płaci raz: nadwyżkę
-            z pozostałych sztuk oddajemy w koszyku jako rabat rozłożony na{" "}
+            z pozostałych sztuk oddajemy w koszyku jako rabat rozłożony proporcjonalnie na{" "}
             <strong className="font-medium">wszystkie sztuki, także pierwszą</strong>. Suma
             zamówienia to zawsze <strong className="font-medium">ceny produktów + jedna wysyłka</strong>,
             czyli tyle samo, ile sklep policzyłby bez promocji.
@@ -865,8 +865,9 @@ export default function SettingsForm({ section, initial, aiUsage }: Props) {
                 produktów plus 18 zł wysyłki.
               </p>
               <p>
-                Rabat dzieli się po równo na wszystkie sztuki; reszta z zaokrągleń (np. 18 zł na
-                7 sztuk) trafia na ostatnią pozycję, żeby suma zgadzała się co do grosza.
+                Rabat jest proporcjonalny – <strong className="font-medium">każda pozycja
+                w koszyku tanieje o ten sam procent</strong>, niezależnie od ceny produktu. Reszta
+                z zaokrągleń trafia na ostatnią pozycję, żeby suma zgadzała się co do grosza.
               </p>
               <p>
                 Przy odbiorze osobistym wysyłki nie ma, więc kwota jest po prostu niższa.
