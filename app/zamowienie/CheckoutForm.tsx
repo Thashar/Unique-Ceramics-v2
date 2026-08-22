@@ -414,13 +414,17 @@ export default function CheckoutForm({
                 )}
               </div>
               <div className="border-t border-sand pt-4 space-y-2 text-sm">
+                {/* Przy odbiorze osobistym nie ma żadnej wysyłki – wiersz nazywa się
+                    wtedy „Odbiór osobisty”, a nie „Wysyłka: darmowa dostawa” */}
                 <div className="flex justify-between text-charcoal/80">
-                  <span>Wysyłka</span>
+                  <span>{shippingMethod === "pickup" ? "Odbiór osobisty" : "Wysyłka"}</span>
                   <span>
-                    {bundle.enabled && shipping > 0 ? (
+                    {shippingMethod === "pickup" ? (
+                      <span className="text-green-700">Bezpłatnie</span>
+                    ) : bundle.enabled ? (
                       <span className="text-green-700">Darmowa wysyłka</span>
                     ) : shipping === 0 ? (
-                      <span className="text-green-700">{shippingMethod === "pickup" ? "Odbiór osobisty" : "Gratis"}</span>
+                      <span className="text-green-700">Gratis</span>
                     ) : (
                       `${shipping} zł`
                     )}
