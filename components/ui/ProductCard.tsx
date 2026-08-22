@@ -40,8 +40,10 @@ export default function ProductCard({
       transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
     >
       <Link href={`/sklep/${product.slug}`} className="group block">
-        {/* Zdjęcie */}
-        <div className={`relative aspect-[4/5] overflow-hidden bg-mist ${compact ? "mb-2" : "mb-4"}`}>
+        {/* Zdjęcie – kadr w osobnym kontenerze, bo znaczek AI ma dymek
+            wychodzący poza `overflow-hidden` obrazka */}
+        <div className={`relative ${compact ? "mb-2" : "mb-4"}`}>
+        <div className="relative aspect-[4/5] overflow-hidden bg-mist">
           {product.images[0] ? (
             <Image
               src={product.images[0]}
@@ -84,22 +86,23 @@ export default function ProductCard({
           {/* Hover overlay */}
           <div className="absolute inset-0 bg-espresso/0 group-hover:bg-espresso/8 transition-colors duration-500" />
         </div>
+        {product.images[0] && isAiGeneratedImage(product.images[0]) && (
+          <AiImageBadge
+            size={compact ? "sm" : "md"}
+            className={`absolute ${compact ? "bottom-1.5 right-1.5" : "bottom-2 right-2"}`}
+          />
+        )}
+        </div>
 
         {/* Info */}
         <div>
-          {/* Kategoria, a przy zdjęciu z AI – oznaczenie po prawej stronie wiersza */}
-          <div className={`flex items-center justify-between gap-2 ${compact ? "mb-0.5" : "mb-1.5"}`}>
-            <p
-              className={`tracking-widest uppercase text-clay truncate ${
-                compact ? "text-[9px]" : "text-[11px]"
-              }`}
-            >
-              {product.category}
-            </p>
-            {product.images[0] && isAiGeneratedImage(product.images[0]) && (
-              <AiImageBadge size={compact ? "sm" : "md"} className="shrink-0" />
-            )}
-          </div>
+          <p
+            className={`tracking-widest uppercase text-clay ${
+              compact ? "text-[9px] mb-0.5" : "text-[11px] mb-1.5"
+            }`}
+          >
+            {product.category}
+          </p>
           <h3
             className={`font-serif text-espresso group-hover:text-clay transition-colors leading-snug mb-1 ${
               compact ? "text-sm" : "text-lg"

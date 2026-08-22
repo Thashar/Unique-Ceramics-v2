@@ -57,6 +57,8 @@ export default function ProductGallery({
   const pending = useRef<Lens | null>(null);
 
   const lensActive = lensStyle !== null;
+  /** Czy oglądane właśnie zdjęcie zostało wygenerowane przez model. */
+  const aiImage = isAiGeneratedImage(images[activeImage] ?? "");
   const hasMany = images.length > 1;
 
   const preload = (src: string): Promise<void> => {
@@ -381,20 +383,32 @@ export default function ProductGallery({
               <ChevronRight size={20} />
             </button>
 
-            {/* Licznik – na dotyku nie widać miniatur przy dłuższej liście */}
-            <span className="md:hidden absolute bottom-3 right-3 bg-espresso/80 text-cream text-xs px-2 py-1 tabular-nums">
-              {activeImage + 1} / {images.length}
-            </span>
           </>
         )}
-      </div>
 
-      {/* Oznaczenie zdjęcia z AI – pod kadrem, dla aktualnie oglądanego zdjęcia */}
-      {isAiGeneratedImage(images[activeImage] ?? "") && (
-        <div className="flex justify-end -mt-2">
-          <AiImageBadge />
-        </div>
-      )}
+        {/* Prawy dolny róg kadru: licznik zdjęć (tylko na dotyku – na desktopie
+            widać miniatury) i oznaczenie zdjęcia z AI. Gdy widać oba, dzielą
+            jedną bryłę, żeby nie walczyć o ten sam róg zdjęcia. */}
+        {(hasMany || aiImage) && (
+          <div
+            // Bez zdjęcia z AI bryła zawiera sam licznik, więc na desktopie
+            // (gdzie licznik jest zbędny – widać miniatury) znika w całości
+            className={`absolute bottom-3 right-3 flex items-center gap-2 bg-espresso/85 px-2 py-1 text-cream ${
+              aiImage ? "" : "md:hidden"
+            }`}
+          >
+            {hasMany && (
+              <span className="md:hidden text-[11px] tabular-nums">
+                {activeImage + 1} / {images.length}
+              </span>
+            )}
+            {hasMany && aiImage && (
+              <span aria-hidden="true" className="md:hidden w-px h-3 bg-cream/40" />
+            )}
+            {aiImage && <AiImageBadge size="lg" bare />}
+          </div>
+        )}
+      </div>
 
       {hasMany && (
         <div className="flex gap-3 overflow-x-auto">
