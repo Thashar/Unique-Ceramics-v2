@@ -69,63 +69,91 @@ export function bundleDiscountPercent(base: number, cfg: BundleConfig): number {
 
 export type BundleLine<T> = {
   item: T;
-  /** Cena pierwszej sztuki tej pozycji (ta jedna może nieść wysyłkę). */
+  /** Cena katalogowa sztuki (baza + narzut) – ta sama, którą klient widział w sklepie. */
+  catalogUnitPrice: number;
+  /** Cena sztuki po rabacie – rabat dostaje **każda** sztuka, także pierwsza. */
   unitPrice: number;
-  /**
-   * Cena kolejnych sztuk **tej samej pozycji** – wypełniona tylko wtedy, gdy
-   * różni się od pierwszej, czyli gdy pozycja niesie wysyłkę i ma więcej niż
-   * jedną sztukę. Bez tego dwie sztuki tego samego produktu wyglądały jak
-   * dwa razy cena z narzutem, choć wysyłka liczy się raz.
-   */
-  restUnitPrice: number | null;
-  /** Cena przekreślona – tylko dla pozycji, które straciły narzut. */
-  wasPrice: number | null;
-  /** Rabat w procentach dla sztuk bez narzutu (0 = pozycja go nie ma). */
+  /** Rabat na sztuce w procentach ceny katalogowej. */
   discountPercent: number;
-  /** Wartość pozycji: `unitPrice` × pierwsza sztuka + cena bazowa × reszta. */
+  /** Wartość pozycji po rabacie. */
   lineTotal: number;
 };
 
 export type BundleSummary<T> = {
   lines: BundleLine<T>[];
+  /** Suma pozycji po cenach katalogowych (przed rabatem). */
+  catalogTotal: number;
+  /** Łączny rabat rozdzielony po równo na wszystkie sztuki w koszyku. */
+  discountTotal: number;
+  /** Rabat wyrażony w procentach wartości katalogowej (0 = brak). */
+  discountPercent: number;
   /** Suma cen produktów bez narzutu. */
   itemsTotal: number;
-  /** Doliczona raz wysyłka (0 przy pustym koszyku albo wyłączonym teście). */
+  /** Doliczona raz wysyłka (0 przy pustym koszyku albo wyłączonej promocji). */
   surcharge: number;
-  /** Do zapłaty: `itemsTotal + surcharge` – tyle samo policzy serwer. */
+  /** Do zapłaty: `catalogTotal - discountTotal` = `itemsTotal + surcharge`. */
   total: number;
 };
 
 /**
- * Rozkłada koszyk na pozycje z cenami pokazywanymi klientowi.
- * Narzut niesie **pierwsza sztuka pierwszej pozycji** – kolejne sztuki tego
- * samego produktu też są już bez wysyłki.
+ * Rozkłada koszyk na pozycje pokazywane klientowi.
+ *
+ * Wysyłkę płaci się raz, więc nadmiarowe narzuty wracają jako rabat – i to
+ * rabat **na każdą sztukę, również pierwszą**: po podziale każda sztuka niesie
+ * `narzut / liczba sztuk` zamiast pełnego narzutu. Suma pozycji po rabacie to
+ * nadal `ceny produktów + jedna wysyłka`, czyli dokładnie tyle, ile policzy
+ * serwer; ewentualna reszta z dzielenia (np. 18 zł na 7 sztuk) ląduje na
+ * ostatniej pozycji, żeby kwoty zgadzały się co do grosza.
  */
 export function bundleSummary<T extends { price: number; quantity: number }>(
   items: T[],
   cfg: BundleConfig
 ): BundleSummary<T> {
   const itemsTotal = money(items.reduce((sum, i) => sum + i.price * i.quantity, 0));
-  const surcharge = cfg.enabled && items.length > 0 ? cfg.surcharge : 0;
+  const pieces = items.reduce((sum, i) => sum + i.quantity, 0);
+  const surcharge = cfg.enabled && pieces > 0 ? cfg.surcharge : 0;
+  const total = money(itemsTotal + surcharge);
 
-  let surchargeUsed = false;
-  const lines = items.map((item) => {
-    const carriesShipping = cfg.enabled && !surchargeUsed;
-    if (carriesShipping) surchargeUsed = true;
+  // Ile z wysyłki przypada na jedną sztukę po rozłożeniu jej na cały koszyk
+  const surchargePerPiece = cfg.enabled && pieces > 0 ? cfg.surcharge / pieces : 0;
 
-    const unitPrice = carriesShipping ? money(item.price + cfg.surcharge) : money(item.price);
-    // Kolejne sztuki pozycji niosącej wysyłkę są już bez narzutu
-    const restDiffers = carriesShipping && item.quantity > 1;
-    const discounted = cfg.enabled && (!carriesShipping || restDiffers);
+  const lines: BundleLine<T>[] = items.map((item) => {
+    const catalogUnitPrice = bundlePrice(item.price, cfg);
+    const unitPrice = cfg.enabled ? money(item.price + surchargePerPiece) : money(item.price);
     return {
       item,
+      catalogUnitPrice,
       unitPrice,
-      restUnitPrice: restDiffers ? money(item.price) : null,
-      wasPrice: cfg.enabled && !carriesShipping ? bundlePrice(item.price, cfg) : null,
-      discountPercent: discounted ? bundleDiscountPercent(item.price, cfg) : 0,
-      lineTotal: money(item.price * item.quantity + (carriesShipping ? cfg.surcharge : 0)),
+      discountPercent:
+        catalogUnitPrice > unitPrice
+          ? Math.round(((catalogUnitPrice - unitPrice) / catalogUnitPrice) * 100)
+          : 0,
+      lineTotal: money(unitPrice * item.quantity),
     };
   });
 
-  return { lines, itemsTotal, surcharge, total: money(itemsTotal + surcharge) };
+  // Reszta z zaokrągleń trafia na ostatnią pozycję – suma musi się zgadzać
+  // z kwotą liczoną przez serwer, nawet gdy narzut nie dzieli się równo
+  const linesTotal = money(lines.reduce((sum, l) => sum + l.lineTotal, 0));
+  const remainder = money(total - linesTotal);
+  if (remainder !== 0 && lines.length > 0) {
+    const last = lines[lines.length - 1];
+    lines[lines.length - 1] = { ...last, lineTotal: money(last.lineTotal + remainder) };
+  }
+
+  const catalogTotal = money(lines.reduce((sum, l) => sum + l.catalogUnitPrice * l.item.quantity, 0));
+  const discountTotal = money(catalogTotal - total);
+
+  return {
+    lines,
+    catalogTotal,
+    discountTotal,
+    discountPercent:
+      catalogTotal > 0 && discountTotal > 0
+        ? Math.round((discountTotal / catalogTotal) * 100)
+        : 0,
+    itemsTotal,
+    surcharge,
+    total,
+  };
 }
