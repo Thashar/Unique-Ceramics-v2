@@ -551,12 +551,18 @@ Konto **nie jest** wymagane do zakupu. Gość i zalogowany klient idą tą samą
 | | Gość | Zalogowany |
 |---|---|---|
 | `Order.userId` | `null` | id użytkownika |
-| Adres | wpisywany w formularzu | podpowiadany z `user_address_{userId}`; **brak kompletnego adresu blokuje zamówienie** (poza odbiorem osobistym) |
+| Adres | wpisywany w formularzu (tylko przy kurierze) | podpowiadany z `user_address_{userId}`; **brak kompletnego adresu blokuje zamówienie** – ale **tylko przy kurierze** |
 | Regulamin | checkbox przy zamówieniu (`acceptTerms`, walidowany też serwerowo) | zaakceptowany przy rejestracji |
 | Dostęp do zamówienia po złożeniu | link `/zamowienie/potwierdzenie?id={orderId}` (id = token, wysyłany e-mailem) | `/konto/zamowienia/{id}` |
 
 - **Telefon jest wymagany** przy wysyłce kurierem i do paczkomatu (kurier dzwoni, InPost wysyła SMS);
   przy odbiorze osobistym pozostaje opcjonalny. Walidacja po obu stronach (`CheckoutForm`, `/api/checkout`).
+- **Adres dostawy zbieramy tylko przy kurierze.** Paczkomat idzie na kod maszyny, a odbiór osobisty odbywa się
+  w pracowni, więc pola adresowe **znikają z formularza** i nie są walidowane – ani u gościa, ani u zalogowanego
+  (brama „uzupełnij adres w koncie" dotyczy wyłącznie kuriera). Bez adresu sprawdzamy same dane kontaktowe
+  (`validateContact` z `lib/address-validation.ts`); `validateAddress` = `validateContact` + ulica/kod/miasto.
+  W zamówieniu paczkomatu w polu `street` zapisujemy `Paczkomat {kod}` (serwerowo, z `parcelLockerCode`),
+  a `city`/`postcode` zostają puste – karty zamówienia i tak pokazują dla paczkomatu sam kod.
 - **Każdy klient dostaje e-mail potwierdzający** (`buildOrderEmail`) – przy przelewie z danymi do wpłaty,
   przy karcie z informacją o płatności Stripe. E-mail zawiera przycisk „Podgląd zamówienia" (dla gościa
   to jedyny dostęp do zamówienia, więc wysyłka jest `await`-owana, nie fire-and-forget).
