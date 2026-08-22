@@ -116,7 +116,6 @@ export default function CartPage() {
                   ) : (
                     <>
                       {(lineFor.get(item.id)?.unitPrice ?? item.price).toFixed(2).replace(".", ",")} zł / szt.
-                      {bundle.enabled && <span className="text-green-700"> · z wysyłką</span>}
                     </>
                   )}
                 </p>
@@ -176,7 +175,7 @@ export default function CartPage() {
                 <span>Wysyłka</span>
                 <span>
                   {bundle.enabled ? (
-                    <span className="text-green-700">0,00 zł · w cenie produktu</span>
+                    <span className="text-green-700">Darmowa wysyłka</span>
                   ) : shippingCost === 0 ? (
                     <span className="text-green-700">Gratis</span>
                   ) : (
@@ -184,16 +183,10 @@ export default function CartPage() {
                   )}
                 </span>
               </div>
-              {bundle.enabled ? (
-                <p className="text-xs text-green-700">
-                  Wysyłkę płacisz raz – każdy kolejny produkt dokładasz bez dopłaty za przesyłkę.
+              {!bundle.enabled && shipping.freeEnabled && subtotal < shipping.freeFrom && (
+                <p className="text-xs text-clay">
+                  Dodaj jeszcze {(shipping.freeFrom - subtotal).toFixed(2).replace(".", ",")} zł do darmowej wysyłki
                 </p>
-              ) : (
-                shipping.freeEnabled && subtotal < shipping.freeFrom && (
-                  <p className="text-xs text-clay">
-                    Dodaj jeszcze {(shipping.freeFrom - subtotal).toFixed(2).replace(".", ",")} zł do darmowej wysyłki
-                  </p>
-                )
               )}
               <div className="border-t border-sand pt-3 flex justify-between font-serif text-xl text-espresso">
                 <span>Razem</span>

@@ -281,7 +281,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                 <Truck size={14} strokeWidth={1.5} className="shrink-0 text-clay" />
                 <span>
                   {bundle.enabled ? (
-                    <>Darmowa wysyłka – koszt przesyłki jest już w cenie</>
+                    <>Darmowa wysyłka</>
                   ) : (
                     <>
                       Wysyłka {shippingCost.toFixed(0)} zł
