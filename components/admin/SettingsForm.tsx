@@ -95,6 +95,7 @@ interface Props {
     ai_prompt_presets: string;
     ai_prompt_preset_ai: string;
     ai_prompt_preset_ai_plus: string;
+    bundled_shipping_enabled: string;
   };
   /** Statystyki zużycia AI – liczone tylko dla zakładki „AI (zdjęcia)” */
   aiUsage?: AiUsageStats | null;
@@ -421,6 +422,8 @@ export default function SettingsForm({ section, initial, aiUsage }: Props) {
   const [aiPresets, setAiPresets] = useState(initial.ai_prompt_presets);
   const [aiPresetAi, setAiPresetAi] = useState(initial.ai_prompt_preset_ai);
   const [aiPresetAiPlus, setAiPresetAiPlus] = useState(initial.ai_prompt_preset_ai_plus);
+  // Test cenowy „wysyłka w cenie produktu"
+  const [bundledShipping, setBundledShipping] = useState(initial.bundled_shipping_enabled === "true");
   const aiRateNumber = Math.max(0, parseFloat(aiRate.replace(",", ".")) || 0);
 
   const save = async (pairs: { key: string; value: string }[]) => {
@@ -806,6 +809,55 @@ export default function SettingsForm({ section, initial, aiUsage }: Props) {
               { key: "payment_blik_phone", value: blikPhone },
             ])}
             label="Zapisz"
+          />
+        </div>
+      )}
+
+      {section === "test" && (
+        <div className="max-w-2xl space-y-6">
+          <h2 className="font-serif text-2xl text-espresso">Test – wysyłka w cenie produktu</h2>
+          <p className="text-xs text-charcoal/80 leading-relaxed">
+            Po włączeniu każdy produkt w sklepie pokazuje cenę powiększoną o koszt wysyłki
+            i zieloną etykietę <strong className="font-medium">Darmowa wysyłka</strong>. Wysyłkę
+            klient płaci raz: pierwsza pozycja w koszyku niesie narzut, każda kolejna jest bez
+            niego – ze starą ceną przekreśloną i widoczną różnicą w procentach. Suma zamówienia
+            to zawsze <strong className="font-medium">ceny produktów + jedna wysyłka</strong>,
+            czyli tyle samo, ile sklep policzyłby bez testu.
+          </p>
+
+          <div className="flex items-center justify-between border border-sand bg-warm-white p-4">
+            <span className="text-xs tracking-widest uppercase text-charcoal/80">Test aktywny</span>
+            <Toggle checked={bundledShipping} onChange={setBundledShipping} />
+          </div>
+
+          <div className="border border-sand bg-cream p-4 text-xs text-charcoal/80 leading-relaxed space-y-2">
+            <p className="font-medium text-espresso">Jak liczą się kwoty</p>
+            <p>
+              Narzut to wyższy z kosztów wysyłki (kurier {shippingCost || "18"} zł,
+              paczkomat {shippingCostParcel || "18"} zł), żeby klient przy kasie nigdy nie
+              zapłacił więcej, niż zapowiadała cena w katalogu.
+            </p>
+            <p>
+              Przykład dla produktów 100 zł i 80 zł: katalog pokazuje 118 zł i 98 zł, w koszyku
+              pierwszy zostaje 118 zł, drugi wraca do 80 zł, razem 198 zł – tyle samo co 180 zł
+              produktów plus 18 zł wysyłki.
+            </p>
+            <p>
+              Przy odbiorze osobistym wysyłki nie ma, więc kwota jest niższa o narzut –
+              klient widzi o tym informację w podsumowaniu zamówienia.
+            </p>
+            <p>
+              W trakcie testu <strong className="font-medium">próg darmowej wysyłki nie działa</strong>{" "}
+              (wysyłka jest już w cenie). Ceny w bazie i kwoty zapisywane w zamówieniach
+              pozostają bez zmian – zmienia się wyłącznie sposób pokazania ceny.
+            </p>
+          </div>
+
+          <SaveButton
+            onClick={() => save([
+              { key: "bundled_shipping_enabled", value: bundledShipping ? "true" : "false" },
+            ])}
+            label="Zapisz ustawienia testu"
           />
         </div>
       )}

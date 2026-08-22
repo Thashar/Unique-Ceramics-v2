@@ -217,6 +217,8 @@ const DEFAULTS: Record<string, string> = {
   shipping_cost_parcel_locker: "18",
   shipping_free_enabled: "true",
   shipping_free_from: "300",
+  // Test cenowy „wysyłka w cenie produktu” (zakładka Test w panelu)
+  bundled_shipping_enabled: "false",
   shipping_time: "2–4 dni robocze",
   // Płatności – przelew tradycyjny
   payment_bank_account_name: "",
