@@ -824,7 +824,8 @@ export default function SettingsForm({ section, initial, aiUsage }: Props) {
             z pozostałych sztuk oddajemy w koszyku jako rabat rozłożony proporcjonalnie na{" "}
             <strong className="font-medium">wszystkie sztuki, także pierwszą</strong>. Suma
             zamówienia to zawsze <strong className="font-medium">ceny produktów + jedna wysyłka</strong>,
-            czyli tyle samo, ile sklep policzyłby bez promocji.
+            czyli tyle samo, ile sklep policzyłby bez promocji – niezależnie od wybranej metody
+            dostawy.
           </p>
 
           <div className="flex items-center justify-between border border-sand bg-warm-white p-4">
@@ -845,6 +846,11 @@ export default function SettingsForm({ section, initial, aiUsage }: Props) {
                 katalogową, ceną po rabacie i procentem, a w podsumowaniu wiersze „Produkty przed
                 rabatem”, „Rabat” i „Darmowa wysyłka”. Pod nimi warunek promocji: rabat naliczamy
                 przy zakupie od 2 sztuk.
+              </p>
+              <p>
+                <strong className="font-medium">Kwoty wysyłki klient nie widzi nigdzie</strong> –
+                ani w koszyku, ani przy wyborze dostawy, ani na potwierdzeniu, w historii zamówień,
+                w e-mailu czy na stronie płatności Stripe. Wszędzie stoi „Darmowa wysyłka”.
               </p>
               <p>
                 Klient <strong className="font-medium">nie dowiaduje się</strong>, że przesyłka jest
@@ -870,9 +876,16 @@ export default function SettingsForm({ section, initial, aiUsage }: Props) {
                 z zaokrągleń trafia na ostatnią pozycję, żeby suma zgadzała się co do grosza.
               </p>
               <p>
-                Przy odbiorze osobistym wysyłki nie ma, więc kwota jest po prostu niższa.
+                <strong className="font-medium">Wybór dostawy nie rusza rachunku</strong> – ani
+                paczkomat, ani kurier, ani odbiór osobisty niczego nie dodają i nie odejmują.
+                Narzut siedzi w cenach katalogowych, więc kwota z koszyka jest kwotą końcową.
                 W trakcie promocji{" "}
                 <strong className="font-medium">próg darmowej wysyłki nie działa</strong>.
+              </p>
+              <p>
+                Rabat produktowy (pole <strong className="font-medium">Rabat (%)</strong> w karcie
+                produktu) <strong className="font-medium">sumuje się</strong> z tą promocją: schodzi
+                z ceny produktu, a dopiero potem dochodzi narzut na wysyłkę.
               </p>
               <p>
                 Ceny w bazie i kwoty zapisywane w zamówieniach{" "}
