@@ -229,7 +229,7 @@ function InPostSearch({ value, onChange }: { value: string; onChange: (code: str
       if (filtered.length === 0 && fromCache.length === 0) {
         setFetchError(
           "Brak wyników. Wpisz samą nazwę miasta (np. Gliwice) albo sam kod pocztowy " +
-          "(np. 44-113) – tylko jedno z dwóch, bez ulicy. Listę zawęzisz dopiero po jej załadowaniu."
+          "(np. 44-113) – tylko jedno z dwóch, bez ulicy."
         );
       }
     } catch (e: unknown) {
@@ -302,8 +302,7 @@ function InPostSearch({ value, onChange }: { value: string; onChange: (code: str
       <label className="block text-xs text-charcoal/80 mb-1">
         Wpisz <strong className="font-medium">samą nazwę miasta</strong> (np. Gliwice)
         albo <strong className="font-medium">sam kod pocztowy</strong> (np. 44-113) – tylko
-        jedno z dwóch, bez ulicy. Gdy lista się załaduje, zawęzisz ją, dopisując fragment
-        kodu paczkomatu, ulicy lub adresu.
+        jedno z dwóch, bez ulicy.
       </label>
 
       <div className="relative">
