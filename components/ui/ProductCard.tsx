@@ -4,8 +4,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { ShoppingBag } from "lucide-react";
-import AiImageBadge from "@/components/ui/AiImageBadge";
-import { isAiGeneratedImage } from "@/lib/ai";
 
 type ProductCardProduct = {
   id: string;
@@ -40,10 +38,8 @@ export default function ProductCard({
       transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
     >
       <Link href={`/sklep/${product.slug}`} className="group block">
-        {/* Zdjęcie – kadr w osobnym kontenerze, bo znaczek AI ma dymek
-            wychodzący poza `overflow-hidden` obrazka */}
-        <div className={`relative ${compact ? "mb-2" : "mb-4"}`}>
-        <div className="relative aspect-[4/5] overflow-hidden bg-mist">
+        {/* Zdjęcie */}
+        <div className={`relative aspect-[4/5] overflow-hidden bg-mist ${compact ? "mb-2" : "mb-4"}`}>
           {product.images[0] ? (
             <Image
               src={product.images[0]}
@@ -85,13 +81,6 @@ export default function ProductCard({
           )}
           {/* Hover overlay */}
           <div className="absolute inset-0 bg-espresso/0 group-hover:bg-espresso/8 transition-colors duration-500" />
-        </div>
-        {product.images[0] && isAiGeneratedImage(product.images[0]) && (
-          <AiImageBadge
-            size={compact ? "sm" : "md"}
-            className={`absolute ${compact ? "bottom-1.5 right-1.5" : "bottom-2 right-2"}`}
-          />
-        )}
         </div>
 
         {/* Info */}
