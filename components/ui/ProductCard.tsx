@@ -26,9 +26,12 @@ function formatPrice(price: number) {
 export default function ProductCard({
   product,
   compact = false,
+  categoryLabel,
 }: {
   product: ProductCardProduct;
   compact?: boolean;
+  /** Etykieta kategorii z panelu; bez niej pokazujemy slug (traci polskie znaki). */
+  categoryLabel?: string;
 }) {
   return (
     <motion.div
@@ -90,7 +93,7 @@ export default function ProductCard({
               compact ? "text-[9px] mb-0.5" : "text-[11px] mb-1.5"
             }`}
           >
-            {product.category}
+            {categoryLabel ?? product.category}
           </p>
           <h3
             className={`font-serif text-espresso group-hover:text-clay transition-colors leading-snug mb-1 ${

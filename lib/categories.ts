@@ -3,7 +3,7 @@ import { db, withDbRetry } from "@/lib/db";
 import { DEFAULT_CATEGORIES } from "@/lib/category-defaults";
 
 export type { Category } from "@/lib/category-defaults";
-export { DEFAULT_CATEGORIES } from "@/lib/category-defaults";
+export { DEFAULT_CATEGORIES, categoryLabel } from "@/lib/category-defaults";
 
 export const getCategories = unstable_cache(
   async () => {

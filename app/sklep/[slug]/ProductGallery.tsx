@@ -57,8 +57,10 @@ export default function ProductGallery({
   const pending = useRef<Lens | null>(null);
 
   const lensActive = lensStyle !== null;
-  /** Czy oglądane właśnie zdjęcie zostało wygenerowane przez model. */
-  const aiImage = isAiGeneratedImage(images[activeImage] ?? "");
+  // Oznaczenie dotyczy całej galerii: wystarczy, że jedno ze zdjęć produktu
+  // powstało z modelu – wtedy podpis jest widoczny niezależnie od tego, które
+  // zdjęcie akurat oglądamy (nie miga przy przełączaniu)
+  const aiImage = images.some(isAiGeneratedImage);
   const hasMany = images.length > 1;
 
   const preload = (src: string): Promise<void> => {
