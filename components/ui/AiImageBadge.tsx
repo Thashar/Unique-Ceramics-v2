@@ -9,16 +9,17 @@ export const AI_IMAGE_NOTICE =
 
 /** Rozmiary dopasowane do miejsca: karta produktu, kafelek listy, widok kompaktowy. */
 const SIZES = {
-  lg: { text: "text-[11px] md:text-xs", icon: "w-3.5 h-3.5", gap: "gap-1.5", pad: "px-2 py-1" },
-  md: { text: "text-[10px]", icon: "w-3 h-3", gap: "gap-1", pad: "px-1.5 py-0.5" },
-  sm: { text: "text-[9px]", icon: "w-2.5 h-2.5", gap: "gap-0.5", pad: "px-1.5 py-0.5" },
+  lg: { text: "text-[11px] md:text-xs", icon: "w-3.5 h-3.5", gap: "gap-1.5" },
+  md: { text: "text-[10px]", icon: "w-3 h-3", gap: "gap-1" },
+  sm: { text: "text-[9px]", icon: "w-2.5 h-2.5", gap: "gap-0.5" },
 } as const;
 
 /**
  * Oznaczenie „AI" na zdjęciu wygenerowanym przez model (sufiks `-ai.webp`).
  *
- * Stoi pod galerią, w ciemnej bryle – czytelnej niezależnie od tego, co jest
- * obok, i spójnej z licznikiem zdjęć w kadrze.
+ * Stoi pod galerią jako dyskretny podpis – bez własnego tła, w kolorach
+ * drobnych informacji na karcie produktu (ikony `clay`, tekst `charcoal/80`,
+ * oba powyżej progu kontrastu AA na jasnym tle).
  *
  * Dymek z wyjaśnieniem pojawia się po najechaniu kursorem, a na dotyku po
  * kliknięciu – dlatego całość jest przyciskiem, a nie samym napisem. Znaczek
@@ -28,12 +29,9 @@ const SIZES = {
  */
 export default function AiImageBadge({
   size = "md",
-  bare = false,
   className = "",
 }: {
   size?: keyof typeof SIZES;
-  /** true = bez własnej bryły; znaczek dziedziczy tło z kontenera (licznik zdjęć na mobile). */
-  bare?: boolean;
   className?: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -88,13 +86,11 @@ export default function AiImageBadge({
         onMouseLeave={() => setOpen(false)}
         aria-label={AI_IMAGE_NOTICE}
         aria-expanded={open}
-        className={`inline-flex items-center tracking-wider uppercase text-cream transition-colors ${s.gap} ${s.text} ${
-          bare ? "" : `bg-espresso/85 hover:bg-espresso ${s.pad}`
-        }`}
+        className={`inline-flex items-center tracking-wider uppercase text-charcoal/80 hover:text-espresso transition-colors ${s.gap} ${s.text}`}
       >
-        <Sparkles className={s.icon} strokeWidth={1.5} aria-hidden="true" />
+        <Sparkles className={`${s.icon} text-clay`} strokeWidth={1.5} aria-hidden="true" />
         AI
-        <Info className={s.icon} strokeWidth={1.5} aria-hidden="true" />
+        <Info className={`${s.icon} text-clay`} strokeWidth={1.5} aria-hidden="true" />
       </button>
     </div>
   );
