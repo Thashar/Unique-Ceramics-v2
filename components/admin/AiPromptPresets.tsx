@@ -193,8 +193,25 @@ export default function AiPromptPresets({
     setError("");
   }
 
+  /**
+   * Ten sam preset nie może obsługiwać obu przycisków – AI i AI+ mają dawać
+   * dwa różne ujęcia tego samego produktu, a wspólny preset robi z nich duplikat.
+   */
+  function takenByOther(variant: AiVariant): boolean {
+    if (!selected) return false;
+    return variant === "ai" ? selected.id === activeAiPlus : selected.id === activeAi;
+  }
+
   function assign(variant: AiVariant) {
     if (!selected) return;
+    if (takenByOther(variant)) {
+      const other: AiVariant = variant === "ai" ? "ai_plus" : "ai";
+      setError(
+        `Ten preset obsługuje już ${AI_VARIANT_LABEL[other]}. Jeden preset może być przypisany tylko do jednego przycisku – wybierz albo utwórz inny.`
+      );
+      setInfo("");
+      return;
+    }
     emit(variant === "ai" ? { activeAi: selected.id } : { activeAiPlus: selected.id });
     setInfo(`Preset „${selected.name}" ustawiony dla ${AI_VARIANT_LABEL[variant]} – zapisz ustawienia.`);
     setError("");
@@ -262,6 +279,16 @@ export default function AiPromptPresets({
         )}
       </div>
 
+      {/* Stan zastany: gdyby oba przyciski wskazywały ten sam preset (ustawienie
+          sprzed tej blokady albo ręczna zmiana w bazie), powiedz o tym wprost –
+          inaczej AI i AI+ po cichu generują to samo zdjęcie */}
+      {activeAi === activeAiPlus && (
+        <p className="bg-amber-50 border border-amber-200/70 text-amber-800 text-xs px-3 py-2 leading-relaxed">
+          Oba przyciski korzystają z tego samego presetu, więc AI i AI+ dadzą taki sam efekt.
+          Przypisz jednemu z nich inny preset.
+        </p>
+      )}
+
       {/* Nazwa – tylko przy edycji i tworzeniu */}
       {editable && (
         <div className="space-y-2">
@@ -316,7 +343,8 @@ export default function AiPromptPresets({
           <button
             type="button"
             onClick={() => assign("ai")}
-            disabled={!selected || selected.id === activeAi}
+            disabled={!selected || selected.id === activeAi || takenByOther("ai")}
+            title={takenByOther("ai") ? "Ten preset obsługuje już AI+" : undefined}
             className={secondaryButton}
           >
             <Check size={14} aria-hidden="true" />
@@ -325,7 +353,8 @@ export default function AiPromptPresets({
           <button
             type="button"
             onClick={() => assign("ai_plus")}
-            disabled={!selected || selected.id === activeAiPlus}
+            disabled={!selected || selected.id === activeAiPlus || takenByOther("ai_plus")}
+            title={takenByOther("ai_plus") ? "Ten preset obsługuje już AI" : undefined}
             className={secondaryButton}
           >
             <Check size={14} aria-hidden="true" />
