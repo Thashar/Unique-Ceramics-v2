@@ -1,16 +1,17 @@
+"use client";
+
 import { Truck, BadgePercent } from "lucide-react";
+import { useCart } from "@/lib/cart";
 import { bundlePrice, type BundleConfig } from "@/lib/bundled-shipping";
 
 /**
  * Cena produktu w teście „wysyłka w cenie”.
  *
  * W katalogu i na karcie produktu pokazujemy **zawsze tę samą cenę** – bez
- * przekreśleń i przeliczeń zależnych od koszyka. Zamiast liczenia jest
- * zachęta: „Uzyskaj rabat” na kafelku i pełne zdanie na karcie produktu.
- * Rabat klient zobaczy dopiero w koszyku, gdzie kwoty są liczone naprawdę.
- *
- * Dzięki temu, że nic tu nie zależy od zawartości koszyka, komponent jest
- * synchroniczny i renderuje się na serwerze – cena nie mruga po wczytaniu strony.
+ * przekreśleń i przeliczeń. Zachęta „Uzyskaj rabat” dochodzi dopiero wtedy,
+ * gdy w koszyku jest już jakaś pozycja: wysyłka jest wówczas opłacona, więc ten
+ * produkt realnie dołoży się taniej. Sam rabat klient zobaczy w koszyku, gdzie
+ * kwoty są liczone naprawdę.
  */
 export default function ProductPriceTag({
   price,
@@ -25,6 +26,10 @@ export default function ProductPriceTag({
   size?: "sm" | "md" | "lg";
   className?: string;
 }) {
+  const { items } = useCart();
+  // Rabat przysługuje dopiero, gdy wysyłkę pokrywa inna pozycja koszyka
+  const discountAvailable = items.length > 0;
+
   const format = (value: number) =>
     size === "lg"
       ? `${value.toFixed(2).replace(".", ",")} zł`
@@ -52,10 +57,12 @@ export default function ProductPriceTag({
           <Truck className={iconClass} strokeWidth={1.75} aria-hidden="true" />
           Darmowa wysyłka
         </span>
-        <span className="inline-flex items-center gap-1">
-          <BadgePercent className={iconClass} strokeWidth={1.75} aria-hidden="true" />
-          {size === "lg" ? "Dodaj produkt do koszyka, aby uzyskać rabat" : "Uzyskaj rabat"}
-        </span>
+        {discountAvailable && (
+          <span className="inline-flex items-center gap-1">
+            <BadgePercent className={iconClass} strokeWidth={1.75} aria-hidden="true" />
+            {size === "lg" ? "Dodaj produkt do koszyka, aby uzyskać rabat" : "Uzyskaj rabat"}
+          </span>
+        )}
       </span>
     </span>
   );
