@@ -7,7 +7,7 @@ import SettingsForm from "@/components/admin/SettingsForm";
 
 const VALID_SECTIONS = new Set([
   "strona_glowna", "omnie", "warsztaty", "regulamin", "polityka",
-  "kontakt", "wysylka", "urlop", "zam_indywidualne", "ai", "test",
+  "kontakt", "wysylka", "urlop", "zam_indywidualne", "ai", "promocje",
   "platnosci_przelew", "platnosci_stripe",
 ]);
 

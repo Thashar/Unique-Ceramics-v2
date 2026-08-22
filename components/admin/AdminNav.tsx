@@ -32,7 +32,7 @@ const settingsItems = [
   { id: "urlop",            label: "Urlop" },
   { id: "zam_indywidualne", label: "Zam. indywidualne" },
   { id: "ai",               label: "AI (zdjęcia i opisy)" },
-  { id: "test",             label: "Test" },
+  { id: "promocje",         label: "Promocje" },
 ];
 
 const paymentItems = [

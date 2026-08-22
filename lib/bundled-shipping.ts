@@ -69,11 +69,18 @@ export function bundleDiscountPercent(base: number, cfg: BundleConfig): number {
 
 export type BundleLine<T> = {
   item: T;
-  /** Cena jednostkowa pokazywana klientowi (pierwsza pozycja niesie wysyłkę). */
+  /** Cena pierwszej sztuki tej pozycji (ta jedna może nieść wysyłkę). */
   unitPrice: number;
+  /**
+   * Cena kolejnych sztuk **tej samej pozycji** – wypełniona tylko wtedy, gdy
+   * różni się od pierwszej, czyli gdy pozycja niesie wysyłkę i ma więcej niż
+   * jedną sztukę. Bez tego dwie sztuki tego samego produktu wyglądały jak
+   * dwa razy cena z narzutem, choć wysyłka liczy się raz.
+   */
+  restUnitPrice: number | null;
   /** Cena przekreślona – tylko dla pozycji, które straciły narzut. */
   wasPrice: number | null;
-  /** Rabat w procentach (0 = brak). */
+  /** Rabat w procentach dla sztuk bez narzutu (0 = pozycja go nie ma). */
   discountPercent: number;
   /** Wartość pozycji: `unitPrice` × pierwsza sztuka + cena bazowa × reszta. */
   lineTotal: number;
@@ -107,11 +114,15 @@ export function bundleSummary<T extends { price: number; quantity: number }>(
     if (carriesShipping) surchargeUsed = true;
 
     const unitPrice = carriesShipping ? money(item.price + cfg.surcharge) : money(item.price);
+    // Kolejne sztuki pozycji niosącej wysyłkę są już bez narzutu
+    const restDiffers = carriesShipping && item.quantity > 1;
+    const discounted = cfg.enabled && (!carriesShipping || restDiffers);
     return {
       item,
       unitPrice,
+      restUnitPrice: restDiffers ? money(item.price) : null,
       wasPrice: cfg.enabled && !carriesShipping ? bundlePrice(item.price, cfg) : null,
-      discountPercent: cfg.enabled && !carriesShipping ? bundleDiscountPercent(item.price, cfg) : 0,
+      discountPercent: discounted ? bundleDiscountPercent(item.price, cfg) : 0,
       lineTotal: money(item.price * item.quantity + (carriesShipping ? cfg.surcharge : 0)),
     };
   });

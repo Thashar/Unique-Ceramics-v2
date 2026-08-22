@@ -813,11 +813,12 @@ export default function SettingsForm({ section, initial, aiUsage }: Props) {
         </div>
       )}
 
-      {section === "test" && (
+      {section === "promocje" && (
         <div className="max-w-2xl space-y-6">
-          <h2 className="font-serif text-2xl text-espresso">Test – wysyłka w cenie produktu</h2>
+          <h2 className="font-serif text-2xl text-espresso">Promocje</h2>
           <p className="text-xs text-charcoal/80 leading-relaxed">
-            Po włączeniu każdy produkt w sklepie pokazuje cenę powiększoną o koszt wysyłki
+            <strong className="font-medium">Wielosztuki</strong> – po włączeniu każdy produkt w sklepie
+            pokazuje cenę powiększoną o koszt wysyłki
             i zieloną etykietę <strong className="font-medium">Darmowa wysyłka</strong>. Wysyłkę
             klient płaci raz: pierwsza pozycja w koszyku niesie narzut, każda kolejna jest bez
             niego – ze starą ceną przekreśloną i widoczną różnicą w procentach. Suma zamówienia
@@ -826,7 +827,7 @@ export default function SettingsForm({ section, initial, aiUsage }: Props) {
           </p>
 
           <div className="flex items-center justify-between border border-sand bg-warm-white p-4">
-            <span className="text-xs tracking-widest uppercase text-charcoal/80">Test aktywny</span>
+            <span className="text-xs tracking-widest uppercase text-charcoal/80">Wielosztuki</span>
             <Toggle checked={bundledShipping} onChange={setBundledShipping} />
           </div>
 
@@ -857,7 +858,7 @@ export default function SettingsForm({ section, initial, aiUsage }: Props) {
             onClick={() => save([
               { key: "bundled_shipping_enabled", value: bundledShipping ? "true" : "false" },
             ])}
-            label="Zapisz ustawienia testu"
+            label="Zapisz ustawienia promocji"
           />
         </div>
       )}
