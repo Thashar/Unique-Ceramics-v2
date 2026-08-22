@@ -85,24 +85,35 @@ export default function CartView({ shipping }: { shipping: ShippingSettings }) {
                   {item.name}
                 </Link>
                 <p className="text-sm text-charcoal/80 mt-1">
-                  {bundle.enabled && lineFor.get(item.id)?.wasPrice ? (
-                    <>
-                      <span className="line-through decoration-charcoal/40">
-                        {lineFor.get(item.id)!.wasPrice!.toFixed(2).replace(".", ",")} zł
-                      </span>{" "}
-                      <span className="text-espresso">
-                        {lineFor.get(item.id)!.unitPrice.toFixed(2).replace(".", ",")} zł
-                      </span>{" "}
-                      <span className="text-green-700">
-                        −{lineFor.get(item.id)!.discountPercent}%
-                      </span>{" "}
-                      / szt.
-                    </>
-                  ) : (
-                    <>
-                      {(lineFor.get(item.id)?.unitPrice ?? item.price).toFixed(2).replace(".", ",")} zł / szt.
-                    </>
-                  )}
+                  {(() => {
+                    const line = lineFor.get(item.id);
+                    const zl = (v: number) => `${v.toFixed(2).replace(".", ",")} zł`;
+
+                    // Pozycja bez narzutu – cała jest tańsza
+                    if (bundle.enabled && line?.wasPrice) {
+                      return (
+                        <>
+                          <span className="line-through decoration-charcoal/40">{zl(line.wasPrice)}</span>{" "}
+                          <span className="text-espresso">{zl(line.unitPrice)}</span>{" "}
+                          <span className="text-green-700">−{line.discountPercent}%</span> / szt.
+                        </>
+                      );
+                    }
+
+                    // Pozycja niosąca wysyłkę, kupowana w kilku sztukach:
+                    // pierwsza z narzutem, kolejne już bez niego
+                    if (bundle.enabled && line?.restUnitPrice !== null && line?.restUnitPrice !== undefined) {
+                      return (
+                        <>
+                          1 szt. {zl(line.unitPrice)}, kolejne{" "}
+                          <span className="text-espresso">{zl(line.restUnitPrice)}</span>{" "}
+                          <span className="text-green-700">−{line.discountPercent}%</span>
+                        </>
+                      );
+                    }
+
+                    return <>{zl(line?.unitPrice ?? item.price)} / szt.</>;
+                  })()}
                 </p>
                 <div className="flex items-center gap-4 mt-3">
                   <div className="flex items-center border border-sand">

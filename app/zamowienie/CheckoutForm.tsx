@@ -385,12 +385,12 @@ export default function CheckoutForm({
             <div className="bg-cream p-8 sticky top-28">
               <h2 className="font-serif text-xl text-espresso mb-6">Twoje zamówienie</h2>
               <div className="space-y-3 mb-6 text-sm">
-                {summary.lines.map(({ item, lineTotal, wasPrice, discountPercent }) => (
+                {summary.lines.map(({ item, lineTotal, discountPercent }) => (
                   <div key={item.id} className="flex justify-between gap-2 text-charcoal/80">
                     {/* Długie nazwy zawijamy zamiast ucinać – klient musi widzieć, co zamawia */}
                     <span className="min-w-0 break-words">
                       {item.name} × {item.quantity}
-                      {wasPrice !== null && discountPercent > 0 && (
+                      {discountPercent > 0 && (
                         <span className="text-green-700"> · −{discountPercent}%</span>
                       )}
                     </span>
