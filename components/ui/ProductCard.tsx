@@ -15,15 +15,9 @@ type ProductCardProduct = {
   price: number;
   images: string[];
   stock: number;
+  /** Rabat produktowy w procentach – kafelek pokazuje cenę już po nim. */
+  discountPercent?: number;
 };
-
-function formatPrice(price: number) {
-  return new Intl.NumberFormat("pl-PL", {
-    style: "currency",
-    currency: "PLN",
-    minimumFractionDigits: 0,
-  }).format(price);
-}
 
 export default function ProductCard({
   product,
@@ -112,15 +106,14 @@ export default function ProductCard({
               compact ? "text-xs" : "text-sm"
             }`}
           >
-            {bundle.enabled ? (
-              <ProductPriceTag
-                price={product.price}
-                bundle={bundle}
-                size={compact ? "sm" : "md"}
-              />
-            ) : (
-              formatPrice(product.price)
-            )}
+            {/* Cena zawsze przez ProductPriceTag – sam zdejmuje rabat produktowy
+                i dolicza narzut promocji „Wielosztuki” */}
+            <ProductPriceTag
+              price={product.price}
+              bundle={bundle}
+              discountPercent={product.discountPercent ?? 0}
+              size={compact ? "sm" : "md"}
+            />
           </p>
         </div>
       </Link>

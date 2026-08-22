@@ -3,6 +3,8 @@
 // trafiłaby do checkoutu (kwoty liczone z ceny produktu), a nieprawidłowe
 // `images`/`slug` na publiczne strony. Zwraca znormalizowane, bezpieczne dane.
 
+import { MAX_DISCOUNT_PERCENT } from "@/lib/product-price";
+
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 const MAX_PRICE = 1_000_000;
@@ -23,6 +25,7 @@ export type ValidProduct = {
   featured: boolean;
   active: boolean;
   variesFromPhoto: boolean;
+  discountPercent: number;
 };
 
 export function validateProduct(
@@ -64,6 +67,21 @@ export function validateProduct(
     return { ok: false, error: "Stan magazynowy musi być liczbą całkowitą ≥ 0." };
   }
 
+  // Rabat produktowy (opcjonalny, 0 = brak przeceny)
+  const discountPercent = b.discountPercent == null || b.discountPercent === ""
+    ? 0
+    : Number(b.discountPercent);
+  if (
+    !Number.isInteger(discountPercent) ||
+    discountPercent < 0 ||
+    discountPercent > MAX_DISCOUNT_PERCENT
+  ) {
+    return {
+      ok: false,
+      error: `Rabat musi być liczbą całkowitą z zakresu 0–${MAX_DISCOUNT_PERCENT}%.`,
+    };
+  }
+
   // Kategoria
   const category = typeof b.category === "string" ? b.category.trim() : "";
   if (!category || category.length > 100) {
@@ -98,6 +116,7 @@ export function validateProduct(
       featured: Boolean(b.featured),
       active: Boolean(b.active),
       variesFromPhoto: Boolean(b.variesFromPhoto),
+      discountPercent,
     },
   };
 }

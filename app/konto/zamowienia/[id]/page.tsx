@@ -5,7 +5,8 @@ import Link from "next/link";
 import { ChevronLeft, Package, MapPin, CreditCard, Clock, Truck, ExternalLink } from "lucide-react";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { getSetting } from "@/lib/settings";
+import { getSetting, getSettings } from "@/lib/settings";
+import { BUNDLED_SHIPPING_KEY, bundleFromSettings, bundleSummary } from "@/lib/bundled-shipping";
 import OrderStatusBadge from "@/components/account/OrderStatusBadge";
 import StripeResumeButton from "@/components/account/StripeResumeButton";
 
@@ -53,6 +54,22 @@ export default async function OrderDetailPage({
     select: { id: true, slug: true },
   }).catch(() => []);
   const slugMap = new Map(productSlugs.map((p) => [p.id, p.slug]));
+
+  // Promocja „Wielosztuki”: zamówienie trzyma ceny bazowe i osobno wysyłkę, ale
+  // klient widział w koszyku ceny katalogowe z rabatem i „Darmową wysyłkę” –
+  // odtwarzamy to samo rozbicie, żeby historia zamówień się z tym zgadzała
+  let bundleLines: ReturnType<typeof bundleSummary<{ id: string; quantity: number; price: number }>> | null = null;
+  if (order.shippingCost > 0) {
+    const bundle = bundleFromSettings(
+      await getSettings([BUNDLED_SHIPPING_KEY, "shipping_cost", "shipping_cost_parcel_locker"])
+    );
+    if (bundle.enabled) {
+      bundleLines = bundleSummary(
+        order.items.map((i) => ({ id: i.id, quantity: i.quantity, price: i.price })),
+        { enabled: true, surcharge: order.shippingCost }
+      );
+    }
+  }
 
   const statusSteps = [
     { key: "PENDING",     label: "Przyjęte" },
@@ -163,6 +180,9 @@ export default async function OrderDetailPage({
           <div className="bg-cream divide-y divide-sand">
             {order.items.map((item) => {
               const slug = slugMap.get(item.productId);
+              const line = bundleLines?.lines.find((l) => l.item.id === item.id);
+              const unitPrice = line?.unitPrice ?? item.price;
+              const lineTotal = line?.lineTotal ?? item.price * item.quantity;
               return (
                 <div key={item.id} className="flex items-center justify-between p-4">
                   <div>
@@ -177,26 +197,38 @@ export default async function OrderDetailPage({
                       <p className="text-sm font-medium text-espresso">{item.name}</p>
                     )}
                     <p className="text-xs text-charcoal/80 mt-0.5">
-                      {item.price.toLocaleString("pl-PL", { style: "currency", currency: "PLN", minimumFractionDigits: 0 })} × {item.quantity}
+                      {unitPrice.toLocaleString("pl-PL", { style: "currency", currency: "PLN", minimumFractionDigits: 0 })} × {item.quantity}
                     </p>
                   </div>
                   <p className="font-serif text-lg text-espresso">
-                    {(item.price * item.quantity).toLocaleString("pl-PL", { style: "currency", currency: "PLN", minimumFractionDigits: 0 })}
+                    {lineTotal.toLocaleString("pl-PL", { style: "currency", currency: "PLN", minimumFractionDigits: 0 })}
                   </p>
                 </div>
               );
             })}
             <div className="p-4 space-y-2">
               <div className="flex justify-between text-sm text-charcoal/80">
-                <span>Suma produktów</span>
-                <span>{(order.total - order.shippingCost).toLocaleString("pl-PL", { style: "currency", currency: "PLN", minimumFractionDigits: 0 })}</span>
+                <span>{bundleLines ? "Produkty przed rabatem" : "Suma produktów"}</span>
+                <span>
+                  {(bundleLines?.catalogTotal ?? order.total - order.shippingCost).toLocaleString("pl-PL", { style: "currency", currency: "PLN", minimumFractionDigits: 0 })}
+                </span>
               </div>
+              {bundleLines && bundleLines.discountTotal > 0 && (
+                <div className="flex justify-between text-sm text-green-700">
+                  <span>Rabat {bundleLines.discountPercent > 0 && `−${bundleLines.discountPercent}%`}</span>
+                  <span>−{bundleLines.discountTotal.toLocaleString("pl-PL", { style: "currency", currency: "PLN", minimumFractionDigits: 0 })}</span>
+                </div>
+              )}
               <div className="flex justify-between text-sm text-charcoal/80">
                 <span>Wysyłka</span>
                 <span>
-                  {order.shippingCost === 0
-                    ? (order.shippingMethod === "pickup" ? "Odbiór osobisty" : "Gratis")
-                    : order.shippingCost.toLocaleString("pl-PL", { style: "currency", currency: "PLN", minimumFractionDigits: 0 })}
+                  {bundleLines ? (
+                    <span className="text-green-700">Darmowa wysyłka</span>
+                  ) : order.shippingCost === 0 ? (
+                    order.shippingMethod === "pickup" ? "Odbiór osobisty" : "Gratis"
+                  ) : (
+                    order.shippingCost.toLocaleString("pl-PL", { style: "currency", currency: "PLN", minimumFractionDigits: 0 })
+                  )}
                 </span>
               </div>
               <div className="flex justify-between text-base font-medium text-espresso border-t border-sand pt-2">

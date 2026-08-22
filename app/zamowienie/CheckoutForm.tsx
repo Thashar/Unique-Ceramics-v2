@@ -300,6 +300,10 @@ export default function CheckoutForm({
                         {(() => {
                           const cost = methodShippingCost(value);
                           if (value === "pickup") return <span className="text-xs text-green-700 font-medium">Bezpłatne</span>;
+                          // W promocji „Wielosztuki” klient nigdy nie widzi kwoty wysyłki –
+                          // narzut siedzi w cenach katalogowych, a przy wyborze dostawy
+                          // ma stać to samo, co w koszyku
+                          if (bundle.enabled) return <span className="text-xs text-green-700 font-medium">Darmowa wysyłka</span>;
                           if (cost === 0) return <span className="text-xs text-green-700 font-medium">Gratis</span>;
                           return <span className="text-xs text-charcoal/80">{cost} zł</span>;
                         })()}

@@ -46,6 +46,7 @@ export default async function NewProductPage({
     featured: source.featured,
     active: source.active,
     variesFromPhoto: source.variesFromPhoto,
+    discountPercent: source.discountPercent,
   };
 
   return (
