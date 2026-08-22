@@ -6,6 +6,11 @@ import Image from "next/image";
 import { Upload, X, Trash2, MoveLeft, MoveRight, Sparkles, Loader2 } from "lucide-react";
 import { uploadErrorMessage } from "@/lib/upload-error";
 import { PRODUCT_MAX_IMAGES } from "@/lib/product-validation";
+import {
+  MAX_DISCOUNT_PERCENT,
+  discountedPrice,
+  normalizeDiscountPercent,
+} from "@/lib/product-price";
 import { AI_VARIANT_LABEL, isAiGeneratedImage, type AiVariant } from "@/lib/ai";
 
 /** Treść potwierdzenia przed płatnym wywołaniem modelu. */
@@ -27,6 +32,7 @@ type Product = {
   featured: boolean;
   active: boolean;
   variesFromPhoto: boolean;
+  discountPercent: number;
 };
 
 type Category = { slug: string; label: string };
@@ -54,6 +60,7 @@ export default function ProductForm({
     price: base?.price?.toString() ?? "",
     category: base?.category ?? categories[0]?.slug ?? "",
     stock: base?.stock?.toString() ?? "0",
+    discountPercent: base?.discountPercent?.toString() ?? "0",
     featured: base?.featured ?? false,
     active: base?.active ?? true,
     variesFromPhoto: base?.variesFromPhoto ?? false,
@@ -65,6 +72,19 @@ export default function ProductForm({
   const [filling, setFilling] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  // Podgląd przeceny pod polem rabatu – liczony z ceny bez narzutu na wysyłkę
+  const discountPreview = (() => {
+    const basePrice = parseFloat(form.price);
+    const percent = normalizeDiscountPercent(form.discountPercent);
+    if (!Number.isFinite(basePrice) || basePrice <= 0 || percent === 0) return null;
+    const zl = (v: number) => `${v.toFixed(2).replace(".", ",")} zł`;
+    return {
+      before: zl(basePrice),
+      after: zl(discountedPrice(basePrice, percent)),
+      percent,
+    };
+  })();
 
   function set(field: string, value: string | boolean) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -213,6 +233,8 @@ export default function ProductForm({
       ...form,
       price: parseFloat(form.price),
       stock: parseInt(form.stock),
+      // Puste pole = brak rabatu; walidację zakresu robi validateProduct
+      discountPercent: parseInt(form.discountPercent) || 0,
       images,
     };
 
@@ -396,6 +418,28 @@ export default function ProductForm({
           <input type="number" min="0" value={form.stock}
             onChange={(e) => set("stock", e.target.value)}
             className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm" />
+        </div>
+        <div className="col-span-2">
+          <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">
+            Rabat (%)
+          </label>
+          <input type="number" min="0" max={MAX_DISCOUNT_PERCENT} step="1" value={form.discountPercent}
+            onChange={(e) => set("discountPercent", e.target.value)}
+            className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm" />
+          <p className="text-xs text-charcoal/80 mt-2 leading-relaxed">
+            0 = brak przeceny. Rabat schodzi z ceny produktu i sumuje się z promocją
+            „Wielosztuki”.
+            {discountPreview && (
+              <>
+                {" "}Karta produktu pokaże{" "}
+                <span className="line-through">{discountPreview.before}</span>{" "}
+                <span className="text-espresso">{discountPreview.after}</span>{" "}
+                <span className="text-green-700">−{discountPreview.percent}%</span>. Przy
+                włączonej promocji „Wielosztuki” obie kwoty niosą narzut na wysyłkę, więc
+                pokazany procent będzie odrobinę niższy.
+              </>
+            )}
+          </p>
         </div>
         <div className="col-span-2">
           <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">Opis</label>

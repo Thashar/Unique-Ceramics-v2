@@ -14,6 +14,7 @@ import { getCategories, categoryLabel } from "@/lib/categories";
 import ProductPriceTag from "@/components/ui/ProductPriceTag";
 import ProductBundleNotes from "@/components/ui/ProductBundleNotes";
 import { BUNDLED_SHIPPING_KEY, bundleFromSettings, bundlePrice } from "@/lib/bundled-shipping";
+import { discountedPrice } from "@/lib/product-price";
 
 export const revalidate = 60;
 
@@ -130,7 +131,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       url: `${BASE}/sklep/${product.slug}`,
       // W promocji „Wielosztuki” dane strukturalne muszą podawać tę samą
       // cenę, którą widzi odwiedzający z pustym koszykiem
-      price: bundlePrice(product.price, bundle).toFixed(2),
+      // Cena dla wyszukiwarek to kwota realnie do zapłaty: po rabacie produktowym
+      price: bundlePrice(discountedPrice(product.price, product.discountPercent), bundle).toFixed(2),
       priceCurrency: "PLN",
       availability: product.stock > 0
         ? "https://schema.org/InStock"
@@ -207,8 +209,14 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               {product.name}
             </h1>
             <p className="font-serif text-2xl text-espresso mb-6">
-              {/* W promocji „Wielosztuki” cena katalogowa zawiera narzut na wysyłkę */}
-              <ProductPriceTag price={product.price} bundle={bundle} size="lg" />
+              {/* W promocji „Wielosztuki” cena katalogowa zawiera narzut na wysyłkę;
+                  przeceniony produkt pokazuje cenę przekreśloną, nową i procent */}
+              <ProductPriceTag
+                price={product.price}
+                bundle={bundle}
+                discountPercent={product.discountPercent}
+                size="lg"
+              />
             </p>
 
             {product.description && (
@@ -266,11 +274,13 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             </div>
 
             {/* Dodaj do koszyka */}
+            {/* Do koszyka trafia cena po rabacie produktowym – tę samą kwotę
+                liczy serwer w /api/checkout */}
             <AddToCartSection product={{
               id: product.id,
               slug: product.slug,
               name: product.name,
-              price: product.price,
+              price: discountedPrice(product.price, product.discountPercent),
               images: product.images,
               stock: product.stock,
             }} />

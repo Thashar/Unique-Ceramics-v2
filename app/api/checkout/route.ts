@@ -1,7 +1,14 @@
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import { getSettings } from "@/lib/settings";
-import { BUNDLED_SHIPPING_KEY, bundleFromSettings } from "@/lib/bundled-shipping";
+import {
+  BUNDLED_SHIPPING_KEY,
+  BUNDLE_OFF,
+  bundleFromSettings,
+  bundleSummary,
+  type BundleConfig,
+} from "@/lib/bundled-shipping";
+import { discountedPrice } from "@/lib/product-price";
 import { validateAddress } from "@/lib/address-validation";
 import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 import { NextResponse } from "next/server";
@@ -101,8 +108,10 @@ function buildOrderEmail(params: {
   orderNumber: string;
   firstName: string;
   paymentMethod: "transfer" | "stripe";
-  items: { name: string; price: number; quantity: number }[];
+  items: { name: string; price: number; quantity: number; lineTotal?: number }[];
   shippingCost: number;
+  /** Promocja „Wielosztuki” – zamiast kwoty wysyłki pokazujemy „Darmowa wysyłka”. */
+  freeShipping?: boolean;
   total: number;
   bankAccountName?: string;
   bankAccountNumber?: string;
@@ -121,6 +130,7 @@ function buildOrderEmail(params: {
     paymentMethod,
     items,
     shippingCost,
+    freeShipping,
     total,
     bankAccountName,
     bankAccountNumber,
@@ -147,7 +157,7 @@ function buildOrderEmail(params: {
         `<tr>
           <td style="padding:8px 12px;border-bottom:1px solid #e8e0d6;">${i.name}</td>
           <td style="padding:8px 12px;border-bottom:1px solid #e8e0d6;text-align:center;">×${i.quantity}</td>
-          <td style="padding:8px 12px;border-bottom:1px solid #e8e0d6;text-align:right;">${(i.price * i.quantity).toFixed(2).replace(".", ",")} zł</td>
+          <td style="padding:8px 12px;border-bottom:1px solid #e8e0d6;text-align:right;">${(i.lineTotal ?? i.price * i.quantity).toFixed(2).replace(".", ",")} zł</td>
         </tr>`
     )
     .join("");
@@ -217,7 +227,7 @@ function buildOrderEmail(params: {
       <table style="width:100%;font-size:14px;color:#4a3728;">
         <tr>
           <td style="padding:6px 12px;text-align:right;color:#6b5748;">Wysyłka</td>
-          <td style="padding:6px 12px;text-align:right;width:120px;">${shippingCost === 0 ? "Gratis" : `${shippingCost.toFixed(2).replace(".", ",")} zł`}</td>
+          <td style="padding:6px 12px;text-align:right;width:120px;">${freeShipping ? "Darmowa wysyłka" : shippingCost === 0 ? "Gratis" : `${shippingCost.toFixed(2).replace(".", ",")} zł`}</td>
         </tr>
         <tr style="border-top:2px solid #e8e0d6;">
           <td style="padding:10px 12px;text-align:right;font-size:16px;color:#3d2b1f;">Razem</td>
@@ -429,7 +439,9 @@ export async function POST(req: Request) {
   // Kwoty zaokrąglane do groszy – unikamy artefaktów arytmetyki float
   const subtotal = Math.round(
     (items as { productId: string; quantity: number }[]).reduce((sum, item) => {
-      return sum + productMap.get(item.productId)!.price * item.quantity;
+      const product = productMap.get(item.productId)!;
+      // Rabat produktowy schodzi z ceny bazowej – dopiero na tym liczy się wysyłka
+      return sum + discountedPrice(product.price, product.discountPercent) * item.quantity;
     }, 0) * 100
   ) / 100;
 
@@ -485,7 +497,7 @@ export async function POST(req: Request) {
               return {
                 productId: item.productId,
                 name: product.name,
-                price: product.price,
+                price: discountedPrice(product.price, product.discountPercent),
                 quantity: item.quantity,
               };
             }),
@@ -516,8 +528,28 @@ export async function POST(req: Request) {
     : `${appUrl}/konto/zamowienia/${order.id}`;
   const verifiedItems = typedItems.map((item) => {
     const product = productMap.get(item.productId)!;
-    return { name: product.name, price: product.price, quantity: item.quantity };
+    return {
+      name: product.name,
+      price: discountedPrice(product.price, product.discountPercent),
+      quantity: item.quantity,
+    };
   });
+  // Rozbicie pokazywane KLIENTOWI (e-mail, Stripe). W promocji „Wielosztuki”
+  // narzut na wysyłkę siedzi w cenach pozycji, a wiersz wysyłki mówi tylko
+  // „Darmowa wysyłka” – tak samo jak koszyk i strona zamówienia. Powiadomienie
+  // dla właściciela zostaje na kwotach z bazy (ceny bazowe + wysyłka osobno).
+  const customerBundle: BundleConfig =
+    bundle.enabled && shippingCost > 0
+      ? { enabled: true, surcharge: shippingCost }
+      : BUNDLE_OFF;
+  const customerLines = bundleSummary(verifiedItems, customerBundle).lines;
+  const customerItems = customerLines.map((l) => ({
+    name: l.item.name,
+    price: l.unitPrice,
+    quantity: l.item.quantity,
+    lineTotal: l.lineTotal,
+  }));
+
   void sendAdminNotification({
     orderNumber, firstName, lastName, email, phone: phone?.trim() || null,
     street, city, postcode, note: note?.trim() || null, paymentMethod,
@@ -559,8 +591,9 @@ export async function POST(req: Request) {
           orderNumber,
           firstName,
           paymentMethod: paymentMethod === "stripe" ? "stripe" : "transfer",
-          items: verifiedItems,
+          items: customerItems,
           shippingCost,
+          freeShipping: customerBundle.enabled,
           total,
           bankAccountName: bankSettings?.payment_bank_account_name,
           bankAccountNumber: bankSettings?.payment_bank_account_number,
@@ -590,29 +623,61 @@ export async function POST(req: Request) {
     const stripe = new Stripe(stripeKey);
     const baseUrl = process.env.AUTH_URL ?? "http://localhost:3000";
 
+    // Domyślnie: pozycje po cenach z zamówienia + osobny wiersz wysyłki.
+    const plainLineItems = [
+      ...verifiedItems.map((item) => ({
+        price_data: {
+          currency: "pln",
+          product_data: { name: item.name },
+          unit_amount: Math.round(item.price * 100),
+        },
+        quantity: item.quantity,
+      })),
+      ...(shippingCost > 0
+        ? [{
+            price_data: {
+              currency: "pln",
+              product_data: { name: "Wysyłka" },
+              unit_amount: Math.round(shippingCost * 100),
+            },
+            quantity: 1,
+          }]
+        : []),
+    ];
+
+    // W promocji „Wielosztuki” u operatora płatności też nie może pojawić się
+    // kwota wysyłki – narzut jest w cenach pozycji. Reszta z zaokrągleń idzie
+    // na jedną sztukę (Stripe nie przyjmuje ujemnych pozycji), a gdyby suma
+    // mimo wszystko nie trafiła w kwotę zamówienia, wracamy do rozbicia
+    // z osobną wysyłką – klient nie może zapłacić innej kwoty niż zamówił.
+    let stripeLineItems = plainLineItems;
+    if (customerBundle.enabled) {
+      const bundled = customerLines.flatMap((l) => {
+        const unit = Math.round(l.unitPrice * 100);
+        const lineGr = Math.round(l.lineTotal * 100);
+        const rest = lineGr - unit * l.item.quantity;
+        const line = (amount: number, quantity: number) => ({
+          price_data: {
+            currency: "pln",
+            product_data: { name: l.item.name },
+            unit_amount: amount,
+          },
+          quantity,
+        });
+        if (rest === 0) return [line(unit, l.item.quantity)];
+        return [line(unit, l.item.quantity - 1), line(unit + rest, 1)].filter(
+          (e) => e.quantity > 0
+        );
+      });
+      const sum = bundled.reduce((acc, e) => acc + e.price_data.unit_amount * e.quantity, 0);
+      if (sum === Math.round(total * 100)) stripeLineItems = bundled;
+      else console.error("[checkout] rozbicie Stripe nie zgadza się z kwotą zamówienia");
+    }
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",
-      line_items: [
-        ...verifiedItems.map((item) => ({
-          price_data: {
-            currency: "pln",
-            product_data: { name: item.name },
-            unit_amount: Math.round(item.price * 100),
-          },
-          quantity: item.quantity,
-        })),
-        ...(shippingCost > 0
-          ? [{
-              price_data: {
-                currency: "pln",
-                product_data: { name: "Wysyłka" },
-                unit_amount: Math.round(shippingCost * 100),
-              },
-              quantity: 1,
-            }]
-          : []),
-      ],
+      line_items: stripeLineItems,
       metadata: { orderId: order.id },
       success_url: `${baseUrl}/zamowienie/potwierdzenie?id=${order.id}`,
       // Porzucona płatność wraca na potwierdzenie z flagą – koszyk jest już

@@ -11,6 +11,7 @@ export const metadata: Metadata = {
 import { CheckCircle, Clock, XCircle } from "lucide-react";
 import { db } from "@/lib/db";
 import { getSettings } from "@/lib/settings";
+import { BUNDLED_SHIPPING_KEY, bundleFromSettings, bundleSummary } from "@/lib/bundled-shipping";
 import { auth } from "@/auth";
 import StripeResumeButton from "@/components/account/StripeResumeButton";
 
@@ -64,6 +65,23 @@ export default async function ConfirmationPage({
       "payment_blik_enabled",
       "payment_blik_phone",
     ]);
+  }
+
+  // Promocja „Wielosztuki”: w koszyku klient widział ceny katalogowe z rabatem
+  // i „Darmową wysyłkę”. Zamówienie trzyma ceny bazowe i osobno koszt wysyłki
+  // (kwoty serwerowe promocja zostawia w spokoju), więc rozbicie odtwarzamy tu
+  // ponownie – inaczej podsumowanie zaprzeczałoby temu, co obiecywał koszyk.
+  let bundleLines: ReturnType<typeof bundleSummary<{ id: string; quantity: number; price: number }>> | null = null;
+  if (order && order.shippingCost > 0) {
+    const bundle = bundleFromSettings(
+      await getSettings([BUNDLED_SHIPPING_KEY, "shipping_cost", "shipping_cost_parcel_locker"])
+    );
+    if (bundle.enabled) {
+      bundleLines = bundleSummary(
+        order.items.map((i) => ({ id: i.id, quantity: i.quantity, price: i.price })),
+        { enabled: true, surcharge: order.shippingCost }
+      );
+    }
   }
 
   const orderNumber = id ? id.slice(-8).toUpperCase() : "";
@@ -211,22 +229,43 @@ export default async function ConfirmationPage({
               Podsumowanie
             </p>
             <div className="space-y-2 text-sm">
-              {order.items.map((item) => (
-                <div key={item.id} className="flex justify-between text-charcoal/80">
-                  <span>
-                    {item.name} ×{item.quantity}
-                  </span>
-                  <span>
-                    {(item.price * item.quantity).toFixed(2).replace(".", ",")} zł
-                  </span>
-                </div>
-              ))}
+              {order.items.map((item) => {
+                const line = bundleLines?.lines.find((l) => l.item.id === item.id);
+                return (
+                  <div key={item.id} className="flex justify-between text-charcoal/80">
+                    <span>
+                      {item.name} ×{item.quantity}
+                    </span>
+                    <span>
+                      {((line?.lineTotal ?? item.price * item.quantity))
+                        .toFixed(2)
+                        .replace(".", ",")} zł
+                    </span>
+                  </div>
+                );
+              })}
+              {bundleLines && bundleLines.discountTotal > 0 && (
+                <>
+                  <div className="flex justify-between text-charcoal/80 border-t border-sand pt-2">
+                    <span>Produkty przed rabatem</span>
+                    <span>{bundleLines.catalogTotal.toFixed(2).replace(".", ",")} zł</span>
+                  </div>
+                  <div className="flex justify-between text-green-700">
+                    <span>Rabat {bundleLines.discountPercent > 0 && `−${bundleLines.discountPercent}%`}</span>
+                    <span>−{bundleLines.discountTotal.toFixed(2).replace(".", ",")} zł</span>
+                  </div>
+                </>
+              )}
               <div className="flex justify-between text-charcoal/80 border-t border-sand pt-2">
                 <span>Wysyłka</span>
                 <span>
-                  {order.shippingCost === 0
-                    ? "Gratis"
-                    : `${order.shippingCost.toFixed(2).replace(".", ",")} zł`}
+                  {bundleLines ? (
+                    <span className="text-green-700">Darmowa wysyłka</span>
+                  ) : order.shippingCost === 0 ? (
+                    "Gratis"
+                  ) : (
+                    `${order.shippingCost.toFixed(2).replace(".", ",")} zł`
+                  )}
                 </span>
               </div>
               <div className="flex justify-between font-serif text-xl text-espresso border-t border-sand pt-2">
