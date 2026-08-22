@@ -78,18 +78,14 @@ export default function AiPromptPresets({
     setInfo("");
   }
 
-  /** Edycja wbudowanego presetu tworzy jego kopię – oryginał zostaje nietknięty. */
+  /** Presety domyślne są tylko do odczytu – edytować można wyłącznie własne. */
   function startEdit() {
-    if (!selected) return;
+    if (!selected || isBuiltinPreset(selected.id)) return;
     setDraftScene(selected.scene);
-    setDraftName(isBuiltinPreset(selected.id) ? `${selected.name} (kopia)` : selected.name);
-    setMode(isBuiltinPreset(selected.id) ? "new" : "edit");
+    setDraftName(selected.name);
+    setMode("edit");
     setError("");
-    setInfo(
-      isBuiltinPreset(selected.id)
-        ? "Presetu wbudowanego nie da się nadpisać – zapiszesz go jako nowy, własny preset."
-        : ""
-    );
+    setInfo("");
   }
 
   function startNew() {
@@ -272,7 +268,7 @@ export default function AiPromptPresets({
             {selected.id === activeAiPlus && badge("ai_plus")}
             {isBuiltinPreset(selected.id) && (
               <span className="text-[10px] tracking-widest uppercase border border-sand bg-cream text-charcoal/80 px-2 py-0.5">
-                Wbudowany
+                Domyślny – tylko do odczytu
               </span>
             )}
           </div>
@@ -332,7 +328,17 @@ export default function AiPromptPresets({
       {/* Akcje */}
       {!editable ? (
         <div className="flex flex-wrap gap-2">
-          <button type="button" onClick={startEdit} className={secondaryButton}>
+          <button
+            type="button"
+            onClick={startEdit}
+            disabled={!selected || isBuiltinPreset(selected.id)}
+            title={
+              selected && isBuiltinPreset(selected.id)
+                ? "Presetu domyślnego nie można edytować – utwórz własny przyciskiem „Generuj nowy prompt”"
+                : undefined
+            }
+            className={secondaryButton}
+          >
             <Pencil size={14} aria-hidden="true" />
             Edytuj prompt
           </button>
