@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Truck, Package, MapPin } from "lucide-react";
 import { useCart } from "@/lib/cart";
 import { bundleSummary, type BundleConfig } from "@/lib/bundled-shipping";
-import { validateAddress } from "@/lib/address-validation";
+import { validateAddress, validateContact } from "@/lib/address-validation";
 import ClayRule from "@/components/ui/ClayRule";
 import dynamic from "next/dynamic";
 
@@ -92,7 +92,10 @@ export default function CheckoutForm({
 
   // Zablokuj złożenie zamówienia jeśli zalogowany użytkownik nie ma kompletnego adresu
   // (null = gość – brak blokady; false = niekompletny; true = OK)
-  const addressBlocked = savedAddressComplete === false && shippingMethod !== "pickup";
+  // Adres jest potrzebny **tylko przy kurierze**: paczkomat ma kod (przesyłka
+  // idzie do maszyny, nie pod adres), a odbiór osobisty adres pracowni
+  const addressRequired = shippingMethod === "courier";
+  const addressBlocked = savedAddressComplete === false && addressRequired;
 
   const [form, setForm] = useState({
     firstName: savedAddress?.firstName ?? "",
@@ -122,15 +125,34 @@ export default function CheckoutForm({
   // a InPost wysyła powiadomienie o paczce SMS-em. Przy odbiorze osobistym opcjonalny.
   const phoneRequired = shippingMethod !== "pickup";
 
+  /** Adres zapisywany w zamówieniu – bez kuriera pola adresowe nie istnieją. */
+  function deliveryAddress(): { street: string; postcode: string; city: string } {
+    if (shippingMethod === "pickup") {
+      return { street: "Odbiór osobisty", postcode: "", city: "Kleszczów" };
+    }
+    if (shippingMethod === "parcel_locker") {
+      return { street: `Paczkomat ${parcelLockerCode.trim()}`, postcode: "", city: "" };
+    }
+    return { street: form.street, postcode: form.postcode, city: form.city };
+  }
+
   function validateForm(): boolean {
-    const result = validateAddress({
-      firstName: form.firstName,
-      lastName:  form.lastName,
-      phone:     form.phone,
-      street:    shippingMethod === "pickup" ? "Odbiór osobisty" : form.street,
-      postcode:  shippingMethod === "pickup" ? "00-000"          : form.postcode,
-      city:      shippingMethod === "pickup" ? "Kleszczów"       : form.city,
-    });
+    // Bez adresu sprawdzamy tylko dane kontaktowe – inaczej walidacja żądałaby
+    // numeru budynku w polu, którego formularz w ogóle nie pokazuje
+    const result = addressRequired
+      ? validateAddress({
+          firstName: form.firstName,
+          lastName:  form.lastName,
+          phone:     form.phone,
+          street:    form.street,
+          postcode:  form.postcode,
+          city:      form.city,
+        })
+      : validateContact({
+          firstName: form.firstName,
+          lastName:  form.lastName,
+          phone:     form.phone,
+        });
 
     const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim());
     const errors: Record<string, string> = { ...result.errors };
@@ -169,9 +191,7 @@ export default function CheckoutForm({
     setLoading(true);
     setError("");
 
-    const street   = shippingMethod === "pickup" ? "Odbiór osobisty" : form.street;
-    const postcode = shippingMethod === "pickup" ? ""                 : form.postcode;
-    const city     = shippingMethod === "pickup" ? "Kleszczów"        : form.city;
+    const { street, postcode, city } = deliveryAddress();
 
     const res = await fetch("/api/checkout", {
       method: "POST",
@@ -323,8 +343,8 @@ export default function CheckoutForm({
               )}
             </div>
 
-            {/* Adres dostawy – ukryty przy odbiorze osobistym */}
-            {shippingMethod !== "pickup" && (
+            {/* Adres dostawy – ukryty przy paczkomacie i odbiorze osobistym */}
+            {addressRequired && (
               <div>
                 <h2 className="font-serif text-2xl text-espresso mb-6">Adres dostawy</h2>
                 {addressBlocked && (

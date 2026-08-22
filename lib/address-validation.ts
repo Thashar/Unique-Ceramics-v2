@@ -39,7 +39,15 @@ export interface ValidationResult {
   errors: Partial<Record<keyof AddressFields, string>>;
 }
 
-export function validateAddress(data: AddressFields): ValidationResult {
+/**
+ * Same dane kontaktowe – bez adresu. Używane tam, gdzie adresu nie ma:
+ * paczkomat (przesyłka idzie na kod) i odbiór osobisty.
+ */
+export function validateContact(data: {
+  firstName: string;
+  lastName: string;
+  phone?: string;
+}): ValidationResult {
   const errors: Partial<Record<keyof AddressFields, string>> = {};
 
   if (!ADDRESS_PATTERNS.name.test(data.firstName.trim())) {
@@ -54,6 +62,15 @@ export function validateAddress(data: AddressFields): ValidationResult {
       errors.phone = ADDRESS_ERRORS.phone;
     }
   }
+
+  return { valid: Object.keys(errors).length === 0, errors };
+}
+
+export function validateAddress(data: AddressFields): ValidationResult {
+  const errors: Partial<Record<keyof AddressFields, string>> = {
+    ...validateContact(data).errors,
+  };
+
   if (!ADDRESS_PATTERNS.street.test(data.street.trim())) {
     errors.street = ADDRESS_ERRORS.street;
   }

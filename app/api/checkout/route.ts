@@ -9,7 +9,7 @@ import {
   type BundleConfig,
 } from "@/lib/bundled-shipping";
 import { discountedPrice } from "@/lib/product-price";
-import { validateAddress } from "@/lib/address-validation";
+import { validateAddress, validateContact } from "@/lib/address-validation";
 import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
@@ -81,7 +81,13 @@ async function sendAdminNotification(params: {
         `Klient: ${firstName} ${lastName}${isGuest ? " (zamówienie bez konta)" : " (konto w sklepie)"}`,
         `E-mail: ${email}`,
         `Telefon: ${phone || "–"}`,
-        `Adres: ${shippingMethod === "pickup" ? "Odbiór osobisty" : `${street}, ${postcode} ${city}`}`,
+        `Adres: ${
+          shippingMethod === "pickup"
+            ? "Odbiór osobisty"
+            : shippingMethod === "parcel_locker"
+              ? `Paczkomat ${parcelLockerCode ?? "–"}`
+              : `${street}, ${postcode} ${city}`
+        }`,
         ``,
         `Metoda wysyłki: ${shippingLabel}${shippingMethod === "parcel_locker" && parcelLockerCode ? ` (${parcelLockerCode})` : ""}`,
         `Płatność: ${PAYMENT_LABEL[paymentMethod] ?? paymentMethod}`,
@@ -278,8 +284,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Nieprawidłowe dane żądania" }, { status: 400 });
   }
 
-  // Zablokuj zalogowanych użytkowników bez kompletnego adresu dostawy (nie dotyczy odbioru osobistego)
-  if (session?.user?.id && String(body.shippingMethod ?? "courier") !== "pickup") {
+  // Zablokuj zalogowanych użytkowników bez kompletnego adresu dostawy.
+  // Dotyczy **tylko kuriera** – paczkomat idzie na kod maszyny, a odbiór
+  // osobisty odbywa się w pracowni, więc adres nie jest tam do niczego potrzebny
+  if (session?.user?.id && String(body.shippingMethod ?? "courier") === "courier") {
     let savedAddress: Record<string, string> | null = null;
     try {
       const key = `user_address_${session.user.id}`;
@@ -346,7 +354,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Brakuje wymaganych pól" }, { status: 400 });
   }
 
-  if (shippingMethod !== "pickup" && (!street?.trim() || !city?.trim() || !postcode?.trim())) {
+  // Adres jest potrzebny tylko przy kurierze (patrz wyżej)
+  const addressRequired = shippingMethod === "courier";
+
+  if (addressRequired && (!street?.trim() || !city?.trim() || !postcode?.trim())) {
     return NextResponse.json({ error: "Brakuje wymaganych pól adresu" }, { status: 400 });
   }
 
@@ -364,12 +375,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Nieprawidłowy adres e-mail" }, { status: 400 });
   }
 
-  if (shippingMethod !== "pickup") {
-    const addrValidation = validateAddress({ firstName, lastName, phone, street, postcode, city });
-    if (!addrValidation.valid) {
-      const firstError = Object.values(addrValidation.errors)[0];
-      return NextResponse.json({ error: firstError }, { status: 400 });
-    }
+  const contactValidation = addressRequired
+    ? validateAddress({ firstName, lastName, phone, street, postcode, city })
+    : validateContact({ firstName, lastName, phone });
+  if (!contactValidation.valid) {
+    const firstError = Object.values(contactValidation.errors)[0];
+    return NextResponse.json({ error: firstError }, { status: 400 });
   }
 
   if (!items?.length) {
@@ -485,9 +496,13 @@ export async function POST(req: Request) {
           lastName: lastName.trim(),
           email: email.trim(),
           phone: phone?.trim() || null,
-          street: street.trim(),
-          city: city.trim(),
-          postcode: postcode.trim(),
+          // Paczkomat nie ma adresu – w polu ulicy zostaje kod maszyny,
+          // żeby zestawienia i raporty nie pokazywały pustego wiersza
+          street: shippingMethod === "parcel_locker"
+            ? `Paczkomat ${String(parcelLockerCode ?? "").trim()}`
+            : String(street ?? "").trim(),
+          city: String(city ?? "").trim(),
+          postcode: String(postcode ?? "").trim(),
           country: "PL",
           note: note?.trim() || null,
           paymentMethod,
