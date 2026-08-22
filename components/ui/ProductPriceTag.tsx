@@ -8,10 +8,10 @@ import { bundlePrice, type BundleConfig } from "@/lib/bundled-shipping";
  * Cena produktu w teście „wysyłka w cenie”.
  *
  * W katalogu i na karcie produktu pokazujemy **zawsze tę samą cenę** – bez
- * przekreśleń i przeliczeń. Zachęta „Uzyskaj rabat” dochodzi dopiero wtedy,
- * gdy w koszyku jest już jakaś pozycja: wysyłka jest wówczas opłacona, więc ten
- * produkt realnie dołoży się taniej. Sam rabat klient zobaczy w koszyku, gdzie
- * kwoty są liczone naprawdę.
+ * przekreśleń i przeliczeń. Zmienia się tylko zachęta pod ceną: przy pustym
+ * koszyku podpowiadamy dołożenie kolejnej sztuki, a gdy coś już w nim jest –
+ * że ten produkt dołoży się z rabatem (wysyłka jest wtedy opłacona). Same
+ * kwoty rabatu klient zobaczy w koszyku, gdzie są liczone naprawdę.
  */
 export default function ProductPriceTag({
   price,
@@ -57,12 +57,14 @@ export default function ProductPriceTag({
           <Truck className={iconClass} strokeWidth={1.75} aria-hidden="true" />
           Darmowa wysyłka
         </span>
-        {discountAvailable && (
-          <span className="inline-flex items-center gap-1">
-            <BadgePercent className={iconClass} strokeWidth={1.75} aria-hidden="true" />
-            {size === "lg" ? "Dodaj produkt do koszyka, aby uzyskać rabat" : "Uzyskaj rabat"}
-          </span>
-        )}
+        <span className="inline-flex items-center gap-1">
+          <BadgePercent className={iconClass} strokeWidth={1.75} aria-hidden="true" />
+          {discountAvailable
+            ? size === "lg"
+              ? "Dodaj produkt do koszyka, aby uzyskać rabat"
+              : "Uzyskaj rabat"
+            : "Dodaj drugą sztukę lub więcej, by otrzymać dodatkowy rabat"}
+        </span>
       </span>
     </span>
   );
