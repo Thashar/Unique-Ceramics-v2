@@ -1,7 +1,56 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { X } from "lucide-react";
+
+// Klient może schować pływający przycisk na stałe (krzyżyk nad jego lewym górnym
+// rogiem). Decyzja siedzi w localStorage tej przeglądarki i jest czytana przez
+// `useSyncExternalStore` – nie przez `setState` w efekcie (reguła
+// `react-hooks/set-state-in-effect`, wzorzec jak w `lib/cookie-consent.tsx`).
+const HIDDEN_KEY = "sklep-zamowienie-ukryte";
+
+let hiddenCache: boolean | undefined;
+const listeners = new Set<() => void>();
+
+function readHidden(): boolean {
+  try {
+    return localStorage.getItem(HIDDEN_KEY) === "true";
+  } catch {
+    // Prywatne okno / zablokowane dane witryny – przycisk po prostu zostaje
+    return false;
+  }
+}
+
+function getHiddenSnapshot(): boolean {
+  if (hiddenCache === undefined) hiddenCache = readHidden();
+  return hiddenCache;
+}
+
+function subscribeHidden(onChange: () => void): () => void {
+  listeners.add(onChange);
+  // `storage` łapie zmianę z innej karty; tę samą kartę obsługuje zbiór listenerów
+  const onStorage = (e: StorageEvent) => {
+    if (e.key === HIDDEN_KEY || e.key === null) {
+      hiddenCache = undefined;
+      onChange();
+    }
+  };
+  window.addEventListener("storage", onStorage);
+  return () => {
+    listeners.delete(onChange);
+    window.removeEventListener("storage", onStorage);
+  };
+}
+
+function hideButton() {
+  try {
+    localStorage.setItem(HIDDEN_KEY, "true");
+  } catch {}
+  hiddenCache = true;
+  listeners.forEach((l) => l());
+}
 
 const DUR = 3; // długość pętli w sekundach
 
@@ -89,44 +138,62 @@ function HandIcon() {
 }
 
 export default function FloatingOrderButton() {
+  // Na serwerze zawsze `false` – zapisana decyzja wchodzi dopiero po hydratacji,
+  // więc SSR i pierwszy render klienta się zgadzają
+  const hidden = useSyncExternalStore(subscribeHidden, getHiddenSnapshot, () => false);
+  if (hidden) return null;
+
   return (
-    <Link
-      href="/zamowienie-indywidualne"
-      /* na desktopie rozmiar bazowy (pomniejszony o połowę względem wcześniejszego 2x), zakotwiczony w prawym dolnym rogu */
-      /* półprzezroczysty, żeby nie zasłaniał produktów; pełna widoczność po najechaniu i przy focusie */
-      className="fixed bottom-6 right-5 z-40 origin-bottom-right md:scale-100 flex items-center gap-2.5 bg-espresso hover:bg-clay text-cream text-[11px] tracking-widest uppercase px-4 py-3 shadow-md hover:shadow-lg opacity-70 hover:opacity-100 focus-visible:opacity-100 transition-[color,background-color,box-shadow,opacity] duration-200"
-    >
-      <motion.span
-        aria-hidden="true"
-        className="relative inline-flex items-center justify-center shrink-0"
-        style={{ width: 24, height: 24 }}
-        // bardzo szybkie trzęsienie (0–0.13s), przyciśnięcie w dół do najniższej
-        // pozycji w 0.22, powrót w 0.30, potem długa pauza
-        animate={{
-          x:     [0, -2.1,  2.1, -2.1,  2.1, -1.4, 0, 0,  2.1, 0, 0],
-          y:     [0,  2.1, -2.1,  2.1, -2.1,  1.4, 0, 0, -2.1, 0, 0],
-          scale: [1,  1,   1,    1,   1,    1,   1, 1, 0.88,  1, 1],
-        }}
-        transition={{
-          duration: DUR,
-          repeat: Infinity,
-          times: [0, 0.02, 0.04, 0.06, 0.08, 0.10, 0.13, 0.18, 0.22, 0.30, 1],
-          ease: "easeInOut",
-        }}
+    /* zakotwiczony w prawym dolnym rogu; rozmiar bazowy na desktopie */
+    <div className="fixed bottom-6 right-5 z-40 origin-bottom-right md:scale-100">
+      {/* Krzyżyk stoi nad lewym górnym rogiem, poza samym przyciskiem – dzięki
+          temu klikając „schowaj” nie da się trafić w link do zamówienia */}
+      <button
+        type="button"
+        onClick={hideButton}
+        aria-label="Ukryj przycisk zamówienia indywidualnego"
+        title="Ukryj ten przycisk"
+        className="absolute bottom-full left-0 mb-1 w-6 h-6 flex items-center justify-center rounded-full bg-espresso hover:bg-clay text-cream shadow-md opacity-70 hover:opacity-100 focus-visible:opacity-100 transition-[color,background-color,box-shadow,opacity] duration-200"
       >
-        {/* dłoń + rozbryzg obrócone o 45° w lewo; rozbryzg strzela z czubka palca */}
-        <span
-          className="relative block"
-          style={{ width: 18, height: 18, rotate: "-45deg" }}
+        <X size={13} strokeWidth={2} aria-hidden="true" />
+      </button>
+      <Link
+        href="/zamowienie-indywidualne"
+        /* półprzezroczysty, żeby nie zasłaniał produktów; pełna widoczność po najechaniu i przy focusie */
+        className="flex items-center gap-2.5 bg-espresso hover:bg-clay text-cream text-[11px] tracking-widest uppercase px-4 py-3 shadow-md hover:shadow-lg opacity-70 hover:opacity-100 focus-visible:opacity-100 transition-[color,background-color,box-shadow,opacity] duration-200"
+      >
+        <motion.span
+          aria-hidden="true"
+          className="relative inline-flex items-center justify-center shrink-0"
+          style={{ width: 24, height: 24 }}
+          // bardzo szybkie trzęsienie (0–0.13s), przyciśnięcie w dół do najniższej
+          // pozycji w 0.22, powrót w 0.30, potem długa pauza
+          animate={{
+            x:     [0, -2.1,  2.1, -2.1,  2.1, -1.4, 0, 0,  2.1, 0, 0],
+            y:     [0,  2.1, -2.1,  2.1, -2.1,  1.4, 0, 0, -2.1, 0, 0],
+            scale: [1,  1,   1,    1,   1,    1,   1, 1, 0.88,  1, 1],
+          }}
+          transition={{
+            duration: DUR,
+            repeat: Infinity,
+            times: [0, 0.02, 0.04, 0.06, 0.08, 0.10, 0.13, 0.18, 0.22, 0.30, 1],
+            ease: "easeInOut",
+          }}
         >
-          <HandIcon />
-          {/* 8 cienkich kresek rozchodzących się w każdą stronę z czubka palca */}
-          {[0, 45, 90, 135, 180, 225, 270, 315].map((angle) => (
-            <ClickSpark key={angle} angle={angle} />
-          ))}
-        </span>
-      </motion.span>
-      <span>Zamów indywidualnie</span>
-    </Link>
+          {/* dłoń + rozbryzg obrócone o 45° w lewo; rozbryzg strzela z czubka palca */}
+          <span
+            className="relative block"
+            style={{ width: 18, height: 18, rotate: "-45deg" }}
+          >
+            <HandIcon />
+            {/* 8 cienkich kresek rozchodzących się w każdą stronę z czubka palca */}
+            {[0, 45, 90, 135, 180, 225, 270, 315].map((angle) => (
+              <ClickSpark key={angle} angle={angle} />
+            ))}
+          </span>
+        </motion.span>
+        <span>Zamów indywidualnie</span>
+      </Link>
+    </div>
   );
 }
