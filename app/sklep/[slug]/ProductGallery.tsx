@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { ShoppingBag, ChevronLeft, ChevronRight } from "lucide-react";
+import AiImageBadge from "@/components/ui/AiImageBadge";
+import { isAiGeneratedImage } from "@/lib/ai";
 
 /** Poniżej tylu pikseli gest traktujemy jako drgnięcie palca, nie przesunięcie. */
 const AXIS_LOCK_PX = 8;
@@ -386,6 +388,13 @@ export default function ProductGallery({
           </>
         )}
       </div>
+
+      {/* Oznaczenie zdjęcia z AI – pod kadrem, dla aktualnie oglądanego zdjęcia */}
+      {isAiGeneratedImage(images[activeImage] ?? "") && (
+        <div className="flex justify-end -mt-2">
+          <AiImageBadge />
+        </div>
+      )}
 
       {hasMany && (
         <div className="flex gap-3 overflow-x-auto">
