@@ -12,6 +12,7 @@ import { db, withDbRetry } from "@/lib/db";
 import { getSettings } from "@/lib/settings";
 import { getCategories, categoryLabel } from "@/lib/categories";
 import ProductPriceTag from "@/components/ui/ProductPriceTag";
+import ProductBundleNotes from "@/components/ui/ProductBundleNotes";
 import { BUNDLED_SHIPPING_KEY, bundleFromSettings, bundlePrice } from "@/lib/bundled-shipping";
 
 export const revalidate = 60;
@@ -277,19 +278,19 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
             {/* Wysyłka */}
             <div className="mt-6 pt-6 border-t border-sand space-y-3">
-              <div className="flex items-center gap-3 text-xs text-charcoal/80">
-                <Truck size={14} strokeWidth={1.5} className="shrink-0 text-clay" />
-                <span>
-                  {bundle.enabled ? (
-                    <>Darmowa wysyłka</>
-                  ) : (
-                    <>
-                      Wysyłka {shippingCost.toFixed(0)} zł
-                      {freeEnabled && ` · bezpłatna od ${freeFrom.toFixed(0)} zł`}
-                    </>
-                  )}
-                </span>
-              </div>
+              {bundle.enabled ? (
+                /* Promocja „Wielosztuki” – darmowa wysyłka i zachęta do rabatu,
+                   obie na zielono, w jednym miejscu pod przyciskiem koszyka */
+                <ProductBundleNotes bundle={bundle} />
+              ) : (
+                <div className="flex items-center gap-3 text-xs text-charcoal/80">
+                  <Truck size={14} strokeWidth={1.5} className="shrink-0 text-clay" />
+                  <span>
+                    Wysyłka {shippingCost.toFixed(0)} zł
+                    {freeEnabled && ` · bezpłatna od ${freeFrom.toFixed(0)} zł`}
+                  </span>
+                </div>
+              )}
               <div className="flex items-center gap-3 text-xs text-charcoal/80">
                 <Clock size={14} strokeWidth={1.5} className="shrink-0 text-clay" />
                 <span>Czas realizacji: {shippingTime}</span>
