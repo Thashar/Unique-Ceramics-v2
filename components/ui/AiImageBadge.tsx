@@ -7,23 +7,38 @@ import { Sparkles, Info } from "lucide-react";
 export const AI_IMAGE_NOTICE =
   "Wybrane elementy grafiki, takie jak tło lub elementy towarzyszące zostały wygenerowane przy wsparciu AI.";
 
+/** Rozmiary dopasowane do miejsca: karta produktu, kafelek listy, widok kompaktowy. */
+const SIZES = {
+  lg: { text: "text-[11px] md:text-xs", icon: "w-3.5 h-3.5", gap: "gap-1.5", pad: "px-2 py-1" },
+  md: { text: "text-[10px]", icon: "w-3 h-3", gap: "gap-1", pad: "px-1.5 py-0.5" },
+  sm: { text: "text-[9px]", icon: "w-2.5 h-2.5", gap: "gap-0.5", pad: "px-1.5 py-0.5" },
+} as const;
+
 /**
- * Oznaczenie „AI" pod zdjęciem wygenerowanym przez model (sufiks `-ai.webp`).
+ * Oznaczenie „AI" na zdjęciu wygenerowanym przez model (sufiks `-ai.webp`).
+ *
+ * Stoi w prawym dolnym rogu kadru, w ciemnej bryle – dzięki niej jest czytelne
+ * niezależnie od tego, co jest pod spodem: jasne tło pracowni czy ciemne szkliwo.
  *
  * Dymek z wyjaśnieniem pojawia się po najechaniu kursorem, a na dotyku po
  * kliknięciu – dlatego całość jest przyciskiem, a nie samym napisem. Znaczek
- * bywa umieszczony wewnątrz linku (karta produktu na liście), więc kliknięcie
- * zatrzymujemy na nim: ma pokazać wyjaśnienie, a nie otworzyć produkt.
+ * bywa umieszczony wewnątrz linku (karta produktu na liście) i wewnątrz kadru
+ * z gestami (galeria), więc zdarzenia zatrzymujemy na nim: kliknięcie ma pokazać
+ * wyjaśnienie, a nie otworzyć produkt ani włączyć lupy.
  */
 export default function AiImageBadge({
   size = "md",
+  bare = false,
   className = "",
 }: {
-  size?: "sm" | "md";
+  size?: keyof typeof SIZES;
+  /** true = bez własnej bryły; znaczek dziedziczy tło z kontenera (licznik zdjęć na mobile). */
+  bare?: boolean;
   className?: string;
 }) {
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const s = SIZES[size];
 
   useEffect(() => {
     if (!open) return;
@@ -45,40 +60,39 @@ export default function AiImageBadge({
     };
   }, [open]);
 
-  const small = size === "sm";
-
   return (
     <div ref={wrapperRef} className={`relative inline-flex ${className}`}>
       {open && (
         <p
           role="tooltip"
-          className={`absolute bottom-full right-0 mb-2 z-20 bg-espresso text-cream leading-relaxed shadow-lg ${
-            small ? "w-44 text-[10px] px-2.5 py-2" : "w-60 text-[11px] px-3 py-2.5"
-          }`}
+          className={`absolute bottom-full right-0 mb-2 z-20 w-56 max-w-[70vw] bg-espresso text-cream text-[11px] leading-relaxed px-3 py-2.5 shadow-lg`}
         >
           {AI_IMAGE_NOTICE}
         </p>
       )}
       <button
         type="button"
-        // Karta produktu na liście jest linkiem – bez zatrzymania zdarzenia
-        // kliknięcie w znaczek otwierałoby stronę produktu zamiast wyjaśnienia
+        // Karta produktu na liście jest linkiem, a kadr galerii ma gesty i lupę –
+        // bez zatrzymania zdarzeń kliknięcie w znaczek robiłoby coś innego niż
+        // pokazanie wyjaśnienia
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
           setOpen((v) => !v);
         }}
+        onPointerDown={(e) => e.stopPropagation()}
+        onTouchStart={(e) => e.stopPropagation()}
         onMouseEnter={() => setOpen(true)}
         onMouseLeave={() => setOpen(false)}
         aria-label={AI_IMAGE_NOTICE}
         aria-expanded={open}
-        className={`inline-flex items-center text-clay hover:text-espresso transition-colors tracking-wider uppercase ${
-          small ? "gap-1 text-[9px]" : "gap-1.5 text-[10px]"
+        className={`inline-flex items-center tracking-wider uppercase text-cream transition-colors ${s.gap} ${s.text} ${
+          bare ? "" : `bg-espresso/85 hover:bg-espresso ${s.pad}`
         }`}
       >
-        <Sparkles size={small ? 11 : 13} strokeWidth={1.5} aria-hidden="true" />
+        <Sparkles className={s.icon} strokeWidth={1.5} aria-hidden="true" />
         AI
-        <Info size={small ? 10 : 12} strokeWidth={1.5} aria-hidden="true" />
+        <Info className={s.icon} strokeWidth={1.5} aria-hidden="true" />
       </button>
     </div>
   );
