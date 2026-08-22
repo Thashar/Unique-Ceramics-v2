@@ -403,7 +403,7 @@ export default function CheckoutForm({
                   <span>Wysyłka</span>
                   <span>
                     {bundle.enabled && shipping > 0 ? (
-                      <span className="text-green-700">0,00 zł · w cenie produktu</span>
+                      <span className="text-green-700">Darmowa wysyłka</span>
                     ) : shipping === 0 ? (
                       <span className="text-green-700">{shippingMethod === "pickup" ? "Odbiór osobisty" : "Gratis"}</span>
                     ) : (
@@ -411,12 +411,6 @@ export default function CheckoutForm({
                     )}
                   </span>
                 </div>
-                {bundle.enabled && shippingMethod === "pickup" && (
-                  <p className="text-xs text-green-700">
-                    Przy odbiorze osobistym nie płacisz za przesyłkę – kwota jest niższa o{" "}
-                    {bundle.surcharge.toFixed(2).replace(".", ",")} zł.
-                  </p>
-                )}
                 <div className="flex justify-between font-serif text-xl text-espresso pt-2 border-t border-sand">
                   <span>Razem</span>
                   <span>{total.toFixed(2).replace(".", ",")} zł</span>
