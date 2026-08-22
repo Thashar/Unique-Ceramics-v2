@@ -17,14 +17,14 @@ const SIZES = {
 /**
  * Oznaczenie „AI" na zdjęciu wygenerowanym przez model (sufiks `-ai.webp`).
  *
- * Stoi w prawym dolnym rogu kadru, w ciemnej bryle – dzięki niej jest czytelne
- * niezależnie od tego, co jest pod spodem: jasne tło pracowni czy ciemne szkliwo.
+ * Stoi pod galerią, w ciemnej bryle – czytelnej niezależnie od tego, co jest
+ * obok, i spójnej z licznikiem zdjęć w kadrze.
  *
  * Dymek z wyjaśnieniem pojawia się po najechaniu kursorem, a na dotyku po
  * kliknięciu – dlatego całość jest przyciskiem, a nie samym napisem. Znaczek
- * bywa umieszczony wewnątrz linku (karta produktu na liście) i wewnątrz kadru
- * z gestami (galeria), więc zdarzenia zatrzymujemy na nim: kliknięcie ma pokazać
- * wyjaśnienie, a nie otworzyć produkt ani włączyć lupy.
+ * bywa umieszczany w kadrze z gestami albo wewnątrz linku, więc zdarzenia
+ * zatrzymujemy na nim: kliknięcie ma pokazać wyjaśnienie, a nie otworzyć
+ * produktu ani włączyć lupy.
  */
 export default function AiImageBadge({
   size = "md",
@@ -65,7 +65,9 @@ export default function AiImageBadge({
       {open && (
         <p
           role="tooltip"
-          className={`absolute bottom-full right-0 mb-2 z-20 w-56 max-w-[70vw] bg-espresso text-cream text-[11px] leading-relaxed px-3 py-2.5 shadow-lg`}
+          // Dymek wyrasta w prawo od znaczka – ten stoi przy lewej krawędzi kolumny,
+          // więc w drugą stronę wychodziłby poza układ strony na wąskim ekranie
+          className="absolute bottom-full left-0 mb-2 z-20 w-56 max-w-[70vw] bg-espresso text-cream text-[11px] leading-relaxed px-3 py-2.5 shadow-lg"
         >
           {AI_IMAGE_NOTICE}
         </p>
