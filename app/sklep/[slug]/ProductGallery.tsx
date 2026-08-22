@@ -386,27 +386,11 @@ export default function ProductGallery({
           </>
         )}
 
-        {/* Prawy dolny róg kadru: licznik zdjęć (tylko na dotyku – na desktopie
-            widać miniatury) i oznaczenie zdjęcia z AI. Gdy widać oba, dzielą
-            jedną bryłę, żeby nie walczyć o ten sam róg zdjęcia. */}
-        {(hasMany || aiImage) && (
-          <div
-            // Bez zdjęcia z AI bryła zawiera sam licznik, więc na desktopie
-            // (gdzie licznik jest zbędny – widać miniatury) znika w całości
-            className={`absolute bottom-3 right-3 flex items-center gap-2 bg-espresso/85 px-2 py-1 text-cream ${
-              aiImage ? "" : "md:hidden"
-            }`}
-          >
-            {hasMany && (
-              <span className="md:hidden text-[11px] tabular-nums">
-                {activeImage + 1} / {images.length}
-              </span>
-            )}
-            {hasMany && aiImage && (
-              <span aria-hidden="true" className="md:hidden w-px h-3 bg-cream/40" />
-            )}
-            {aiImage && <AiImageBadge size="lg" bare />}
-          </div>
+        {/* Licznik zdjęć – tylko na dotyku, na desktopie widać miniatury */}
+        {hasMany && (
+          <span className="md:hidden absolute bottom-3 right-3 bg-espresso/85 text-cream text-[11px] px-2 py-1 tabular-nums">
+            {activeImage + 1} / {images.length}
+          </span>
         )}
       </div>
 
@@ -434,6 +418,14 @@ export default function ProductGallery({
               />
             </button>
           ))}
+        </div>
+      )}
+
+      {/* Oznaczenie zdjęcia z AI – poza kadrem, pod miniaturami: na wąskim
+          ekranie wypada dokładnie między wyborem zdjęć a kategorią produktu */}
+      {aiImage && (
+        <div className="flex">
+          <AiImageBadge size="lg" />
         </div>
       )}
     </div>
