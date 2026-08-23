@@ -3,9 +3,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Truck, Package, MapPin } from "lucide-react";
+import { Truck, Package, MapPin, Tag, X, Loader2 } from "lucide-react";
 import { useCart } from "@/lib/cart";
-import { bundleSummary, type BundleConfig } from "@/lib/bundled-shipping";
+import { type BundleConfig } from "@/lib/bundled-shipping";
+import {
+  normalizeCode,
+  priceOrder,
+  type DiscountCodeInfo,
+} from "@/lib/discount-code";
 import { validateAddress, validateContact } from "@/lib/address-validation";
 import ClayRule from "@/components/ui/ClayRule";
 import dynamic from "next/dynamic";
@@ -66,29 +71,74 @@ export default function CheckoutForm({
   savedAddressComplete,
 }: Props) {
   const router = useRouter();
-  const { items, subtotal, clearCart } = useCart();
+  const { items, clearCart } = useCart();
 
   const [shippingMethod, setShippingMethod] = useState<"courier" | "parcel_locker" | "pickup">("courier");
   const [parcelLockerCode, setParcelLockerCode] = useState("");
 
-  // Koszt wysyłki zależy od wybranej metody; darmowa wysyłka stosuje się do obu.
-  // W promocji „Wielosztuki" próg nie działa – wysyłka jest już doliczona
-  // do ceny pierwszego produktu (tak samo liczy serwer w /api/checkout)
-  function methodShippingCost(method: string): number {
-    // Promocja „Wielosztuki”: narzut siedzi w cenach katalogowych, więc kwota
-    // jest ta sama dla każdej metody – także dla odbioru osobistego. Inaczej
-    // wybór dostawy korygowałby rachunek, choć wysyłka ma być darmowa
-    if (bundle.enabled) return bundle.surcharge;
-    if (method === "pickup") return 0;
-    const raw = method === "parcel_locker" ? shippingCostParcelLocker : shippingCostCourier;
-    return shippingFreeEnabled && subtotal >= shippingFreeFrom ? 0 : raw;
+  // Kod rabatowy: procent i zasady dostajemy z serwera (`/api/discount-code`),
+  // kwoty liczy `priceOrder` – ta sama funkcja, której użyje `/api/checkout`
+  const [codeInput, setCodeInput] = useState("");
+  const [appliedCode, setAppliedCode] = useState<DiscountCodeInfo | null>(null);
+  const [codeError, setCodeError] = useState("");
+  const [codeChecking, setCodeChecking] = useState(false);
+
+  // Cała kwota zamówienia w jednym miejscu: przeceny produktów, promocja
+  // „Wielosztuki" i kod rabatowy (łączony albo korzystniejszy z dwóch wariantów)
+  function pricingFor(method: "courier" | "parcel_locker" | "pickup") {
+    return priceOrder({
+      items,
+      bundle,
+      code: appliedCode,
+      shipping: {
+        method,
+        courier: shippingCostCourier,
+        parcelLocker: shippingCostParcelLocker,
+        freeEnabled: shippingFreeEnabled,
+        freeFrom: shippingFreeFrom,
+      },
+    });
   }
 
-  const shipping = methodShippingCost(shippingMethod);
-  const total = subtotal + shipping;
-  // Rozbicie pozycji na ceny pokazywane klientowi: przy promocji „Wielosztuki”
-  // rabat schodzi w tym samym procencie z każdej pozycji
-  const summary = bundleSummary(items, bundle);
+  const pricing = pricingFor(shippingMethod);
+  const shipping = pricing.shippingCost;
+  const total = pricing.total;
+  const summary = pricing.display;
+  // Kod niełączony wchodzi tylko wtedy, gdy daje niższą kwotę niż promocje sklepu
+  const codeIgnored = appliedCode !== null && pricing.appliedCode === null;
+
+  async function applyCode(e: React.MouseEvent | React.KeyboardEvent) {
+    e.preventDefault();
+    const code = normalizeCode(codeInput);
+    if (!code) return;
+    setCodeChecking(true);
+    setCodeError("");
+    try {
+      const res = await fetch("/api/discount-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.code) {
+        setAppliedCode(null);
+        setCodeError(data?.error ?? "Kod jest nieprawidłowy lub wygasł");
+        return;
+      }
+      setAppliedCode({ code: data.code, percent: data.percent, stackable: data.stackable });
+      setCodeInput(data.code);
+    } catch {
+      setCodeError("Nie udało się sprawdzić kodu. Spróbuj ponownie.");
+    } finally {
+      setCodeChecking(false);
+    }
+  }
+
+  function clearCode() {
+    setAppliedCode(null);
+    setCodeInput("");
+    setCodeError("");
+  }
 
   // Zablokuj złożenie zamówienia jeśli zalogowany użytkownik nie ma kompletnego adresu
   // (null = gość – brak blokady; false = niekompletny; true = OK)
@@ -205,9 +255,11 @@ export default function CheckoutForm({
         acceptTerms: isLoggedIn ? true : acceptTerms,
         parcelLockerCode: shippingMethod === "parcel_locker" ? parcelLockerCode.trim() : null,
         items: items.map((i) => ({ productId: i.id, name: i.name, price: i.price, quantity: i.quantity })),
-        subtotal,
+        subtotal: pricing.itemsTotal,
         shippingCost: shipping,
         total,
+        // Serwer i tak sprawdza kod w bazie i liczy kwotę od nowa
+        discountCode: appliedCode?.code ?? null,
       }),
     });
 
@@ -221,7 +273,9 @@ export default function CheckoutForm({
     const data = await res.json();
     clearCart();
     if (data.stripeUrl) {
-      window.location.href = data.stripeUrl;
+      // assign() zamiast przypisania do location.href – reguła react-hooks/immutability
+      // traktuje przypisanie do obiektu spoza komponentu jako mutację
+      window.location.assign(data.stripeUrl);
     } else {
       router.push(`/zamowienie/potwierdzenie?id=${data.orderId}`);
     }
@@ -317,14 +371,17 @@ export default function CheckoutForm({
                       <div className="flex items-center justify-between">
                         <p className="text-sm font-medium text-espresso">{label}</p>
                         {(() => {
-                          const cost = methodShippingCost(value);
+                          // Kwota liczona tą samą funkcją co całe zamówienie –
+                          // przy kodzie niełączonym promocja „Wielosztuki” może
+                          // ustąpić kodowi, a wtedy wysyłka ma normalną cenę
+                          const forMethod = pricingFor(value);
                           if (value === "pickup") return <span className="text-xs text-green-700 font-medium">Bezpłatne</span>;
                           // W promocji „Wielosztuki” klient nigdy nie widzi kwoty wysyłki –
                           // narzut siedzi w cenach katalogowych, a przy wyborze dostawy
                           // ma stać to samo, co w koszyku
-                          if (bundle.enabled) return <span className="text-xs text-green-700 font-medium">Darmowa wysyłka</span>;
-                          if (cost === 0) return <span className="text-xs text-green-700 font-medium">Gratis</span>;
-                          return <span className="text-xs text-charcoal/80">{cost} zł</span>;
+                          if (forMethod.bundle.enabled) return <span className="text-xs text-green-700 font-medium">Darmowa wysyłka</span>;
+                          if (forMethod.shippingCost === 0) return <span className="text-xs text-green-700 font-medium">Gratis</span>;
+                          return <span className="text-xs text-charcoal/80">{forMethod.shippingCost} zł</span>;
                         })()}
                       </div>
                       <p className="text-xs text-charcoal/80 mt-0.5">{desc}</p>
@@ -430,8 +487,66 @@ export default function CheckoutForm({
                         −{summary.discountTotal.toFixed(2).replace(".", ",")} zł
                       </span>
                     </div>
+                    {/* Udział kodu w rabacie – wiersz „Rabat” obejmuje wszystko,
+                        więc kod pokazujemy jako dopisek, a nie kolejne odjęcie */}
+                    {pricing.appliedCode && pricing.codeDiscount > 0 && (
+                      <p className="text-xs text-green-700">
+                        w tym kod {pricing.appliedCode.code} (−{pricing.appliedCode.percent}%):
+                        {" "}−{pricing.codeDiscount.toFixed(2).replace(".", ",")} zł
+                      </p>
+                    )}
                   </>
                 )}
+
+                {/* Kod rabatowy */}
+                <div className="pt-3 border-t border-sand">
+                  {appliedCode ? (
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="inline-flex items-center gap-2 text-espresso">
+                        <Tag size={14} strokeWidth={1.5} className="text-clay shrink-0" />
+                        <span className="font-medium">{appliedCode.code}</span>
+                        <span className="text-charcoal/80">−{appliedCode.percent}%</span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={clearCode}
+                        className="inline-flex items-center gap-1 text-xs text-charcoal/80 hover:text-red-700 transition-colors"
+                      >
+                        <X size={13} strokeWidth={1.5} />
+                        Usuń
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <input
+                        value={codeInput}
+                        onChange={(e) => { setCodeInput(e.target.value.toUpperCase()); setCodeError(""); }}
+                        onKeyDown={(e) => { if (e.key === "Enter") applyCode(e); }}
+                        placeholder="Kod rabatowy"
+                        aria-label="Kod rabatowy"
+                        className="flex-1 min-w-0 bg-warm-white border border-sand focus:border-clay outline-none px-3 py-2 text-espresso text-sm uppercase tracking-wider"
+                      />
+                      <button
+                        type="button"
+                        onClick={applyCode}
+                        disabled={codeChecking || !codeInput.trim()}
+                        className="shrink-0 inline-flex items-center gap-2 border border-sand bg-warm-white hover:bg-sand disabled:opacity-40 disabled:cursor-not-allowed text-espresso text-xs tracking-widest uppercase px-4 py-2 transition-colors"
+                      >
+                        {codeChecking && <Loader2 size={13} className="animate-spin" aria-hidden="true" />}
+                        Zastosuj
+                      </button>
+                    </div>
+                  )}
+                  {codeError && <p className="mt-2 text-xs text-red-700">{codeError}</p>}
+                  {/* Kod niełączony wchodzi tylko wtedy, gdy wychodzi taniej niż
+                      promocje sklepu – inaczej zostaje niewykorzystany */}
+                  {codeIgnored && (
+                    <p className="mt-2 text-xs text-amber-700">
+                      Ten kod nie łączy się z innymi rabatami, a promocje sklepu dają
+                      niższą cenę – zostawiamy korzystniejszy wariant.
+                    </p>
+                  )}
+                </div>
               </div>
               <div className="border-t border-sand pt-4 space-y-2 text-sm">
                 {/* Przy odbiorze osobistym nie ma żadnej wysyłki – wiersz nazywa się

@@ -219,6 +219,16 @@ export default async function OrderDetailPage({
                   <span>−{bundleLines.discountTotal.toLocaleString("pl-PL", { style: "currency", currency: "PLN", minimumFractionDigits: 0 })}</span>
                 </div>
               )}
+              {order.discountCode && (
+                <div className="flex justify-between text-sm text-green-700">
+                  <span>Kod rabatowy {order.discountCode}</span>
+                  <span>
+                    {order.discountAmount
+                      ? `−${order.discountAmount.toLocaleString("pl-PL", { style: "currency", currency: "PLN", minimumFractionDigits: 0 })}`
+                      : "uwzględniony"}
+                  </span>
+                </div>
+              )}
               <div className="flex justify-between text-sm text-charcoal/80">
                 <span>{order.shippingMethod === "pickup" ? "Odbiór osobisty" : "Wysyłka"}</span>
                 <span>

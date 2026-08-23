@@ -90,6 +90,11 @@ model Order {
   trackingNumber   String?
   trackingCarrier  String?                        // DPD | DHL | InPost | PocztaPolska
 
+  // Użyty kod rabatowy: nazwa i kwota, o jaką obniżył zamówienie.
+  // Kwota jest już wliczona w ceny pozycji – pola służą do zestawień i podglądu.
+  discountCode   String?
+  discountAmount Float?
+
   paidAt DateTime?   // data i godzina wpłaty (podana przez admina przy oznaczaniu „Opłacone"); przychód rozpoznawany wg tej daty
 
   createdAt DateTime @default(now())
@@ -140,6 +145,26 @@ model Product {
   @@index([active, stock])
   @@index([active, featured, createdAt(sort: Desc)])
   @@index([slug, active])
+}
+
+// ─── Kody rabatowe ────────────────────────────────────────────────────────────
+
+model DiscountCode {
+  id        String    @id @default(cuid())
+  code      String    @unique          // zawsze wielkimi literami
+  percent   Int                        // rabat w %, 1–90
+  active    Boolean   @default(true)
+  // true = rabat dokłada się do przecen produktów i promocji „Wielosztuki”;
+  // false = kod działa sam, a sklep wybiera wariant korzystniejszy dla klienta
+  stackable Boolean   @default(true)
+  // Okno obowiązywania w UTC (panel ustawia je w czasie polskim)
+  startsAt  DateTime?
+  endsAt    DateTime?
+  usedCount Int       @default(0)      // ile zamówień skorzystało z kodu
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([active])
 }
 
 // ─── Enums ────────────────────────────────────────────────────────────────────

@@ -153,6 +153,17 @@ export default async function AdminOrderDetailPage({
           })}
         </div>
         <div className="border-t border-sand mt-4 pt-4 space-y-2">
+          {/* Kod rabatowy – kwota jest już w cenach pozycji, wiersz jest śladem */}
+          {order.discountCode && (
+            <div className="flex justify-between text-sm text-green-700">
+              <span>Kod rabatowy {order.discountCode}</span>
+              <span className="tabular-nums">
+                {order.discountAmount
+                  ? `−${order.discountAmount.toFixed(2).replace(".", ",")} zł`
+                  : "użyty"}
+              </span>
+            </div>
+          )}
           <div className="flex justify-between text-sm text-charcoal/80">
             <span>Wysyłka</span>
             <span className="tabular-nums">

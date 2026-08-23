@@ -14,6 +14,13 @@ const SWIPE_MIN_RATIO = 0.15;
 /** Opór na krańcach taśmy – palec jedzie, ale wyraźnie wolniej. */
 const EDGE_RESISTANCE = 3;
 
+/** Ile miniatur ma się zmieścić w rzędzie na telefonie (odstęp `gap-3` = 0,75 rem). */
+const THUMBS_PER_VIEW = 3;
+const THUMBS_GAP_REM = 0.75;
+/** Wskaźnik przewijania miniatur: po puszczeniu palca gaśnie powoli. */
+const THUMB_HINT_HIDE_MS = 600;
+const THUMB_HINT_FADE_MS = 700;
+
 /** Lupa: ile trzeba przytrzymać palcem, jak duże jest szkło i jak mocno powiększa. */
 const HOLD_MS = 500;
 const LENS_SIZE = 176;
@@ -55,6 +62,13 @@ export default function ProductGallery({
   const loading = useRef<Map<string, Promise<void>>>(new Map());
   /** Punkt, w którym ma się pojawić lupa, gdy zdjęcie jeszcze się wczytuje. */
   const pending = useRef<Lens | null>(null);
+
+  // Pasek miniatur: własny wskaźnik przewijania zamiast systemowego scrollbara.
+  // Pokazuje się w trakcie przesuwania i gaśnie powoli po puszczeniu – tak samo
+  // na dotyku i na myszy (zdarzenie `scroll` obsługuje oba przypadki).
+  const thumbsRef = useRef<HTMLDivElement>(null);
+  const [thumbHint, setThumbHint] = useState({ visible: false, progress: 0, size: 1 });
+  const thumbHintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const lensActive = lensStyle !== null;
   // Oznaczenie dotyczy całej galerii: wystarczy, że jedno ze zdjęć produktu
@@ -182,6 +196,35 @@ export default function ProductGallery({
 
   // Sprzątanie zegara przy odmontowaniu – inaczej lupa mogłaby się włączyć po wyjściu
   useEffect(() => cancelHold, []);
+
+  /**
+   * Wskaźnik przewijania miniatur. Zapala się przy każdym ruchu taśmy i gaśnie
+   * po chwili bez ruchu – dzięki temu na telefonie nie ma stałego paska pod
+   * miniaturami, a widać, że rząd da się przesunąć.
+   */
+  const handleThumbsScroll = () => {
+    const el = thumbsRef.current;
+    if (!el) return;
+    const scrollable = el.scrollWidth - el.clientWidth;
+    if (scrollable <= 1) return;
+    setThumbHint({
+      visible: true,
+      progress: Math.min(1, Math.max(0, el.scrollLeft / scrollable)),
+      size: el.clientWidth / el.scrollWidth,
+    });
+    if (thumbHintTimer.current) clearTimeout(thumbHintTimer.current);
+    thumbHintTimer.current = setTimeout(
+      () => setThumbHint((prev) => ({ ...prev, visible: false })),
+      THUMB_HINT_HIDE_MS
+    );
+  };
+
+  useEffect(
+    () => () => {
+      if (thumbHintTimer.current) clearTimeout(thumbHintTimer.current);
+    },
+    []
+  );
 
   const go = (dir: -1 | 1) => {
     // Zmiana zdjęcia zamyka lupę – inaczej szkło pokazywałoby poprzedni kadr
@@ -397,29 +440,60 @@ export default function ProductGallery({
       </div>
 
       {hasMany && (
-        <div className="flex gap-3 overflow-x-auto">
-          {images.map((img, i) => (
-            <button
-              key={i}
-              onClick={() => {
-                closeLens();
-                setActiveImage(i);
+        <div>
+          {/* Systemowy scrollbar chowamy (`no-scrollbar`) – jego miejsce zajmuje
+              wskaźnik niżej, widoczny tylko w trakcie przesuwania */}
+          <div
+            ref={thumbsRef}
+            onScroll={handleThumbsScroll}
+            className="flex gap-3 overflow-x-auto no-scrollbar"
+          >
+            {images.map((img, i) => (
+              <button
+                key={i}
+                onClick={() => {
+                  closeLens();
+                  setActiveImage(i);
+                }}
+                aria-label={`Pokaż zdjęcie ${i + 1}`}
+                aria-current={activeImage === i}
+                /* Na telefonie w rzędzie mieszczą się dokładnie trzy miniatury
+                   na szerokość oglądanego zdjęcia – szerokość liczona z odstępu,
+                   więc odstępy zostają równe. Na desktopie zostaje stałe 112 px */
+                style={{
+                  "--thumb-w": `calc((100% - ${(THUMBS_PER_VIEW - 1) * THUMBS_GAP_REM}rem) / ${THUMBS_PER_VIEW})`,
+                } as React.CSSProperties}
+                className={`relative aspect-[4/3] w-[var(--thumb-w)] md:w-28 overflow-hidden bg-cream flex-shrink-0 border-2 transition-colors ${
+                  activeImage === i ? "border-clay" : "border-transparent"
+                }`}
+              >
+                <Image
+                  src={img}
+                  alt={`${name} ${i + 1}`}
+                  fill
+                  className="object-contain"
+                  sizes="(max-width: 767px) 33vw, 112px"
+                />
+              </button>
+            ))}
+          </div>
+
+          {/* Wskaźnik przewijania: zapala się od razu, gaśnie powoli po
+              puszczeniu. Przesunięcie i szerokość bez animacji – mają jechać
+              razem z palcem, animujemy samą przezroczystość */}
+          <div className="relative mt-2 h-0.5" aria-hidden="true">
+            <div
+              className="absolute inset-y-0 bg-clay rounded-full"
+              style={{
+                width: `${thumbHint.size * 100}%`,
+                left: `${thumbHint.progress * (100 - thumbHint.size * 100)}%`,
+                opacity: thumbHint.visible ? 1 : 0,
+                transition: thumbHint.visible
+                  ? "opacity 120ms ease-out"
+                  : `opacity ${THUMB_HINT_FADE_MS}ms ease-in`,
               }}
-              aria-label={`Pokaż zdjęcie ${i + 1}`}
-              aria-current={activeImage === i}
-              className={`relative aspect-[4/3] w-28 overflow-hidden bg-cream flex-shrink-0 border-2 transition-colors ${
-                activeImage === i ? "border-clay" : "border-transparent"
-              }`}
-            >
-              <Image
-                src={img}
-                alt={`${name} ${i + 1}`}
-                fill
-                className="object-contain"
-                sizes="112px"
-              />
-            </button>
-          ))}
+            />
+          </div>
         </div>
       )}
 

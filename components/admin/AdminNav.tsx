@@ -8,7 +8,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import {
   LayoutDashboard, Package, ShoppingBag, ClipboardList,
   Settings, LogOut, Menu, X, ChevronDown, ChevronRight, ExternalLink, Tag,
-  GalleryHorizontal, BarChart2,
+  GalleryHorizontal, BarChart2, Ticket,
 } from "lucide-react";
 
 const topLinks = [
@@ -16,6 +16,7 @@ const topLinks = [
   { href: "/admin/kategorie",               label: "Kategorie",         icon: Tag },
   { href: "/admin/produkty",                label: "Produkty",          icon: Package },
   { href: "/admin/projekty",                label: "Projekty",          icon: GalleryHorizontal },
+  { href: "/admin/kody-rabatowe",           label: "Kody rabatowe",     icon: Ticket },
   { href: "/admin/zamowienia",              label: "Zamówienia",        icon: ShoppingBag },
   { href: "/admin/zamowienia-indywidualne", label: "Zam. indywidualne", icon: ClipboardList },
   { href: "/admin/analityki",              label: "Analityka",          icon: BarChart2 },

@@ -50,3 +50,8 @@ h1, h2, h3, h4 {
 
 /* Ukryty scrollbar dla karuzeli */
 .snap-x::-webkit-scrollbar { display: none; }
+
+/* Poziome paski przewijane palcem (miniatury produktu, filtry kategorii)
+   – systemowy scrollbar zastępuje w nich własny wskaźnik albo jego brak */
+.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
