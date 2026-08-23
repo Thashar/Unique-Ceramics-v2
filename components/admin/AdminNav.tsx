@@ -8,7 +8,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import {
   LayoutDashboard, Package, ShoppingBag, ClipboardList,
   Settings, LogOut, Menu, X, ChevronDown, ChevronRight, ExternalLink, Tag,
-  GalleryHorizontal, BarChart2, Ticket,
+  GalleryHorizontal, BarChart2,
 } from "lucide-react";
 
 const topLinks = [
@@ -16,13 +16,15 @@ const topLinks = [
   { href: "/admin/kategorie",               label: "Kategorie",         icon: Tag },
   { href: "/admin/produkty",                label: "Produkty",          icon: Package },
   { href: "/admin/projekty",                label: "Projekty",          icon: GalleryHorizontal },
-  { href: "/admin/kody-rabatowe",           label: "Kody rabatowe",     icon: Ticket },
   { href: "/admin/zamowienia",              label: "Zamówienia",        icon: ShoppingBag },
   { href: "/admin/zamowienia-indywidualne", label: "Zam. indywidualne", icon: ClipboardList },
   { href: "/admin/analityki",              label: "Analityka",          icon: BarChart2 },
 ];
 
-const settingsItems = [
+/** Ścieżka pozycji „Kody rabatowe" – osobne strony, nie zakładka `?s=`. */
+const DISCOUNT_CODES_HREF = "/admin/kody-rabatowe";
+
+const settingsItems: { id: string; label: string; href?: string }[] = [
   { id: "strona_glowna", label: "Strona główna" },
   { id: "omnie",     label: "O mnie" },
   { id: "warsztaty", label: "Warsztaty" },
@@ -34,6 +36,9 @@ const settingsItems = [
   { id: "zam_indywidualne", label: "Zam. indywidualne" },
   { id: "ai",               label: "AI (zdjęcia i opisy)" },
   { id: "promocje",         label: "Promocje" },
+  // Kody rabatowe mają własne strony (lista + formularz), więc pozycja prowadzi
+  // pod adres, a nie do zakładki ustawień
+  { id: "kody_rabatowe",    label: "Kody rabatowe", href: DISCOUNT_CODES_HREF },
 ];
 
 const paymentItems = [
@@ -46,7 +51,10 @@ function AdminNavInner({ onClose }: { onClose?: () => void }) {
   const searchParams = useSearchParams();
   const activeSection = searchParams.get("s") ?? "strona_glowna";
 
-  const onSettings = pathname.startsWith("/admin/ustawienia");
+  const onDiscountCodes = pathname.startsWith(DISCOUNT_CODES_HREF);
+  // Lista ustawień zostaje otwarta również na stronach kodów rabatowych –
+  // to jedna z jej pozycji, choć ma własny adres
+  const onSettings = pathname.startsWith("/admin/ustawienia") || onDiscountCodes;
   const onPayments = activeSection.startsWith("platnosci_");
   const [paymentsManualOpen, setPaymentsManualOpen] = useState(false);
   const paymentsOpen = paymentsManualOpen || onPayments;
@@ -103,20 +111,26 @@ function AdminNavInner({ onClose }: { onClose?: () => void }) {
 
           {settingsOpen && (
             <div className="ml-4 border-l border-white/10 pl-3 space-y-0.5">
-              {settingsItems.map(({ id, label }) => (
-                <Link
-                  key={id}
-                  href={`/admin/ustawienia?s=${id}`}
-                  onClick={onClose}
-                  className={`block px-2.5 py-1.5 text-xs rounded-md transition-colors ${
-                    activeSection === id
-                      ? "text-white bg-white/12 font-medium"
-                      : "text-white/50 hover:text-white hover:bg-white/8"
-                  }`}
-                >
-                  {label}
-                </Link>
-              ))}
+              {settingsItems.map(({ id, label, href }) => {
+                // Pozycja z własnym adresem świeci się od ścieżki, zakładka – od `?s=`
+                const active = href
+                  ? pathname.startsWith(href)
+                  : !onDiscountCodes && activeSection === id;
+                return (
+                  <Link
+                    key={id}
+                    href={href ?? `/admin/ustawienia?s=${id}`}
+                    onClick={onClose}
+                    className={`block px-2.5 py-1.5 text-xs rounded-md transition-colors ${
+                      active
+                        ? "text-white bg-white/12 font-medium"
+                        : "text-white/50 hover:text-white hover:bg-white/8"
+                    }`}
+                  >
+                    {label}
+                  </Link>
+                );
+              })}
 
               {/* Płatności – druga warstwa */}
               <button
