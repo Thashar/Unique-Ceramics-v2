@@ -26,7 +26,22 @@ export type ValidProduct = {
   active: boolean;
   variesFromPhoto: boolean;
   discountPercent: number;
+  /** Okno obowiązywania rabatu w UTC (null = bez ograniczenia). */
+  discountStartsAt: Date | null;
+  discountEndsAt: Date | null;
 };
+
+/** Znacznik nieprawidłowej daty – odróżnia błąd od „pola nie podano". */
+const INVALID_DATE = Symbol("invalid-date");
+
+/** Data z body: brak/pusty string → null, ISO → Date, śmieci → INVALID_DATE. */
+function parseDateField(value: unknown): Date | null | typeof INVALID_DATE {
+  if (value == null || value === "") return null;
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? INVALID_DATE : value;
+  if (typeof value !== "string") return INVALID_DATE;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? INVALID_DATE : date;
+}
 
 export function validateProduct(
   body: unknown
@@ -103,6 +118,24 @@ export function validateProduct(
     images.push(img.trim());
   }
 
+  // Okno obowiązywania rabatu – formularz przysyła ISO (czas polski przeliczony
+  // na UTC już po stronie panelu), więc tutaj sprawdzamy tylko sensowność dat
+  const startsRaw = parseDateField(b.discountStartsAt);
+  if (startsRaw === INVALID_DATE) {
+    return { ok: false, error: "Nieprawidłowa data rozpoczęcia rabatu." };
+  }
+  const endsRaw = parseDateField(b.discountEndsAt);
+  if (endsRaw === INVALID_DATE) {
+    return { ok: false, error: "Nieprawidłowa data zakończenia rabatu." };
+  }
+  if (startsRaw && endsRaw && endsRaw.getTime() <= startsRaw.getTime()) {
+    return { ok: false, error: "Koniec rabatu musi być późniejszy niż jego początek." };
+  }
+  // Bez rabatu daty nie mają znaczenia – czyścimy je, żeby po powrocie przeceny
+  // nie odżyło stare okno
+  const discountStartsAt = discountPercent > 0 ? startsRaw : null;
+  const discountEndsAt = discountPercent > 0 ? endsRaw : null;
+
   return {
     ok: true,
     data: {
@@ -117,6 +150,8 @@ export function validateProduct(
       active: Boolean(b.active),
       variesFromPhoto: Boolean(b.variesFromPhoto),
       discountPercent,
+      discountStartsAt,
+      discountEndsAt,
     },
   };
 }

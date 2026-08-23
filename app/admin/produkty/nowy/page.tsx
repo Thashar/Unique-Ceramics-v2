@@ -47,6 +47,9 @@ export default async function NewProductPage({
     active: source.active,
     variesFromPhoto: source.variesFromPhoto,
     discountPercent: source.discountPercent,
+    // Kopia przejmuje też okno rabatu – termin liczy się od tych samych dat
+    discountStartsAt: source.discountStartsAt,
+    discountEndsAt: source.discountEndsAt,
   };
 
   return (

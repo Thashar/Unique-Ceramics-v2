@@ -1,8 +1,15 @@
-// Rabat procentowy ustawiany na pojedynczym produkcie (pole `discountPercent`).
+// Rabat procentowy ustawiany na pojedynczym produkcie (pola `discountPercent`,
+// `discountStartsAt`, `discountEndsAt`).
 //
 // Rabat schodzi z **ceny bazowej** produktu i dopiero na tak policzoną cenę
 // nakłada się promocja „Wielosztuki" (narzut na wysyłkę i rabat koszykowy) –
 // dzięki temu obie promocje się sumują, a nie wykluczają.
+//
+// Rabat może obowiązywać w wyznaczonym oknie czasu (panel ustawia je w czasie
+// polskim, w bazie leży UTC). Poza oknem produkt sprzedaje się w cenie
+// podstawowej – decyduje o tym `activeDiscountPercent`, a **nie** samo pole
+// `discountPercent`, więc wszędzie, gdzie liczymy albo pokazujemy cenę,
+// pytamy o rabat tą funkcją.
 //
 // Moduł jest neutralny (same funkcje) – używa go serwer, panel admina
 // i komponenty klienckie.
@@ -44,4 +51,64 @@ export function discountedPrice(price: number, discountPercent?: number | null):
 export function shownDiscountPercent(before: number, after: number): number {
   if (before <= 0 || after >= before) return 0;
   return Math.round(((before - after) / before) * 100);
+}
+
+/** Produkt w zakresie potrzebnym do rozstrzygnięcia rabatu (pola z bazy). */
+export type DiscountWindow = {
+  discountPercent?: number | null;
+  discountStartsAt?: Date | string | null;
+  discountEndsAt?: Date | string | null;
+};
+
+/**
+ * Ile czasu wynik musi jeszcze być prawdziwy na stronach z cache'em.
+ * Zapisany HTML bywa serwowany do końca okna rewalidacji, a nigdy nie chcemy
+ * pokazać ceny niższej niż ta, którą policzy `/api/checkout`. Rabat kończący
+ * się w trakcie okna pokazujemy więc jako już nieaktywny (klient zobaczy cenę
+ * podstawową i najwyżej zapłaci mniej – nigdy więcej, niż widział).
+ */
+export const DISCOUNT_HOLD_CATALOG_MS = 60_000;      // /sklep i /sklep/[slug] – 60 s
+export const DISCOUNT_HOLD_HOME_MS = 3_600_000;      // strona główna – ISR 3600 s
+
+function timestamp(value: Date | string | null | undefined): number | null {
+  if (value == null || value === "") return null;
+  const date = value instanceof Date ? value : new Date(value);
+  const ms = date.getTime();
+  return Number.isNaN(ms) ? null : ms;
+}
+
+/**
+ * Rabat **obowiązujący w tej chwili** – 0, gdy produkt nie jest przeceniony
+ * albo gdy okno rabatu jeszcze się nie zaczęło lub już minęło.
+ *
+ * `holdMs` (patrz stałe wyżej) przesuwa koniec okna: rabat wygasający w czasie
+ * życia cache'u strony traktujemy jak nieaktywny.
+ */
+export function activeDiscountPercent(
+  product: DiscountWindow,
+  { now, holdMs = 0 }: { now?: Date; holdMs?: number } = {}
+): number {
+  const percent = normalizeDiscountPercent(product.discountPercent);
+  if (percent === 0) return 0;
+
+  const nowMs = now?.getTime() ?? Date.now();
+  const startsAt = timestamp(product.discountStartsAt);
+  const endsAt = timestamp(product.discountEndsAt);
+
+  if (startsAt !== null && startsAt > nowMs) return 0;
+  if (endsAt !== null && endsAt <= nowMs + Math.max(0, holdMs)) return 0;
+  return percent;
+}
+
+/** Stan rabatu – do opisów w panelu admina. */
+export type DiscountState = "none" | "scheduled" | "active" | "expired";
+
+export function discountState(product: DiscountWindow, now: Date = new Date()): DiscountState {
+  if (normalizeDiscountPercent(product.discountPercent) === 0) return "none";
+  const nowMs = now.getTime();
+  const startsAt = timestamp(product.discountStartsAt);
+  const endsAt = timestamp(product.discountEndsAt);
+  if (endsAt !== null && endsAt <= nowMs) return "expired";
+  if (startsAt !== null && startsAt > nowMs) return "scheduled";
+  return "active";
 }

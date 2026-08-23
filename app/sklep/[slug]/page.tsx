@@ -14,7 +14,12 @@ import { getCategories, categoryLabel } from "@/lib/categories";
 import ProductPriceTag from "@/components/ui/ProductPriceTag";
 import ProductBundleNotes from "@/components/ui/ProductBundleNotes";
 import { BUNDLED_SHIPPING_KEY, bundleFromSettings, bundlePrice } from "@/lib/bundled-shipping";
-import { discountedPrice } from "@/lib/product-price";
+import {
+  DISCOUNT_HOLD_CATALOG_MS,
+  activeDiscountPercent,
+  discountedPrice,
+} from "@/lib/product-price";
+import { formatWarsaw } from "@/lib/warsaw-time";
 
 export const revalidate = 60;
 
@@ -108,6 +113,12 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   if (!product) notFound();
 
   const bundle = bundleFromSettings(settings);
+  // Rabat produktowy liczymy raz – ta sama wartość idzie do ceny, danych
+  // strukturalnych i koszyka. Poza oknem obowiązywania (patrz `lib/product-price`)
+  // wychodzi 0, więc karta wraca do ceny podstawowej sama
+  const discountPercent = activeDiscountPercent(product, { holdMs: DISCOUNT_HOLD_CATALOG_MS });
+  // Termin pokazujemy tylko przy realnie działającym rabacie
+  const discountEndsAt = discountPercent > 0 ? product.discountEndsAt : null;
   const shippingTime = settings.shipping_time || "2–4 dni robocze";
   const shippingCost = parseFloat(settings.shipping_cost) || 18;
   const freeEnabled = settings.shipping_free_enabled === "true";
@@ -132,7 +143,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       // W promocji „Wielosztuki” dane strukturalne muszą podawać tę samą
       // cenę, którą widzi odwiedzający z pustym koszykiem
       // Cena dla wyszukiwarek to kwota realnie do zapłaty: po rabacie produktowym
-      price: bundlePrice(discountedPrice(product.price, product.discountPercent), bundle).toFixed(2),
+      price: bundlePrice(discountedPrice(product.price, discountPercent), bundle).toFixed(2),
       priceCurrency: "PLN",
       availability: product.stock > 0
         ? "https://schema.org/InStock"
@@ -214,10 +225,19 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               <ProductPriceTag
                 price={product.price}
                 bundle={bundle}
-                discountPercent={product.discountPercent}
+                discountPercent={discountPercent}
                 size="lg"
               />
             </p>
+
+            {/* Rabat z terminem – klient ma wiedzieć, do kiedy obowiązuje cena.
+                Godzina jest czasem polskim (tak samo, jak ustawia ją panel). */}
+            {discountEndsAt && (
+              <p className="-mt-4 mb-6 flex items-center gap-2 text-xs text-green-700">
+                <Clock size={14} strokeWidth={1.5} className="shrink-0" aria-hidden="true" />
+                <span>Promocyjna cena obowiązuje do {formatWarsaw(discountEndsAt)}</span>
+              </p>
+            )}
 
             {product.description && (
               // whitespace-pre-line: opis wpisywany jest w zwykłym textarea w panelu,
@@ -280,7 +300,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               id: product.id,
               slug: product.slug,
               name: product.name,
-              price: discountedPrice(product.price, product.discountPercent),
+              price: discountedPrice(product.price, discountPercent),
               images: product.images,
               stock: product.stock,
             }} />

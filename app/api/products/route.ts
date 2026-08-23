@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { activeDiscountPercent } from "@/lib/product-price";
 import { NextResponse } from "next/server";
 
 export async function GET(req: Request) {
@@ -16,5 +17,9 @@ export async function GET(req: Request) {
     orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
   });
 
-  return NextResponse.json(products);
+  // Na zewnątrz oddajemy rabat obowiązujący teraz – poza oknem wychodzi 0,
+  // tak samo jak w katalogu i w kwotach liczonych przy zamówieniu
+  return NextResponse.json(
+    products.map((p) => ({ ...p, discountPercent: activeDiscountPercent(p) }))
+  );
 }

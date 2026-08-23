@@ -5,6 +5,7 @@ import { getCategories } from "@/lib/categories";
 import { BUNDLED_SHIPPING_KEY, bundleFromSettings } from "@/lib/bundled-shipping";
 import { getShopProducts } from "@/lib/products";
 import { getSetting, getSettings } from "@/lib/settings";
+import { DISCOUNT_HOLD_CATALOG_MS, activeDiscountPercent } from "@/lib/product-price";
 import ProductGrid from "./ProductGrid";
 import FloatingOrderButton from "./FloatingOrderButton";
 import type { Metadata } from "next";
@@ -42,7 +43,12 @@ export default async function ShopPage({
       kategoria && kategoria !== "wszystkie"
         ? (p: (typeof inStock)[0]) => p.category === kategoria
         : () => true;
-    products = [...inStock.filter(filterFn), ...soldOut.filter(filterFn)];
+    // Rabat rozstrzygamy tutaj, na serwerze: kafelek dostaje procent
+    // obowiązujący teraz (0 poza oknem rabatu), a nie surowe pole z bazy
+    products = [...inStock.filter(filterFn), ...soldOut.filter(filterFn)].map((p) => ({
+      ...p,
+      discountPercent: activeDiscountPercent(p, { holdMs: DISCOUNT_HOLD_CATALOG_MS }),
+    }));
   } catch (e) {
     dbError = true;
     console.error("DB error in /sklep:", e);
