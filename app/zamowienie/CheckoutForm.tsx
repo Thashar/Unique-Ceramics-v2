@@ -416,7 +416,7 @@ export default function CheckoutForm({
                     <span className="shrink-0">{lineTotal.toFixed(2).replace(".", ",")} zł</span>
                   </div>
                 ))}
-                {bundle.enabled && summary.discountTotal > 0 && (
+                {summary.discountTotal > 0 && (
                   <>
                     <div className="flex justify-between gap-2 text-charcoal/80">
                       <span>Produkty przed rabatem</span>

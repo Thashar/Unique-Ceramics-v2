@@ -35,6 +35,9 @@ export default function CartView({ shipping }: { shipping: ShippingSettings }) {
   const total = bundle.enabled ? summary.total : subtotal;
   /** Ceny pozycji po uwzględnieniu promocji – klucz to id produktu. */
   const lineFor = new Map(summary.lines.map((l) => [l.item.id, l]));
+  // Upust obejmuje rabat produktowy i rabat za wielosztuki – pokazujemy go
+  // także wtedy, gdy promocja „Wielosztuki” jest wyłączona, a produkt przeceniony
+  const hasDiscount = summary.discountTotal > 0;
 
   if (items.length === 0) {
     return (
@@ -89,8 +92,8 @@ export default function CartView({ shipping }: { shipping: ShippingSettings }) {
                   {(() => {
                     const line = lineFor.get(item.id);
                     const zl = (v: number) => `${v.toFixed(2).replace(".", ",")} zł`;
-                    // Rabat dostaje każda sztuka – także pierwsza, w tym samym procencie
-                    if (bundle.enabled && line && line.discountPercent > 0) {
+                    // Rabat dostaje każda sztuka – także pierwsza
+                    if (line && line.discountPercent > 0) {
                       return (
                         <>
                           <span className="line-through decoration-charcoal/40">
@@ -149,12 +152,12 @@ export default function CartView({ shipping }: { shipping: ShippingSettings }) {
             <h2 className="font-serif text-2xl text-espresso mb-6">Podsumowanie</h2>
             <div className="space-y-3 mb-6">
               <div className="flex justify-between text-sm text-charcoal/80">
-                <span>{bundle.enabled ? "Produkty przed rabatem" : "Produkty"}</span>
+                <span>{hasDiscount ? "Produkty przed rabatem" : "Produkty"}</span>
                 <span>
-                  {(bundle.enabled ? summary.catalogTotal : subtotal).toFixed(2).replace(".", ",")} zł
+                  {(hasDiscount ? summary.catalogTotal : subtotal).toFixed(2).replace(".", ",")} zł
                 </span>
               </div>
-              {bundle.enabled && summary.discountTotal > 0 && (
+              {hasDiscount && (
                 <div className="flex justify-between text-sm text-green-700">
                   <span>Rabat {summary.discountPercent > 0 && `−${summary.discountPercent}%`}</span>
                   <span>−{summary.discountTotal.toFixed(2).replace(".", ",")} zł</span>
@@ -164,8 +167,8 @@ export default function CartView({ shipping }: { shipping: ShippingSettings }) {
                   rabat przysługuje i czego dotyczy */}
               {bundle.enabled && (
                 <p className="text-xs text-charcoal/80">
-                  Rabat naliczamy przy zakupie od 2 sztuk – obejmuje wszystkie produkty
-                  w zamówieniu.
+                  Rabat za wielosztuki naliczamy przy zakupie od 2 sztuk – obejmuje
+                  wszystkie produkty w zamówieniu.
                 </p>
               )}
               <div className="flex justify-between text-sm text-charcoal/80">

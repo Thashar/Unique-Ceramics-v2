@@ -8,7 +8,10 @@ type Product = {
   id: string;
   slug: string;
   name: string;
+  /** Cena po rabacie produktowym – tę kwotę liczy też `/api/checkout`. */
   price: number;
+  /** Cena podstawowa – koszyk pokazuje dzięki niej pełny upust. */
+  basePrice: number;
   images: string[];
   stock: number;
 };
@@ -30,6 +33,7 @@ export default function AddToCartSection({ product }: { product: Product }) {
         slug: product.slug,
         name: product.name,
         price: product.price,
+        basePrice: product.basePrice,
         image: product.images[0] ?? "",
         stock: product.stock,
       },

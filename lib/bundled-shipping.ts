@@ -9,7 +9,16 @@
 // prezentacji – kwot po stronie serwera nie zmieniamy**, dzięki czemu promocja
 // nie otwiera nowej drogi do manipulowania ceną zamówienia.
 //
+// Rabat produktowy (`Product.discountPercent`) siedzi już w cenie pozycji, więc
+// oba upusty się sumują. Żeby klient je zobaczył **razem**, ceną odniesienia
+// („przed rabatem”) jest cena katalogowa liczona z ceny **przed** rabatem
+// produktowym – podaje ją pole `basePrice` pozycji. Bez niego (pozycje
+// odtwarzane z zamówienia, które trzyma tylko kwoty do zapłaty) odniesieniem
+// zostaje cena pozycji, czyli sam rabat za wielosztuki.
+//
 // Moduł jest neutralny (same funkcje) – używa go serwer i komponenty klienckie.
+
+import { shownDiscountPercent } from "@/lib/product-price";
 
 /** Klucz ustawienia włączającego promocję. */
 export const BUNDLED_SHIPPING_KEY = "bundled_shipping_enabled";
@@ -51,11 +60,11 @@ export function bundlePrice(base: number, cfg: BundleConfig): number {
 
 export type BundleLine<T> = {
   item: T;
-  /** Cena katalogowa sztuki (baza + narzut) – ta sama, którą klient widział w sklepie. */
+  /** Cena sprzed rabatów (cena podstawowa + narzut) – od niej liczymy upust. */
   catalogUnitPrice: number;
-  /** Cena sztuki po rabacie – rabat dostaje **każda** sztuka, także pierwsza. */
+  /** Cena sztuki po rabatach – rabat za wielosztuki dostaje **każda** sztuka, także pierwsza. */
   unitPrice: number;
-  /** Rabat na sztuce w procentach – ten sam dla wszystkich pozycji w koszyku. */
+  /** Upust na sztuce w procentach – policzony z dwóch kwot pokazywanych obok siebie. */
   discountPercent: number;
   /** Wartość pozycji po rabacie. */
   lineTotal: number;
@@ -63,9 +72,9 @@ export type BundleLine<T> = {
 
 export type BundleSummary<T> = {
   lines: BundleLine<T>[];
-  /** Suma pozycji po cenach katalogowych (przed rabatem). */
+  /** Suma pozycji w cenach sprzed rabatów (produktowego i za wielosztuki). */
   catalogTotal: number;
-  /** Łączny rabat rozdzielony proporcjonalnie na wszystkie pozycje koszyka. */
+  /** Łączny upust: rabaty produktowe + oddany narzut na wysyłkę. */
   discountTotal: number;
   /** Rabat wyrażony w procentach wartości katalogowej (0 = brak). */
   discountPercent: number;
@@ -81,44 +90,58 @@ export type BundleSummary<T> = {
  * Rozkłada koszyk na pozycje pokazywane klientowi.
  *
  * Wysyłkę płaci się raz, więc nadmiarowe narzuty wracają jako rabat – i to
- * rabat **na każdą sztukę, również pierwszą**. Rabat jest **proporcjonalny**:
- * ceny katalogowe mnożymy przez wspólny współczynnik `total / catalogTotal`,
- * dzięki czemu każda pozycja tanieje o ten sam procent (podział kwotowy
+ * rabat **na każdą sztukę, również pierwszą**. Rabat za wielosztuki jest
+ * **proporcjonalny**: ceny pozycji mnożymy przez wspólny współczynnik
+ * `total / promoTotal`, dzięki czemu narzut rozkłada się równo (podział kwotowy
  * `narzut / liczba sztuk` dawał tańszym produktom wyraźnie większy rabat
- * procentowy niż droższym). Suma pozycji po rabacie to nadal `ceny produktów +
- * jedna wysyłka`, czyli dokładnie tyle, ile policzy serwer; reszta z zaokrągleń
- * ląduje na ostatniej pozycji, żeby kwoty zgadzały się co do grosza.
+ * procentowy niż droższym).
+ *
+ * Ceną odniesienia jest natomiast cena **sprzed rabatu produktowego**
+ * (`basePrice` + narzut), więc pokazany upust obejmuje oba rabaty naraz i zgadza
+ * się z ceną przekreśloną na karcie produktu. Procent liczymy osobno dla każdej
+ * pozycji – produkty mogą mieć różne rabaty własne, więc jedna wspólna wartość
+ * kłamałaby na kartach.
+ *
+ * Suma pozycji po rabatach to nadal `ceny produktów + jedna wysyłka`, czyli
+ * dokładnie tyle, ile policzy serwer; reszta z zaokrągleń ląduje na ostatniej
+ * pozycji, żeby kwoty zgadzały się co do grosza.
  */
-export function bundleSummary<T extends { price: number; quantity: number }>(
-  items: T[],
-  cfg: BundleConfig
-): BundleSummary<T> {
+export function bundleSummary<
+  T extends { price: number; quantity: number; basePrice?: number | null }
+>(items: T[], cfg: BundleConfig): BundleSummary<T> {
   const itemsTotal = money(items.reduce((sum, i) => sum + i.price * i.quantity, 0));
   const pieces = items.reduce((sum, i) => sum + i.quantity, 0);
   const surcharge = cfg.enabled && pieces > 0 ? cfg.surcharge : 0;
   const total = money(itemsTotal + surcharge);
 
-  const catalogTotal = money(
+  /** Cena sprzed rabatu produktowego; brak `basePrice` = cena pozycji. */
+  const listPrice = (item: T): number =>
+    typeof item.basePrice === "number" && Number.isFinite(item.basePrice)
+      ? Math.max(item.basePrice, item.price)
+      : item.price;
+
+  // Współczynnik rabatu za wielosztuki liczymy od cen **po** rabacie produktowym –
+  // to on rozdziela sam narzut na wysyłkę, cudzego upustu nie rusza
+  const promoTotal = money(
     items.reduce((sum, i) => sum + bundlePrice(i.price, cfg) * i.quantity, 0)
   );
+  const ratio = cfg.enabled && promoTotal > 0 ? total / promoTotal : 1;
+
+  // Odniesienie pokazywane klientowi: ceny sprzed obu rabatów
+  const catalogTotal = money(
+    items.reduce((sum, i) => sum + bundlePrice(listPrice(i), cfg) * i.quantity, 0)
+  );
   const discountTotal = money(catalogTotal - total);
-  // Jeden współczynnik dla całego koszyka = ten sam % rabatu na każdej pozycji
-  const ratio = cfg.enabled && catalogTotal > 0 ? total / catalogTotal : 1;
-  const discountPercent =
-    catalogTotal > 0 && discountTotal > 0
-      ? Math.round((discountTotal / catalogTotal) * 100)
-      : 0;
+  const discountPercent = shownDiscountPercent(catalogTotal, total);
 
   const lines: BundleLine<T>[] = items.map((item) => {
-    const catalogUnitPrice = bundlePrice(item.price, cfg);
-    const unitPrice = money(catalogUnitPrice * ratio);
+    const catalogUnitPrice = bundlePrice(listPrice(item), cfg);
+    const unitPrice = money(bundlePrice(item.price, cfg) * ratio);
     return {
       item,
       catalogUnitPrice,
       unitPrice,
-      // Procent bierzemy wspólny, a nie liczony z zaokrąglonej ceny sztuki –
-      // inaczej grosz zaokrąglenia rozjeżdżałby etykiety między pozycjami
-      discountPercent: catalogUnitPrice > unitPrice ? discountPercent : 0,
+      discountPercent: shownDiscountPercent(catalogUnitPrice, unitPrice),
       lineTotal: money(unitPrice * item.quantity),
     };
   });
