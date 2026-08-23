@@ -25,6 +25,19 @@ const THUMB_HINT_FADE_MS = 700;
 const HOLD_MS = 500;
 const LENS_SIZE = 176;
 const LENS_ZOOM = 2.6;
+/**
+ * Na dotyku szkło nie stoi pod palcem (palec zasłaniałby cały podgląd), tylko
+ * w rogu kadru – domyślnie w lewym górnym. Gdy palec trafia właśnie tam,
+ * szkło przeskakuje w prawy górny róg.
+ */
+const TOUCH_LENS_MARGIN = 8;
+/**
+ * Kiedy uznajemy, że palec zasłania szkło stojące w lewym górnym rogu: dopiero
+ * gdy dotyk pada w jego środkową część. Sam róg szkła może zostać przykryty –
+ * przy kadrze węższym niż dwa szkła każde inne kryterium przerzucałoby podgląd
+ * w prawo także przy dotknięciu środka zdjęcia.
+ */
+const TOUCH_LENS_FLIP_RATIO = 0.65;
 
 type Gesture = { x: number; y: number; axis: "none" | "x" | "y" };
 /** Pozycja lupy w układzie kadru (px od lewej/górnej krawędzi). */
@@ -49,6 +62,8 @@ export default function ProductGallery({
   // w zdarzeniach i efektach, nie przy renderze.
   const [lensStyle, setLensStyle] = useState<React.CSSProperties | null>(null);
   const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** Czy lupę włączył palec – wtedy szkło stoi w rogu, nie pod punktem dotyku. */
+  const lensTouch = useRef(false);
   // Wymiary źródłowe zdjęć – potrzebne, bo przy `object-contain` obraz nie
   // wypełnia kadru i tło lupy musi trafić dokładnie w to, co widać
   const naturalSize = useRef<Record<number, { w: number; h: number }>>({});
@@ -133,9 +148,22 @@ export default function ProductGallery({
     const offsetY = (rect.height - shownH) / 2;
 
     const half = LENS_SIZE / 2;
+    // Myszą szkło jedzie pod kursorem; palcem – w rogu kadru, żeby dłoń nie
+    // zasłaniała podglądu. Powiększenie i tak trafia w miejsce dotyku, bo
+    // `backgroundPosition` liczy się względem samego szkła, nie kadru.
+    let left = lens.x - half;
+    let top = lens.y - half;
+    if (lensTouch.current) {
+      const flipZone = TOUCH_LENS_MARGIN + LENS_SIZE * TOUCH_LENS_FLIP_RATIO;
+      const underFinger = lens.x < flipZone && lens.y < flipZone;
+      left = underFinger
+        ? Math.max(TOUCH_LENS_MARGIN, rect.width - LENS_SIZE - TOUCH_LENS_MARGIN)
+        : TOUCH_LENS_MARGIN;
+      top = TOUCH_LENS_MARGIN;
+    }
     return {
-      left: lens.x - half,
-      top: lens.y - half,
+      left,
+      top,
       width: LENS_SIZE,
       height: LENS_SIZE,
       backgroundImage: `url(${images[activeImage]})`,
@@ -165,6 +193,7 @@ export default function ProductGallery({
   };
 
   const armLens = (clientX: number, clientY: number) => {
+    lensTouch.current = true;
     cancelHold();
     holdTimer.current = setTimeout(() => showLens(clientX, clientY), HOLD_MS);
   };
@@ -300,6 +329,7 @@ export default function ProductGallery({
       closeLens();
       return;
     }
+    lensTouch.current = false;
     showLens(e.clientX, e.clientY);
   };
 
