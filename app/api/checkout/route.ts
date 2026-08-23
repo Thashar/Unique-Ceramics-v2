@@ -9,6 +9,8 @@ import {
   type BundleConfig,
 } from "@/lib/bundled-shipping";
 import { activeDiscountPercent, discountedPrice } from "@/lib/product-price";
+import { priceOrder, type ShippingMethod } from "@/lib/discount-code";
+import { findActiveCode, markCodeUsed } from "@/lib/discount-codes";
 import { validateAddress, validateContact } from "@/lib/address-validation";
 import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 import { NextResponse } from "next/server";
@@ -118,6 +120,8 @@ function buildOrderEmail(params: {
   shippingCost: number;
   /** Promocja „Wielosztuki” – zamiast kwoty wysyłki pokazujemy „Darmowa wysyłka”. */
   freeShipping?: boolean;
+  /** Użyty kod rabatowy – kwota jest już w cenach pozycji, wiersz jest informacyjny. */
+  discountCode?: { code: string; percent: number; amount: number } | null;
   total: number;
   bankAccountName?: string;
   bankAccountNumber?: string;
@@ -137,6 +141,7 @@ function buildOrderEmail(params: {
     items,
     shippingCost,
     freeShipping,
+    discountCode,
     total,
     bankAccountName,
     bankAccountNumber,
@@ -231,6 +236,11 @@ function buildOrderEmail(params: {
         <tbody>${itemsHtml}</tbody>
       </table>
       <table style="width:100%;font-size:14px;color:#4a3728;">
+        ${discountCode ? `
+        <tr>
+          <td style="padding:6px 12px;text-align:right;color:#6b5748;">Kod rabatowy ${discountCode.code} (−${discountCode.percent}%)</td>
+          <td style="padding:6px 12px;text-align:right;width:120px;color:#2f6f3e;">−${discountCode.amount.toFixed(2).replace(".", ",")} zł</td>
+        </tr>` : ""}
         <tr>
           <td style="padding:6px 12px;text-align:right;color:#6b5748;">${shippingMethod === "pickup" ? "Odbiór osobisty" : "Wysyłka"}</td>
           <td style="padding:6px 12px;text-align:right;width:120px;">${shippingMethod === "pickup" ? "Bezpłatnie" : freeShipping ? "Darmowa wysyłka" : shippingCost === 0 ? "Gratis" : `${shippingCost.toFixed(2).replace(".", ",")} zł`}</td>
@@ -447,30 +457,50 @@ export async function POST(req: Request) {
   const freeEnabled = shippingSettings.shipping_free_enabled === "true";
   const freeFrom = Number(shippingSettings.shipping_free_from) || 300;
 
-  // Kwoty zaokrąglane do groszy – unikamy artefaktów arytmetyki float
-  const subtotal = Math.round(
-    (items as { productId: string; quantity: number }[]).reduce((sum, item) => {
-      const product = productMap.get(item.productId)!;
-      // Rabat produktowy schodzi z ceny bazowej – dopiero na tym liczy się wysyłka
-      return sum + discountedPrice(product.price, activeDiscountPercent(product)) * item.quantity;
-    }, 0) * 100
-  ) / 100;
+  const typedItems = items as { productId: string; quantity: number }[];
 
   // Promocja „Wielosztuki”: narzut na wysyłkę jest już w cenach katalogowych,
   // więc próg darmowej wysyłki nie działa – inaczej klient zapłaciłby mniej,
   // niż pokazywał koszyk
   const bundle = bundleFromSettings(shippingSettings);
-  const rawCost = shippingMethod === "parcel_locker" ? shippingCostParcel : shippingCostCourier;
-  // W promocji narzut jest ten sam dla każdej metody – także dla odbioru
-  // osobistego – bo siedzi w cenach katalogowych, które widział klient
-  const shippingCost = bundle.enabled
-    ? bundle.surcharge
-    : shippingMethod === "pickup"
-      ? 0
-      : (freeEnabled && subtotal >= freeFrom ? 0 : rawCost);
-  const total = Math.round((subtotal + shippingCost) * 100) / 100;
 
-  const typedItems = items as { productId: string; quantity: number }[];
+  // Kod rabatowy sprawdzamy w bazie – z żądania bierzemy samą nazwę.
+  // Nieznany, wyłączony albo wygasły kod po prostu nie wchodzi (bez błędu:
+  // klient ma dostać zamówienie, a nie komunikat po kliknięciu „Zamawiam”)
+  const requestedCode = await findActiveCode(body.discountCode);
+
+  // Ceny pozycji: rabat produktowy schodzi z ceny bazowej, `basePrice` zostaje
+  // ceną sprzed przeceny – potrzebuje jej wariant „sam kod rabatowy”
+  const pricedItems = typedItems.map((item) => {
+    const product = productMap.get(item.productId)!;
+    return {
+      productId: item.productId,
+      quantity: item.quantity,
+      price: discountedPrice(product.price, activeDiscountPercent(product)),
+      basePrice: product.price,
+    };
+  });
+
+  // Jedno miejsce liczy całą kwotę: przeceny produktów, „Wielosztuki” i kod
+  // (łączony albo – przy niełączonym – korzystniejszy z dwóch wariantów)
+  const pricing = priceOrder({
+    items: pricedItems,
+    bundle,
+    code: requestedCode,
+    shipping: {
+      method: shippingMethod as ShippingMethod,
+      courier: shippingCostCourier,
+      parcelLocker: shippingCostParcel,
+      freeEnabled,
+      freeFrom,
+    },
+  });
+
+  const unitPrice = new Map(pricing.items.map((l) => [l.item.productId, l.unitPrice]));
+  const shippingCost = pricing.shippingCost;
+  const total = pricing.total;
+  const appliedCode = pricing.appliedCode;
+  const codeDiscount = pricing.codeDiscount;
 
   // Atomowo: dekrementacja magazynu + utworzenie zamówienia.
   // Warunek stock >= quantity wykrywa wyścig równoległych zakupów –
@@ -508,6 +538,9 @@ export async function POST(req: Request) {
           paymentMethod,
           shippingCost,
           total,
+          // Kwota kodu jest już wliczona w ceny pozycji – pola są śladem do zestawień
+          discountCode: appliedCode?.code ?? null,
+          discountAmount: codeDiscount > 0 ? codeDiscount : null,
           shippingMethod: shippingMethod ?? "courier",
           parcelLockerCode: shippingMethod === "parcel_locker" ? String(parcelLockerCode ?? "").trim() : null,
           items: {
@@ -516,7 +549,7 @@ export async function POST(req: Request) {
               return {
                 productId: item.productId,
                 name: product.name,
-                price: discountedPrice(product.price, activeDiscountPercent(product)),
+                price: unitPrice.get(item.productId)!,
                 quantity: item.quantity,
               };
             }),
@@ -549,7 +582,7 @@ export async function POST(req: Request) {
     const product = productMap.get(item.productId)!;
     return {
       name: product.name,
-      price: discountedPrice(product.price, activeDiscountPercent(product)),
+      price: unitPrice.get(item.productId)!,
       quantity: item.quantity,
     };
   });
@@ -558,7 +591,7 @@ export async function POST(req: Request) {
   // „Darmowa wysyłka” – tak samo jak koszyk i strona zamówienia. Powiadomienie
   // dla właściciela zostaje na kwotach z bazy (ceny bazowe + wysyłka osobno).
   const customerBundle: BundleConfig =
-    bundle.enabled && shippingCost > 0
+    pricing.bundle.enabled && shippingCost > 0
       ? { enabled: true, surcharge: shippingCost }
       : BUNDLE_OFF;
   const customerLines = bundleSummary(verifiedItems, customerBundle).lines;
@@ -568,6 +601,9 @@ export async function POST(req: Request) {
     quantity: l.item.quantity,
     lineTotal: l.lineTotal,
   }));
+
+  // Licznik użyć kodu – informacyjny, więc bez await i bez wpływu na zamówienie
+  if (appliedCode) void markCodeUsed(appliedCode.code);
 
   void sendAdminNotification({
     orderNumber, firstName, lastName, email, phone: phone?.trim() || null,
@@ -613,6 +649,9 @@ export async function POST(req: Request) {
           items: customerItems,
           shippingCost,
           freeShipping: customerBundle.enabled,
+          discountCode: appliedCode && codeDiscount > 0
+            ? { code: appliedCode.code, percent: appliedCode.percent, amount: codeDiscount }
+            : null,
           total,
           bankAccountName: bankSettings?.payment_bank_account_name,
           bankAccountNumber: bankSettings?.payment_bank_account_number,

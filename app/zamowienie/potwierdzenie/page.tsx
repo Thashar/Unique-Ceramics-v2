@@ -256,6 +256,17 @@ export default async function ConfirmationPage({
                   </div>
                 </>
               )}
+              {/* Użyty kod – rabat siedzi już w cenach pozycji, więc kwoty nie odejmujemy drugi raz */}
+              {order.discountCode && (
+                <div className="flex justify-between text-green-700">
+                  <span>Kod rabatowy {order.discountCode}</span>
+                  <span>
+                    {order.discountAmount
+                      ? `−${order.discountAmount.toFixed(2).replace(".", ",")} zł`
+                      : "uwzględniony"}
+                  </span>
+                </div>
+              )}
               <div className="flex justify-between text-charcoal/80 border-t border-sand pt-2">
                 <span>{order.shippingMethod === "pickup" ? "Odbiór osobisty" : "Wysyłka"}</span>
                 <span>
