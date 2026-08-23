@@ -8,9 +8,11 @@ import { uploadErrorMessage } from "@/lib/upload-error";
 import { PRODUCT_MAX_IMAGES } from "@/lib/product-validation";
 import {
   MAX_DISCOUNT_PERCENT,
+  discountState,
   discountedPrice,
   normalizeDiscountPercent,
 } from "@/lib/product-price";
+import { dateToWarsawLocal, formatWarsaw, warsawLocalToDate } from "@/lib/warsaw-time";
 import { AI_VARIANT_LABEL, isAiGeneratedImage, type AiVariant } from "@/lib/ai";
 
 /** Treść potwierdzenia przed płatnym wywołaniem modelu. */
@@ -19,6 +21,25 @@ const AI_CONFIRM: Record<AiVariant, string> = {
   ai_plus:
     "Wygenerować przez AI zdjęcie tego produktu w wystylizowanej scenie (len, eukaliptus, kamienie)?\n\nPowstanie nowe zdjęcie dodane na końcu listy – oryginał zostaje bez zmian.",
 };
+
+const HOUR_MS = 3_600_000;
+
+/**
+ * Gotowe czasy obowiązywania rabatu. Wybór wpisuje datę końca do pola
+ * „Do kiedy" (liczoną od początku rabatu albo od teraz), więc właściciel
+ * nie musi liczyć terminu w głowie. „Do wskazanej daty" zostawia pole
+ * do ręcznej edycji.
+ */
+const DISCOUNT_DURATIONS: { value: string; label: string }[] = [
+  { value: "", label: "Bezterminowo" },
+  { value: "24", label: "24 godziny" },
+  { value: "48", label: "2 dni" },
+  { value: "72", label: "3 dni" },
+  { value: "168", label: "7 dni" },
+  { value: "336", label: "14 dni" },
+  { value: "720", label: "30 dni" },
+  { value: "custom", label: "Do wskazanej daty" },
+];
 
 type Product = {
   id: string;
@@ -33,6 +54,9 @@ type Product = {
   active: boolean;
   variesFromPhoto: boolean;
   discountPercent: number;
+  /** Okno obowiązywania rabatu (z bazy w UTC; w panelu pokazywane po polsku). */
+  discountStartsAt: Date | string | null;
+  discountEndsAt: Date | string | null;
 };
 
 type Category = { slug: string; label: string };
@@ -61,11 +85,17 @@ export default function ProductForm({
     category: base?.category ?? categories[0]?.slug ?? "",
     stock: base?.stock?.toString() ?? "0",
     discountPercent: base?.discountPercent?.toString() ?? "0",
+    // Pola dat trzymamy w formacie <input type="datetime-local">, czyli
+    // w czasie polskim; na ISO (UTC) przeliczamy je dopiero przy zapisie
+    discountStartsAt: dateToWarsawLocal(base?.discountStartsAt),
+    discountEndsAt: dateToWarsawLocal(base?.discountEndsAt),
     featured: base?.featured ?? false,
     active: base?.active ?? true,
     variesFromPhoto: base?.variesFromPhoto ?? false,
   });
   const [images, setImages] = useState<string[]>(base?.images ?? []);
+  // Wybrany czas obowiązywania – sam nie jest zapisywany, tylko wypełnia datę końca
+  const [durationPreset, setDurationPreset] = useState(base?.discountEndsAt ? "custom" : "");
   const [uploading, setUploading] = useState(false);
   // Które zdjęcie jest właśnie przerabiane przez AI (indeks + wariant)
   const [generating, setGenerating] = useState<{ idx: number; variant: AiVariant } | null>(null);
@@ -85,6 +115,70 @@ export default function ProductForm({
       percent,
     };
   })();
+
+  // ── Okno obowiązywania rabatu (czas polski) ────────────────────────────────
+  const startsAtDate = form.discountStartsAt ? warsawLocalToDate(form.discountStartsAt) : null;
+  const endsAtDate = form.discountEndsAt ? warsawLocalToDate(form.discountEndsAt) : null;
+  const windowError =
+    (form.discountStartsAt && !startsAtDate) || (form.discountEndsAt && !endsAtDate)
+      ? "Nieprawidłowa data rabatu."
+      : startsAtDate && endsAtDate && endsAtDate.getTime() <= startsAtDate.getTime()
+        ? "Koniec rabatu musi być późniejszy niż jego początek."
+        : "";
+
+  /** Opis okna rabatu pod polami – tym samym językiem, co stan w bazie. */
+  const discountSummary = (() => {
+    const percent = normalizeDiscountPercent(form.discountPercent);
+    if (percent === 0) return "Rabat wyłączony – produkt sprzedaje się w cenie podstawowej.";
+    if (windowError) return "";
+    const state = discountState({
+      discountPercent: percent,
+      discountStartsAt: startsAtDate,
+      discountEndsAt: endsAtDate,
+    });
+    if (state === "expired") {
+      return `Rabat zakończył się ${formatWarsaw(endsAtDate)} – produkt sprzedaje się w cenie podstawowej.`;
+    }
+    if (state === "scheduled") {
+      return endsAtDate
+        ? `Rabat włączy się ${formatWarsaw(startsAtDate)} i potrwa do ${formatWarsaw(endsAtDate)}.`
+        : `Rabat włączy się ${formatWarsaw(startsAtDate)} i będzie obowiązywał bezterminowo.`;
+    }
+    if (endsAtDate) {
+      return startsAtDate
+        ? `Rabat obowiązuje od ${formatWarsaw(startsAtDate)} do ${formatWarsaw(endsAtDate)}.`
+        : `Rabat obowiązuje do ${formatWarsaw(endsAtDate)}.`;
+    }
+    return "Rabat obowiązuje bezterminowo – do chwili wyłączenia go tutaj.";
+  })();
+
+  /** Data końca liczona od początku rabatu (albo od teraz, gdy startuje od razu). */
+  function endAfterHours(hours: number, startLocal: string): string {
+    const from = warsawLocalToDate(startLocal) ?? new Date();
+    return dateToWarsawLocal(new Date(from.getTime() + hours * HOUR_MS));
+  }
+
+  function setDiscountStart(value: string) {
+    set("discountStartsAt", value);
+    // Wybrany czas obowiązywania liczy się od początku rabatu – przesuwając
+    // start, przesuwamy też koniec
+    if (durationPreset && durationPreset !== "custom") {
+      set("discountEndsAt", endAfterHours(Number(durationPreset), value));
+    }
+  }
+
+  function setDiscountDuration(preset: string) {
+    setDurationPreset(preset);
+    if (preset === "") {
+      set("discountEndsAt", "");
+      return;
+    }
+    if (preset === "custom") {
+      if (!form.discountEndsAt) set("discountEndsAt", endAfterHours(168, form.discountStartsAt));
+      return;
+    }
+    set("discountEndsAt", endAfterHours(Number(preset), form.discountStartsAt));
+  }
 
   function set(field: string, value: string | boolean) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -229,12 +323,21 @@ export default function ProductForm({
     setSaving(true);
     setError("");
 
+    if (windowError) {
+      setError(windowError);
+      setSaving(false);
+      return;
+    }
+
     const body = {
       ...form,
       price: parseFloat(form.price),
       stock: parseInt(form.stock),
       // Puste pole = brak rabatu; walidację zakresu robi validateProduct
       discountPercent: parseInt(form.discountPercent) || 0,
+      // Daty wpisywane są w czasie polskim – do bazy idą jako moment w UTC
+      discountStartsAt: startsAtDate ? startsAtDate.toISOString() : null,
+      discountEndsAt: endsAtDate ? endsAtDate.toISOString() : null,
       images,
     };
 
@@ -419,7 +522,7 @@ export default function ProductForm({
             onChange={(e) => set("stock", e.target.value)}
             className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm" />
         </div>
-        <div className="col-span-2">
+        <div className="col-span-2 border border-sand/60 bg-warm-white p-4">
           <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">
             Rabat (%)
           </label>
@@ -440,6 +543,77 @@ export default function ProductForm({
               </>
             )}
           </p>
+
+          {/* Okno obowiązywania – widoczne dopiero przy ustawionym rabacie.
+              Wszystkie godziny są w czasie polskim; do bazy trafiają jako UTC. */}
+          {normalizeDiscountPercent(form.discountPercent) > 0 && (
+            <div className="mt-5 pt-5 border-t border-sand/60">
+              <p className="text-xs tracking-widest uppercase text-charcoal/80 mb-3">
+                Czas obowiązywania <span className="text-clay">(czas polski)</span>
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="min-w-0">
+                  <label className="block text-[11px] text-charcoal/80 mb-1.5">
+                    Start rabatu
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={form.discountStartsAt}
+                    onChange={(e) => setDiscountStart(e.target.value)}
+                    className="w-full min-w-0 bg-cream border border-sand focus:border-clay outline-none px-3 py-2.5 text-espresso text-sm"
+                  />
+                  <p className="text-[11px] text-charcoal/80 mt-1">
+                    Puste = rabat działa od zapisania produktu.
+                  </p>
+                </div>
+                <div className="min-w-0">
+                  <label className="block text-[11px] text-charcoal/80 mb-1.5">
+                    Czas trwania
+                  </label>
+                  <select
+                    value={durationPreset}
+                    onChange={(e) => setDiscountDuration(e.target.value)}
+                    className="w-full min-w-0 bg-cream border border-sand focus:border-clay outline-none px-3 py-2.5 text-espresso text-sm"
+                  >
+                    {DISCOUNT_DURATIONS.map((d) => (
+                      <option key={d.value || "none"} value={d.value}>{d.label}</option>
+                    ))}
+                  </select>
+                  <p className="text-[11px] text-charcoal/80 mt-1">
+                    Wypełnia pole „Do kiedy”.
+                  </p>
+                </div>
+                <div className="min-w-0">
+                  <label className="block text-[11px] text-charcoal/80 mb-1.5">
+                    Do kiedy
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={form.discountEndsAt}
+                    onChange={(e) => {
+                      set("discountEndsAt", e.target.value);
+                      setDurationPreset(e.target.value ? "custom" : "");
+                    }}
+                    className="w-full min-w-0 bg-cream border border-sand focus:border-clay outline-none px-3 py-2.5 text-espresso text-sm"
+                  />
+                  <p className="text-[11px] text-charcoal/80 mt-1">
+                    Puste = rabat bezterminowy.
+                  </p>
+                </div>
+              </div>
+              {windowError ? (
+                <p className="text-xs text-red-700 mt-3">{windowError}</p>
+              ) : (
+                <p className="text-xs text-espresso mt-3">{discountSummary}</p>
+              )}
+              <p className="text-[11px] text-charcoal/80 mt-2 leading-relaxed">
+                Po upływie terminu produkt wraca do ceny podstawowej sam – bez wchodzenia
+                w panel. Katalog i strona główna mają cache, więc przez chwilę po zmianie
+                mogą pokazywać jeszcze poprzednią cenę; zamówienie zawsze liczy się według
+                rabatu obowiązującego w chwili złożenia.
+              </p>
+            </div>
+          )}
         </div>
         <div className="col-span-2">
           <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">Opis</label>

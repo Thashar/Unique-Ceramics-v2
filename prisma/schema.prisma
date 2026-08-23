@@ -128,6 +128,10 @@ model Product {
   variesFromPhoto Boolean  @default(false)
   // Rabat produktowy w procentach (0 = brak); sumuje się z promocją „Wielosztuki”
   discountPercent Int      @default(0)
+  // Okno obowiązywania rabatu (UTC; w panelu ustawiane w czasie polskim).
+  // null/null = rabat bezterminowy, liczony od razu po zapisaniu produktu.
+  discountStartsAt DateTime?
+  discountEndsAt   DateTime?
   createdAt       DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

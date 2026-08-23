@@ -8,7 +8,7 @@ import {
   bundleSummary,
   type BundleConfig,
 } from "@/lib/bundled-shipping";
-import { discountedPrice } from "@/lib/product-price";
+import { activeDiscountPercent, discountedPrice } from "@/lib/product-price";
 import { validateAddress, validateContact } from "@/lib/address-validation";
 import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 import { NextResponse } from "next/server";
@@ -452,7 +452,7 @@ export async function POST(req: Request) {
     (items as { productId: string; quantity: number }[]).reduce((sum, item) => {
       const product = productMap.get(item.productId)!;
       // Rabat produktowy schodzi z ceny bazowej – dopiero na tym liczy się wysyłka
-      return sum + discountedPrice(product.price, product.discountPercent) * item.quantity;
+      return sum + discountedPrice(product.price, activeDiscountPercent(product)) * item.quantity;
     }, 0) * 100
   ) / 100;
 
@@ -516,7 +516,7 @@ export async function POST(req: Request) {
               return {
                 productId: item.productId,
                 name: product.name,
-                price: discountedPrice(product.price, product.discountPercent),
+                price: discountedPrice(product.price, activeDiscountPercent(product)),
                 quantity: item.quantity,
               };
             }),
@@ -549,7 +549,7 @@ export async function POST(req: Request) {
     const product = productMap.get(item.productId)!;
     return {
       name: product.name,
-      price: discountedPrice(product.price, product.discountPercent),
+      price: discountedPrice(product.price, activeDiscountPercent(product)),
       quantity: item.quantity,
     };
   });

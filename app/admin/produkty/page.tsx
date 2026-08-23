@@ -9,6 +9,30 @@ import ProductsSearch from "@/components/admin/ProductsSearch";
 import ProductRowActions from "@/components/admin/ProductRowActions";
 import { getCategories } from "@/lib/categories";
 import { productOrderBy, resolveProductSort, sortByName } from "@/lib/product-sort";
+import { discountState, type DiscountState } from "@/lib/product-price";
+import { formatWarsaw } from "@/lib/warsaw-time";
+
+/** Kolory znacznika rabatu – zielony dla działającego, bursztyn dla zaplanowanego. */
+const DISCOUNT_BADGE: Record<Exclude<DiscountState, "none">, string> = {
+  active: "bg-green-50 text-green-700 ring-1 ring-green-200",
+  scheduled: "bg-amber-50 text-amber-800 ring-1 ring-amber-200",
+  expired: "bg-charcoal/8 text-charcoal/80",
+};
+
+/** Podpowiedź pod kursorem: od kiedy i do kiedy rabat obowiązuje (czas polski). */
+function discountTitle(
+  state: Exclude<DiscountState, "none">,
+  startsAt: Date | null,
+  endsAt: Date | null
+): string {
+  if (state === "expired") return `Rabat zakończył się ${formatWarsaw(endsAt)}`;
+  if (state === "scheduled") {
+    return endsAt
+      ? `Rabat od ${formatWarsaw(startsAt)} do ${formatWarsaw(endsAt)}`
+      : `Rabat od ${formatWarsaw(startsAt)}, bezterminowo`;
+  }
+  return endsAt ? `Rabat obowiązuje do ${formatWarsaw(endsAt)}` : "Rabat bezterminowy";
+}
 
 export default async function AdminProductsPage({
   searchParams,
@@ -101,6 +125,20 @@ export default async function AdminProductsPage({
                       {product.name}
                     </Link>
                     {product.featured && <Star size={11} className="text-clay shrink-0 fill-clay" />}
+                    {(() => {
+                      // Rabat produktowy: kolor mówi, czy działa teraz, czeka na
+                      // swój termin, czy już się skończył
+                      const state = discountState(product);
+                      if (state === "none") return null;
+                      return (
+                        <span
+                          title={discountTitle(state, product.discountStartsAt, product.discountEndsAt)}
+                          className={`text-[10px] tracking-wide uppercase px-1.5 py-0.5 rounded-sm shrink-0 ${DISCOUNT_BADGE[state]}`}
+                        >
+                          −{product.discountPercent}%
+                        </span>
+                      );
+                    })()}
                   </div>
                   <p className="text-xs text-charcoal/80 capitalize">{product.category}</p>
                   <div className="flex items-center justify-between mt-1.5">
@@ -143,6 +181,20 @@ export default async function AdminProductsPage({
                       {product.name}
                     </Link>
                     {product.featured && <Star size={11} className="text-clay shrink-0 fill-clay" />}
+                    {(() => {
+                      // Rabat produktowy: kolor mówi, czy działa teraz, czeka na
+                      // swój termin, czy już się skończył
+                      const state = discountState(product);
+                      if (state === "none") return null;
+                      return (
+                        <span
+                          title={discountTitle(state, product.discountStartsAt, product.discountEndsAt)}
+                          className={`text-[10px] tracking-wide uppercase px-1.5 py-0.5 rounded-sm shrink-0 ${DISCOUNT_BADGE[state]}`}
+                        >
+                          −{product.discountPercent}%
+                        </span>
+                      );
+                    })()}
                   </div>
                   <p className="text-xs text-charcoal/80 capitalize mt-0.5">{product.category}</p>
                 </div>

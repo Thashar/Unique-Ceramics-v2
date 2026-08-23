@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { getFeaturedProducts } from "@/lib/products";
 import { getCategories, type Category } from "@/lib/categories";
+import { DISCOUNT_HOLD_HOME_MS, activeDiscountPercent } from "@/lib/product-price";
 import ProductCarousel from "@/components/home/ProductCarousel";
 import DesktopCarousel from "@/components/home/DesktopCarousel";
 
@@ -15,6 +16,14 @@ export default async function FeaturedProducts() {
   }
 
   if (products.length === 0) return null;
+
+  // Strona główna jest ISR-em na godzinę, więc rabat kończący się w tym czasie
+  // pokazujemy jako już nieaktywny – lepiej podać cenę podstawową (klient
+  // zapłaci najwyżej mniej), niż reklamować przecenę, której checkout nie uzna
+  const shown = products.map((p) => ({
+    ...p,
+    discountPercent: activeDiscountPercent(p, { holdMs: DISCOUNT_HOLD_HOME_MS }),
+  }));
 
   return (
     <section
@@ -47,12 +56,12 @@ export default async function FeaturedProducts() {
 
         {/* Mobile: karuzel z sinusoidalną animacją, wyśrodkowane karty */}
         <div className="lg:hidden">
-          <ProductCarousel products={products} categories={categories} />
+          <ProductCarousel products={shown} categories={categories} />
         </div>
 
         {/* Desktop: 4 kolumny, gdy >4 produktów – carousel z nawigacją */}
         <div className="hidden lg:block max-w-7xl mx-auto w-full px-16">
-          <DesktopCarousel products={products} categories={categories} />
+          <DesktopCarousel products={shown} categories={categories} />
         </div>
       </div>
     </section>
