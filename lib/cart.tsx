@@ -6,7 +6,10 @@ export type CartItem = {
   id: string;
   slug: string;
   name: string;
+  /** Cena do zapłaty za sztukę – już po rabacie produktowym. */
   price: number;
+  /** Cena podstawowa (sprzed rabatu produktowego) – tylko do pokazania upustu. */
+  basePrice?: number;
   image: string;
   quantity: number;
   stock: number;
@@ -22,6 +25,11 @@ function normalize(raw: unknown[]): CartItem[] {
       slug:     String(item.slug ?? ""),
       name:     String(item.name ?? ""),
       price:    Number(item.price ?? 0),
+      // Starsze wpisy w localStorage nie mają ceny podstawowej – wtedy koszyk
+      // pokazuje sam rabat za wielosztuki, tak jak przed tą zmianą
+      ...(Number.isFinite(Number(item.basePrice)) && Number(item.basePrice) > 0
+        ? { basePrice: Number(item.basePrice) }
+        : {}),
       image:    String(item.image ?? ""),
       quantity: Number(item.quantity ?? 1),
       // Stare wpisy w localStorage nie mają stock – defaultujemy do dużej liczby
