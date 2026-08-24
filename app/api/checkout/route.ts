@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
-import { getSettings } from "@/lib/settings";
+import { getSettings, settingNumber } from "@/lib/settings";
 import {
   BUNDLED_SHIPPING_KEY,
   BUNDLE_OFF,
@@ -10,7 +10,7 @@ import {
 } from "@/lib/bundled-shipping";
 import { activeDiscountPercent, discountedPrice } from "@/lib/product-price";
 import { priceOrder, type ShippingMethod } from "@/lib/discount-code";
-import { findActiveCode, markCodeUsed } from "@/lib/discount-codes";
+import { findActiveCode } from "@/lib/discount-codes";
 import { validateAddress, validateContact } from "@/lib/address-validation";
 import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 import { NextResponse } from "next/server";
@@ -21,6 +21,41 @@ const PAYMENT_LABEL: Record<string, string> = {
   blik:     "BLIK",
   stripe:   "Karta (Stripe)",
 };
+
+/**
+ * Zwalnia zamówienie, którego nie udało się doprowadzić do płatności: oddaje
+ * zarezerwowany stan magazynowy i oznacza je jako anulowane.
+ *
+ * Potrzebne, gdy sesja Stripe nie powstanie – zamówienie jest już w bazie, a bez
+ * sesji nie przyjdzie webhook `checkout.session.expired`, który normalnie sprząta
+ * porzucone płatności. Bez tego towar zostawał zablokowany bezterminowo.
+ * Sprzątanie jest „best effort” – błąd tylko logujemy, bo klient i tak dostaje
+ * już informację o nieudanej płatności.
+ */
+async function releaseOrder(
+  orderId: string,
+  items: { productId: string; quantity: number }[]
+): Promise<void> {
+  try {
+    await db.$transaction(async (tx) => {
+      // Anuluj tylko zamówienie nadal oczekujące – gdyby webhook zdążył je
+      // wcześniej opłacić, nie chcemy cofać sprzedaży
+      const cancelled = await tx.order.updateMany({
+        where: { id: orderId, status: "PENDING", paymentStatus: { not: "PAID" } },
+        data: { status: "CANCELLED", paymentStatus: "expired" },
+      });
+      if (cancelled.count === 0) return;
+      for (const item of items) {
+        await tx.product.update({
+          where: { id: item.productId },
+          data: { stock: { increment: item.quantity } },
+        });
+      }
+    });
+  } catch (e) {
+    console.error("[checkout] zwolnienie zamówienia nieudane:", e);
+  }
+}
 
 const SHIPPING_LABEL: Record<string, string> = {
   courier:       "Kurier",
@@ -381,6 +416,20 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Nieprawidłowa metoda płatności" }, { status: 400 });
   }
 
+  // Płatność kartą musi być realnie włączona – sam formularz tylko ukrywał opcję,
+  // więc ręcznie wysłane żądanie potrafiło utworzyć sesję Stripe mimo wyłączenia
+  // jej w panelu. Sprawdzamy to **przed** utworzeniem zamówienia, żeby odmowa
+  // nie zostawiła po sobie zamówienia ze zdjętym stanem magazynowym.
+  if (paymentMethod === "stripe") {
+    const { payment_stripe_enabled } = await getSettings(["payment_stripe_enabled"]);
+    if (payment_stripe_enabled !== "true" || !process.env.STRIPE_SECRET_KEY) {
+      return NextResponse.json(
+        { error: "Płatność kartą jest chwilowo niedostępna. Wybierz przelew bankowy." },
+        { status: 400 }
+      );
+    }
+  }
+
   if (!validateEmail(email)) {
     return NextResponse.json({ error: "Nieprawidłowy adres e-mail" }, { status: 400 });
   }
@@ -431,8 +480,9 @@ export async function POST(req: Request) {
     "vacation_message",
     BUNDLED_SHIPPING_KEY,
   ]);
-  const shippingCostCourier = Number(shippingSettings.shipping_cost) || 18;
-  const shippingCostParcel = Number(shippingSettings.shipping_cost_parcel_locker) || 18;
+  // settingNumber, nie `|| 18` – zero to poprawna stawka (darmowa wysyłka)
+  const shippingCostCourier = settingNumber(shippingSettings.shipping_cost, 18);
+  const shippingCostParcel = settingNumber(shippingSettings.shipping_cost_parcel_locker, 18);
 
   // Urlop – wylicz notatkę raz, użyj w obu mailach
   let vacationNote: string | undefined;
@@ -455,7 +505,7 @@ export async function POST(req: Request) {
     }
   }
   const freeEnabled = shippingSettings.shipping_free_enabled === "true";
-  const freeFrom = Number(shippingSettings.shipping_free_from) || 300;
+  const freeFrom = settingNumber(shippingSettings.shipping_free_from, 300);
 
   const typedItems = items as { productId: string; quantity: number }[];
 
@@ -502,6 +552,30 @@ export async function POST(req: Request) {
   const appliedCode = pricing.appliedCode;
   const codeDiscount = pricing.codeDiscount;
 
+  // Koszyk żyje w localStorage i trzyma cenę z chwili dodania produktu, więc po
+  // wygaśnięciu przeceny (albo po zmianie ceny w panelu) klient widzi na
+  // formularzu inną kwotę, niż liczy serwer. Wcześniej różnica przechodziła bez
+  // słowa – przy karcie klient trafiał od razu na Stripe z wyższą kwotą.
+  // Rozbieżność zatrzymujemy **przed** utworzeniem zamówienia i oddajemy
+  // aktualne ceny, żeby koszyk mógł się odświeżyć i pokazać, co się zmieniło.
+  const clientTotal = Number((body as { total?: unknown }).total);
+  if (Number.isFinite(clientTotal) && Math.abs(clientTotal - total) >= 0.01) {
+    return NextResponse.json(
+      {
+        error:
+          "Ceny w koszyku zdążyły się zmienić. Sprawdź nowe podsumowanie i potwierdź zamówienie jeszcze raz.",
+        priceChanged: true,
+        total,
+        items: pricedItems.map((i) => ({
+          productId: i.productId,
+          price: i.price,
+          basePrice: i.basePrice,
+        })),
+      },
+      { status: 409 }
+    );
+  }
+
   // Atomowo: dekrementacja magazynu + utworzenie zamówienia.
   // Warunek stock >= quantity wykrywa wyścig równoległych zakupów –
   // przy braku stanu cała transakcja jest wycofywana.
@@ -541,6 +615,9 @@ export async function POST(req: Request) {
           // Kwota kodu jest już wliczona w ceny pozycji – pola są śladem do zestawień
           discountCode: appliedCode?.code ?? null,
           discountAmount: codeDiscount > 0 ? codeDiscount : null,
+          // Narzut promocji „Wielosztuki” z chwili zakupu – podsumowanie
+          // zamówienia odtwarzamy z niego, a nie z bieżących ustawień sklepu
+          bundleSurcharge: pricing.bundle.enabled ? pricing.bundle.surcharge : null,
           shippingMethod: shippingMethod ?? "courier",
           parcelLockerCode: shippingMethod === "parcel_locker" ? String(parcelLockerCode ?? "").trim() : null,
           items: {
@@ -550,6 +627,9 @@ export async function POST(req: Request) {
                 productId: item.productId,
                 name: product.name,
                 price: unitPrice.get(item.productId)!,
+                // Cena sprzed rabatu produktowego – dzięki niej historia
+                // zamówienia pokazuje pełny upust i sumuje się do kwoty zapłaty
+                basePrice: product.price,
                 quantity: item.quantity,
               };
             }),
@@ -602,8 +682,9 @@ export async function POST(req: Request) {
     lineTotal: l.lineTotal,
   }));
 
-  // Licznik użyć kodu – informacyjny, więc bez await i bez wpływu na zamówienie
-  if (appliedCode) void markCodeUsed(appliedCode.code);
+  // Licznika użyć kodu tu nie ruszamy. Zliczał także zamówienia porzucone przy
+  // płatności kartą, więc panel pokazywał zawyżoną liczbę. Użycia liczymy teraz
+  // wprost z zamówień (`Order.discountCode`) – patrz `countCodeUsage`.
 
   void sendAdminNotification({
     orderNumber, firstName, lastName, email, phone: phone?.trim() || null,
@@ -674,11 +755,9 @@ export async function POST(req: Request) {
 
   // Stripe – create Checkout session and redirect
   if (paymentMethod === "stripe") {
-    const stripeKey = process.env.STRIPE_SECRET_KEY;
-    if (!stripeKey) {
-      return NextResponse.json({ error: "Stripe nie jest skonfigurowany" }, { status: 500 });
-    }
-    const stripe = new Stripe(stripeKey);
+    // Klucz jest sprawdzany razem z `payment_stripe_enabled` przed utworzeniem
+    // zamówienia – tutaj tylko go odczytujemy
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
     const baseUrl = process.env.AUTH_URL ?? "http://localhost:3000";
 
     // Domyślnie: pozycje po cenach z zamówienia + osobny wiersz wysyłki.
@@ -732,16 +811,33 @@ export async function POST(req: Request) {
       else console.error("[checkout] rozbicie Stripe nie zgadza się z kwotą zamówienia");
     }
 
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
-      mode: "payment",
-      line_items: stripeLineItems,
-      metadata: { orderId: order.id },
-      success_url: `${baseUrl}/zamowienie/potwierdzenie?id=${order.id}`,
-      // Porzucona płatność wraca na potwierdzenie z flagą – koszyk jest już
-      // wyczyszczony, a zamówienie czeka na wpłatę; stamtąd można ją ponowić
-      cancel_url: `${baseUrl}/zamowienie/potwierdzenie?id=${order.id}&platnosc=anulowana`,
-    });
+    // Sesja Stripe potrafi nie powstać (błąd sieci, odrzucony klucz, kwota poniżej
+    // minimum operatora). Zamówienie i rezerwacja magazynu już istnieją, a skoro
+    // sesji nie ma, to `checkout.session.expired` nigdy nie przyjdzie i nikt tego
+    // zamówienia nie posprząta – zwalniamy je więc od razu sami.
+    let session;
+    try {
+      session = await stripe.checkout.sessions.create({
+        payment_method_types: ["card"],
+        mode: "payment",
+        line_items: stripeLineItems,
+        metadata: { orderId: order.id },
+        success_url: `${baseUrl}/zamowienie/potwierdzenie?id=${order.id}`,
+        // Porzucona płatność wraca na potwierdzenie z flagą – koszyk jest już
+        // wyczyszczony, a zamówienie czeka na wpłatę; stamtąd można ją ponowić
+        cancel_url: `${baseUrl}/zamowienie/potwierdzenie?id=${order.id}&platnosc=anulowana`,
+      });
+    } catch (e) {
+      console.error("[checkout] utworzenie sesji Stripe nieudane:", e);
+      await releaseOrder(order.id, typedItems);
+      return NextResponse.json(
+        {
+          error:
+            "Nie udało się rozpocząć płatności kartą. Spróbuj ponownie lub wybierz przelew bankowy.",
+        },
+        { status: 502 }
+      );
+    }
 
     // Czekamy na wysyłkę – dla gościa ten e-mail jest jedynym śladem zamówienia,
     // a po zwróceniu odpowiedzi funkcja serverless może zostać uśpiona

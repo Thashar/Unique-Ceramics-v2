@@ -1,4 +1,4 @@
-# CI: typecheck + lint + build przy każdym pushu i PR
+# CI: typecheck + lint + testy + build przy każdym pushu i PR
 name: CI
 
 on:
@@ -25,6 +25,9 @@ jobs:
 
       - name: ESLint
         run: npm run lint
+
+      - name: Testy jednostkowe (wycena zamówienia)
+        run: npm test
 
       - name: Build produkcyjny
         run: npm run build

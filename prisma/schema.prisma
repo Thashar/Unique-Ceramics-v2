@@ -95,6 +95,12 @@ model Order {
   discountCode   String?
   discountAmount Float?
 
+  // Narzut promocji „Wielosztuki” wliczony w ceny katalogowe w chwili zakupu
+  // (null = promocja wtedy nie obowiązywała). Bez tego pola podsumowanie starego
+  // zamówienia zmieniało wygląd po przestawieniu promocji w panelu – rozbicie
+  // odtwarzamy z zapisanej wartości, nie z bieżących ustawień.
+  bundleSurcharge Float?
+
   paidAt DateTime?   // data i godzina wpłaty (podana przez admina przy oznaczaniu „Opłacone"); przychód rozpoznawany wg tej daty
 
   createdAt DateTime @default(now())
@@ -113,7 +119,12 @@ model OrderItem {
   orderId   String
   productId String
   name      String
+  // Cena zapłacona za sztukę – po wszystkich rabatach (produktowym i kodzie)
   price     Float
+  // Cena katalogowa sprzed rabatu produktowego (null dla zamówień sprzed tej
+  // zmiany). Dzięki niej historia zamówienia pokazuje pełny upust, a wiersze
+  // podsumowania sumują się do kwoty zapłaconej.
+  basePrice Float?
   quantity  Int
 
   order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)

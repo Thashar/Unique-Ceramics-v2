@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 import { db } from "@/lib/db";
-import { getSettings } from "@/lib/settings";
+import { getSettings, settingNumber } from "@/lib/settings";
 import { BUNDLED_SHIPPING_KEY, bundleFromSettings } from "@/lib/bundled-shipping";
 import { validateAddress } from "@/lib/address-validation";
 import CheckoutForm from "./CheckoutForm";
@@ -82,10 +82,10 @@ export default async function CheckoutPage() {
       userEmail={session?.user?.email ?? ""}
       savedAddress={savedAddress}
       paymentMethods={paymentMethods}
-      shippingCostCourier={Number(settings.shipping_cost) || 18}
-      shippingCostParcelLocker={Number(settings.shipping_cost_parcel_locker) || 18}
+      shippingCostCourier={settingNumber(settings.shipping_cost, 18)}
+      shippingCostParcelLocker={settingNumber(settings.shipping_cost_parcel_locker, 18)}
       shippingFreeEnabled={settings.shipping_free_enabled === "true"}
-      shippingFreeFrom={Number(settings.shipping_free_from) || 300}
+      shippingFreeFrom={settingNumber(settings.shipping_free_from, 300)}
       inpostToken={process.env.INPOST_GEOWIDGET_TOKEN ?? null}
       savedAddressComplete={savedAddressComplete}
     />

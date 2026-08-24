@@ -292,3 +292,16 @@ export const getContactSettings = unstable_cache(
   ["contact-settings"],
   { revalidate: 3600, tags: ["settings"] }
 );
+
+/**
+ * Liczba z ustawienia sklepu. **Zero jest poprawną wartością** – wzorzec
+ * `Number(value) || fallback` traktował je jak brak i cicho przywracał default,
+ * przez co nie dało się ustawić darmowej wysyłki (`shipping_cost = 0`) ani progu
+ * darmowej wysyłki od pierwszej złotówki (`shipping_free_from = 0`).
+ * Fallback wchodzi wyłącznie przy pustym polu albo wartości nieliczbowej.
+ */
+export function settingNumber(value: unknown, fallback: number): number {
+  if (value == null || value === "") return fallback;
+  const n = typeof value === "number" ? value : Number(String(value).trim().replace(",", "."));
+  return Number.isFinite(n) && n >= 0 ? n : fallback;
+}

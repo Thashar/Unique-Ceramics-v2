@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { Plus, Ticket } from "lucide-react";
-import { listDiscountCodes } from "@/lib/discount-codes";
+import { countCodeUsage, listDiscountCodes } from "@/lib/discount-codes";
 import { codeState, type CodeState } from "@/lib/discount-code";
 import { formatWarsaw } from "@/lib/warsaw-time";
 
@@ -22,7 +22,12 @@ const STATE_LABEL: Record<CodeState, string> = {
 };
 
 export default async function DiscountCodesPage() {
-  const { available, codes } = await listDiscountCodes();
+  // Użycia liczymy z zamówień, nie z kolumny `usedCount` – ta rosła także przy
+  // porzuconych płatnościach kartą i nigdy nie malała
+  const [{ available, codes }, usage] = await Promise.all([
+    listDiscountCodes(),
+    countCodeUsage(),
+  ]);
 
   return (
     <div>
@@ -107,7 +112,7 @@ export default async function DiscountCodesPage() {
                   </div>
                   <div className="text-xs text-charcoal/80 mt-1 md:mt-0">{window}</div>
                   <div className="text-xs text-charcoal/80 md:text-center mt-1 md:mt-0 tabular-nums">
-                    {code.usedCount}
+                    {usage.get(code.code) ?? 0}
                   </div>
                 </div>
               </Link>

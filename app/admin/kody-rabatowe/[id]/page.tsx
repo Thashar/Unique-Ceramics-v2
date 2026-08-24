@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { notFound } from "next/navigation";
-import { getDiscountCode } from "@/lib/discount-codes";
+import { countCodeUsageFor, getDiscountCode } from "@/lib/discount-codes";
 import DiscountCodeForm from "@/components/admin/DiscountCodeForm";
 
 export default async function EditDiscountCodePage({
@@ -13,11 +13,14 @@ export default async function EditDiscountCodePage({
   const code = await getDiscountCode(id);
   if (!code) notFound();
 
+  // Liczba użyć z zamówień (bez anulowanych) – patrz `countCodeUsage`
+  const used = await countCodeUsageFor(code.code);
+
   return (
     <div>
       <h1 className="font-serif text-3xl text-espresso mb-2">Kod {code.code}</h1>
       <p className="text-sm text-charcoal/80 mb-8">
-        Użyty w {code.usedCount} {code.usedCount === 1 ? "zamówieniu" : "zamówieniach"}.
+        Użyty w {used} {used === 1 ? "zamówieniu" : "zamówieniach"}.
       </p>
       <DiscountCodeForm
         id={code.id}

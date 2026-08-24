@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Truck, Package, MapPin, Tag, X, Loader2 } from "lucide-react";
-import { useCart } from "@/lib/cart";
+import { useCart, useCartPriceSync } from "@/lib/cart";
 import { type BundleConfig } from "@/lib/bundled-shipping";
 import {
   normalizeCode,
@@ -71,7 +71,10 @@ export default function CheckoutForm({
   savedAddressComplete,
 }: Props) {
   const router = useRouter();
-  const { items, clearCart } = useCart();
+  const { items, clearCart, syncPrices } = useCart();
+  // Wyrównanie cen do stanu z serwera zaraz po wejściu – bez tego formularz
+  // pokazywałby kwotę z chwili dodania produktu do koszyka
+  const pricesChanged = useCartPriceSync();
 
   const [shippingMethod, setShippingMethod] = useState<"courier" | "parcel_locker" | "pickup">("courier");
   const [parcelLockerCode, setParcelLockerCode] = useState("");
@@ -265,6 +268,20 @@ export default function CheckoutForm({
 
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
+      // Serwer wykrył, że koszyk liczył inną kwotę (wygasła przecena, zmiana ceny
+      // w panelu). Zamówienie nie powstało – wyrównujemy koszyk i prosimy
+      // o ponowne potwierdzenie już na aktualnych cenach.
+      if (res.status === 409 && data.priceChanged && Array.isArray(data.items)) {
+        syncPrices(
+          data.items.map((i: { productId: string; price: number; basePrice?: number }) => ({
+            id: i.productId,
+            price: i.price,
+            basePrice: i.basePrice,
+            // Stan magazynowy zostaje bez zmian – ten błąd dotyczy tylko cen
+            stock: items.find((c) => c.id === i.productId)?.stock ?? 0,
+          }))
+        );
+      }
       setError(data.error ?? "Wystąpił błąd. Spróbuj ponownie.");
       setLoading(false);
       return;
@@ -297,6 +314,12 @@ export default function CheckoutForm({
       <div className="max-w-5xl mx-auto px-6 lg:px-10 py-16">
         <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-12">
           <div className="lg:col-span-2 space-y-8">
+            {pricesChanged && !error && (
+              <div className="bg-mist border border-sand text-charcoal/80 text-sm px-4 py-3">
+                Ceny lub dostępność części produktów zmieniły się od czasu dodania
+                ich do koszyka – podsumowanie obok jest już zaktualizowane.
+              </div>
+            )}
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3">{error}</div>
             )}

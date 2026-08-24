@@ -71,15 +71,47 @@ export async function findActiveCode(raw: unknown): Promise<DiscountCodeInfo | n
   }
 }
 
-/** Licznik użyć – wyłącznie informacyjny, błąd nie może wywrócić zamówienia. */
-export async function markCodeUsed(code: string): Promise<void> {
+/**
+ * Ile zamówień faktycznie skorzystało z kodu – liczone **wprost z zamówień**,
+ * nie z licznika `usedCount`.
+ *
+ * Licznik był podbijany w chwili utworzenia zamówienia, więc rósł także przy
+ * płatnościach kartą, które klient porzucał, i nigdy nie malał. Zamówienia
+ * anulowane pomijamy, bo kod się w nich nie „zużył”.
+ *
+ * Zwraca mapę `KOD → liczba zamówień`; przy niedostępnej bazie – pustą mapę.
+ */
+export async function countCodeUsage(): Promise<Map<string, number>> {
   try {
-    await db.discountCode.updateMany({
-      where: { code },
-      data: { usedCount: { increment: 1 } },
-    });
+    const rows = await withDbRetry(() =>
+      db.order.groupBy({
+        by: ["discountCode"],
+        where: { discountCode: { not: null }, status: { not: "CANCELLED" } },
+        _count: { _all: true },
+      })
+    );
+    return new Map(
+      rows
+        .filter((r): r is typeof r & { discountCode: string } => r.discountCode !== null)
+        .map((r) => [r.discountCode, r._count._all])
+    );
   } catch (e) {
-    console.error("[discount-codes] licznik użyć nieudany:", e);
+    console.error("[discount-codes] zliczenie użyć nieudane:", e);
+    return new Map();
+  }
+}
+
+/** Użycia jednego kodu – ta sama zasada co w `countCodeUsage`. */
+export async function countCodeUsageFor(code: string): Promise<number> {
+  try {
+    return await withDbRetry(() =>
+      db.order.count({
+        where: { discountCode: code, status: { not: "CANCELLED" } },
+      })
+    );
+  } catch (e) {
+    console.error("[discount-codes] zliczenie użyć kodu nieudane:", e);
+    return 0;
   }
 }
 

@@ -9,7 +9,7 @@ import DishwasherIcon from "@/components/ui/DishwasherIcon";
 import ProductGallery from "./ProductGallery";
 import AddToCartSection from "./AddToCartSection";
 import { db, withDbRetry } from "@/lib/db";
-import { getSettings } from "@/lib/settings";
+import { getSettings, settingNumber } from "@/lib/settings";
 import { getCategories, categoryLabel } from "@/lib/categories";
 import ProductPriceTag from "@/components/ui/ProductPriceTag";
 import ProductBundleNotes from "@/components/ui/ProductBundleNotes";
@@ -120,9 +120,9 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   // Termin pokazujemy tylko przy realnie działającym rabacie
   const discountEndsAt = discountPercent > 0 ? product.discountEndsAt : null;
   const shippingTime = settings.shipping_time || "2–4 dni robocze";
-  const shippingCost = parseFloat(settings.shipping_cost) || 18;
+  const shippingCost = settingNumber(settings.shipping_cost, 18);
   const freeEnabled = settings.shipping_free_enabled === "true";
-  const freeFrom = parseFloat(settings.shipping_free_from) || 300;
+  const freeFrom = settingNumber(settings.shipping_free_from, 300);
 
   const BASE = "https://uniqueceramics.pl";
   const jsonLd = {
@@ -157,7 +157,9 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         "@type": "OfferShippingDetails",
         shippingRate: {
           "@type": "MonetaryAmount",
-          value: shippingCost.toFixed(2),
+          // W promocji „Wielosztuki” wysyłka jest wliczona w cenę katalogową,
+          // więc wyszukiwarce podajemy 0 – inaczej doliczałaby ją drugi raz
+          value: (bundle.enabled ? 0 : shippingCost).toFixed(2),
           currency: "PLN",
         },
         deliveryTime: {

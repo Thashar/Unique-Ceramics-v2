@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ShoppingBag, ArrowRight, Trash2, Plus, Minus } from "lucide-react";
-import { useCart } from "@/lib/cart";
+import { useCart, useCartPriceSync } from "@/lib/cart";
 import ClayRule from "@/components/ui/ClayRule";
 import { bundleSummary, type BundleConfig } from "@/lib/bundled-shipping";
 
@@ -23,6 +23,9 @@ export type ShippingSettings = {
  */
 export default function CartView({ shipping }: { shipping: ShippingSettings }) {
   const { items, removeItem, updateQuantity, subtotal } = useCart();
+  // Ceny w koszyku pochodzą z chwili dodania produktu – po wejściu wyrównujemy
+  // je do stanu z serwera, żeby klient nie oglądał wygasłej promocji
+  const pricesChanged = useCartPriceSync();
 
   // W promocji „Wielosztuki” próg darmowej wysyłki nie działa – wysyłka jest
   // doliczona raz, a nadwyżka wraca jako rabat o tym samym procencie na każdej pozycji
@@ -73,6 +76,12 @@ export default function CartView({ shipping }: { shipping: ShippingSettings }) {
       <div className="max-w-5xl mx-auto px-6 lg:px-10 py-16 grid grid-cols-1 lg:grid-cols-3 gap-12">
         {/* Lista */}
         <div className="lg:col-span-2 space-y-6">
+          {pricesChanged && (
+            <p className="bg-mist border border-sand text-charcoal/80 text-sm px-4 py-3">
+              Ceny lub dostępność części produktów zmieniły się od czasu dodania
+              ich do koszyka – podsumowanie jest już zaktualizowane.
+            </p>
+          )}
           {items.map((item) => (
             <div key={item.id} className="flex gap-5 pb-6 border-b border-sand">
               <div className="relative w-24 h-24 bg-cream flex-shrink-0 overflow-hidden">

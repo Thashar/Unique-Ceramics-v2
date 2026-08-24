@@ -11,9 +11,9 @@ import { discountedPrice, shownDiscountPercent } from "@/lib/product-price";
  * procent policzony **z tych dwóch kwot** (przy narzucie realna obniżka jest
  * niższa niż nominalny rabat – liczby na stronie muszą się zgadzać).
  *
- * W katalogu (`sm`/`md`) zostaje sama cena po rabacie plus zielone dopiski
- * „Darmowa wysyłka” i „Uzyskaj rabat”; kwoty rabatu koszykowego widać dopiero
- * w koszyku.
+ * W katalogu (`sm`/`md`) przeceniony produkt też pokazuje cenę przekreśloną
+ * i procent – tyle że mniejszą czcionką – plus zielone dopiski „Darmowa wysyłka”
+ * i „Uzyskaj rabat”; kwoty rabatu koszykowego widać dopiero w koszyku.
  */
 export default function ProductPriceTag({
   price,
@@ -61,14 +61,31 @@ export default function ProductPriceTag({
     );
   }
 
-  if (!bundle.enabled) return <span className={className}>{format(after)}</span>;
+  // W katalogu przecena też musi być widoczna – wcześniej kafelek pokazywał samą
+  // obniżoną cenę, więc klient przeglądający listę nie miał jak zauważyć promocji
+  const priceLine =
+    percent > 0 ? (
+      <span className="flex flex-wrap items-baseline gap-x-1.5">
+        <span className="line-through decoration-charcoal/40 text-charcoal/80">
+          {format(before)}
+        </span>
+        <span>{format(after)}</span>
+        <span className={`text-green-700 ${size === "sm" ? "text-[9px]" : "text-[10px]"}`}>
+          −{percent}%
+        </span>
+      </span>
+    ) : (
+      <span>{format(after)}</span>
+    );
+
+  if (!bundle.enabled) return <span className={className}>{priceLine}</span>;
 
   const noteClass = size === "sm" ? "text-[9px] gap-1" : "text-[10px] gap-1";
   const iconClass = size === "sm" ? "w-2.5 h-2.5" : "w-3 h-3";
 
   return (
     <span className={`flex flex-col gap-1 ${className}`}>
-      <span>{format(after)}</span>
+      {priceLine}
       <span className={`flex flex-wrap items-center text-green-700 ${noteClass}`}>
         <span className="inline-flex items-center gap-1">
           <Truck className={iconClass} strokeWidth={1.75} aria-hidden="true" />

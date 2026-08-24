@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 
 export type CartItem = {
   id: string;
@@ -116,6 +116,65 @@ function clearCartStore() {
   setItems([]);
 }
 
+/** Świeże dane produktu z serwera – kształt odpowiedzi `/api/cart/prices`. */
+export type CartPriceUpdate = {
+  id: string;
+  name?: string;
+  price: number;
+  basePrice?: number;
+  stock: number;
+};
+
+/**
+ * Wyrównuje koszyk do cen i stanów z serwera.
+ *
+ * Koszyk zapisuje cenę z chwili dodania produktu, a rabat produktowy ma własne
+ * okno czasu – bez tej synchronizacji klient widziałby cenę, której
+ * `/api/checkout` już nie policzy, i płacił inną kwotę, niż zobaczył.
+ * Produkty, których serwer nie zna (usunięte) albo które zeszły do zera sztuk,
+ * z koszyka wypadają. Zwraca `true`, gdy cokolwiek się zmieniło.
+ */
+function syncPricesInStore(updates: CartPriceUpdate[]): boolean {
+  if (!loaded || items.length === 0) return false;
+  const map = new Map(updates.map((u) => [u.id, u]));
+  let changed = false;
+
+  const next: CartItem[] = [];
+  for (const item of items) {
+    const fresh = map.get(item.id);
+    // Brak produktu w odpowiedzi = nie ma go już w sprzedaży
+    if (!fresh || fresh.stock < 1) {
+      changed = true;
+      continue;
+    }
+    const quantity = Math.min(item.quantity, fresh.stock);
+    const basePrice =
+      typeof fresh.basePrice === "number" && Number.isFinite(fresh.basePrice)
+        ? fresh.basePrice
+        : item.basePrice;
+    if (
+      fresh.price !== item.price ||
+      fresh.stock !== item.stock ||
+      quantity !== item.quantity ||
+      basePrice !== item.basePrice ||
+      (fresh.name && fresh.name !== item.name)
+    ) {
+      changed = true;
+    }
+    next.push({
+      ...item,
+      name: fresh.name || item.name,
+      price: fresh.price,
+      ...(typeof basePrice === "number" ? { basePrice } : {}),
+      stock: fresh.stock,
+      quantity,
+    });
+  }
+
+  if (changed) setItems(next);
+  return changed;
+}
+
 export function useCart() {
   const current = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
@@ -129,9 +188,61 @@ export function useCart() {
     []
   );
   const clearCart = useCallback(() => clearCartStore(), []);
+  const syncPrices = useCallback(
+    (updates: CartPriceUpdate[]) => syncPricesInStore(updates),
+    []
+  );
 
   const count = current.reduce((sum, i) => sum + i.quantity, 0);
   const subtotal = current.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
-  return { items: current, addItem, removeItem, updateQuantity, clearCart, count, subtotal };
+  return {
+    items: current,
+    addItem,
+    removeItem,
+    updateQuantity,
+    clearCart,
+    syncPrices,
+    count,
+    subtotal,
+  };
+}
+
+/**
+ * Odświeża ceny koszyka z serwera raz po wejściu na stronę.
+ *
+ * Bez tego klient ogląda cenę zapamiętaną w chwili dodania produktu – po
+ * wygaśnięciu przeceny rozjeżdża się ona z kwotą, którą policzy `/api/checkout`.
+ * Zwraca `true`, gdy coś się zmieniło, żeby strona mogła o tym uprzedzić.
+ *
+ * Błąd sieci celowo przechodzi bez śladu: kwoty i tak weryfikuje serwer przy
+ * składaniu zamówienia, a straszenie komunikatem przy chwilowym braku sieci
+ * tylko blokowałoby zakupy.
+ */
+export function useCartPriceSync(): boolean {
+  const [changed, setChanged] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    const ids = getSnapshot().map((i) => i.id);
+    if (ids.length === 0) return;
+
+    fetch("/api/cart/prices", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ productIds: ids }),
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (cancelled || !data?.products) return;
+        if (syncPricesInStore(data.products)) setChanged(true);
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return changed;
 }

@@ -27,6 +27,13 @@ export type BundleConfig = {
   enabled: boolean;
   /** Narzut = koszt wysyłki doliczany raz na zamówienie. */
   surcharge: number;
+  /**
+   * Ile z narzutu klient **realnie płaci** przy tym zamówieniu. Domyślnie tyle,
+   * ile wynosi `surcharge`, ale przy odbiorze osobistym wysyłki nie ma, więc
+   * cały narzut wraca do klienta jako rabat (`0`). Ceną odniesienia zostaje
+   * `surcharge`, bo to ona siedzi w cenach katalogowych, które klient widział.
+   */
+  chargedSurcharge?: number;
 };
 
 /** Promocja wyłączona – ceny zachowują się jak dotąd. */
@@ -111,7 +118,10 @@ export function bundleSummary<
 >(items: T[], cfg: BundleConfig): BundleSummary<T> {
   const itemsTotal = money(items.reduce((sum, i) => sum + i.price * i.quantity, 0));
   const pieces = items.reduce((sum, i) => sum + i.quantity, 0);
-  const surcharge = cfg.enabled && pieces > 0 ? cfg.surcharge : 0;
+  // Narzut realnie zapłacony – przy odbiorze osobistym 0, więc rabat obejmuje
+  // cały narzut wliczony w ceny katalogowe
+  const surcharge =
+    cfg.enabled && pieces > 0 ? money(cfg.chargedSurcharge ?? cfg.surcharge) : 0;
   const total = money(itemsTotal + surcharge);
 
   /** Cena sprzed rabatu produktowego; brak `basePrice` = cena pozycji. */

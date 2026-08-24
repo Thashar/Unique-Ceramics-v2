@@ -45,6 +45,10 @@ export default async function AdminOrderDetailPage({
   }).catch(() => []);
   const slugMap = new Map(productSlugs.map((p) => [p.id, p.slug]));
 
+  // Suma pozycji po cenach zapisanych w zamówieniu – razem z wysyłką daje `total`
+  const itemsTotal =
+    Math.round(order.items.reduce((sum, i) => sum + i.price * i.quantity, 0) * 100) / 100;
+
   const needsTracking = order.shippingMethod !== "pickup";
 
   return (
@@ -152,24 +156,22 @@ export default async function AdminOrderDetailPage({
             );
           })}
         </div>
+        {/* Kolumna sumuje się wprost: produkty + wysyłka = razem. Rabaty siedzą
+            już w cenach pozycji, więc stoją pod spodem jako adnotacja – jako
+            osobny wiersz odejmowania zaniżałyby sumę o swoją wartość. */}
         <div className="border-t border-sand mt-4 pt-4 space-y-2">
-          {/* Kod rabatowy – kwota jest już w cenach pozycji, wiersz jest śladem */}
-          {order.discountCode && (
-            <div className="flex justify-between text-sm text-green-700">
-              <span>Kod rabatowy {order.discountCode}</span>
-              <span className="tabular-nums">
-                {order.discountAmount
-                  ? `−${order.discountAmount.toFixed(2).replace(".", ",")} zł`
-                  : "użyty"}
-              </span>
-            </div>
-          )}
+          <div className="flex justify-between text-sm text-charcoal/80">
+            <span>Suma produktów</span>
+            <span className="tabular-nums">
+              {itemsTotal.toFixed(2).replace(".", ",")} zł
+            </span>
+          </div>
           <div className="flex justify-between text-sm text-charcoal/80">
             <span>Wysyłka</span>
             <span className="tabular-nums">
               {order.shippingCost === 0
                 ? (order.shippingMethod === "pickup" ? "Odbiór osobisty" : "Gratis")
-                : `${order.shippingCost} zł`}
+                : `${order.shippingCost.toFixed(2).replace(".", ",")} zł`}
             </span>
           </div>
           <div className="flex justify-between">
@@ -178,6 +180,24 @@ export default async function AdminOrderDetailPage({
               {order.total.toFixed(2).replace(".", ",")} zł
             </span>
           </div>
+          {(order.discountCode || order.bundleSurcharge) && (
+            <div className="border-t border-sand pt-2 space-y-1">
+              {order.discountCode && (
+                <p className="text-xs text-green-700">
+                  Kod rabatowy <strong>{order.discountCode}</strong>
+                  {order.discountAmount
+                    ? ` – obniżył ceny pozycji o ${order.discountAmount.toFixed(2).replace(".", ",")} zł`
+                    : " – uwzględniony w cenach pozycji"}
+                </p>
+              )}
+              {order.bundleSurcharge ? (
+                <p className="text-xs text-charcoal/80">
+                  Promocja „Wielosztuki”: w cenach katalogowych był narzut{" "}
+                  {order.bundleSurcharge.toFixed(2).replace(".", ",")} zł na wysyłkę.
+                </p>
+              ) : null}
+            </div>
+          )}
         </div>
       </div>
 

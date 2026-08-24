@@ -12,7 +12,15 @@ export async function GET() {
 export async function POST(req: Request) {
   if (!await requireAdmin()) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const validation = validateDiscountCode(await req.json());
+  // Złamany JSON nie może kończyć się pięćsetką – to błąd żądania
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Nieprawidłowe dane kodu." }, { status: 400 });
+  }
+
+  const validation = validateDiscountCode(body);
   if (!validation.ok) return NextResponse.json({ error: validation.error }, { status: 400 });
 
   try {

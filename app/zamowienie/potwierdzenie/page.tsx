@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 import { CheckCircle, Clock, XCircle } from "lucide-react";
 import { db } from "@/lib/db";
 import { getSettings } from "@/lib/settings";
-import { BUNDLED_SHIPPING_KEY, bundleFromSettings, bundleSummary } from "@/lib/bundled-shipping";
+import { orderSummary } from "@/lib/order-summary";
 import { auth } from "@/auth";
 import StripeResumeButton from "@/components/account/StripeResumeButton";
 
@@ -67,22 +67,24 @@ export default async function ConfirmationPage({
     ]);
   }
 
-  // Promocja „Wielosztuki”: w koszyku klient widział ceny katalogowe z rabatem
-  // i „Darmową wysyłkę”. Zamówienie trzyma ceny bazowe i osobno koszt wysyłki
-  // (kwoty serwerowe promocja zostawia w spokoju), więc rozbicie odtwarzamy tu
-  // ponownie – inaczej podsumowanie zaprzeczałoby temu, co obiecywał koszyk.
-  let bundleLines: ReturnType<typeof bundleSummary<{ id: string; quantity: number; price: number }>> | null = null;
-  if (order && order.shippingCost > 0) {
-    const bundle = bundleFromSettings(
-      await getSettings([BUNDLED_SHIPPING_KEY, "shipping_cost", "shipping_cost_parcel_locker"])
-    );
-    if (bundle.enabled) {
-      bundleLines = bundleSummary(
-        order.items.map((i) => ({ id: i.id, quantity: i.quantity, price: i.price })),
-        { enabled: true, surcharge: order.shippingCost }
-      );
-    }
-  }
+  // Rozbicie kwot liczy `lib/order-summary` – z danych zapisanych w zamówieniu,
+  // nie z bieżących ustawień sklepu (patrz komentarz w module)
+  const summary = order
+    ? orderSummary({
+        items: order.items.map((i) => ({
+          id: i.id,
+          price: i.price,
+          basePrice: i.basePrice,
+          quantity: i.quantity,
+        })),
+        shippingCost: order.shippingCost,
+        total: order.total,
+        shippingMethod: order.shippingMethod,
+        bundleSurcharge: order.bundleSurcharge,
+        discountCode: order.discountCode,
+        discountAmount: order.discountAmount,
+      })
+    : null;
 
   const orderNumber = id ? id.slice(-8).toUpperCase() : "";
   const transferTitle = `${bankSettings.payment_bank_transfer_title || "Zamówienie"} #${orderNumber}`;
@@ -230,54 +232,56 @@ export default async function ConfirmationPage({
             </p>
             <div className="space-y-2 text-sm">
               {order.items.map((item) => {
-                const line = bundleLines?.lines.find((l) => l.item.id === item.id);
+                const line = summary?.lines.find((l) => l.id === item.id);
                 return (
                   <div key={item.id} className="flex justify-between text-charcoal/80">
                     <span>
                       {item.name} ×{item.quantity}
                     </span>
                     <span>
-                      {((line?.lineTotal ?? item.price * item.quantity))
+                      {(line?.lineTotal ?? item.price * item.quantity)
                         .toFixed(2)
                         .replace(".", ",")} zł
                     </span>
                   </div>
                 );
               })}
-              {bundleLines && bundleLines.discountTotal > 0 && (
+              {summary && summary.discountTotal > 0 && (
                 <>
                   <div className="flex justify-between text-charcoal/80 border-t border-sand pt-2">
                     <span>Produkty przed rabatem</span>
-                    <span>{bundleLines.catalogTotal.toFixed(2).replace(".", ",")} zł</span>
+                    <span>{summary.catalogTotal.toFixed(2).replace(".", ",")} zł</span>
                   </div>
                   <div className="flex justify-between text-green-700">
-                    <span>Rabat {bundleLines.discountPercent > 0 && `−${bundleLines.discountPercent}%`}</span>
-                    <span>−{bundleLines.discountTotal.toFixed(2).replace(".", ",")} zł</span>
+                    <span>Rabat {summary.discountPercent > 0 && `−${summary.discountPercent}%`}</span>
+                    <span>−{summary.discountTotal.toFixed(2).replace(".", ",")} zł</span>
                   </div>
+                  {/* Kod jest częścią rabatu powyżej – jako osobne odjęcie zaniżałby
+                      sumę o swoją wartość, więc pokazujemy go dopiskiem */}
+                  {summary.codeLabel && summary.codeAmount > 0 && (
+                    <p className="text-xs text-green-700">
+                      w tym kod {summary.codeLabel}: −
+                      {summary.codeAmount.toFixed(2).replace(".", ",")} zł
+                    </p>
+                  )}
                 </>
               )}
-              {/* Użyty kod – rabat siedzi już w cenach pozycji, więc kwoty nie odejmujemy drugi raz */}
-              {order.discountCode && (
-                <div className="flex justify-between text-green-700">
-                  <span>Kod rabatowy {order.discountCode}</span>
-                  <span>
-                    {order.discountAmount
-                      ? `−${order.discountAmount.toFixed(2).replace(".", ",")} zł`
-                      : "uwzględniony"}
-                  </span>
-                </div>
+              {summary && summary.codeLabel && summary.discountTotal === 0 && (
+                <p className="text-xs text-green-700">
+                  Użyty kod rabatowy: {summary.codeLabel}
+                </p>
               )}
               <div className="flex justify-between text-charcoal/80 border-t border-sand pt-2">
-                <span>{order.shippingMethod === "pickup" ? "Odbiór osobisty" : "Wysyłka"}</span>
+                <span>{summary?.shippingLabel === "pickup" ? "Odbiór osobisty" : "Wysyłka"}</span>
                 <span>
-                  {order.shippingMethod === "pickup" ? (
+                  {summary?.shippingLabel === "pickup" ? (
                     <span className="text-green-700">Bezpłatnie</span>
-                  ) : bundleLines ? (
+                  ) : summary?.shippingLabel === "bundled" ? (
                     <span className="text-green-700">Darmowa wysyłka</span>
-                  ) : order.shippingCost === 0 ? (
+                  ) : summary?.shippingLabel === "free" ? (
                     "Gratis"
                   ) : (
-                    `${order.shippingCost.toFixed(2).replace(".", ",")} zł`
+                    `${(summary?.shippingShown ?? order.shippingCost).toFixed(2).replace(".", ",")} zł`
                   )}
                 </span>
               </div>

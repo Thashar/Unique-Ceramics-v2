@@ -5,8 +5,17 @@ import Link from "next/link";
 import { ChevronLeft, Package, MapPin, CreditCard, Clock, Truck, ExternalLink } from "lucide-react";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { getSetting, getSettings } from "@/lib/settings";
-import { BUNDLED_SHIPPING_KEY, bundleFromSettings, bundleSummary } from "@/lib/bundled-shipping";
+import { getSetting } from "@/lib/settings";
+import { orderSummary } from "@/lib/order-summary";
+
+/**
+ * Kwota w formacie używanym w całym sklepie: dwa miejsca po przecinku i przecinek
+ * dziesiętny. Wcześniej ta strona używała `toLocaleString` z
+ * `minimumFractionDigits: 0`, więc to samo zamówienie miało tu „180,5 zł”,
+ * a na potwierdzeniu „180,50 zł”.
+ */
+const formatPln = (value: number): string =>
+  `${value.toFixed(2).replace(".", ",")} zł`;
 import OrderStatusBadge from "@/components/account/OrderStatusBadge";
 import StripeResumeButton from "@/components/account/StripeResumeButton";
 
@@ -55,21 +64,22 @@ export default async function OrderDetailPage({
   }).catch(() => []);
   const slugMap = new Map(productSlugs.map((p) => [p.id, p.slug]));
 
-  // Promocja „Wielosztuki”: zamówienie trzyma ceny bazowe i osobno wysyłkę, ale
-  // klient widział w koszyku ceny katalogowe z rabatem i „Darmową wysyłkę” –
-  // odtwarzamy to samo rozbicie, żeby historia zamówień się z tym zgadzała
-  let bundleLines: ReturnType<typeof bundleSummary<{ id: string; quantity: number; price: number }>> | null = null;
-  if (order.shippingCost > 0) {
-    const bundle = bundleFromSettings(
-      await getSettings([BUNDLED_SHIPPING_KEY, "shipping_cost", "shipping_cost_parcel_locker"])
-    );
-    if (bundle.enabled) {
-      bundleLines = bundleSummary(
-        order.items.map((i) => ({ id: i.id, quantity: i.quantity, price: i.price })),
-        { enabled: true, surcharge: order.shippingCost }
-      );
-    }
-  }
+  // Rozbicie kwot liczy `lib/order-summary` – z danych zapisanych w zamówieniu,
+  // dzięki czemu historia nie zmienia się po przestawieniu promocji w panelu
+  const summary = orderSummary({
+    items: order.items.map((i) => ({
+      id: i.id,
+      price: i.price,
+      basePrice: i.basePrice,
+      quantity: i.quantity,
+    })),
+    shippingCost: order.shippingCost,
+    total: order.total,
+    shippingMethod: order.shippingMethod,
+    bundleSurcharge: order.bundleSurcharge,
+    discountCode: order.discountCode,
+    discountAmount: order.discountAmount,
+  });
 
   const statusSteps = [
     { key: "PENDING",     label: "Przyjęte" },
@@ -180,7 +190,7 @@ export default async function OrderDetailPage({
           <div className="bg-cream divide-y divide-sand">
             {order.items.map((item) => {
               const slug = slugMap.get(item.productId);
-              const line = bundleLines?.lines.find((l) => l.item.id === item.id);
+              const line = summary.lines.find((l) => l.id === item.id);
               const unitPrice = line?.unitPrice ?? item.price;
               const lineTotal = line?.lineTotal ?? item.price * item.quantity;
               return (
@@ -197,56 +207,52 @@ export default async function OrderDetailPage({
                       <p className="text-sm font-medium text-espresso">{item.name}</p>
                     )}
                     <p className="text-xs text-charcoal/80 mt-0.5">
-                      {unitPrice.toLocaleString("pl-PL", { style: "currency", currency: "PLN", minimumFractionDigits: 0 })} × {item.quantity}
+                      {formatPln(unitPrice)} × {item.quantity}
                     </p>
                   </div>
                   <p className="font-serif text-lg text-espresso">
-                    {lineTotal.toLocaleString("pl-PL", { style: "currency", currency: "PLN", minimumFractionDigits: 0 })}
+                    {formatPln(lineTotal)}
                   </p>
                 </div>
               );
             })}
             <div className="p-4 space-y-2">
               <div className="flex justify-between text-sm text-charcoal/80">
-                <span>{bundleLines ? "Produkty przed rabatem" : "Suma produktów"}</span>
-                <span>
-                  {(bundleLines?.catalogTotal ?? order.total - order.shippingCost).toLocaleString("pl-PL", { style: "currency", currency: "PLN", minimumFractionDigits: 0 })}
-                </span>
+                <span>{summary.discountTotal > 0 ? "Produkty przed rabatem" : "Suma produktów"}</span>
+                <span>{formatPln(summary.catalogTotal)}</span>
               </div>
-              {bundleLines && bundleLines.discountTotal > 0 && (
+              {summary.discountTotal > 0 && (
                 <div className="flex justify-between text-sm text-green-700">
-                  <span>Rabat {bundleLines.discountPercent > 0 && `−${bundleLines.discountPercent}%`}</span>
-                  <span>−{bundleLines.discountTotal.toLocaleString("pl-PL", { style: "currency", currency: "PLN", minimumFractionDigits: 0 })}</span>
+                  <span>Rabat {summary.discountPercent > 0 && `−${summary.discountPercent}%`}</span>
+                  <span>−{formatPln(summary.discountTotal)}</span>
                 </div>
               )}
-              {order.discountCode && (
-                <div className="flex justify-between text-sm text-green-700">
-                  <span>Kod rabatowy {order.discountCode}</span>
-                  <span>
-                    {order.discountAmount
-                      ? `−${order.discountAmount.toLocaleString("pl-PL", { style: "currency", currency: "PLN", minimumFractionDigits: 0 })}`
-                      : "uwzględniony"}
-                  </span>
-                </div>
+              {/* Kod jest częścią rabatu powyżej – osobne odjęcie zaniżałoby sumę */}
+              {summary.codeLabel && (
+                <p className="text-xs text-green-700">
+                  {summary.codeAmount > 0
+                    ? `w tym kod ${summary.codeLabel}: −${formatPln(summary.codeAmount)}`
+                    : `Użyty kod rabatowy: ${summary.codeLabel}`}
+                </p>
               )}
               <div className="flex justify-between text-sm text-charcoal/80">
-                <span>{order.shippingMethod === "pickup" ? "Odbiór osobisty" : "Wysyłka"}</span>
+                <span>{summary.shippingLabel === "pickup" ? "Odbiór osobisty" : "Wysyłka"}</span>
                 <span>
-                  {order.shippingMethod === "pickup" ? (
+                  {summary.shippingLabel === "pickup" ? (
                     <span className="text-green-700">Bezpłatnie</span>
-                  ) : bundleLines ? (
+                  ) : summary.shippingLabel === "bundled" ? (
                     <span className="text-green-700">Darmowa wysyłka</span>
-                  ) : order.shippingCost === 0 ? (
+                  ) : summary.shippingLabel === "free" ? (
                     "Gratis"
                   ) : (
-                    order.shippingCost.toLocaleString("pl-PL", { style: "currency", currency: "PLN", minimumFractionDigits: 0 })
+                    formatPln(summary.shippingShown)
                   )}
                 </span>
               </div>
               <div className="flex justify-between text-base font-medium text-espresso border-t border-sand pt-2">
                 <span>Do zapłaty</span>
                 <span className="font-serif text-xl">
-                  {order.total.toLocaleString("pl-PL", { style: "currency", currency: "PLN", minimumFractionDigits: 0 })}
+                  {formatPln(order.total)}
                 </span>
               </div>
             </div>

@@ -125,10 +125,14 @@ function listPrice(item: PricedItem): number {
 }
 
 function shippingFor(itemsTotal: number, bundle: BundleConfig, s: ShippingParams): number {
-  // Promocja „Wielosztuki”: narzut jest ten sam dla każdej metody – siedzi
+  // Odbiór osobisty nie ma wysyłki, więc nie ma też czego doliczać – dotyczy to
+  // także promocji „Wielosztuki”, gdzie narzut siedzi w cenach katalogowych.
+  // Wcześniej promocja pobierała narzut również przy odbiorze, a sklep pisał
+  // wtedy „Bezpłatnie” – klient dopłacał za wysyłkę, której nie było.
+  if (s.method === "pickup") return 0;
+  // Promocja „Wielosztuki”: narzut jest ten sam dla obu metod wysyłki – siedzi
   // w cenach katalogowych, które widział klient
   if (bundle.enabled) return money(bundle.surcharge);
-  if (s.method === "pickup") return 0;
   const raw = s.method === "parcel_locker" ? s.parcelLocker : s.courier;
   return s.freeEnabled && itemsTotal >= s.freeFrom ? 0 : money(raw);
 }
@@ -145,12 +149,18 @@ function priceVariant<T extends PricedItem>(
     priced.reduce((sum, i) => sum + i.price * i.quantity, 0)
   );
   const shippingCost = shippingFor(itemsTotal, bundle, shipping);
+  // Rozbicie pokazywane klientowi musi zsumować się do kwoty realnie płaconej:
+  // odniesieniem zostaje narzut z cen katalogowych, ale doliczamy tylko tyle,
+  // ile faktycznie wchodzi na fakturę (przy odbiorze osobistym – nic)
+  const displayBundle: BundleConfig = bundle.enabled
+    ? { ...bundle, chargedSurcharge: shippingCost }
+    : bundle;
   return {
     priced,
     itemsTotal,
     shippingCost,
     total: money(itemsTotal + shippingCost),
-    display: bundleSummary(priced, bundle),
+    display: bundleSummary(priced, displayBundle),
   };
 }
 
