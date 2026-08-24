@@ -108,8 +108,8 @@ export default function CartView({
         <div className="lg:col-span-2 space-y-6">
           {pricesChanged && (
             <p className="bg-mist border border-sand text-charcoal/80 text-sm px-4 py-3">
-              Ceny lub dostępność części produktów zmieniły się od czasu dodania
-              ich do koszyka – podsumowanie jest już zaktualizowane.
+              Ceny części produktów zmieniły się od czasu dodania ich do koszyka –
+              podsumowanie jest już zaktualizowane.
             </p>
           )}
           {items.map((item) => (

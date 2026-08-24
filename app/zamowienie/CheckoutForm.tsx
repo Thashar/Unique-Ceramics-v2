@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Truck, Package, MapPin, Tag, X, Loader2 } from "lucide-react";
-import { useCart, useCartPriceSync } from "@/lib/cart";
+import { refreshCartFromServer, useCart, useCartPriceSync } from "@/lib/cart";
 import {
   normalizeCode,
   priceOrder,
@@ -286,6 +286,12 @@ export default function CheckoutForm({
           }))
         );
       }
+      // Produkt sprzedał się między dodaniem do koszyka a kliknięciem „Zamawiam”.
+      // Odświeżamy koszyk z serwera – wyprzedana pozycja wypadnie sama, a klient
+      // dostanie dymek z jej nazwą (patrz `syncCartWithServer`)
+      if (res.status === 409 && data.outOfStock) {
+        await refreshCartFromServer(items.map((i) => i.id));
+      }
       setError(data.error ?? "Wystąpił błąd. Spróbuj ponownie.");
       setLoading(false);
       return;
@@ -320,8 +326,8 @@ export default function CheckoutForm({
           <div className="lg:col-span-2 space-y-8">
             {pricesChanged && !error && (
               <div className="bg-mist border border-sand text-charcoal/80 text-sm px-4 py-3">
-                Ceny lub dostępność części produktów zmieniły się od czasu dodania
-                ich do koszyka – podsumowanie obok jest już zaktualizowane.
+                Ceny części produktów zmieniły się od czasu dodania ich do koszyka –
+                podsumowanie obok jest już zaktualizowane.
               </div>
             )}
             {error && (

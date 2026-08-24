@@ -479,14 +479,31 @@ export async function POST(req: Request) {
     if (!item.productId || typeof item.quantity !== "number" || item.quantity < 1) {
       return NextResponse.json({ error: "Nieprawidłowe dane produktu" }, { status: 400 });
     }
+    // Odpowiedzi o dostępności niosą `outOfStock` i id produktu – dzięki temu
+    // koszyk po stronie klienta potrafi sam usunąć sprzedaną pozycję i nazwać ją
+    // w komunikacie, zamiast pokazać suchy błąd nad formularzem
     const product = productMap.get(item.productId);
     if (!product) {
-      return NextResponse.json({ error: "Produkt nie istnieje lub jest niedostępny" }, { status: 400 });
+      return NextResponse.json(
+        {
+          error: "Jednego z produktów nie ma już w sprzedaży – zniknął z koszyka.",
+          outOfStock: true,
+          productIds: [item.productId],
+        },
+        { status: 409 }
+      );
     }
     if (product.stock < item.quantity) {
       return NextResponse.json(
-        { error: `Niewystarczający stan magazynowy dla: ${product.name}` },
-        { status: 400 }
+        {
+          error:
+            product.stock === 0
+              ? `„${product.name}” został sprzedany, zanim dokończyłeś zakupy.`
+              : `Zostało tylko ${product.stock} szt. produktu „${product.name}”.`,
+          outOfStock: true,
+          productIds: [item.productId],
+        },
+        { status: 409 }
       );
     }
   }
@@ -607,7 +624,7 @@ export async function POST(req: Request) {
           data: { stock: { decrement: item.quantity } },
         });
         if (updated.count === 0) {
-          throw new Error(`${OUT_OF_STOCK}:${productMap.get(item.productId)!.name}`);
+          throw new Error(`${OUT_OF_STOCK}:${item.productId}:${productMap.get(item.productId)!.name}`);
         }
       }
 
@@ -658,9 +675,15 @@ export async function POST(req: Request) {
     });
   } catch (e) {
     if (e instanceof Error && e.message.startsWith(OUT_OF_STOCK)) {
-      const name = e.message.slice(OUT_OF_STOCK.length + 1);
+      // Wyścig równoległych zakupów – ktoś kupił ostatnią sztukę między naszą
+      // kontrolą a transakcją. Klient dostaje id, więc koszyk usunie pozycję sam
+      const [, productId, ...rest] = e.message.split(":");
       return NextResponse.json(
-        { error: `Niewystarczający stan magazynowy dla: ${name}` },
+        {
+          error: `„${rest.join(":")}” został sprzedany, zanim dokończyłeś zakupy.`,
+          outOfStock: true,
+          productIds: [productId],
+        },
         { status: 409 }
       );
     }

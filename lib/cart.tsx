@@ -1,6 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import {
+  mergeCarts,
+  reducedMessage,
+  soldOutMessage,
+  syncCartWithServer,
+  type CartPriceUpdate,
+  type CartSyncResult,
+} from "@/lib/cart-sync";
+
+export type { CartPriceUpdate } from "@/lib/cart-sync";
 
 export type CartItem = {
   id: string;
@@ -116,63 +126,80 @@ function clearCartStore() {
   setItems([]);
 }
 
-/** Świeże dane produktu z serwera – kształt odpowiedzi `/api/cart/prices`. */
-export type CartPriceUpdate = {
-  id: string;
-  name?: string;
-  price: number;
-  basePrice?: number;
-  stock: number;
+/**
+ * Wyrównuje koszyk do cen i stanów z serwera. Logikę liczy `lib/cart-sync.ts`;
+ * tutaj zostaje tylko zapis do store'u i zgłoszenie powiadomień.
+ *
+ * Wyprzedane pozycje **znikają z koszyka i są nazwane w komunikacie** – po cichu
+ * zmieniona suma byłaby dla klienta niezrozumiała.
+ */
+function syncPricesInStore(updates: CartPriceUpdate[]): CartSyncResult {
+  const empty: CartSyncResult = {
+    items,
+    changed: false,
+    soldOut: [],
+    reduced: [],
+    priceChanged: false,
+  };
+  if (!loaded || items.length === 0) return empty;
+
+  const result = syncCartWithServer(items, updates);
+  if (result.changed) setItems(result.items);
+
+  const soldOut = soldOutMessage(result.soldOut);
+  if (soldOut) pushCartNotice(soldOut, "warning");
+  const reduced = reducedMessage(result.reduced);
+  if (reduced) pushCartNotice(reduced, "warning");
+
+  return result;
+}
+
+// ── Powiadomienia koszyka ────────────────────────────────────────────────────
+//
+// Zmiany w koszyku bywają dokonywane **za plecami klienta** (produkt sprzedał
+// się komuś innemu, cena promocyjna wygasła). Taka zmiana musi zostać nazwana,
+// i to niezależnie od tego, na której stronie klient akurat jest – dlatego
+// powiadomienia żyją w osobnym store i wyświetla je `CartToasts` z layoutu.
+
+export type CartNotice = {
+  id: number;
+  text: string;
+  kind: "info" | "warning";
 };
 
-/**
- * Wyrównuje koszyk do cen i stanów z serwera.
- *
- * Koszyk zapisuje cenę z chwili dodania produktu, a rabat produktowy ma własne
- * okno czasu – bez tej synchronizacji klient widziałby cenę, której
- * `/api/checkout` już nie policzy, i płacił inną kwotę, niż zobaczył.
- * Produkty, których serwer nie zna (usunięte) albo które zeszły do zera sztuk,
- * z koszyka wypadają. Zwraca `true`, gdy cokolwiek się zmieniło.
- */
-function syncPricesInStore(updates: CartPriceUpdate[]): boolean {
-  if (!loaded || items.length === 0) return false;
-  const map = new Map(updates.map((u) => [u.id, u]));
-  let changed = false;
+let notices: CartNotice[] = [];
+let noticeId = 0;
+const noticeListeners = new Set<() => void>();
 
-  const next: CartItem[] = [];
-  for (const item of items) {
-    const fresh = map.get(item.id);
-    // Brak produktu w odpowiedzi = nie ma go już w sprzedaży
-    if (!fresh || fresh.stock < 1) {
-      changed = true;
-      continue;
-    }
-    const quantity = Math.min(item.quantity, fresh.stock);
-    const basePrice =
-      typeof fresh.basePrice === "number" && Number.isFinite(fresh.basePrice)
-        ? fresh.basePrice
-        : item.basePrice;
-    if (
-      fresh.price !== item.price ||
-      fresh.stock !== item.stock ||
-      quantity !== item.quantity ||
-      basePrice !== item.basePrice ||
-      (fresh.name && fresh.name !== item.name)
-    ) {
-      changed = true;
-    }
-    next.push({
-      ...item,
-      name: fresh.name || item.name,
-      price: fresh.price,
-      ...(typeof basePrice === "number" ? { basePrice } : {}),
-      stock: fresh.stock,
-      quantity,
-    });
-  }
+function emitNotices() {
+  noticeListeners.forEach((l) => l());
+}
 
-  if (changed) setItems(next);
-  return changed;
+export function pushCartNotice(text: string, kind: CartNotice["kind"] = "info") {
+  // Ten sam komunikat nie ma się mnożyć przy kilku synchronizacjach pod rząd
+  if (notices.some((n) => n.text === text)) return;
+  notices = [...notices, { id: ++noticeId, text, kind }];
+  emitNotices();
+}
+
+export function dismissCartNotice(id: number) {
+  notices = notices.filter((n) => n.id !== id);
+  emitNotices();
+}
+
+function subscribeNotices(listener: () => void): () => void {
+  noticeListeners.add(listener);
+  return () => noticeListeners.delete(listener);
+}
+
+const NO_NOTICES: CartNotice[] = [];
+
+export function useCartNotices(): CartNotice[] {
+  return useSyncExternalStore(
+    subscribeNotices,
+    () => notices,
+    () => NO_NOTICES
+  );
 }
 
 export function useCart() {
@@ -220,7 +247,7 @@ export function useCart() {
  * tylko blokowałoby zakupy.
  */
 export function useCartPriceSync(): boolean {
-  const [changed, setChanged] = useState(false);
+  const [priceChanged, setPriceChanged] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -235,7 +262,9 @@ export function useCartPriceSync(): boolean {
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (cancelled || !data?.products) return;
-        if (syncPricesInStore(data.products)) setChanged(true);
+        // Wyprzedane pozycje zgłasza sam store (toast) – tutaj interesuje nas
+        // tylko cena, bo o niej strona informuje w podsumowaniu
+        if (syncPricesInStore(data.products).priceChanged) setPriceChanged(true);
       })
       .catch(() => {});
 
@@ -244,5 +273,104 @@ export function useCartPriceSync(): boolean {
     };
   }, []);
 
-  return changed;
+  return priceChanged;
+}
+
+/** Pobiera aktualne dane produktów z koszyka i wyrównuje do nich store. */
+export async function refreshCartFromServer(ids: string[]): Promise<void> {
+  if (ids.length === 0) return;
+  try {
+    const res = await fetch("/api/cart/prices", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ productIds: ids }),
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data?.products) syncPricesInStore(data.products);
+  } catch {
+    // Brak sieci nie może blokować zakupów – kwoty i stany weryfikuje serwer
+  }
+}
+
+// ── Koszyk przypisany do konta ───────────────────────────────────────────────
+
+/**
+ * Trzyma koszyk w zgodzie z kontem klienta.
+ *
+ *  • **po zalogowaniu** – koszyk z urządzenia scala się z zapisanym na koncie
+ *    (`mergeCarts`: ilości to większa z dwóch, nie suma) i wraca na serwer,
+ *    dzięki czemu klient znajduje go na innym urządzeniu;
+ *  • **przy każdej zmianie** zalogowanego koszyka – zapis na konto;
+ *  • **po wylogowaniu** – koszyk na urządzeniu jest czyszczony, żeby nie został
+ *    na cudzym ekranie.
+ *
+ * Wylogowanie rozpoznajemy po **przejściu** `authenticated → unauthenticated`.
+ * Sam stan `unauthenticated` nie wystarcza: gość nigdy nie był zalogowany,
+ * a jego koszyk musi przetrwać (sklep dopuszcza zakupy bez konta).
+ */
+export function useCartAccountSync(status: string, userId: string | null): void {
+  const previousStatus = useRef<string | null>(null);
+  const syncedFor = useRef<string | null>(null);
+
+  useEffect(() => {
+    const was = previousStatus.current;
+    previousStatus.current = status;
+
+    if (status === "loading") return;
+
+    // Wylogowanie – dopiero przejście ze stanu zalogowanego
+    if (status === "unauthenticated") {
+      if (was === "authenticated") {
+        syncedFor.current = null;
+        clearCartStore();
+      }
+      return;
+    }
+
+    if (status !== "authenticated" || !userId) return;
+    if (syncedFor.current === userId) return;
+    syncedFor.current = userId;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/account/cart");
+        if (!res.ok || cancelled) return;
+        const data = await res.json();
+        const saved: CartItem[] = Array.isArray(data?.items) ? normalize(data.items) : [];
+        const merged = mergeCarts(getSnapshot(), saved);
+        setItems(merged);
+        await fetch("/api/account/cart", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ items: merged }),
+        });
+        // Scalony koszyk może zawierać pozycje sprzed dłuższego czasu –
+        // od razu sprawdzamy, czy nadal są w sprzedaży
+        await refreshCartFromServer(merged.map((i) => i.id));
+      } catch {
+        // Koszyk na urządzeniu zostaje – lepiej niż go zgubić
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [status, userId]);
+
+  // Zapis na konto przy każdej zmianie koszyka zalogowanego klienta
+  const current = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  useEffect(() => {
+    if (status !== "authenticated" || !userId) return;
+    if (syncedFor.current !== userId) return; // scalanie jeszcze trwa
+    const timer = setTimeout(() => {
+      fetch("/api/account/cart", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items: current }),
+      }).catch(() => {});
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [current, status, userId]);
 }
