@@ -31,7 +31,7 @@ export default function CartView({
   const { items, removeItem, updateQuantity } = useCart();
   // Ceny w koszyku pochodzą z chwili dodania produktu – po wejściu wyrównujemy
   // je do stanu z serwera, żeby klient nie oglądał wygasłej promocji
-  const pricesChanged = useCartPriceSync();
+  const { priceChanged } = useCartPriceSync();
 
   // Ta sama funkcja, którą liczy `/api/checkout` – koszyk nie ma własnej
   // arytmetyki. Metody dostawy jeszcze nie znamy, więc pytamy o najtańszą
@@ -106,7 +106,7 @@ export default function CartView({
       <div className="max-w-5xl mx-auto px-6 lg:px-10 py-16 grid grid-cols-1 lg:grid-cols-3 gap-12">
         {/* Lista */}
         <div className="lg:col-span-2 space-y-6">
-          {pricesChanged && (
+          {priceChanged && (
             <p className="bg-mist border border-sand text-charcoal/80 text-sm px-4 py-3">
               Ceny części produktów zmieniły się od czasu dodania ich do koszyka –
               podsumowanie jest już zaktualizowane.

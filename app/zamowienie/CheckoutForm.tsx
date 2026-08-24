@@ -1,10 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Truck, Package, MapPin, Tag, X, Loader2 } from "lucide-react";
-import { refreshCartFromServer, useCart, useCartPriceSync } from "@/lib/cart";
+import {
+  pushCartNotice,
+  refreshCartFromServer,
+  useCart,
+  useCartPriceSync,
+} from "@/lib/cart";
 import {
   normalizeCode,
   priceOrder,
@@ -75,7 +80,14 @@ export default function CheckoutForm({
   const { items, clearCart, syncPrices } = useCart();
   // Wyrównanie cen do stanu z serwera zaraz po wejściu – bez tego formularz
   // pokazywałby kwotę z chwili dodania produktu do koszyka
-  const pricesChanged = useCartPriceSync();
+  const { priceChanged, availabilityChanged } = useCartPriceSync();
+
+  // Zmiana zawartości koszyka (wyprzedany produkt, przycięta ilość) odsyła do
+  // koszyka. Zostawienie klienta na formularzu kończyło się tym, że składał
+  // zamówienie bez brakującego produktu, nie zauważywszy, że coś zniknęło.
+  useEffect(() => {
+    if (availabilityChanged) router.push("/koszyk");
+  }, [availabilityChanged, router]);
 
   const [shippingMethod, setShippingMethod] = useState<"courier" | "parcel_locker" | "pickup">("courier");
   const [parcelLockerCode, setParcelLockerCode] = useState("");
@@ -287,10 +299,23 @@ export default function CheckoutForm({
         );
       }
       // Produkt sprzedał się między dodaniem do koszyka a kliknięciem „Zamawiam”.
-      // Odświeżamy koszyk z serwera – wyprzedana pozycja wypadnie sama, a klient
-      // dostanie dymek z jej nazwą (patrz `syncCartWithServer`)
+      // Odświeżamy koszyk (wyprzedana pozycja wypada sama) i **cofamy klienta do
+      // koszyka** – zostawienie go na formularzu kończyło się tym, że klikał
+      // jeszcze raz i składał zamówienie bez brakującego produktu, nie zauważywszy
+      // zmiany. Zmianę koszyka trzeba zobaczyć i potwierdzić świadomie.
       if (res.status === 409 && data.outOfStock) {
-        await refreshCartFromServer(items.map((i) => i.id));
+        const sync = await refreshCartFromServer(items.map((i) => i.id));
+        // Gdy wyrównanie nie miało nic do powiedzenia (np. padła sieć albo stan
+        // zdążył wrócić), zgłaszamy komunikat serwera – klient nie może zostać
+        // odesłany do koszyka bez wyjaśnienia
+        if (!sync || (sync.soldOut.length === 0 && sync.reduced.length === 0)) {
+          pushCartNotice(
+            data.error ?? "Dostępność produktów w koszyku zmieniła się.",
+            "warning"
+          );
+        }
+        router.push("/koszyk");
+        return;
       }
       setError(data.error ?? "Wystąpił błąd. Spróbuj ponownie.");
       setLoading(false);
@@ -324,7 +349,7 @@ export default function CheckoutForm({
       <div className="max-w-5xl mx-auto px-6 lg:px-10 py-16">
         <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-12">
           <div className="lg:col-span-2 space-y-8">
-            {pricesChanged && !error && (
+            {priceChanged && !error && (
               <div className="bg-mist border border-sand text-charcoal/80 text-sm px-4 py-3">
                 Ceny części produktów zmieniły się od czasu dodania ich do koszyka –
                 podsumowanie obok jest już zaktualizowane.

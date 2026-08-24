@@ -246,8 +246,23 @@ export function useCart() {
  * składaniu zamówienia, a straszenie komunikatem przy chwilowym braku sieci
  * tylko blokowałoby zakupy.
  */
-export function useCartPriceSync(): boolean {
-  const [priceChanged, setPriceChanged] = useState(false);
+export type CartPriceSyncState = {
+  /** Zmieniła się cena którejś pozycji – strona informuje o tym w podsumowaniu. */
+  priceChanged: boolean;
+  /**
+   * Zmieniła się **dostępność**: pozycja wypadła z koszyka albo przycięliśmy
+   * ilość. Strona zamówienia musi wtedy cofnąć klienta do koszyka – zmianę
+   * zawartości trzeba zobaczyć i potwierdzić świadomie, a nie zamówić resztę
+   * bez zauważenia braku. Komunikat pokazuje dymek ze store'u.
+   */
+  availabilityChanged: boolean;
+};
+
+export function useCartPriceSync(): CartPriceSyncState {
+  const [state, setState] = useState<CartPriceSyncState>({
+    priceChanged: false,
+    availabilityChanged: false,
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -262,9 +277,11 @@ export function useCartPriceSync(): boolean {
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (cancelled || !data?.products) return;
-        // Wyprzedane pozycje zgłasza sam store (toast) – tutaj interesuje nas
-        // tylko cena, bo o niej strona informuje w podsumowaniu
-        if (syncPricesInStore(data.products).priceChanged) setPriceChanged(true);
+        const result = syncPricesInStore(data.products);
+        setState({
+          priceChanged: result.priceChanged,
+          availabilityChanged: result.soldOut.length > 0 || result.reduced.length > 0,
+        });
       })
       .catch(() => {});
 
@@ -273,23 +290,33 @@ export function useCartPriceSync(): boolean {
     };
   }, []);
 
-  return priceChanged;
+  return state;
 }
 
-/** Pobiera aktualne dane produktów z koszyka i wyrównuje do nich store. */
-export async function refreshCartFromServer(ids: string[]): Promise<void> {
-  if (ids.length === 0) return;
+/**
+ * Pobiera aktualne dane produktów z koszyka i wyrównuje do nich store.
+ *
+ * Zwraca wynik wyrównania (albo `null`, gdy nie udało się odpytać serwera), żeby
+ * wywołujący wiedział, czy klient dostał już komunikat – i mógł dołożyć własny,
+ * jeśli nie.
+ */
+export async function refreshCartFromServer(
+  ids: string[]
+): Promise<CartSyncResult | null> {
+  if (ids.length === 0) return null;
   try {
     const res = await fetch("/api/cart/prices", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ productIds: ids }),
     });
-    if (!res.ok) return;
+    if (!res.ok) return null;
     const data = await res.json();
-    if (data?.products) syncPricesInStore(data.products);
+    if (!data?.products) return null;
+    return syncPricesInStore(data.products);
   } catch {
     // Brak sieci nie może blokować zakupów – kwoty i stany weryfikuje serwer
+    return null;
   }
 }
 
