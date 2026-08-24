@@ -656,6 +656,14 @@ export default function CheckoutForm({
                   aby odblokować zamówienie.
                 </p>
               )}
+              {/* Wyjście z formularza – bez tego jedyną drogą powrotu było menu.
+                  Odpowiednik „Kontynuuj zakupy” w koszyku */}
+              <Link
+                href="/koszyk"
+                className="block text-center text-xs tracking-widest uppercase text-charcoal/80 hover:text-clay transition-colors mt-4"
+              >
+                ← Wróć do koszyka
+              </Link>
             </div>
           </div>
         </form>

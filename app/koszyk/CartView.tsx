@@ -65,9 +65,14 @@ export default function CartView({
   if (items.length === 0) {
     return (
       <div className="min-h-[100svh] bg-warm-white">
-        <div className="bg-cream pt-32 pb-12 px-6 text-center">
-          <h1 className="font-serif text-5xl text-espresso">Koszyk</h1>
-          <ClayRule align="center" className="max-w-[220px] mx-auto mt-6" />
+        {/* Ten sam układ nagłówka co na /zamowienie – obie strony należą do
+            jednej ścieżki zakupowej, więc nie mogą się różnić wyrównaniem */}
+        <div className="bg-cream pt-28 pb-10 px-6 lg:px-10">
+          <div className="max-w-5xl mx-auto">
+            <p className="text-xs tracking-[0.3em] uppercase text-clay mb-3">Sklep</p>
+            <h1 className="font-serif text-4xl md:text-5xl text-espresso">Koszyk</h1>
+            <ClayRule className="mt-6" />
+          </div>
         </div>
         <div className="text-center py-24">
           <ShoppingBag size={56} strokeWidth={1} className="mx-auto text-sand mb-6" />
@@ -87,10 +92,15 @@ export default function CartView({
 
   return (
     <div className="min-h-[100svh] bg-warm-white">
-      <div className="bg-cream pt-32 pb-12 px-6 text-center">
-        <h1 className="font-serif text-5xl text-espresso">Koszyk</h1>
-        <p className="text-charcoal/80 mt-2 text-sm">{items.length} {items.length === 1 ? "produkt" : "produkty"}</p>
-        <ClayRule align="center" className="max-w-[220px] mx-auto mt-6" />
+      <div className="bg-cream pt-28 pb-10 px-6 lg:px-10">
+        <div className="max-w-5xl mx-auto">
+          <p className="text-xs tracking-[0.3em] uppercase text-clay mb-3">Sklep</p>
+          <h1 className="font-serif text-4xl md:text-5xl text-espresso">Koszyk</h1>
+          <p className="text-charcoal/80 mt-2 text-sm">
+            {items.length} {items.length === 1 ? "produkt" : "produkty"}
+          </p>
+          <ClayRule className="mt-6" />
+        </div>
       </div>
 
       <div className="max-w-5xl mx-auto px-6 lg:px-10 py-16 grid grid-cols-1 lg:grid-cols-3 gap-12">
