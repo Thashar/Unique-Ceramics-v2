@@ -17,6 +17,8 @@ import {
   toQuantityConfig,
 } from "@/lib/promos";
 import { validateAddress } from "@/lib/address-validation";
+import Header from "@/components/layout/HeaderWrapper";
+import Footer from "@/components/layout/Footer";
 import CheckoutForm from "./CheckoutForm";
 
 export default async function CheckoutPage() {
@@ -84,17 +86,23 @@ export default async function CheckoutPage() {
   ];
 
   return (
-    <CheckoutForm
-      quantityPromo={toQuantityConfig(quantityPromo)}
-      freeShipping={toFreeShippingConfig(freeShipping)}
-      isLoggedIn={!!session?.user?.id}
-      userEmail={session?.user?.email ?? ""}
-      savedAddress={savedAddress}
-      paymentMethods={paymentMethods}
-      shippingCostCourier={settingNumber(settings.shipping_cost, 18)}
-      shippingCostParcelLocker={settingNumber(settings.shipping_cost_parcel_locker, 18)}
-      inpostToken={process.env.INPOST_GEOWIDGET_TOKEN ?? null}
-      savedAddressComplete={savedAddressComplete}
-    />
+    <>
+      <Header />
+      <main className="flex-1">
+        <CheckoutForm
+          quantityPromo={toQuantityConfig(quantityPromo)}
+          freeShipping={toFreeShippingConfig(freeShipping)}
+          isLoggedIn={!!session?.user?.id}
+          userEmail={session?.user?.email ?? ""}
+          savedAddress={savedAddress}
+          paymentMethods={paymentMethods}
+          shippingCostCourier={settingNumber(settings.shipping_cost, 18)}
+          shippingCostParcelLocker={settingNumber(settings.shipping_cost_parcel_locker, 18)}
+          inpostToken={process.env.INPOST_GEOWIDGET_TOKEN ?? null}
+          savedAddressComplete={savedAddressComplete}
+        />
+      </main>
+      <Footer />
+    </>
   );
 }

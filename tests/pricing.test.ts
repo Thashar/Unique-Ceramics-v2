@@ -230,7 +230,7 @@ describe("kody rabatowe", () => {
   it("kod łączony sumuje się z rabatem produktowym", () => {
     const p = priceOrder({
       items: [{ price: 80, basePrice: 100, quantity: 1 }], // przecena 20%
-      code: { code: "LATO10", percent: 10, stackable: true },
+      code: { code: "LATO10", percent: 10, freeShipping: false, stackable: true },
       shipping: { method: "courier", ...shipping },
     });
     expect(p.variant).toBe("promo");
@@ -244,7 +244,7 @@ describe("kody rabatowe", () => {
     const items = [{ price: 80, basePrice: 100, quantity: 1 }];
     const slaby = priceOrder({
       items,
-      code: { code: "MALY", percent: 10, stackable: false },
+      code: { code: "MALY", percent: 10, freeShipping: false, stackable: false },
       shipping: { method: "courier", ...shipping },
     });
     expect(slaby.appliedCode).toBeNull();
@@ -252,12 +252,89 @@ describe("kody rabatowe", () => {
 
     const mocny = priceOrder({
       items,
-      code: { code: "MEGA", percent: 50, stackable: false },
+      code: { code: "MEGA", percent: 50, freeShipping: false, stackable: false },
       shipping: { method: "courier", ...shipping },
     });
     expect(mocny.variant).toBe("code");
     expect(mocny.appliedCode?.code).toBe("MEGA");
     expect(mocny.total).toBe(68);
+  });
+});
+
+describe("kod na darmową wysyłkę", () => {
+  const items = [{ price: 100, basePrice: 100, quantity: 1 }];
+  const wysylkowy = { code: "WYSYLKA", percent: 0, freeShipping: true, stackable: true };
+
+  it("zeruje wysyłkę mimo nieosiągniętego progu promocji", () => {
+    const p = priceOrder({
+      items,
+      code: wysylkowy,
+      shipping: { method: "courier", ...shipping },
+    });
+    expect(p.shippingCost).toBe(0);
+    expect(p.total).toBe(100); // ceny pozycji bez zmian
+    expect(p.appliedCode?.code).toBe("WYSYLKA");
+  });
+
+  it("bez kodu ten sam koszyk płaci za wysyłkę", () => {
+    const p = priceOrder({ items, code: null, shipping: { method: "courier", ...shipping } });
+    expect(p.shippingCost).toBe(18);
+  });
+
+  it("kod na samą wysyłkę nie rusza cen pozycji", () => {
+    const p = priceOrder({
+      items: [{ price: 80, basePrice: 100, quantity: 1 }],
+      code: wysylkowy,
+      shipping: { method: "courier", ...shipping },
+    });
+    expect(p.itemsTotal).toBe(80);
+    expect(p.codeDiscount).toBe(0);
+    expect(p.productDiscount).toBe(20);
+    expect(p.total).toBe(80);
+  });
+
+  it("łączy rabat procentowy z darmową wysyłką", () => {
+    const p = priceOrder({
+      items,
+      code: { code: "OBA", percent: 10, freeShipping: true, stackable: true },
+      shipping: { method: "courier", ...shipping },
+    });
+    expect(p.itemsTotal).toBe(90);
+    expect(p.shippingCost).toBe(0);
+    expect(p.total).toBe(90);
+  });
+
+  it("przy odbiorze osobistym nic nie zmienia – i tak jest bezpłatny", () => {
+    const p = priceOrder({
+      items,
+      code: wysylkowy,
+      shipping: { method: "pickup", ...shipping },
+    });
+    expect(p.shippingCost).toBe(0);
+    expect(p.total).toBe(100);
+  });
+
+  it("kod niełączony na wysyłkę wygrywa, gdy jest korzystniejszy niż rabat ilościowy", () => {
+    // Rabat ilościowy 10% z 300 zł = 30 zł; darmowa wysyłka = 18 zł → wygrywa rabat
+    const trzySztuki = [{ price: 100, basePrice: 100, quantity: 3 }];
+    const slabszy = priceOrder({
+      items: trzySztuki,
+      quantityPromo: qtyPromo(),
+      code: { code: "WYS", percent: 0, freeShipping: true, stackable: false },
+      shipping: { method: "courier", ...shipping },
+    });
+    expect(slabszy.appliedCode).toBeNull();
+    expect(slabszy.quantityPercent).toBe(10);
+
+    // Przy jednej sztuce rabat ilościowy nie przysługuje – wtedy kod ma sens
+    const lepszy = priceOrder({
+      items,
+      quantityPromo: qtyPromo(),
+      code: { code: "WYS", percent: 0, freeShipping: true, stackable: false },
+      shipping: { method: "courier", ...shipping },
+    });
+    expect(lepszy.appliedCode?.code).toBe("WYS");
+    expect(lepszy.total).toBe(100);
   });
 });
 
@@ -268,7 +345,7 @@ describe("łączenie rabatu ilościowego z kodem", () => {
     const p = priceOrder({
       items,
       quantityPromo: qtyPromo(),
-      code: { code: "LATO10", percent: 10, stackable: true },
+      code: { code: "LATO10", percent: 10, freeShipping: false, stackable: true },
       shipping: { method: "courier", ...shipping },
     });
     expect(p.quantityPercent).toBe(10);
@@ -283,7 +360,7 @@ describe("łączenie rabatu ilościowego z kodem", () => {
     const slabyKod = priceOrder({
       items,
       quantityPromo: qtyPromo({ stackable: false }),
-      code: { code: "MALY", percent: 5, stackable: true },
+      code: { code: "MALY", percent: 5, freeShipping: false, stackable: true },
       shipping: { method: "courier", ...shipping },
     });
     expect(slabyKod.quantityPercent).toBe(10);
@@ -294,7 +371,7 @@ describe("łączenie rabatu ilościowego z kodem", () => {
     const mocnyKod = priceOrder({
       items,
       quantityPromo: qtyPromo({ stackable: false }),
-      code: { code: "MEGA", percent: 30, stackable: true },
+      code: { code: "MEGA", percent: 30, freeShipping: false, stackable: true },
       shipping: { method: "courier", ...shipping },
     });
     expect(mocnyKod.quantityPercent).toBe(0);
@@ -306,7 +383,7 @@ describe("łączenie rabatu ilościowego z kodem", () => {
     const p = priceOrder({
       items: [{ price: 80, basePrice: 100, quantity: 3 }],
       quantityPromo: qtyPromo({ includeDiscountedProducts: true }),
-      code: { code: "MEGA", percent: 50, stackable: false },
+      code: { code: "MEGA", percent: 50, freeShipping: false, stackable: false },
       shipping: { method: "courier", ...shipping },
     });
     expect(p.variant).toBe("code");
@@ -322,8 +399,8 @@ describe("niezmienniki wyceny", () => {
     { nazwa: "przecena", items: [{ price: 80, basePrice: 100, quantity: 1 }], q: null, code: null, method: "courier" as const },
     { nazwa: "ilościowy", items: [{ price: 100, basePrice: 100, quantity: 3 }], q: qtyPromo(), code: null, method: "courier" as const },
     { nazwa: "ilościowy + odbiór", items: [{ price: 100, basePrice: 100, quantity: 3 }], q: qtyPromo(), code: null, method: "pickup" as const },
-    { nazwa: "ilościowy + kod", items: [{ price: 100, basePrice: 100, quantity: 3 }], q: qtyPromo(), code: { code: "LATO10", percent: 10, stackable: true }, method: "courier" as const },
-    { nazwa: "wszystko naraz", items: [{ price: 80, basePrice: 100, quantity: 2 }, { price: 45, basePrice: 45, quantity: 2 }], q: qtyPromo({ includeDiscountedProducts: true }), code: { code: "LATO10", percent: 10, stackable: true }, method: "courier" as const },
+    { nazwa: "ilościowy + kod", items: [{ price: 100, basePrice: 100, quantity: 3 }], q: qtyPromo(), code: { code: "LATO10", percent: 10, freeShipping: false, stackable: true }, method: "courier" as const },
+    { nazwa: "wszystko naraz", items: [{ price: 80, basePrice: 100, quantity: 2 }, { price: 45, basePrice: 45, quantity: 2 }], q: qtyPromo({ includeDiscountedProducts: true }), code: { code: "LATO10", percent: 10, freeShipping: false, stackable: true }, method: "courier" as const },
     { nazwa: "darmowa wysyłka", items: [{ price: 350, basePrice: 350, quantity: 1 }], q: null, code: null, method: "courier" as const },
     { nazwa: "grosze", items: [{ price: 33.33, basePrice: 33.33, quantity: 3 }, { price: 10.01, basePrice: 10.01, quantity: 1 }], q: qtyPromo(), code: null, method: "courier" as const },
   ];

@@ -104,8 +104,12 @@ export default async function DiscountCodesPage() {
                       {STATE_LABEL[state]}
                     </span>
                   </div>
-                  <div className="text-sm text-espresso tabular-nums md:text-center mt-1 md:mt-0">
-                    −{code.percent}%
+                  <div className="text-sm text-espresso md:text-center mt-1 md:mt-0">
+                    {code.percent > 0 && <span className="tabular-nums">−{code.percent}%</span>}
+                    {code.percent > 0 && code.freeShipping && " + "}
+                    {code.freeShipping && (
+                      <span className="text-green-700 text-xs">darmowa wysyłka</span>
+                    )}
                   </div>
                   <div className="text-xs text-charcoal/80 md:text-center mt-1 md:mt-0">
                     {code.stackable ? "z innymi rabatami" : "sam (lepszy wariant)"}

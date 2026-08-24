@@ -11,6 +11,8 @@ import {
   isValidCodeFormat,
   normalizeCode,
   activeCodePercent,
+  codeHasEffect,
+  isCodeActive,
   type DiscountCodeInfo,
 } from "@/lib/discount-code";
 
@@ -18,6 +20,7 @@ export type DiscountCodeRow = {
   id: string;
   code: string;
   percent: number;
+  freeShipping: boolean;
   active: boolean;
   stackable: boolean;
   startsAt: Date | null;
@@ -62,9 +65,16 @@ export async function findActiveCode(raw: unknown): Promise<DiscountCodeInfo | n
   try {
     const row = await db.discountCode.findUnique({ where: { code } });
     if (!row) return null;
-    const percent = activeCodePercent(row);
-    if (percent === 0) return null;
-    return { code: row.code, percent, stackable: row.stackable };
+    // O tym, czy kod działa, decyduje okno – **nie procent**. Kod na samą
+    // darmową wysyłkę ma `percent = 0` i nadal jest ważny.
+    if (!isCodeActive(row)) return null;
+    const info: DiscountCodeInfo = {
+      code: row.code,
+      percent: activeCodePercent(row),
+      freeShipping: row.freeShipping,
+      stackable: row.stackable,
+    };
+    return codeHasEffect(info) ? info : null;
   } catch (e) {
     console.error("[discount-codes] weryfikacja kodu nieudana:", e);
     return null;
@@ -120,6 +130,7 @@ export async function countCodeUsageFor(code: string): Promise<number> {
 export type ValidDiscountCode = {
   code: string;
   percent: number;
+  freeShipping: boolean;
   active: boolean;
   stackable: boolean;
   startsAt: Date | null;
@@ -152,11 +163,21 @@ export function validateDiscountCode(
     };
   }
 
-  const percent = Number(b.percent);
-  if (!Number.isInteger(percent) || percent < 1 || percent > MAX_CODE_PERCENT) {
+  const freeShipping = b.freeShipping === true;
+
+  // Zero jest dozwolone **tylko** przy darmowej wysyłce – wtedy kod działa samą
+  // wysyłką. Bez niej kod bez rabatu nie dawałby klientowi nic
+  const percent = b.percent == null || b.percent === "" ? 0 : Number(b.percent);
+  if (!Number.isInteger(percent) || percent < 0 || percent > MAX_CODE_PERCENT) {
     return {
       ok: false,
-      error: `Rabat musi być liczbą całkowitą z zakresu 1–${MAX_CODE_PERCENT}%.`,
+      error: `Rabat musi być liczbą całkowitą z zakresu 0–${MAX_CODE_PERCENT}%.`,
+    };
+  }
+  if (percent === 0 && !freeShipping) {
+    return {
+      ok: false,
+      error: "Kod musi coś dawać – ustaw rabat procentowy albo darmową wysyłkę.",
     };
   }
 
@@ -177,6 +198,7 @@ export function validateDiscountCode(
     data: {
       code,
       percent,
+      freeShipping,
       active: b.active !== false,
       // Domyślnie kod łączy się z innymi rabatami
       stackable: b.stackable !== false,

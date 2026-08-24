@@ -64,10 +64,10 @@ export default function CartView({
 
   if (items.length === 0) {
     return (
-      <div className="min-h-[100svh] bg-warm-white">
+      <div className="bg-warm-white">
         {/* Ten sam układ nagłówka co na /zamowienie – obie strony należą do
             jednej ścieżki zakupowej, więc nie mogą się różnić wyrównaniem */}
-        <div className="bg-cream pt-28 pb-10 px-6 lg:px-10">
+        <div className="bg-cream px-6 lg:px-10 py-10">
           <div className="max-w-5xl mx-auto">
             <p className="text-xs tracking-[0.3em] uppercase text-clay mb-3">Sklep</p>
             <h1 className="font-serif text-4xl md:text-5xl text-espresso">Koszyk</h1>
@@ -91,8 +91,8 @@ export default function CartView({
   }
 
   return (
-    <div className="min-h-[100svh] bg-warm-white">
-      <div className="bg-cream pt-28 pb-10 px-6 lg:px-10">
+    <div className="bg-warm-white">
+      <div className="bg-cream px-6 lg:px-10 py-10">
         <div className="max-w-5xl mx-auto">
           <p className="text-xs tracking-[0.3em] uppercase text-clay mb-3">Sklep</p>
           <h1 className="font-serif text-4xl md:text-5xl text-espresso">Koszyk</h1>

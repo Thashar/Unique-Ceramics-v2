@@ -15,7 +15,8 @@
 
 import {
   MAX_DISCOUNT_PERCENT,
-  activeDiscountPercent,
+  isWithinWindow,
+  normalizeDiscountPercent,
   shownDiscountPercent,
 } from "@/lib/product-price";
 import {
@@ -46,10 +47,18 @@ export function isValidCodeFormat(code: string): boolean {
 /** Dane kodu potrzebne do policzenia zamówienia. */
 export type DiscountCodeInfo = {
   code: string;
+  /** Rabat w % (0 = kod działa wyłącznie przez darmową wysyłkę). */
   percent: number;
+  /** Kod zeruje koszt wysyłki – niezależnie od promocji „Darmowa wysyłka”. */
+  freeShipping: boolean;
   /** true = sumuje się z innymi rabatami; false = wybieramy korzystniejszy wariant. */
   stackable: boolean;
 };
+
+/** Czy kod cokolwiek daje – bez tego nie ma sensu go stosować. */
+export function codeHasEffect(code: Pick<DiscountCodeInfo, "percent" | "freeShipping">): boolean {
+  return code.percent > 0 || code.freeShipping;
+}
 
 /** Rekord kodu (z bazy albo z formularza) razem z oknem obowiązywania. */
 export type DiscountCodeRecord = DiscountCodeInfo & {
@@ -59,20 +68,22 @@ export type DiscountCodeRecord = DiscountCodeInfo & {
 };
 
 /**
- * Rabat kodu obowiązujący w danej chwili – 0, gdy kod jest wyłączony albo poza
- * swoim oknem. Okno liczy ta sama funkcja co przy przecenach produktów, więc
- * daty zachowują się identycznie (czas polski ustawiany w panelu, UTC w bazie).
+ * Czy kod obowiązuje w danej chwili – jest włączony i mieści się w swoim oknie.
+ *
+ * **Osobno od procentu**: kod na samą darmową wysyłkę ma `percent = 0`, więc
+ * pytanie „ile procent" nie może decydować o tym, czy kod w ogóle działa.
+ * Okno liczy ta sama funkcja co przy przecenach produktów, więc daty zachowują
+ * się identycznie (czas polski ustawiany w panelu, UTC w bazie).
  */
+export function isCodeActive(code: DiscountCodeRecord, now?: Date): boolean {
+  if (!code.active) return false;
+  return isWithinWindow(code.startsAt, code.endsAt, { now });
+}
+
+/** Rabat procentowy kodu obowiązujący w danej chwili – 0 poza oknem. */
 export function activeCodePercent(code: DiscountCodeRecord, now?: Date): number {
-  if (!code.active) return 0;
-  return activeDiscountPercent(
-    {
-      discountPercent: code.percent,
-      discountStartsAt: code.startsAt,
-      discountEndsAt: code.endsAt,
-    },
-    { now }
-  );
+  if (!isCodeActive(code, now)) return 0;
+  return normalizeDiscountPercent(code.percent);
 }
 
 /** Stan kodu do opisów w panelu. */
@@ -163,13 +174,20 @@ function listPrice(item: PricedItem): number {
 
 /**
  * Koszt wysyłki. Kolejność ma znaczenie: **odbiór osobisty nie ma wysyłki**,
- * więc nie ma też czego doliczać ani zerować promocją. Dalej decyduje promocja
- * „Darmowa wysyłka” (próg liczony od kwoty **po rabatach**, żeby nie dało się
- * odblokować jej kwotą, której klient realnie nie płaci), a na końcu stawka
- * wybranej metody.
+ * więc nie ma też czego doliczać ani zerować. Dalej kod rabatowy na darmową
+ * wysyłkę (bezwarunkowo), potem promocja „Darmowa wysyłka” (próg liczony od
+ * kwoty **po rabatach**, żeby nie dało się odblokować jej kwotą, której klient
+ * realnie nie płaci), a na końcu stawka wybranej metody.
  */
-function shippingFor(itemsTotal: number, s: ShippingParams): number {
+function shippingFor(
+  itemsTotal: number,
+  s: ShippingParams,
+  codeFreeShipping: boolean
+): number {
   if (s.method === "pickup") return 0;
+  // Kod na darmową wysyłkę działa **niezależnie od progu** promocji wysyłkowej –
+  // po to właśnie się go wydaje
+  if (codeFreeShipping) return 0;
   if (isShippingFree(s.freeShipping, s.method, itemsTotal)) return 0;
   return money(s.method === "parcel_locker" ? s.parcelLocker : s.courier);
 }
@@ -191,7 +209,12 @@ function buildVariant<T extends PricedItem>(
   const itemsTotal = money(
     items.reduce((sum, item, i) => sum + unitPrices[i] * item.quantity, 0)
   );
-  const shippingCost = shippingFor(itemsTotal, shipping);
+  // Darmową wysyłkę daje tylko kod, który w tym wariancie **realnie wszedł**
+  const shippingCost = shippingFor(
+    itemsTotal,
+    shipping,
+    parts.appliedCode?.freeShipping === true
+  );
 
   const lines: PricedLine<T>[] = items.map((item, i) => {
     const catalogUnitPrice = money(listPrice(item));
@@ -265,7 +288,9 @@ export function priceOrder<T extends PricedItem>({
   shipping: ShippingParams;
 }): OrderPricing<T> {
   const codePercent = code && code.percent > 0 ? Math.min(code.percent, MAX_CODE_PERCENT) : 0;
-  const hasCode = codePercent > 0;
+  // Kod „ma efekt”, gdy daje rabat **albo** darmową wysyłkę – kod wyłącznie
+  // wysyłkowy ma `percent = 0`, więc sam procent nie może o tym decydować
+  const hasCode = !!code && codeHasEffect(code);
   const codeFactor = 1 - codePercent / 100;
 
   // Upust z samych przecen produktowych – ten sam w każdym wariancie, który

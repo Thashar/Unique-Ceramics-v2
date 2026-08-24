@@ -144,7 +144,12 @@ export default function CheckoutForm({
         setCodeError(data?.error ?? "Kod jest nieprawidłowy lub wygasł");
         return;
       }
-      setAppliedCode({ code: data.code, percent: data.percent, stackable: data.stackable });
+      setAppliedCode({
+        code: data.code,
+        percent: data.percent,
+        freeShipping: data.freeShipping === true,
+        stackable: data.stackable,
+      });
       setCodeInput(data.code);
     } catch {
       setCodeError("Nie udało się sprawdzić kodu. Spróbuj ponownie.");
@@ -245,7 +250,7 @@ export default function CheckoutForm({
 
   if (items.length === 0) {
     return (
-      <div className="min-h-[100svh] bg-warm-white flex items-center justify-center">
+      <div className="bg-warm-white flex items-center justify-center py-24">
         <div className="text-center">
           <p className="font-serif text-2xl text-espresso mb-4">Koszyk jest pusty</p>
           <Link href="/sklep" className="text-clay hover:text-espresso underline">Przejdź do sklepu</Link>
@@ -337,8 +342,8 @@ export default function CheckoutForm({
     `w-full bg-cream border ${fieldErrors[field] ? "border-red-400" : "border-sand"} focus:border-clay outline-none px-4 py-3 text-espresso text-sm`;
 
   return (
-    <div className="min-h-[100svh] bg-warm-white">
-      <div className="bg-cream pt-28 pb-10 px-6 lg:px-10">
+    <div className="bg-warm-white">
+      <div className="bg-cream px-6 lg:px-10 py-10">
         <div className="max-w-5xl mx-auto">
           <p className="text-xs tracking-[0.3em] uppercase text-clay mb-3">Sklep</p>
           <h1 className="font-serif text-4xl md:text-5xl text-espresso">Zamówienie</h1>
@@ -560,6 +565,13 @@ export default function CheckoutForm({
                         {" "}−{pricing.codeDiscount.toFixed(2).replace(".", ",")} zł
                       </p>
                     )}
+                    {/* Kod na samą wysyłkę nie obniża cen pozycji – jego efekt
+                        widać w wierszu wysyłki, więc tu tylko go nazywamy */}
+                    {pricing.appliedCode?.freeShipping && pricing.codeDiscount === 0 && (
+                      <p className="text-xs text-green-700">
+                        kod {pricing.appliedCode.code}: darmowa wysyłka
+                      </p>
+                    )}
                   </>
                 )}
 
@@ -582,7 +594,11 @@ export default function CheckoutForm({
                       <span className="inline-flex items-center gap-2 text-espresso">
                         <Tag size={14} strokeWidth={1.5} className="text-clay shrink-0" />
                         <span className="font-medium">{appliedCode.code}</span>
-                        <span className="text-charcoal/80">−{appliedCode.percent}%</span>
+                        <span className="text-charcoal/80">
+                          {appliedCode.percent > 0 && `−${appliedCode.percent}%`}
+                          {appliedCode.percent > 0 && appliedCode.freeShipping && " + "}
+                          {appliedCode.freeShipping && "darmowa wysyłka"}
+                        </span>
                       </span>
                       <button
                         type="button"

@@ -27,6 +27,7 @@ export default async function EditDiscountCodePage({
         initial={{
           code: code.code,
           percent: code.percent,
+          freeShipping: code.freeShipping,
           active: code.active,
           stackable: code.stackable,
           startsAt: code.startsAt,

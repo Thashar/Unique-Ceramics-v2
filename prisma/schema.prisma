@@ -169,7 +169,11 @@ model Product {
 model DiscountCode {
   id        String    @id @default(cuid())
   code      String    @unique          // zawsze wielkimi literami
-  percent   Int                        // rabat w %, 1–90
+  /// Rabat w %, 0–90. Zero jest dozwolone **tylko** razem z `freeShipping` –
+  /// kod musi cokolwiek dawać.
+  percent   Int
+  /// Kod zeruje koszt wysyłki. Może działać sam (percent = 0) albo razem z rabatem.
+  freeShipping Boolean @default(false)
   active    Boolean   @default(true)
   // true = rabat dokłada się do przecen produktów i promocji „Wielosztuki”;
   // false = kod działa sam, a sklep wybiera wariant korzystniejszy dla klienta

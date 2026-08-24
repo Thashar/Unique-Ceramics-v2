@@ -23,6 +23,7 @@ const DURATIONS: { value: string; label: string }[] = [
 export type DiscountCodeDraft = {
   code: string;
   percent: number;
+  freeShipping: boolean;
   active: boolean;
   stackable: boolean;
   startsAt: Date | string | null;
@@ -41,6 +42,7 @@ export default function DiscountCodeForm({
   const [form, setForm] = useState({
     code: initial?.code ?? "",
     percent: initial?.percent?.toString() ?? "10",
+    freeShipping: initial?.freeShipping ?? false,
     active: initial?.active ?? true,
     stackable: initial?.stackable ?? true,
     // Daty trzymamy w formacie <input type="datetime-local">, czyli w czasie
@@ -71,6 +73,7 @@ export default function DiscountCodeForm({
     const state = codeState({
       code: form.code,
       percent: Number.isFinite(percent) ? percent : 0,
+      freeShipping: form.freeShipping,
       stackable: form.stackable,
       active: form.active,
       startsAt: startsAtDate,
@@ -129,7 +132,8 @@ export default function DiscountCodeForm({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           code: normalizeCode(form.code),
-          percent: Number.parseInt(form.percent, 10),
+          percent: form.percent === "" ? 0 : Number.parseInt(form.percent, 10),
+          freeShipping: form.freeShipping,
           active: form.active,
           stackable: form.stackable,
           startsAt: startsAtDate ? startsAtDate.toISOString() : null,
@@ -188,20 +192,44 @@ export default function DiscountCodeForm({
         </div>
         <div className="min-w-0">
           <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">
-            Rabat (%) *
+            Rabat (%){!form.freeShipping && " *"}
           </label>
           <input
-            required
+            required={!form.freeShipping}
             type="number"
-            min="1"
+            min="0"
             max={MAX_CODE_PERCENT}
             step="1"
             value={form.percent}
             onChange={(e) => set("percent", e.target.value)}
             className="w-full min-w-0 bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm"
           />
-          <p className="text-[11px] text-charcoal/80 mt-1">Od 1 do {MAX_CODE_PERCENT}%.</p>
+          <p className="text-[11px] text-charcoal/80 mt-1">
+            {form.freeShipping
+              ? `0 = kod daje samą darmową wysyłkę. Maks. ${MAX_CODE_PERCENT}%.`
+              : `Od 1 do ${MAX_CODE_PERCENT}%.`}
+          </p>
         </div>
+      </div>
+
+      {/* Darmowa wysyłka – kod może dawać ją zamiast rabatu albo razem z nim */}
+      <div className="border border-sand/60 bg-warm-white p-4">
+        <label className="flex items-start gap-3 text-sm text-espresso cursor-pointer">
+          <input
+            type="checkbox"
+            checked={form.freeShipping}
+            onChange={(e) => set("freeShipping", e.target.checked)}
+            className="mt-0.5 accent-clay shrink-0"
+          />
+          <span>
+            Kod daje darmową wysyłkę
+            <span className="block text-xs text-charcoal/80 mt-1 leading-relaxed">
+              Zeruje koszt dostawy <strong>bez względu na próg</strong> promocji
+              „Darmowa wysyłka”. Można połączyć z rabatem procentowym albo zostawić
+              rabat na 0 – wtedy kod daje samą wysyłkę. Odbiór osobisty i tak jest bezpłatny.
+            </span>
+          </span>
+        </label>
       </div>
 
       {/* Okno obowiązywania – identyczne jak przy rabacie w karcie produktu */}
