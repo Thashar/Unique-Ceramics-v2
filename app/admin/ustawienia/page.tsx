@@ -7,7 +7,7 @@ import SettingsForm from "@/components/admin/SettingsForm";
 
 const VALID_SECTIONS = new Set([
   "strona_glowna", "omnie", "warsztaty", "regulamin", "polityka",
-  "kontakt", "wysylka", "urlop", "zam_indywidualne", "ai", "promocje",
+  "kontakt", "wysylka", "urlop", "zam_indywidualne", "ai",
   "platnosci_przelew", "platnosci_stripe",
 ]);
 
@@ -63,8 +63,6 @@ export default async function AdminSettingsPage({
     "contact_address_region",
     "shipping_cost",
     "shipping_cost_parcel_locker",
-    "shipping_free_enabled",
-    "shipping_free_from",
     "shipping_time",
     "payment_bank_account_name",
     "payment_bank_account_number",
@@ -84,7 +82,6 @@ export default async function AdminSettingsPage({
     "ai_prompt_presets",
     "ai_prompt_preset_ai",
     "ai_prompt_preset_ai_plus",
-    "bundled_shipping_enabled",
   ]);
 
   // Statystyki zużycia AI potrzebne tylko na jednej zakładce – nie odpytuj bazy poza nią

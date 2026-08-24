@@ -1,16 +1,15 @@
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import { getSettings, settingNumber } from "@/lib/settings";
-import {
-  BUNDLED_SHIPPING_KEY,
-  BUNDLE_OFF,
-  bundleFromSettings,
-  bundleSummary,
-  type BundleConfig,
-} from "@/lib/bundled-shipping";
 import { activeDiscountPercent, discountedPrice } from "@/lib/product-price";
 import { priceOrder, type ShippingMethod } from "@/lib/discount-code";
 import { findActiveCode } from "@/lib/discount-codes";
+import {
+  findActiveFreeShipping,
+  findActiveQuantityPromo,
+  toFreeShippingConfig,
+  toQuantityConfig,
+} from "@/lib/promos";
 import { validateAddress, validateContact } from "@/lib/address-validation";
 import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 import { NextResponse } from "next/server";
@@ -153,10 +152,16 @@ function buildOrderEmail(params: {
   paymentMethod: "transfer" | "stripe";
   items: { name: string; price: number; quantity: number; lineTotal?: number }[];
   shippingCost: number;
-  /** Promocja „Wielosztuki” – zamiast kwoty wysyłki pokazujemy „Darmowa wysyłka”. */
+  /** Promocja „Darmowa wysyłka” – zamiast kwoty pokazujemy „Darmowa wysyłka”. */
   freeShipping?: boolean;
+  /** Rabat ilościowy – kwota jest już w cenach pozycji, wiersz jest informacyjny. */
+  quantityDiscount?: { percent: number; amount: number } | null;
   /** Użyty kod rabatowy – kwota jest już w cenach pozycji, wiersz jest informacyjny. */
   discountCode?: { code: string; percent: number; amount: number } | null;
+  /** Suma pozycji sprzed rabatów – wiersz „Produkty przed rabatem”. */
+  catalogTotal: number;
+  /** Łączny upust; `catalogTotal − discountTotal + wysyłka = total`. */
+  discountTotal: number;
   total: number;
   bankAccountName?: string;
   bankAccountNumber?: string;
@@ -176,7 +181,10 @@ function buildOrderEmail(params: {
     items,
     shippingCost,
     freeShipping,
+    quantityDiscount,
     discountCode,
+    catalogTotal,
+    discountTotal,
     total,
     bankAccountName,
     bankAccountNumber,
@@ -271,10 +279,24 @@ function buildOrderEmail(params: {
         <tbody>${itemsHtml}</tbody>
       </table>
       <table style="width:100%;font-size:14px;color:#4a3728;">
+        ${discountTotal > 0 ? `
+        <tr>
+          <td style="padding:6px 12px;text-align:right;color:#6b5748;">Produkty przed rabatem</td>
+          <td style="padding:6px 12px;text-align:right;width:120px;">${catalogTotal.toFixed(2).replace(".", ",")} zł</td>
+        </tr>
+        <tr>
+          <td style="padding:6px 12px;text-align:right;color:#2f6f3e;">Rabat</td>
+          <td style="padding:6px 12px;text-align:right;width:120px;color:#2f6f3e;">−${discountTotal.toFixed(2).replace(".", ",")} zł</td>
+        </tr>` : ""}
+        ${/* Rabaty siedzą już w cenach pozycji – dopiski, nie kolejne odjęcia:
+             jako osobne wiersze zaniżałyby kolumnę o swoją wartość */ ""}
+        ${quantityDiscount ? `
+        <tr>
+          <td colspan="2" style="padding:0 12px 6px;text-align:right;font-size:12px;color:#2f6f3e;">w tym rabat ilościowy −${quantityDiscount.percent}%: −${quantityDiscount.amount.toFixed(2).replace(".", ",")} zł</td>
+        </tr>` : ""}
         ${discountCode ? `
         <tr>
-          <td style="padding:6px 12px;text-align:right;color:#6b5748;">Kod rabatowy ${discountCode.code} (−${discountCode.percent}%)</td>
-          <td style="padding:6px 12px;text-align:right;width:120px;color:#2f6f3e;">−${discountCode.amount.toFixed(2).replace(".", ",")} zł</td>
+          <td colspan="2" style="padding:0 12px 6px;text-align:right;font-size:12px;color:#2f6f3e;">w tym kod ${discountCode.code} (−${discountCode.percent}%): −${discountCode.amount.toFixed(2).replace(".", ",")} zł</td>
         </tr>` : ""}
         <tr>
           <td style="padding:6px 12px;text-align:right;color:#6b5748;">${shippingMethod === "pickup" ? "Odbiór osobisty" : "Wysyłka"}</td>
@@ -473,12 +495,9 @@ export async function POST(req: Request) {
   const shippingSettings = await getSettings([
     "shipping_cost",
     "shipping_cost_parcel_locker",
-    "shipping_free_enabled",
-    "shipping_free_from",
     "vacation_enabled",
     "vacation_end_date",
     "vacation_message",
-    BUNDLED_SHIPPING_KEY,
   ]);
   // settingNumber, nie `|| 18` – zero to poprawna stawka (darmowa wysyłka)
   const shippingCostCourier = settingNumber(shippingSettings.shipping_cost, 18);
@@ -504,15 +523,15 @@ export async function POST(req: Request) {
       vacationNote = "Zamówienie zostanie zrealizowane po powrocie z urlopu.";
     }
   }
-  const freeEnabled = shippingSettings.shipping_free_enabled === "true";
-  const freeFrom = settingNumber(shippingSettings.shipping_free_from, 300);
-
   const typedItems = items as { productId: string; quantity: number }[];
 
-  // Promocja „Wielosztuki”: narzut na wysyłkę jest już w cenach katalogowych,
-  // więc próg darmowej wysyłki nie działa – inaczej klient zapłaciłby mniej,
-  // niż pokazywał koszyk
-  const bundle = bundleFromSettings(shippingSettings);
+  // Promocje sprawdzamy w bazie **w chwili składania zamówienia** – bez `holdMs`,
+  // bo tu nie ma cache'u strony, a klient zaraz płaci. Brak tabel (migracja jest
+  // ręczna) po prostu wyłącza promocje, zamiast wywracać zamówienie.
+  const [quantityPromoRow, freeShippingRow] = await Promise.all([
+    findActiveQuantityPromo(),
+    findActiveFreeShipping(),
+  ]);
 
   // Kod rabatowy sprawdzamy w bazie – z żądania bierzemy samą nazwę.
   // Nieznany, wyłączony albo wygasły kod po prostu nie wchodzi (bez błędu:
@@ -531,18 +550,17 @@ export async function POST(req: Request) {
     };
   });
 
-  // Jedno miejsce liczy całą kwotę: przeceny produktów, „Wielosztuki” i kod
-  // (łączony albo – przy niełączonym – korzystniejszy z dwóch wariantów)
+  // Jedno miejsce liczy całą kwotę: przeceny produktów, rabat ilościowy, kod
+  // (łączony albo – przy niełączonym – korzystniejszy wariant) i darmową wysyłkę
   const pricing = priceOrder({
     items: pricedItems,
-    bundle,
+    quantityPromo: toQuantityConfig(quantityPromoRow),
     code: requestedCode,
     shipping: {
       method: shippingMethod as ShippingMethod,
       courier: shippingCostCourier,
       parcelLocker: shippingCostParcel,
-      freeEnabled,
-      freeFrom,
+      freeShipping: toFreeShippingConfig(freeShippingRow),
     },
   });
 
@@ -615,9 +633,10 @@ export async function POST(req: Request) {
           // Kwota kodu jest już wliczona w ceny pozycji – pola są śladem do zestawień
           discountCode: appliedCode?.code ?? null,
           discountAmount: codeDiscount > 0 ? codeDiscount : null,
-          // Narzut promocji „Wielosztuki” z chwili zakupu – podsumowanie
-          // zamówienia odtwarzamy z niego, a nie z bieżących ustawień sklepu
-          bundleSurcharge: pricing.bundle.enabled ? pricing.bundle.surcharge : null,
+          // Rabat ilościowy z chwili zakupu – tak samo wliczony w ceny pozycji.
+          // Podsumowanie odtwarzamy z tych pól, nie z bieżącego stanu promocji
+          quantityDiscountPercent: pricing.quantityPercent > 0 ? pricing.quantityPercent : null,
+          quantityDiscountAmount: pricing.quantityDiscount > 0 ? pricing.quantityDiscount : null,
           shippingMethod: shippingMethod ?? "courier",
           parcelLockerCode: shippingMethod === "parcel_locker" ? String(parcelLockerCode ?? "").trim() : null,
           items: {
@@ -666,20 +685,14 @@ export async function POST(req: Request) {
       quantity: item.quantity,
     };
   });
-  // Rozbicie pokazywane KLIENTOWI (e-mail, Stripe). W promocji „Wielosztuki”
-  // narzut na wysyłkę siedzi w cenach pozycji, a wiersz wysyłki mówi tylko
-  // „Darmowa wysyłka” – tak samo jak koszyk i strona zamówienia. Powiadomienie
-  // dla właściciela zostaje na kwotach z bazy (ceny bazowe + wysyłka osobno).
-  const customerBundle: BundleConfig =
-    pricing.bundle.enabled && shippingCost > 0
-      ? { enabled: true, surcharge: shippingCost }
-      : BUNDLE_OFF;
-  const customerLines = bundleSummary(verifiedItems, customerBundle).lines;
-  const customerItems = customerLines.map((l) => ({
-    name: l.item.name,
-    price: l.unitPrice,
-    quantity: l.item.quantity,
-    lineTotal: l.lineTotal,
+  // Rozbicie pokazywane KLIENTOWI (e-mail, Stripe). Rabaty siedzą już w cenach
+  // pozycji, więc pozycje idą wprost z zamówienia – bez przeliczeń, które przy
+  // poprzedniej promocji wymagały osobnej warstwy prezentacji.
+  const customerItems = verifiedItems.map((item) => ({
+    name: item.name,
+    price: item.price,
+    quantity: item.quantity,
+    lineTotal: Math.round(item.price * item.quantity * 100) / 100,
   }));
 
   // Licznika użyć kodu tu nie ruszamy. Zliczał także zamówienia porzucone przy
@@ -729,10 +742,16 @@ export async function POST(req: Request) {
           paymentMethod: paymentMethod === "stripe" ? "stripe" : "transfer",
           items: customerItems,
           shippingCost,
-          freeShipping: customerBundle.enabled,
+          freeShipping: pricing.shippingFree,
+          quantityDiscount:
+            pricing.quantityPercent > 0 && pricing.quantityDiscount > 0
+              ? { percent: pricing.quantityPercent, amount: pricing.quantityDiscount }
+              : null,
           discountCode: appliedCode && codeDiscount > 0
             ? { code: appliedCode.code, percent: appliedCode.percent, amount: codeDiscount }
             : null,
+          catalogTotal: pricing.display.catalogTotal,
+          discountTotal: pricing.display.discountTotal,
           total,
           bankAccountName: bankSettings?.payment_bank_account_name,
           bankAccountNumber: bankSettings?.payment_bank_account_number,
@@ -760,8 +779,10 @@ export async function POST(req: Request) {
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
     const baseUrl = process.env.AUTH_URL ?? "http://localhost:3000";
 
-    // Domyślnie: pozycje po cenach z zamówienia + osobny wiersz wysyłki.
-    const plainLineItems = [
+    // Pozycje po cenach z zamówienia (rabaty są już w nich zawarte) + osobny
+    // wiersz wysyłki. Rabatów nie pokazujemy Stripe'owi jako ujemnych pozycji –
+    // nie przyjmuje ich, a i tak liczy się końcowa kwota.
+    const stripeLineItems = [
       ...verifiedItems.map((item) => ({
         price_data: {
           currency: "pln",
@@ -782,33 +803,22 @@ export async function POST(req: Request) {
         : []),
     ];
 
-    // W promocji „Wielosztuki” u operatora płatności też nie może pojawić się
-    // kwota wysyłki – narzut jest w cenach pozycji. Reszta z zaokrągleń idzie
-    // na jedną sztukę (Stripe nie przyjmuje ujemnych pozycji), a gdyby suma
-    // mimo wszystko nie trafiła w kwotę zamówienia, wracamy do rozbicia
-    // z osobną wysyłką – klient nie może zapłacić innej kwoty niż zamówił.
-    let stripeLineItems = plainLineItems;
-    if (customerBundle.enabled) {
-      const bundled = customerLines.flatMap((l) => {
-        const unit = Math.round(l.unitPrice * 100);
-        const lineGr = Math.round(l.lineTotal * 100);
-        const rest = lineGr - unit * l.item.quantity;
-        const line = (amount: number, quantity: number) => ({
-          price_data: {
-            currency: "pln",
-            product_data: { name: l.item.name },
-            unit_amount: amount,
-          },
-          quantity,
-        });
-        if (rest === 0) return [line(unit, l.item.quantity)];
-        return [line(unit, l.item.quantity - 1), line(unit + rest, 1)].filter(
-          (e) => e.quantity > 0
-        );
+    // Ostatnia linia obrony: klient nie może zapłacić u operatora innej kwoty,
+    // niż zatwierdził w sklepie
+    const stripeSum = stripeLineItems.reduce(
+      (acc, e) => acc + e.price_data.unit_amount * e.quantity,
+      0
+    );
+    if (stripeSum !== Math.round(total * 100)) {
+      console.error("[checkout] rozbicie Stripe nie zgadza się z kwotą zamówienia", {
+        stripeSum,
+        total,
       });
-      const sum = bundled.reduce((acc, e) => acc + e.price_data.unit_amount * e.quantity, 0);
-      if (sum === Math.round(total * 100)) stripeLineItems = bundled;
-      else console.error("[checkout] rozbicie Stripe nie zgadza się z kwotą zamówienia");
+      await releaseOrder(order.id, typedItems);
+      return NextResponse.json(
+        { error: "Nie udało się rozpocząć płatności kartą. Wybierz przelew bankowy." },
+        { status: 500 }
+      );
     }
 
     // Sesja Stripe potrafi nie powstać (błąd sieci, odrzucony klucz, kwota poniżej

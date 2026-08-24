@@ -1,30 +1,39 @@
 import { getSettings, settingNumber } from "@/lib/settings";
-import { BUNDLED_SHIPPING_KEY, BUNDLE_OFF, bundleFromSettings } from "@/lib/bundled-shipping";
+import {
+  findActiveFreeShipping,
+  findActiveQuantityPromo,
+  toFreeShippingConfig,
+  toQuantityConfig,
+} from "@/lib/promos";
+import { DISCOUNT_HOLD_CATALOG_MS } from "@/lib/product-price";
 import CartView from "./CartView";
 
-// Ustawienia wysyłki zmieniają się rzadko, a zapis w panelu robi
+// Ustawienia wysyłki i promocje zmieniają się rzadko, a zapis w panelu robi
 // revalidatePath("/", "layout"), więc krótkie ISR w zupełności wystarcza
 export const revalidate = 300;
 
 export default async function CartPage() {
-  const settings = await getSettings([
-    "shipping_cost",
-    "shipping_cost_parcel_locker",
-    "shipping_free_enabled",
-    "shipping_free_from",
-    BUNDLED_SHIPPING_KEY,
+  // `holdMs` = okno cache tej strony: promocji kończącej się w czasie życia
+  // zapisanego HTML-a nie pokazujemy, żeby koszyk nie obiecywał rabatu,
+  // którego `/api/checkout` już nie policzy
+  const hold = { holdMs: DISCOUNT_HOLD_CATALOG_MS };
+  const [settings, quantityPromo, freeShipping] = await Promise.all([
+    getSettings(["shipping_cost", "shipping_cost_parcel_locker"]),
+    findActiveQuantityPromo(hold),
+    findActiveFreeShipping(hold),
   ]);
-
-  const bundle = bundleFromSettings(settings);
 
   return (
     <CartView
       shipping={{
-        cost: settingNumber(settings.shipping_cost, 18),
-        freeEnabled: settings.shipping_free_enabled === "true",
-        freeFrom: settingNumber(settings.shipping_free_from, 300),
-        bundle: bundle.enabled ? bundle : BUNDLE_OFF,
+        // Koszyk nie zna jeszcze metody dostawy – pokazujemy najtańszą stawkę
+        cheapestCost: Math.min(
+          settingNumber(settings.shipping_cost, 18),
+          settingNumber(settings.shipping_cost_parcel_locker, 18)
+        ),
+        freeShipping: toFreeShippingConfig(freeShipping),
       }}
+      quantityPromo={toQuantityConfig(quantityPromo)}
     />
   );
 }

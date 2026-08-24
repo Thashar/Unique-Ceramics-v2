@@ -90,14 +90,51 @@ export function activeDiscountPercent(
 ): number {
   const percent = normalizeDiscountPercent(product.discountPercent);
   if (percent === 0) return 0;
+  return isWithinWindow(product.discountStartsAt, product.discountEndsAt, { now, holdMs })
+    ? percent
+    : 0;
+}
 
+/**
+ * Czy dana chwila mieści się w oknie obowiązywania.
+ *
+ * Wspólne dla przecen produktów, kodów rabatowych i promocji (rabat ilościowy,
+ * darmowa wysyłka) – wszystkie używają tej samej konwencji: `null` z którejkolwiek
+ * strony oznacza brak ograniczenia, a `holdMs` przesuwa koniec okna dla stron
+ * z cache'em (patrz stałe `DISCOUNT_HOLD_*`).
+ */
+export function isWithinWindow(
+  startsAt: Date | string | null | undefined,
+  endsAt: Date | string | null | undefined,
+  { now, holdMs = 0 }: { now?: Date; holdMs?: number } = {}
+): boolean {
   const nowMs = now?.getTime() ?? Date.now();
-  const startsAt = timestamp(product.discountStartsAt);
-  const endsAt = timestamp(product.discountEndsAt);
+  const start = timestamp(startsAt);
+  const end = timestamp(endsAt);
 
-  if (startsAt !== null && startsAt > nowMs) return 0;
-  if (endsAt !== null && endsAt <= nowMs + Math.max(0, holdMs)) return 0;
-  return percent;
+  if (start !== null && start > nowMs) return false;
+  if (end !== null && end <= nowMs + Math.max(0, holdMs)) return false;
+  return true;
+}
+
+/**
+ * Stan okna obowiązywania – do opisów w panelu (rabat ilościowy, darmowa
+ * wysyłka). Domyślne `now` liczone jest **wewnątrz funkcji**, żeby komponenty
+ * nie wołały `Date.now()` w trakcie renderu (reguła `react-hooks/purity`).
+ */
+export type WindowState = "scheduled" | "active" | "expired";
+
+export function windowState(
+  startsAt: Date | string | null | undefined,
+  endsAt: Date | string | null | undefined,
+  now: Date = new Date()
+): WindowState {
+  const nowMs = now.getTime();
+  const start = timestamp(startsAt);
+  const end = timestamp(endsAt);
+  if (end !== null && end <= nowMs) return "expired";
+  if (start !== null && start > nowMs) return "scheduled";
+  return "active";
 }
 
 /** Stan rabatu – do opisów w panelu admina. */

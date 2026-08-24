@@ -266,9 +266,9 @@ export default function DiscountCodeForm({
           <span>
             Łączy się z innymi rabatami
             <span className="block text-xs text-charcoal/80 mt-1 leading-relaxed">
-              Zaznaczone: kod schodzi dodatkowo z cen już przecenionych, a promocja
-              „Wielosztuki” działa normalnie – rabaty się sumują.
-              Odznaczone: kod działa sam (bez przecen produktów i bez „Wielosztuk”),
+              Zaznaczone: kod schodzi dodatkowo z cen już przecenionych, a rabat
+              ilościowy działa normalnie – rabaty się sumują.
+              Odznaczone: kod działa sam (bez przecen produktów i bez rabatu ilościowego),
               a sklep porównuje obie kwoty i zostawia <strong>korzystniejszą dla klienta</strong>.
             </span>
           </span>

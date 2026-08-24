@@ -5,7 +5,7 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { ShoppingBag } from "lucide-react";
 import ProductPriceTag from "@/components/ui/ProductPriceTag";
-import { BUNDLE_OFF, type BundleConfig } from "@/lib/bundled-shipping";
+
 
 type ProductCardProduct = {
   id: string;
@@ -23,14 +23,17 @@ export default function ProductCard({
   product,
   compact = false,
   categoryLabel,
-  bundle = BUNDLE_OFF,
+  quantityTeaser = null,
+  freeShippingNote = false,
 }: {
   product: ProductCardProduct;
   compact?: boolean;
   /** Etykieta kategorii z panelu; bez niej pokazujemy slug (traci polskie znaki). */
   categoryLabel?: string;
-  /** Konfiguracja promocji „Wielosztuki”; domyślnie wyłączona. */
-  bundle?: BundleConfig;
+  /** Zachęta do rabatu ilościowego, np. „Kup 3 szt. i zyskaj −10%”. */
+  quantityTeaser?: string | null;
+  /** Czy trwa promocja „Darmowa wysyłka”. */
+  freeShippingNote?: boolean;
 }) {
   return (
     <motion.div
@@ -110,7 +113,8 @@ export default function ProductCard({
                 i dolicza narzut promocji „Wielosztuki” */}
             <ProductPriceTag
               price={product.price}
-              bundle={bundle}
+              quantityTeaser={quantityTeaser}
+              freeShippingNote={freeShippingNote}
               discountPercent={product.discountPercent ?? 0}
               size={compact ? "sm" : "md"}
             />

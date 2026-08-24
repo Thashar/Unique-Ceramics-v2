@@ -95,11 +95,17 @@ model Order {
   discountCode   String?
   discountAmount Float?
 
-  // Narzut promocji „Wielosztuki” wliczony w ceny katalogowe w chwili zakupu
-  // (null = promocja wtedy nie obowiązywała). Bez tego pola podsumowanie starego
-  // zamówienia zmieniało wygląd po przestawieniu promocji w panelu – rozbicie
-  // odtwarzamy z zapisanej wartości, nie z bieżących ustawień.
+  // LEGACY: narzut wycofanej promocji „Wielosztuki” wliczony w ceny katalogowe
+  // w chwili zakupu (null = promocja wtedy nie obowiązywała). Nowe zamówienia
+  // zawsze mają tu null; pole zostaje, żeby zamówienia sprzed 24.08.2026
+  // renderowały się tak, jak je złożono.
   bundleSurcharge Float?
+
+  // Rabat ilościowy z chwili zakupu: procent zdobytego progu i kwota, o jaką
+  // obniżył zamówienie. Kwota jest już wliczona w ceny pozycji – pola są śladem
+  // do zestawień, podglądu i rozstrzygania sporów.
+  quantityDiscountPercent Int?
+  quantityDiscountAmount  Float?
 
   paidAt DateTime?   // data i godzina wpłaty (podana przez admina przy oznaczaniu „Opłacone"); przychód rozpoznawany wg tej daty
 
@@ -171,9 +177,69 @@ model DiscountCode {
   // Okno obowiązywania w UTC (panel ustawia je w czasie polskim)
   startsAt  DateTime?
   endsAt    DateTime?
-  usedCount Int       @default(0)      // ile zamówień skorzystało z kodu
+  usedCount Int       @default(0)      // LEGACY: panel liczy użycia z zamówień
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+
+  @@index([active])
+}
+
+// ─── Promocje ─────────────────────────────────────────────────────────────────
+
+/// Rabat za wolumen: im więcej sztuk w koszyku, tym wyższy procent.
+/// Zastąpił wycofaną promocję „Wielosztuki”, która nie dawała klientowi realnej
+/// obniżki (podnosiła cenę katalogową o wysyłkę i oddawała ją jako „rabat”).
+model QuantityPromo {
+  id     String  @id @default(cuid())
+  name   String
+  active Boolean @default(true)
+
+  // Okno obowiązywania w UTC (panel ustawia je w czasie polskim) – jak przy kodach
+  startsAt DateTime?
+  endsAt   DateTime?
+
+  /// true = rabat dokłada się do przecen produktów i kodów;
+  /// false = działa sam, a sklep wybiera wariant korzystniejszy dla klienta
+  stackable Boolean @default(true)
+
+  /// Czy produkty z własną przeceną liczą się do progu i dostają rabat ilościowy
+  includeDiscountedProducts Boolean @default(false)
+
+  /// Zabezpieczenie przed dobijaniem progu tanimi sztukami: pozycja tańsza niż
+  /// ta kwota nie liczy się do progu **ani** nie dostaje rabatu
+  minItemPrice Float @default(0)
+
+  /// Twardy limit kwoty rabatu na zamówienie (null = bez limitu)
+  maxDiscount Float?
+
+  /// Progi: [{ minPieces, minValue, percent }] – walidowane przez lib/quantity-promo.ts
+  tiers Json
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([active])
+}
+
+/// Darmowa wysyłka jako promocja z oknem czasu – zastąpiła stałe ustawienia
+/// `shipping_free_enabled` / `shipping_free_from`.
+model FreeShippingPromo {
+  id     String  @id @default(cuid())
+  name   String
+  active Boolean @default(true)
+
+  startsAt DateTime?
+  endsAt   DateTime?
+
+  /// Próg wartości koszyka (0 = darmowa wysyłka niezależnie od kwoty)
+  minOrderValue Float @default(0)
+
+  /// Których metod dotyczy: courier | parcel_locker (odbiór osobisty jest
+  /// bezpłatny zawsze, niezależnie od promocji)
+  methods String[] @default(["courier", "parcel_locker"])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([active])
 }

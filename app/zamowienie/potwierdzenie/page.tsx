@@ -81,6 +81,8 @@ export default async function ConfirmationPage({
         total: order.total,
         shippingMethod: order.shippingMethod,
         bundleSurcharge: order.bundleSurcharge,
+        quantityDiscountPercent: order.quantityDiscountPercent,
+        quantityDiscountAmount: order.quantityDiscountAmount,
         discountCode: order.discountCode,
         discountAmount: order.discountAmount,
       })
@@ -256,8 +258,15 @@ export default async function ConfirmationPage({
                     <span>Rabat {summary.discountPercent > 0 && `−${summary.discountPercent}%`}</span>
                     <span>−{summary.discountTotal.toFixed(2).replace(".", ",")} zł</span>
                   </div>
-                  {/* Kod jest częścią rabatu powyżej – jako osobne odjęcie zaniżałby
-                      sumę o swoją wartość, więc pokazujemy go dopiskiem */}
+                  {/* Składniki rabatu są jego częścią – jako osobne odjęcia
+                      zaniżałyby sumę, więc pokazujemy je dopiskami */}
+                  {summary.quantityAmount > 0 && (
+                    <p className="text-xs text-green-700">
+                      w tym rabat ilościowy
+                      {summary.quantityPercent > 0 && ` (−${summary.quantityPercent}%)`}: −
+                      {summary.quantityAmount.toFixed(2).replace(".", ",")} zł
+                    </p>
+                  )}
                   {summary.codeLabel && summary.codeAmount > 0 && (
                     <p className="text-xs text-green-700">
                       w tym kod {summary.codeLabel}: −

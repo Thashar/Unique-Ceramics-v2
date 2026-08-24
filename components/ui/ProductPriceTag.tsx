@@ -1,32 +1,34 @@
-import { Truck, BadgePercent } from "lucide-react";
-import { bundlePrice, type BundleConfig } from "@/lib/bundled-shipping";
+import { BadgePercent, Truck } from "lucide-react";
 import { discountedPrice, shownDiscountPercent } from "@/lib/product-price";
 
 /**
- * Cena produktu – z rabatem produktowym i promocją „Wielosztuki”.
+ * Cena produktu – z rabatem produktowym i dopiskami o trwających promocjach.
  *
- * Rabat produktowy schodzi z ceny bazowej, dopiero potem dochodzi narzut na
- * wysyłkę, więc obie promocje się sumują. Przeceniony produkt pokazuje na
- * **karcie produktu** (`size="lg"`) cenę przekreśloną, cenę po rabacie i
- * procent policzony **z tych dwóch kwot** (przy narzucie realna obniżka jest
- * niższa niż nominalny rabat – liczby na stronie muszą się zgadzać).
+ * Cena w katalogu i na karcie produktu jest **zwykłą ceną** (po ewentualnej
+ * przecenie). Rabat ilościowy zależy od zawartości koszyka, więc tu pokazujemy
+ * go tylko jako zachętę – kwoty pojawiają się dopiero w koszyku, gdzie znana
+ * jest liczba sztuk.
  *
- * W katalogu (`sm`/`md`) przeceniony produkt też pokazuje cenę przekreśloną
- * i procent – tyle że mniejszą czcionką – plus zielone dopiski „Darmowa wysyłka”
- * i „Uzyskaj rabat”; kwoty rabatu koszykowego widać dopiero w koszyku.
+ * Przeceniony produkt pokazuje cenę przekreśloną, cenę po rabacie i procent
+ * **we wszystkich rozmiarach** – na karcie produktu (`size="lg"`) pełną
+ * czcionką, w katalogu (`sm`/`md`) mniejszą.
  */
 export default function ProductPriceTag({
   price,
-  bundle,
   discountPercent = 0,
+  quantityTeaser = null,
+  freeShippingNote = false,
   size = "md",
   className = "",
 }: {
-  /** Cena bazowa produktu z bazy (przed rabatem i bez narzutu na wysyłkę). */
+  /** Cena bazowa produktu z bazy (przed rabatem produktowym). */
   price: number;
-  bundle: BundleConfig;
   /** Rabat produktowy w procentach (0 = brak przeceny). */
   discountPercent?: number;
+  /** Zachęta do rabatu ilościowego, np. „Kup 3 szt. i zyskaj −10%”. */
+  quantityTeaser?: string | null;
+  /** Czy trwa promocja „Darmowa wysyłka” (dopisek w katalogu). */
+  freeShippingNote?: boolean;
   /** `lg` = karta produktu, `md`/`sm` = kafelek listy (kompaktowy). */
   size?: "sm" | "md" | "lg";
   className?: string;
@@ -40,14 +42,12 @@ export default function ProductPriceTag({
           minimumFractionDigits: 0,
         }).format(value);
 
-  // Obie kwoty niosą ten sam narzut promocji „Wielosztuki” – porównujemy to,
-  // co klient realnie widzi
-  const before = bundlePrice(price, bundle);
-  const after = bundlePrice(discountedPrice(price, discountPercent), bundle);
+  const before = price;
+  const after = discountedPrice(price, discountPercent);
   const percent = shownDiscountPercent(before, after);
 
-  // Na karcie produktu dopiski o wysyłce i rabacie koszykowym stoją pod
-  // przyciskiem koszyka (ProductBundleNotes), więc przy cenie zostaje sama kwota
+  // Na karcie produktu zachęty stoją pod przyciskiem koszyka (QuantityPromoNotes),
+  // więc przy cenie zostaje sama kwota
   if (size === "lg") {
     if (percent === 0) return <span className={className}>{format(after)}</span>;
     return (
@@ -61,8 +61,8 @@ export default function ProductPriceTag({
     );
   }
 
-  // W katalogu przecena też musi być widoczna – wcześniej kafelek pokazywał samą
-  // obniżoną cenę, więc klient przeglądający listę nie miał jak zauważyć promocji
+  // W katalogu przecena też musi być widoczna – kafelek pokazujący samą obniżoną
+  // cenę nie dawał klientowi szansy zauważyć promocji
   const priceLine =
     percent > 0 ? (
       <span className="flex flex-wrap items-baseline gap-x-1.5">
@@ -78,7 +78,9 @@ export default function ProductPriceTag({
       <span>{format(after)}</span>
     );
 
-  if (!bundle.enabled) return <span className={className}>{priceLine}</span>;
+  if (!quantityTeaser && !freeShippingNote) {
+    return <span className={className}>{priceLine}</span>;
+  }
 
   const noteClass = size === "sm" ? "text-[9px] gap-1" : "text-[10px] gap-1";
   const iconClass = size === "sm" ? "w-2.5 h-2.5" : "w-3 h-3";
@@ -87,14 +89,18 @@ export default function ProductPriceTag({
     <span className={`flex flex-col gap-1 ${className}`}>
       {priceLine}
       <span className={`flex flex-wrap items-center text-green-700 ${noteClass}`}>
-        <span className="inline-flex items-center gap-1">
-          <Truck className={iconClass} strokeWidth={1.75} aria-hidden="true" />
-          Darmowa wysyłka
-        </span>
-        <span className="inline-flex items-center gap-1">
-          <BadgePercent className={iconClass} strokeWidth={1.75} aria-hidden="true" />
-          Uzyskaj rabat
-        </span>
+        {freeShippingNote && (
+          <span className="inline-flex items-center gap-1">
+            <Truck className={iconClass} strokeWidth={1.75} aria-hidden="true" />
+            Darmowa wysyłka
+          </span>
+        )}
+        {quantityTeaser && (
+          <span className="inline-flex items-center gap-1">
+            <BadgePercent className={iconClass} strokeWidth={1.75} aria-hidden="true" />
+            {quantityTeaser}
+          </span>
+        )}
       </span>
     </span>
   );

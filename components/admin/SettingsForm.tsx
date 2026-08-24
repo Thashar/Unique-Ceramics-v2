@@ -3,6 +3,7 @@
 import { useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
+import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import RichEditor from "@/components/admin/RichEditor";
 import ImageUploader from "@/components/admin/ImageUploader";
@@ -74,8 +75,6 @@ interface Props {
     contact_address_region: string;
     shipping_cost: string;
     shipping_cost_parcel_locker: string;
-    shipping_free_enabled: string;
-    shipping_free_from: string;
     shipping_time: string;
     payment_bank_account_name: string;
     payment_bank_account_number: string;
@@ -95,7 +94,6 @@ interface Props {
     ai_prompt_presets: string;
     ai_prompt_preset_ai: string;
     ai_prompt_preset_ai_plus: string;
-    bundled_shipping_enabled: string;
   };
   /** Statystyki zużycia AI – liczone tylko dla zakładki „AI (zdjęcia)” */
   aiUsage?: AiUsageStats | null;
@@ -383,8 +381,6 @@ export default function SettingsForm({ section, initial, aiUsage }: Props) {
   // Wysyłka
   const [shippingCost, setShippingCost] = useState(initial.shipping_cost);
   const [shippingCostParcel, setShippingCostParcel] = useState(initial.shipping_cost_parcel_locker);
-  const [freeEnabled, setFreeEnabled] = useState(initial.shipping_free_enabled === "true");
-  const [freeFrom, setFreeFrom] = useState(initial.shipping_free_from);
   const [shippingTime, setShippingTime] = useState(initial.shipping_time);
 
   // Przelew
@@ -423,7 +419,6 @@ export default function SettingsForm({ section, initial, aiUsage }: Props) {
   const [aiPresetAi, setAiPresetAi] = useState(initial.ai_prompt_preset_ai);
   const [aiPresetAiPlus, setAiPresetAiPlus] = useState(initial.ai_prompt_preset_ai_plus);
   // Test cenowy „wysyłka w cenie produktu"
-  const [bundledShipping, setBundledShipping] = useState(initial.bundled_shipping_enabled === "true");
   const aiRateNumber = Math.max(0, parseFloat(aiRate.replace(",", ".")) || 0);
 
   const save = async (pairs: { key: string; value: string }[]) => {
@@ -751,22 +746,23 @@ export default function SettingsForm({ section, initial, aiUsage }: Props) {
       {section === "wysylka" && (
         <div className="max-w-md space-y-6">
           <h2 className="font-serif text-2xl text-espresso">Wysyłka</h2>
-          <div className="flex items-center justify-between">
-            <span className="text-xs tracking-widest uppercase text-charcoal/80">Darmowa wysyłka</span>
-            <Toggle checked={freeEnabled} onChange={setFreeEnabled} />
-          </div>
           <Field label="Koszt wysyłki – Kurier (zł)" value={shippingCost} setter={setShippingCost} type="number" />
           <Field label="Koszt wysyłki – Paczkomat InPost (zł)" value={shippingCostParcel} setter={setShippingCostParcel} type="number" />
-          {freeEnabled && (
-            <Field label="Darmowa wysyłka od (zł)" value={freeFrom} setter={setFreeFrom} type="number" />
-          )}
           <Field label="Czas realizacji (tekst na karcie produktu)" value={shippingTime} setter={setShippingTime} placeholder="np. 2–4 dni robocze" />
+          {/* Darmowa wysyłka jest promocją z oknem czasu, nie stałym progiem –
+              stąd odesłanie zamiast pól */}
+          <p className="text-xs text-charcoal/80 leading-relaxed border border-sand bg-cream p-3">
+            Darmowa wysyłka ma własną promocję z terminem obowiązywania – ustawisz ją
+            w zakładce{" "}
+            <Link href="/admin/promocje" className="text-clay underline underline-offset-2">
+              Promocje
+            </Link>
+            . Odbiór osobisty jest bezpłatny zawsze.
+          </p>
           <SaveButton
             onClick={() => save([
               { key: "shipping_cost", value: shippingCost },
               { key: "shipping_cost_parcel_locker", value: shippingCostParcel },
-              { key: "shipping_free_enabled", value: freeEnabled ? "true" : "false" },
-              { key: "shipping_free_from", value: freeFrom },
               { key: "shipping_time", value: shippingTime },
             ])}
             label="Zapisz wysyłkę"
@@ -809,97 +805,6 @@ export default function SettingsForm({ section, initial, aiUsage }: Props) {
               { key: "payment_blik_phone", value: blikPhone },
             ])}
             label="Zapisz"
-          />
-        </div>
-      )}
-
-      {section === "promocje" && (
-        <div className="max-w-2xl space-y-6">
-          <h2 className="font-serif text-2xl text-espresso">Promocje</h2>
-          <p className="text-xs text-charcoal/80 leading-relaxed">
-            <strong className="font-medium">Wielosztuki</strong> – po włączeniu każdy produkt w sklepie
-            kosztuje o koszt wysyłki więcej, a klient dostaje w zamian zieloną informację{" "}
-            <strong className="font-medium">Darmowa wysyłka</strong> i zachętę{" "}
-            <strong className="font-medium">Uzyskaj rabat</strong>. Wysyłkę płaci raz: nadwyżkę
-            z pozostałych sztuk oddajemy w koszyku jako rabat rozłożony proporcjonalnie na{" "}
-            <strong className="font-medium">wszystkie sztuki, także pierwszą</strong>. Suma
-            zamówienia to zawsze <strong className="font-medium">ceny produktów + jedna wysyłka</strong>,
-            czyli tyle samo, ile sklep policzyłby bez promocji – niezależnie od wybranej metody
-            dostawy.
-          </p>
-
-          <div className="flex items-center justify-between border border-sand bg-warm-white p-4">
-            <span className="text-xs tracking-widest uppercase text-charcoal/80">Wielosztuki</span>
-            <Toggle checked={bundledShipping} onChange={setBundledShipping} />
-          </div>
-
-          <div className="border border-sand bg-cream p-4 text-xs text-charcoal/80 leading-relaxed space-y-3">
-            <div className="space-y-1">
-              <p className="font-medium text-espresso">Co widzi klient</p>
-              <p>
-                <strong className="font-medium">Sklep i karta produktu:</strong> jedna cena – bez
-                przekreśleń i przeliczeń. Pod nią, na zielono, „Darmowa wysyłka” i „Uzyskaj rabat”
-                (na karcie produktu te informacje stoją pod przyciskiem dodania do koszyka).
-              </p>
-              <p>
-                <strong className="font-medium">Koszyk:</strong> każda pozycja z przekreśloną ceną
-                katalogową, ceną po rabacie i procentem, a w podsumowaniu wiersze „Produkty przed
-                rabatem”, „Rabat” i „Darmowa wysyłka”. Pod nimi warunek promocji: rabat naliczamy
-                przy zakupie od 2 sztuk.
-              </p>
-              <p>
-                <strong className="font-medium">Kwoty wysyłki klient nie widzi nigdzie</strong> –
-                ani w koszyku, ani przy wyborze dostawy, ani na potwierdzeniu, w historii zamówień,
-                w e-mailu czy na stronie płatności Stripe. Wszędzie stoi „Darmowa wysyłka”.
-              </p>
-              <p>
-                Klient <strong className="font-medium">nie dowiaduje się</strong>, że przesyłka jest
-                wliczona w cenę – nigdzie nie pokazujemy kwoty 0 zł ani wyjaśnień mechaniki.
-              </p>
-            </div>
-
-            <div className="space-y-1">
-              <p className="font-medium text-espresso">Jak liczą się kwoty</p>
-              <p>
-                Narzut to wyższy z kosztów wysyłki (kurier {shippingCost || "18"} zł, paczkomat{" "}
-                {shippingCostParcel || "18"} zł), żeby klient przy kasie nigdy nie zapłacił więcej,
-                niż zapowiadała cena w katalogu.
-              </p>
-              <p>
-                Przykład dla dwóch sztuk po 95 zł przy wysyłce 18 zł: katalog pokazuje 113 zł,
-                w koszyku każda sztuka schodzi do 104 zł (−8%), razem 208 zł – tyle samo co 190 zł
-                produktów plus 18 zł wysyłki.
-              </p>
-              <p>
-                Rabat jest proporcjonalny – <strong className="font-medium">każda pozycja
-                w koszyku tanieje o ten sam procent</strong>, niezależnie od ceny produktu. Reszta
-                z zaokrągleń trafia na ostatnią pozycję, żeby suma zgadzała się co do grosza.
-              </p>
-              <p>
-                <strong className="font-medium">Wybór dostawy nie rusza rachunku</strong> – ani
-                paczkomat, ani kurier, ani odbiór osobisty niczego nie dodają i nie odejmują.
-                Narzut siedzi w cenach katalogowych, więc kwota z koszyka jest kwotą końcową.
-                W trakcie promocji{" "}
-                <strong className="font-medium">próg darmowej wysyłki nie działa</strong>.
-              </p>
-              <p>
-                Rabat produktowy (pole <strong className="font-medium">Rabat (%)</strong> w karcie
-                produktu) <strong className="font-medium">sumuje się</strong> z tą promocją: schodzi
-                z ceny produktu, a dopiero potem dochodzi narzut na wysyłkę.
-              </p>
-              <p>
-                Ceny w bazie i kwoty zapisywane w zamówieniach{" "}
-                <strong className="font-medium">pozostają bez zmian</strong> – zmienia się wyłącznie
-                sposób pokazania ceny, więc raporty i analityka liczą jak dotąd.
-              </p>
-            </div>
-          </div>
-
-          <SaveButton
-            onClick={() => save([
-              { key: "bundled_shipping_enabled", value: bundledShipping ? "true" : "false" },
-            ])}
-            label="Zapisz ustawienia promocji"
           />
         </div>
       )}

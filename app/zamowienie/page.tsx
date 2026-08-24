@@ -10,22 +10,30 @@ export const metadata: Metadata = {
 };
 import { db } from "@/lib/db";
 import { getSettings, settingNumber } from "@/lib/settings";
-import { BUNDLED_SHIPPING_KEY, bundleFromSettings } from "@/lib/bundled-shipping";
+import {
+  findActiveFreeShipping,
+  findActiveQuantityPromo,
+  toFreeShippingConfig,
+  toQuantityConfig,
+} from "@/lib/promos";
 import { validateAddress } from "@/lib/address-validation";
 import CheckoutForm from "./CheckoutForm";
 
 export default async function CheckoutPage() {
   const session = await auth();
 
-  const settings = await getSettings([
-    "payment_blik_enabled",
-    "payment_blik_phone",
-    "payment_stripe_enabled",
-    "shipping_cost",
-    "shipping_cost_parcel_locker",
-    "shipping_free_enabled",
-    "shipping_free_from",
-    BUNDLED_SHIPPING_KEY,
+  // Strona jest force-dynamic, więc promocje czytamy bez `holdMs` – klient
+  // widzi dokładnie to, co za chwilę policzy `/api/checkout`
+  const [settings, quantityPromo, freeShipping] = await Promise.all([
+    getSettings([
+      "payment_blik_enabled",
+      "payment_blik_phone",
+      "payment_stripe_enabled",
+      "shipping_cost",
+      "shipping_cost_parcel_locker",
+    ]),
+    findActiveQuantityPromo(),
+    findActiveFreeShipping(),
   ]);
 
   let savedAddress = null;
@@ -77,15 +85,14 @@ export default async function CheckoutPage() {
 
   return (
     <CheckoutForm
-      bundle={bundleFromSettings(settings)}
+      quantityPromo={toQuantityConfig(quantityPromo)}
+      freeShipping={toFreeShippingConfig(freeShipping)}
       isLoggedIn={!!session?.user?.id}
       userEmail={session?.user?.email ?? ""}
       savedAddress={savedAddress}
       paymentMethods={paymentMethods}
       shippingCostCourier={settingNumber(settings.shipping_cost, 18)}
       shippingCostParcelLocker={settingNumber(settings.shipping_cost_parcel_locker, 18)}
-      shippingFreeEnabled={settings.shipping_free_enabled === "true"}
-      shippingFreeFrom={settingNumber(settings.shipping_free_from, 300)}
       inpostToken={process.env.INPOST_GEOWIDGET_TOKEN ?? null}
       savedAddressComplete={savedAddressComplete}
     />

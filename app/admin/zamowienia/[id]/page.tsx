@@ -180,8 +180,16 @@ export default async function AdminOrderDetailPage({
               {order.total.toFixed(2).replace(".", ",")} zł
             </span>
           </div>
-          {(order.discountCode || order.bundleSurcharge) && (
+          {(order.discountCode || order.quantityDiscountAmount || order.bundleSurcharge) && (
             <div className="border-t border-sand pt-2 space-y-1">
+              {order.quantityDiscountAmount ? (
+                <p className="text-xs text-green-700">
+                  Rabat ilościowy
+                  {order.quantityDiscountPercent ? ` −${order.quantityDiscountPercent}%` : ""} –
+                  obniżył ceny pozycji o{" "}
+                  {order.quantityDiscountAmount.toFixed(2).replace(".", ",")} zł
+                </p>
+              ) : null}
               {order.discountCode && (
                 <p className="text-xs text-green-700">
                   Kod rabatowy <strong>{order.discountCode}</strong>
@@ -190,9 +198,10 @@ export default async function AdminOrderDetailPage({
                     : " – uwzględniony w cenach pozycji"}
                 </p>
               )}
+              {/* Archiwalne zamówienie z wycofanej promocji „Wielosztuki” */}
               {order.bundleSurcharge ? (
                 <p className="text-xs text-charcoal/80">
-                  Promocja „Wielosztuki”: w cenach katalogowych był narzut{" "}
+                  Wycofana promocja „Wielosztuki”: w cenach katalogowych był narzut{" "}
                   {order.bundleSurcharge.toFixed(2).replace(".", ",")} zł na wysyłkę.
                 </p>
               ) : null}

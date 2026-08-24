@@ -2,9 +2,10 @@
 import Header from "@/components/layout/HeaderWrapper";
 import Footer from "@/components/layout/Footer";
 import { getCategories } from "@/lib/categories";
-import { BUNDLED_SHIPPING_KEY, bundleFromSettings } from "@/lib/bundled-shipping";
+import { findActiveFreeShipping, findActiveQuantityPromo, toQuantityConfig } from "@/lib/promos";
+import { quantityPromoTeaser } from "@/lib/quantity-promo";
 import { getShopProducts } from "@/lib/products";
-import { getSetting, getSettings } from "@/lib/settings";
+import { getSetting } from "@/lib/settings";
 import { DISCOUNT_HOLD_CATALOG_MS, activeDiscountPercent } from "@/lib/product-price";
 import ProductGrid from "./ProductGrid";
 import FloatingOrderButton from "./FloatingOrderButton";
@@ -30,10 +31,12 @@ export default async function ShopPage({
   // co chroni przed wyczerpaniem puli (Supabase: 15 połączeń w trybie sesji).
   const vacationEnabled = (await getSetting("vacation_enabled")) === "true";
   const dbCategories = await getCategories();
-  // Promocja „Wielosztuki” – ceny w katalogu pokazujemy wtedy z narzutem
-  const bundle = bundleFromSettings(
-    await getSettings([BUNDLED_SHIPPING_KEY, "shipping_cost", "shipping_cost_parcel_locker"])
-  );
+  // Trwające promocje – w katalogu pokazujemy je jako zachęty pod ceną.
+  // `holdMs` = okno ISR tej strony: promocji kończącej się w czasie życia
+  // zapisanego HTML-a nie reklamujemy, bo checkout już by jej nie policzył
+  const hold = { holdMs: DISCOUNT_HOLD_CATALOG_MS };
+  const quantityTeaser = quantityPromoTeaser(toQuantityConfig(await findActiveQuantityPromo(hold)));
+  const freeShippingNote = (await findActiveFreeShipping(hold)) !== null;
 
   let products: Awaited<ReturnType<typeof getShopProducts>>["inStock"] = [];
   let dbError = false;
@@ -97,7 +100,7 @@ export default async function ShopPage({
 
         {/* Siatka produktów */}
         <div className="max-w-7xl mx-auto px-6 lg:px-10 pt-3 pb-16 md:pt-8 md:pb-16">
-          <ProductGrid products={products} kategoria={kategoria} dbError={dbError} categories={dbCategories} bundle={bundle} />
+          <ProductGrid products={products} kategoria={kategoria} dbError={dbError} categories={dbCategories} quantityTeaser={quantityTeaser} freeShippingNote={freeShippingNote} />
         </div>
       </div>
 

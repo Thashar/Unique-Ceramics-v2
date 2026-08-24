@@ -1,20 +1,22 @@
-import { getSettings } from "@/lib/settings";
+import { getSettings, settingNumber } from "@/lib/settings";
 import { NextResponse } from "next/server";
-import { BUNDLED_SHIPPING_KEY, bundleFromSettings } from "@/lib/bundled-shipping";
+import { findActiveFreeShipping, toFreeShippingConfig } from "@/lib/promos";
 
 export async function GET() {
-  const s = await getSettings([
-    "shipping_cost",
-    "shipping_cost_parcel_locker",
-    "shipping_free_enabled",
-    "shipping_free_from",
-    BUNDLED_SHIPPING_KEY,
+  const [s, freeShipping] = await Promise.all([
+    getSettings(["shipping_cost", "shipping_cost_parcel_locker"]),
+    findActiveFreeShipping(),
   ]);
+
+  const courier = settingNumber(s.shipping_cost, 18);
+  const parcelLocker = settingNumber(s.shipping_cost_parcel_locker, 18);
+
   return NextResponse.json({
-    cost: s.shipping_cost,
-    freeEnabled: s.shipping_free_enabled,
-    freeFrom: s.shipping_free_from,
-    // Promocja „Wielosztuki” – koszyk i checkout muszą liczyć tak samo jak katalog
-    bundle: bundleFromSettings(s),
+    courier,
+    parcelLocker,
+    // Najtańsza stawka – tę pokazuje karta produktu („Wysyłka od …”)
+    cheapest: Math.min(courier, parcelLocker),
+    // Promocja „Darmowa wysyłka” – null, gdy żadna nie obowiązuje
+    freeShipping: toFreeShippingConfig(freeShipping),
   });
 }

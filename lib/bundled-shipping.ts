@@ -1,5 +1,16 @@
-// Promocja „Wielosztuki” – wysyłka wliczona w cenę produktu
-// (zakładka Promocje w panelu admina).
+// ⚠️ LEGACY – wycofana promocja „Wielosztuki”. **Nie używaj w nowym kodzie.**
+//
+// Promocja została zastąpiona 24.08.2026 przez rabat ilościowy
+// (`lib/quantity-promo.ts`), bo nie dawała klientowi realnej obniżki: podnosiła
+// cenę katalogową o koszt wysyłki i oddawała nadwyżkę jako „rabat”, przez co
+// suma zamówienia wychodziła identycznie jak bez promocji.
+//
+// Moduł zostaje wyłącznie po to, żeby zamówienia złożone w czasie jej trwania
+// (`Order.bundleSurcharge != null`) renderowały się dokładnie tak, jak je
+// złożono. Czyta go już tylko `lib/order-summary.ts`. Nowe zamówienia zawsze
+// mają `bundleSurcharge = null`.
+//
+// Opis pierwotnej mechaniki:
 //
 // Zasada: w katalogu produkt kosztuje `cena + wysyłka` i ma etykietę „Darmowa
 // wysyłka”. Wysyłkę płaci się raz, więc nadwyżkę z pozostałych sztuk oddajemy

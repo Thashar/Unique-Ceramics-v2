@@ -77,6 +77,8 @@ export default async function OrderDetailPage({
     total: order.total,
     shippingMethod: order.shippingMethod,
     bundleSurcharge: order.bundleSurcharge,
+    quantityDiscountPercent: order.quantityDiscountPercent,
+    quantityDiscountAmount: order.quantityDiscountAmount,
     discountCode: order.discountCode,
     discountAmount: order.discountAmount,
   });
@@ -227,7 +229,14 @@ export default async function OrderDetailPage({
                   <span>−{formatPln(summary.discountTotal)}</span>
                 </div>
               )}
-              {/* Kod jest częścią rabatu powyżej – osobne odjęcie zaniżałoby sumę */}
+              {/* Składniki rabatu – osobne odjęcia zaniżałyby sumę */}
+              {summary.quantityAmount > 0 && (
+                <p className="text-xs text-green-700">
+                  w tym rabat ilościowy
+                  {summary.quantityPercent > 0 && ` (−${summary.quantityPercent}%)`}: −
+                  {formatPln(summary.quantityAmount)}
+                </p>
+              )}
               {summary.codeLabel && (
                 <p className="text-xs text-green-700">
                   {summary.codeAmount > 0

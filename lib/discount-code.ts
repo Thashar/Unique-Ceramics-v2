@@ -1,23 +1,29 @@
-// Kody rabatowe – wspólna logika dla panelu, formularza zamówienia i serwera.
+// Kody rabatowe **oraz wycena całego zamówienia** – wspólna logika dla panelu,
+// formularza zamówienia i serwera.
 //
 // Kod to rabat procentowy z własnym oknem czasu (jak przecena produktu) plus
 // jedna decyzja: czy **łączy się** z pozostałymi rabatami.
-//   • łączony    – schodzi z cen już przecenionych, promocja „Wielosztuki”
-//                  działa normalnie, wszystko się sumuje;
-//   • niełączony – kod działa sam (bez rabatów produktowych i bez „Wielosztuk”),
-//                  a sklep liczy oba warianty i wybiera **tańszy dla klienta**.
+//   • łączony    – schodzi z cen już przecenionych, rabat ilościowy działa
+//                  normalnie, wszystko się sumuje;
+//   • niełączony – kod działa sam (bez przecen produktów i bez rabatu
+//                  ilościowego), a sklep liczy oba warianty i wybiera
+//                  **tańszy dla klienta**.
 //
 // Moduł jest neutralny (same funkcje, bez bazy) – używa go panel, `CheckoutForm`
 // i `/api/checkout`, dzięki czemu klient widzi dokładnie tę kwotę, którą policzy
 // serwer.
 
 import {
-  BUNDLE_OFF,
-  bundleSummary,
-  type BundleConfig,
-  type BundleSummary,
-} from "@/lib/bundled-shipping";
-import { MAX_DISCOUNT_PERCENT, activeDiscountPercent } from "@/lib/product-price";
+  MAX_DISCOUNT_PERCENT,
+  activeDiscountPercent,
+  shownDiscountPercent,
+} from "@/lib/product-price";
+import {
+  applyQuantityDiscount,
+  type NextTierHint,
+  type QuantityPromoConfig,
+} from "@/lib/quantity-promo";
+import { isShippingFree, type FreeShippingConfig } from "@/lib/free-shipping";
 
 /** Kwoty są typu Float – każdy wynik zaokrąglamy do groszy (patrz CLAUDE.md). */
 const money = (value: number): number => Math.round(value * 100) / 100;
@@ -90,29 +96,60 @@ export type ShippingParams = {
   method: ShippingMethod;
   courier: number;
   parcelLocker: number;
-  freeEnabled: boolean;
-  freeFrom: number;
+  /** Promocja „Darmowa wysyłka” obowiązująca w tej chwili (null = brak). */
+  freeShipping: FreeShippingConfig | null;
 };
 
 /** Pozycja koszyka: `price` = cena po rabacie produktowym, `basePrice` = sprzed niego. */
 export type PricedItem = { price: number; basePrice?: number | null; quantity: number };
 
+/** Pozycja w rozbiciu pokazywanym klientowi. */
+export type PricedLine<T> = {
+  item: T;
+  /** Cena sprzed wszystkich rabatów – od niej liczymy upust. */
+  catalogUnitPrice: number;
+  /** Cena sztuki po wszystkich rabatach – ta trafia do zamówienia. */
+  unitPrice: number;
+  /** Upust na sztuce w procentach, policzony z dwóch kwot obok siebie. */
+  discountPercent: number;
+  lineTotal: number;
+};
+
+export type PricingDisplay<T> = {
+  lines: PricedLine<T>[];
+  /** Suma pozycji w cenach sprzed rabatów. */
+  catalogTotal: number;
+  /** Łączny upust: przeceny produktów + rabat ilościowy + kod. */
+  discountTotal: number;
+  discountPercent: number;
+  /** Suma pozycji po rabatach (bez wysyłki). */
+  itemsTotal: number;
+};
+
 export type OrderPricing<T extends PricedItem> = {
   /** „promo” = rabaty sklepu (kod łączony wchodzi do nich), „code” = sam kod. */
   variant: "promo" | "code";
-  /** Ceny jednostkowe do zapisania w zamówieniu (po rabatach, bez narzutu wysyłki). */
+  /** Ceny jednostkowe do zapisania w zamówieniu (po wszystkich rabatach). */
   items: { item: T; unitPrice: number }[];
-  /** Rozbicie pokazywane klientowi (z rozłożonym narzutem promocji „Wielosztuki”). */
-  display: BundleSummary<T & { price: number }>;
-  /** Konfiguracja promocji „Wielosztuki” użyta w tym wariancie. */
-  bundle: BundleConfig;
+  /** Rozbicie pokazywane klientowi. */
+  display: PricingDisplay<T>;
   /** Suma cen pozycji po rabatach, bez wysyłki. */
   itemsTotal: number;
-  /** Upust z rabatów sklepu (przeceny produktów + „Wielosztuki”), bez kodu. */
-  promoDiscount: number;
+  /** Upust z przecen produktowych. */
+  productDiscount: number;
+  /** Procent zdobytego progu rabatu ilościowego (0 = nie wszedł). */
+  quantityPercent: number;
+  /** Upust z rabatu ilościowego. */
+  quantityDiscount: number;
+  /** Najbliższy lepszy próg – do zachęty „dodaj jeszcze N szt.”. */
+  quantityNextTier: NextTierHint | null;
   /** Upust z samego kodu (0, gdy kod nie wszedł). */
   codeDiscount: number;
+  /** Upust z rabatów sklepu razem (przeceny + ilościowy), bez kodu. */
+  promoDiscount: number;
   shippingCost: number;
+  /** Czy wysyłka wyszła darmowa z promocji (nie z odbioru osobistego). */
+  shippingFree: boolean;
   total: number;
   /** Kod, który realnie wpłynął na kwotę (null = żaden). */
   appliedCode: DiscountCodeInfo | null;
@@ -124,120 +161,183 @@ function listPrice(item: PricedItem): number {
     : item.price;
 }
 
-function shippingFor(itemsTotal: number, bundle: BundleConfig, s: ShippingParams): number {
-  // Odbiór osobisty nie ma wysyłki, więc nie ma też czego doliczać – dotyczy to
-  // także promocji „Wielosztuki”, gdzie narzut siedzi w cenach katalogowych.
-  // Wcześniej promocja pobierała narzut również przy odbiorze, a sklep pisał
-  // wtedy „Bezpłatnie” – klient dopłacał za wysyłkę, której nie było.
+/**
+ * Koszt wysyłki. Kolejność ma znaczenie: **odbiór osobisty nie ma wysyłki**,
+ * więc nie ma też czego doliczać ani zerować promocją. Dalej decyduje promocja
+ * „Darmowa wysyłka” (próg liczony od kwoty **po rabatach**, żeby nie dało się
+ * odblokować jej kwotą, której klient realnie nie płaci), a na końcu stawka
+ * wybranej metody.
+ */
+function shippingFor(itemsTotal: number, s: ShippingParams): number {
   if (s.method === "pickup") return 0;
-  // Promocja „Wielosztuki”: narzut jest ten sam dla obu metod wysyłki – siedzi
-  // w cenach katalogowych, które widział klient
-  if (bundle.enabled) return money(bundle.surcharge);
-  const raw = s.method === "parcel_locker" ? s.parcelLocker : s.courier;
-  return s.freeEnabled && itemsTotal >= s.freeFrom ? 0 : money(raw);
+  if (isShippingFree(s.freeShipping, s.method, itemsTotal)) return 0;
+  return money(s.method === "parcel_locker" ? s.parcelLocker : s.courier);
 }
 
-/** Jeden wariant wyceny – ceny pozycji są już ustalone. */
-function priceVariant<T extends PricedItem>(
+/** Jeden policzony wariant – ceny jednostkowe są już ustalone. */
+function buildVariant<T extends PricedItem>(
+  variant: "promo" | "code",
   items: T[],
   unitPrices: number[],
-  bundle: BundleConfig,
-  shipping: ShippingParams
-) {
-  const priced = items.map((item, i) => ({ ...item, price: unitPrices[i] }));
+  shipping: ShippingParams,
+  parts: {
+    productDiscount: number;
+    quantityPercent: number;
+    quantityDiscount: number;
+    quantityNextTier: NextTierHint | null;
+    appliedCode: DiscountCodeInfo | null;
+  }
+): OrderPricing<T> {
   const itemsTotal = money(
-    priced.reduce((sum, i) => sum + i.price * i.quantity, 0)
+    items.reduce((sum, item, i) => sum + unitPrices[i] * item.quantity, 0)
   );
-  const shippingCost = shippingFor(itemsTotal, bundle, shipping);
-  // Rozbicie pokazywane klientowi musi zsumować się do kwoty realnie płaconej:
-  // odniesieniem zostaje narzut z cen katalogowych, ale doliczamy tylko tyle,
-  // ile faktycznie wchodzi na fakturę (przy odbiorze osobistym – nic)
-  const displayBundle: BundleConfig = bundle.enabled
-    ? { ...bundle, chargedSurcharge: shippingCost }
-    : bundle;
+  const shippingCost = shippingFor(itemsTotal, shipping);
+
+  const lines: PricedLine<T>[] = items.map((item, i) => {
+    const catalogUnitPrice = money(listPrice(item));
+    const unitPrice = unitPrices[i];
+    return {
+      item,
+      catalogUnitPrice,
+      unitPrice,
+      discountPercent: shownDiscountPercent(catalogUnitPrice, unitPrice),
+      lineTotal: money(unitPrice * item.quantity),
+    };
+  });
+
+  const catalogTotal = money(
+    items.reduce((sum, item) => sum + listPrice(item) * item.quantity, 0)
+  );
+  const discountTotal = money(catalogTotal - itemsTotal);
+
+  // Kod dostaje resztę upustu – dzięki temu rozbicie zawsze sumuje się do
+  // kwoty realnie zapłaconej, niezależnie od zaokrągleń pojedynczych pozycji
+  const codeDiscount = parts.appliedCode
+    ? Math.max(0, money(discountTotal - parts.productDiscount - parts.quantityDiscount))
+    : 0;
+
   return {
-    priced,
+    variant,
+    items: items.map((item, i) => ({ item, unitPrice: unitPrices[i] })),
+    display: {
+      lines,
+      catalogTotal,
+      discountTotal,
+      discountPercent: shownDiscountPercent(catalogTotal, itemsTotal),
+      itemsTotal,
+    },
     itemsTotal,
+    productDiscount: parts.productDiscount,
+    quantityPercent: parts.quantityPercent,
+    quantityDiscount: parts.quantityDiscount,
+    quantityNextTier: parts.quantityNextTier,
+    codeDiscount,
+    promoDiscount: money(parts.productDiscount + parts.quantityDiscount),
     shippingCost,
+    shippingFree: shipping.method !== "pickup" && shippingCost === 0,
     total: money(itemsTotal + shippingCost),
-    display: bundleSummary(priced, displayBundle),
+    appliedCode: parts.appliedCode,
   };
 }
 
 /**
- * Kwota zamówienia z uwzględnieniem przecen produktów, promocji „Wielosztuki”
- * i kodu rabatowego.
+ * Kwota zamówienia z uwzględnieniem przecen produktów, rabatu ilościowego,
+ * kodu rabatowego i promocji „Darmowa wysyłka”.
  *
- * Kod **łączony** schodzi z cen już przecenionych – wszystkie rabaty się sumują.
- * Kod **niełączony** wyklucza pozostałe promocje, więc liczymy oba warianty
- * (sklepowy bez kodu i sam kod od cen podstawowych, bez „Wielosztuk”) i bierzemy
- * ten o niższej kwocie do zapłaty; przy remisie zostają promocje sklepu, żeby
- * nie zużywać kodu bez korzyści dla klienta.
+ * Kolejność: cena bazowa → przecena produktowa (jest już w `item.price`) →
+ * rabat ilościowy → kod → wysyłka.
+ *
+ * Łączenie rabatów jest **konfigurowalne po obu stronach**: kod ma `stackable`,
+ * rabat ilościowy też. Gdy którakolwiek strona odmawia łączenia, liczymy kilka
+ * wariantów i wybieramy **tańszy dla klienta**; przy remisie zostają promocje
+ * sklepu, żeby nie zużywać kodu bez korzyści.
  */
 export function priceOrder<T extends PricedItem>({
   items,
-  bundle,
+  quantityPromo = null,
   code,
   shipping,
 }: {
   items: T[];
-  bundle: BundleConfig;
+  /** Rabat ilościowy obowiązujący teraz (null = brak). */
+  quantityPromo?: QuantityPromoConfig | null;
   code: DiscountCodeInfo | null;
   shipping: ShippingParams;
 }): OrderPricing<T> {
-  const percent = code && code.percent > 0 ? Math.min(code.percent, MAX_CODE_PERCENT) : 0;
-  const factor = 1 - percent / 100;
+  const codePercent = code && code.percent > 0 ? Math.min(code.percent, MAX_CODE_PERCENT) : 0;
+  const hasCode = codePercent > 0;
+  const codeFactor = 1 - codePercent / 100;
 
-  // Wariant sklepowy: ceny po rabatach produktowych, promocja „Wielosztuki”
-  // według ustawień. Kod łączony schodzi dodatkowo z każdej pozycji.
-  const stacked = percent > 0 && code!.stackable;
-  const promoUnits = items.map((i) => (stacked ? money(i.price * factor) : money(i.price)));
-  const promo = priceVariant(items, promoUnits, bundle, shipping);
+  // Upust z samych przecen produktowych – ten sam w każdym wariancie, który
+  // w ogóle korzysta z cen po przecenie
+  const productDiscount = money(
+    items.reduce((sum, i) => sum + (listPrice(i) - i.price) * i.quantity, 0)
+  );
 
-  // Ten sam wariant bez kodu – potrzebny, żeby rozdzielić w podsumowaniu upust
-  // sklepowy od upustu z kodu
-  const promoNoCode = stacked
-    ? priceVariant(items, items.map((i) => money(i.price)), bundle, shipping)
-    : promo;
+  // Rabat ilościowy liczony **od cen po przecenie produktowej**
+  const quantity = applyQuantityDiscount(items, quantityPromo);
 
-  const promoResult: OrderPricing<T> = {
-    variant: "promo",
-    items: items.map((item, i) => ({ item, unitPrice: promoUnits[i] })),
-    display: promo.display,
-    bundle,
-    itemsTotal: promo.itemsTotal,
-    // Upust sklepowy bierzemy z rozbicia koszyka (ceny + narzut „Wielosztuk”),
-    // a nie z kwoty do zapłaty – inaczej przy wyłączonej promocji odejmowałaby
-    // się od niego wysyłka i wychodziła liczba ujemna
-    promoDiscount: promoNoCode.display.discountTotal,
-    codeDiscount: stacked ? money(promoNoCode.itemsTotal - promo.itemsTotal) : 0,
-    shippingCost: promo.shippingCost,
-    total: promo.total,
-    appliedCode: stacked ? { ...code! } : null,
-  };
+  const candidates: OrderPricing<T>[] = [];
 
-  if (percent === 0 || code!.stackable) return promoResult;
+  // 1) Wariant sklepowy: przeceny + rabat ilościowy. Kod dokłada się tylko wtedy,
+  //    gdy zgadzają się na to obie strony (kod i promocja ilościowa).
+  const codeStacks = hasCode && code!.stackable && (!quantityPromo || quantityPromo.stackable);
+  candidates.push(
+    buildVariant(
+      "promo",
+      items,
+      quantity.unitPrices.map((p) => (codeStacks ? money(p * codeFactor) : money(p))),
+      shipping,
+      {
+        productDiscount,
+        quantityPercent: quantity.percent,
+        quantityDiscount: quantity.discountTotal,
+        quantityNextTier: quantity.nextTier,
+        appliedCode: codeStacks ? { ...code! } : null,
+      }
+    )
+  );
 
-  // Wariant „sam kod”: rabat schodzi z cen podstawowych, bez przecen produktów
-  // i bez promocji „Wielosztuki” (wysyłka liczona zwyczajnie)
-  const codeUnits = items.map((i) => money(listPrice(i) * factor));
-  const only = priceVariant(items, codeUnits, BUNDLE_OFF, shipping);
-  const codeResult: OrderPricing<T> = {
-    variant: "code",
-    items: items.map((item, i) => ({ item, unitPrice: codeUnits[i] })),
-    display: only.display,
-    bundle: BUNDLE_OFF,
-    itemsTotal: only.itemsTotal,
-    promoDiscount: 0,
-    codeDiscount: money(
-      items.reduce((sum, i) => sum + listPrice(i) * i.quantity, 0) - only.itemsTotal
-    ),
-    shippingCost: only.shippingCost,
-    total: only.total,
-    appliedCode: { ...code! },
-  };
+  // 2) Kod bez rabatu ilościowego – gdy kod jest łączony, ale promocja ilościowa
+  //    nie chce się z nim łączyć. Klient dostaje to, co dla niego korzystniejsze.
+  if (hasCode && code!.stackable && quantityPromo && !quantityPromo.stackable) {
+    candidates.push(
+      buildVariant(
+        "promo",
+        items,
+        items.map((i) => money(i.price * codeFactor)),
+        shipping,
+        {
+          productDiscount,
+          quantityPercent: 0,
+          quantityDiscount: 0,
+          quantityNextTier: quantity.nextTier,
+          appliedCode: { ...code! },
+        }
+      )
+    );
+  }
 
-  // Remis zostawia promocje sklepu – kod niech poczeka na zamówienie,
-  // w którym naprawdę pomoże
-  return codeResult.total < promoResult.total ? codeResult : promoResult;
+  // 3) Sam kod od cen podstawowych – bez przecen produktowych i bez rabatu
+  //    ilościowego. Wariant dla kodu oznaczonego jako niełączony.
+  if (hasCode && !code!.stackable) {
+    candidates.push(
+      buildVariant(
+        "code",
+        items,
+        items.map((i) => money(listPrice(i) * codeFactor)),
+        shipping,
+        {
+          productDiscount: 0,
+          quantityPercent: 0,
+          quantityDiscount: 0,
+          quantityNextTier: null,
+          appliedCode: { ...code! },
+        }
+      )
+    );
+  }
+
+  // Najtańszy dla klienta; remis zostawia wariant wcześniejszy, czyli promocje sklepu
+  return candidates.reduce((best, c) => (c.total < best.total ? c : best));
 }

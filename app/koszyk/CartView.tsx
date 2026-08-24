@@ -5,42 +5,62 @@ import Image from "next/image";
 import { ShoppingBag, ArrowRight, Trash2, Plus, Minus } from "lucide-react";
 import { useCart, useCartPriceSync } from "@/lib/cart";
 import ClayRule from "@/components/ui/ClayRule";
-import { bundleSummary, type BundleConfig } from "@/lib/bundled-shipping";
+import { priceOrder } from "@/lib/discount-code";
+import { nextTierHintText, type QuantityPromoConfig } from "@/lib/quantity-promo";
+import { freeShippingMissing, type FreeShippingConfig } from "@/lib/free-shipping";
 
 export type ShippingSettings = {
-  cost: number;
-  freeEnabled: boolean;
-  freeFrom: number;
-  /** Promocja „Wielosztuki” – rabat proporcjonalny na wszystkie pozycje koszyka. */
-  bundle: BundleConfig;
+  /** Najtańsza stawka wysyłki – koszyk nie zna jeszcze wybranej metody. */
+  cheapestCost: number;
+  freeShipping: FreeShippingConfig | null;
 };
 
 /**
- * Widok koszyka. Ustawienia wysyłki przychodzą **propsem z serwera**, a nie
+ * Widok koszyka. Ustawienia i promocje przychodzą **propsem z serwera**, a nie
  * fetchem po zamontowaniu: pobierane w przeglądarce sprawiały, że przez chwilę
  * po wejściu widać było ceny policzone starą stawką, które po sekundzie
  * podskakiwały. Zawartość koszyka (localStorage) zostaje kliencka.
  */
-export default function CartView({ shipping }: { shipping: ShippingSettings }) {
-  const { items, removeItem, updateQuantity, subtotal } = useCart();
+export default function CartView({
+  shipping,
+  quantityPromo,
+}: {
+  shipping: ShippingSettings;
+  quantityPromo: QuantityPromoConfig | null;
+}) {
+  const { items, removeItem, updateQuantity } = useCart();
   // Ceny w koszyku pochodzą z chwili dodania produktu – po wejściu wyrównujemy
   // je do stanu z serwera, żeby klient nie oglądał wygasłej promocji
   const pricesChanged = useCartPriceSync();
 
-  // W promocji „Wielosztuki” próg darmowej wysyłki nie działa – wysyłka jest
-  // doliczona raz, a nadwyżka wraca jako rabat o tym samym procencie na każdej pozycji
-  const bundle = shipping.bundle;
-  const summary = bundleSummary(items, bundle);
-  // Koszyk **nigdy** nie pokazuje kwoty dostawy ani nie dolicza jej do sumy –
-  // koszt zależy od metody, którą klient wybiera dopiero przy zamówieniu.
-  // W promocji „Wielosztuki” narzut siedzi już w cenach katalogowych, więc suma
-  // koszyka jest tam kwotą końcową.
-  const total = bundle.enabled ? summary.total : subtotal;
-  /** Ceny pozycji po uwzględnieniu promocji – klucz to id produktu. */
+  // Ta sama funkcja, którą liczy `/api/checkout` – koszyk nie ma własnej
+  // arytmetyki. Metody dostawy jeszcze nie znamy, więc pytamy o najtańszą
+  // (kurier/paczkomat mają tu tę samą stawkę wejściową).
+  const pricing = priceOrder({
+    items,
+    quantityPromo,
+    code: null,
+    shipping: {
+      method: "courier",
+      courier: shipping.cheapestCost,
+      parcelLocker: shipping.cheapestCost,
+      freeShipping: shipping.freeShipping,
+    },
+  });
+  const summary = pricing.display;
+  // Koszyk **nie dolicza wysyłki do sumy** – koszt zależy od metody, którą klient
+  // wybiera dopiero przy zamówieniu. Pokazujemy samą wartość produktów.
+  const total = pricing.itemsTotal;
+  /** Ceny pozycji po rabatach – klucz to id produktu. */
   const lineFor = new Map(summary.lines.map((l) => [l.item.id, l]));
-  // Upust obejmuje rabat produktowy i rabat za wielosztuki – pokazujemy go
-  // także wtedy, gdy promocja „Wielosztuki” jest wyłączona, a produkt przeceniony
   const hasDiscount = summary.discountTotal > 0;
+  // Zachęty: do wyższego progu rabatu i do darmowej wysyłki
+  const nextTierText = nextTierHintText(pricing.quantityNextTier);
+  const freeShippingLeft = freeShippingMissing(
+    shipping.freeShipping,
+    "courier",
+    pricing.itemsTotal
+  );
 
   if (items.length === 0) {
     return (
@@ -163,7 +183,9 @@ export default function CartView({ shipping }: { shipping: ShippingSettings }) {
               <div className="flex justify-between text-sm text-charcoal/80">
                 <span>{hasDiscount ? "Produkty przed rabatem" : "Produkty"}</span>
                 <span>
-                  {(hasDiscount ? summary.catalogTotal : subtotal).toFixed(2).replace(".", ",")} zł
+                  {(hasDiscount ? summary.catalogTotal : pricing.itemsTotal)
+                    .toFixed(2)
+                    .replace(".", ",")} zł
                 </span>
               </div>
               {hasDiscount && (
@@ -172,27 +194,30 @@ export default function CartView({ shipping }: { shipping: ShippingSettings }) {
                   <span>−{summary.discountTotal.toFixed(2).replace(".", ",")} zł</span>
                 </div>
               )}
-              {/* Warunek promocji podany wprost – klient musi wiedzieć, kiedy
-                  rabat przysługuje i czego dotyczy */}
-              {bundle.enabled && (
-                <p className="text-xs text-charcoal/80">
-                  Rabat za wielosztuki naliczamy przy zakupie od 2 sztuk – obejmuje
-                  wszystkie produkty w zamówieniu.
+              {/* Rabat ilościowy jako dopisek – wiersz „Rabat” już go obejmuje,
+                  osobne odjęcie zaniżałoby kolumnę o jego wartość */}
+              {pricing.quantityPercent > 0 && pricing.quantityDiscount > 0 && (
+                <p className="text-xs text-green-700">
+                  w tym rabat ilościowy (−{pricing.quantityPercent}%):
+                  {" "}−{pricing.quantityDiscount.toFixed(2).replace(".", ",")} zł
                 </p>
               )}
+              {/* Zachęta do wyższego progu – warunek podany wprost, żeby klient
+                  wiedział, ile dołożyć i co dokładnie dostanie */}
+              {nextTierText && <p className="text-xs text-clay">{nextTierText}</p>}
               <div className="flex justify-between text-sm text-charcoal/80">
                 <span>Wysyłka</span>
                 <span>
-                  {bundle.enabled ? (
+                  {pricing.shippingCost === 0 && shipping.freeShipping ? (
                     <span className="text-green-700">Darmowa wysyłka</span>
                   ) : (
                     "przy wyborze dostawy"
                   )}
                 </span>
               </div>
-              {!bundle.enabled && shipping.freeEnabled && subtotal < shipping.freeFrom && (
+              {freeShippingLeft > 0 && (
                 <p className="text-xs text-clay">
-                  Dodaj jeszcze {(shipping.freeFrom - subtotal).toFixed(2).replace(".", ",")} zł do darmowej wysyłki
+                  Dodaj jeszcze {freeShippingLeft.toFixed(2).replace(".", ",")} zł do darmowej wysyłki
                 </p>
               )}
               <div className="border-t border-sand pt-3 flex justify-between font-serif text-xl text-espresso">

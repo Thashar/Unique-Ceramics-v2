@@ -215,10 +215,8 @@ const DEFAULTS: Record<string, string> = {
   contact_address_region: "woj. śląskie",
   shipping_cost: "18",
   shipping_cost_parcel_locker: "18",
-  shipping_free_enabled: "true",
-  shipping_free_from: "300",
-  // Promocja „Wielosztuki” – wysyłka wliczona w cenę (zakładka Promocje w panelu)
-  bundled_shipping_enabled: "false",
+  // Darmowa wysyłka nie jest już ustawieniem – to promocja z oknem czasu
+  // (tabela `FreeShippingPromo`, zakładka Promocje w panelu)
   shipping_time: "2–4 dni robocze",
   // Płatności – przelew tradycyjny
   payment_bank_account_name: "",
@@ -297,7 +295,7 @@ export const getContactSettings = unstable_cache(
  * Liczba z ustawienia sklepu. **Zero jest poprawną wartością** – wzorzec
  * `Number(value) || fallback` traktował je jak brak i cicho przywracał default,
  * przez co nie dało się ustawić darmowej wysyłki (`shipping_cost = 0`) ani progu
- * darmowej wysyłki od pierwszej złotówki (`shipping_free_from = 0`).
+ * darmowej wysyłki od pierwszej złotówki (próg promocji `minOrderValue = 0`).
  * Fallback wchodzi wyłącznie przy pustym polu albo wartości nieliczbowej.
  */
 export function settingNumber(value: unknown, fallback: number): number {

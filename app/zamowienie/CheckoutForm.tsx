@@ -5,12 +5,13 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Truck, Package, MapPin, Tag, X, Loader2 } from "lucide-react";
 import { useCart, useCartPriceSync } from "@/lib/cart";
-import { type BundleConfig } from "@/lib/bundled-shipping";
 import {
   normalizeCode,
   priceOrder,
   type DiscountCodeInfo,
 } from "@/lib/discount-code";
+import { nextTierHintText, type QuantityPromoConfig } from "@/lib/quantity-promo";
+import { freeShippingMissing, type FreeShippingConfig } from "@/lib/free-shipping";
 import { validateAddress, validateContact } from "@/lib/address-validation";
 import ClayRule from "@/components/ui/ClayRule";
 import dynamic from "next/dynamic";
@@ -33,15 +34,16 @@ export interface SavedAddress {
 }
 
 interface Props {
-  bundle: BundleConfig;
+  /** Rabat ilościowy obowiązujący teraz (null = brak). */
+  quantityPromo: QuantityPromoConfig | null;
+  /** Promocja „Darmowa wysyłka” obowiązująca teraz (null = brak). */
+  freeShipping: FreeShippingConfig | null;
   isLoggedIn: boolean;
   userEmail: string;
   savedAddress: SavedAddress | null;
   paymentMethods: PaymentMethod[];
   shippingCostCourier: number;
   shippingCostParcelLocker: number;
-  shippingFreeEnabled: boolean;
-  shippingFreeFrom: number;
   inpostToken: string | null;
   savedAddressComplete: boolean | null; // null = gość
 }
@@ -58,15 +60,14 @@ const SHIPPING_METHODS = [
 ] as const;
 
 export default function CheckoutForm({
-  bundle,
+  quantityPromo,
+  freeShipping,
   isLoggedIn,
   userEmail,
   savedAddress,
   paymentMethods,
   shippingCostCourier,
   shippingCostParcelLocker,
-  shippingFreeEnabled,
-  shippingFreeFrom,
   inpostToken,
   savedAddressComplete,
 }: Props) {
@@ -86,19 +87,18 @@ export default function CheckoutForm({
   const [codeError, setCodeError] = useState("");
   const [codeChecking, setCodeChecking] = useState(false);
 
-  // Cała kwota zamówienia w jednym miejscu: przeceny produktów, promocja
-  // „Wielosztuki" i kod rabatowy (łączony albo korzystniejszy z dwóch wariantów)
+  // Cała kwota zamówienia w jednym miejscu: przeceny produktów, rabat ilościowy,
+  // kod rabatowy i darmowa wysyłka. Ta sama funkcja liczy `/api/checkout`.
   function pricingFor(method: "courier" | "parcel_locker" | "pickup") {
     return priceOrder({
       items,
-      bundle,
+      quantityPromo,
       code: appliedCode,
       shipping: {
         method,
         courier: shippingCostCourier,
         parcelLocker: shippingCostParcelLocker,
-        freeEnabled: shippingFreeEnabled,
-        freeFrom: shippingFreeFrom,
+        freeShipping,
       },
     });
   }
@@ -109,6 +109,10 @@ export default function CheckoutForm({
   const summary = pricing.display;
   // Kod niełączony wchodzi tylko wtedy, gdy daje niższą kwotę niż promocje sklepu
   const codeIgnored = appliedCode !== null && pricing.appliedCode === null;
+  // Zachęty: ile brakuje do wyższego progu rabatu i do darmowej wysyłki
+  const nextTierText = nextTierHintText(pricing.quantityNextTier);
+  const freeShippingLeft =
+    shippingMethod === "pickup" ? 0 : freeShippingMissing(freeShipping, shippingMethod, pricing.itemsTotal);
 
   async function applyCode(e: React.MouseEvent | React.KeyboardEvent) {
     e.preventDefault();
@@ -395,16 +399,17 @@ export default function CheckoutForm({
                         <p className="text-sm font-medium text-espresso">{label}</p>
                         {(() => {
                           // Kwota liczona tą samą funkcją co całe zamówienie –
-                          // przy kodzie niełączonym promocja „Wielosztuki” może
-                          // ustąpić kodowi, a wtedy wysyłka ma normalną cenę
-                          const forMethod = pricingFor(value);
+                          // przy kodzie niełączonym rabat ilościowy może ustąpić
+                          // kodowi, co zmienia kwotę, od której liczy się próg
+                          // darmowej wysyłki
                           if (value === "pickup") return <span className="text-xs text-green-700 font-medium">Bezpłatne</span>;
-                          // W promocji „Wielosztuki” klient nigdy nie widzi kwoty wysyłki –
-                          // narzut siedzi w cenach katalogowych, a przy wyborze dostawy
-                          // ma stać to samo, co w koszyku
-                          if (forMethod.bundle.enabled) return <span className="text-xs text-green-700 font-medium">Darmowa wysyłka</span>;
-                          if (forMethod.shippingCost === 0) return <span className="text-xs text-green-700 font-medium">Gratis</span>;
-                          return <span className="text-xs text-charcoal/80">{forMethod.shippingCost} zł</span>;
+                          const forMethod = pricingFor(value);
+                          if (forMethod.shippingCost === 0) return <span className="text-xs text-green-700 font-medium">Darmowa wysyłka</span>;
+                          return (
+                            <span className="text-xs text-charcoal/80">
+                              {forMethod.shippingCost.toFixed(2).replace(".", ",")} zł
+                            </span>
+                          );
                         })()}
                       </div>
                       <p className="text-xs text-charcoal/80 mt-0.5">{desc}</p>
@@ -510,8 +515,14 @@ export default function CheckoutForm({
                         −{summary.discountTotal.toFixed(2).replace(".", ",")} zł
                       </span>
                     </div>
-                    {/* Udział kodu w rabacie – wiersz „Rabat” obejmuje wszystko,
-                        więc kod pokazujemy jako dopisek, a nie kolejne odjęcie */}
+                    {/* Składniki rabatu – wiersz „Rabat” obejmuje wszystko, więc
+                        pokazujemy je dopiskami, a nie kolejnymi odjęciami */}
+                    {pricing.quantityPercent > 0 && pricing.quantityDiscount > 0 && (
+                      <p className="text-xs text-green-700">
+                        w tym rabat ilościowy (−{pricing.quantityPercent}%):
+                        {" "}−{pricing.quantityDiscount.toFixed(2).replace(".", ",")} zł
+                      </p>
+                    )}
                     {pricing.appliedCode && pricing.codeDiscount > 0 && (
                       <p className="text-xs text-green-700">
                         w tym kod {pricing.appliedCode.code} (−{pricing.appliedCode.percent}%):
@@ -519,6 +530,18 @@ export default function CheckoutForm({
                       </p>
                     )}
                   </>
+                )}
+
+                {/* Zachęty do wyższego progu i do darmowej wysyłki – tuż przy
+                    kwotach, bo tu klient decyduje o dołożeniu czegoś do koszyka */}
+                {nextTierText && (
+                  <p className="text-xs text-clay">{nextTierText}</p>
+                )}
+                {freeShippingLeft > 0 && (
+                  <p className="text-xs text-clay">
+                    Dodaj jeszcze {freeShippingLeft.toFixed(2).replace(".", ",")} zł
+                    {" "}do darmowej wysyłki
+                  </p>
                 )}
 
                 {/* Kod rabatowy */}
@@ -579,12 +602,10 @@ export default function CheckoutForm({
                   <span>
                     {shippingMethod === "pickup" ? (
                       <span className="text-green-700">Bezpłatnie</span>
-                    ) : bundle.enabled ? (
-                      <span className="text-green-700">Darmowa wysyłka</span>
                     ) : shipping === 0 ? (
-                      <span className="text-green-700">Gratis</span>
+                      <span className="text-green-700">Darmowa wysyłka</span>
                     ) : (
-                      `${shipping} zł`
+                      `${shipping.toFixed(2).replace(".", ",")} zł`
                     )}
                   </span>
                 </div>

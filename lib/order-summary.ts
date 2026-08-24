@@ -34,10 +34,13 @@ export type OrderSummaryInput = {
   shippingCost: number;
   total: number;
   shippingMethod?: string | null;
-  /** Narzut promocji „Wielosztuki” z chwili zakupu (null = promocja nie obowiązywała). */
+  /** LEGACY: narzut wycofanej promocji „Wielosztuki” (null = nie obowiązywała). */
   bundleSurcharge?: number | null;
   discountCode?: string | null;
   discountAmount?: number | null;
+  /** Rabat ilościowy z chwili zakupu – procent progu i kwota. */
+  quantityDiscountPercent?: number | null;
+  quantityDiscountAmount?: number | null;
 };
 
 export type OrderSummaryLine = {
@@ -53,12 +56,15 @@ export type OrderSummaryView = {
   bundleApplied: boolean;
   /** Wiersz „Produkty przed rabatem”. */
   catalogTotal: number;
-  /** Łączny upust: rabat produktowy + „Wielosztuki” + kod. */
+  /** Łączny upust: rabat produktowy + ilościowy + kod (+ legacy „Wielosztuki”). */
   discountTotal: number;
   discountPercent: number;
   /** Udział kodu w upuście – pokazywany jako dopisek, nie kolejne odjęcie. */
   codeAmount: number;
   codeLabel: string | null;
+  /** Udział rabatu ilościowego – również dopisek, z tego samego powodu. */
+  quantityAmount: number;
+  quantityPercent: number;
   /** Kwota w wierszu wysyłki (0 przy odbiorze osobistym i przy „Wielosztukach”). */
   shippingShown: number;
   /** Etykieta wiersza wysyłki. */
@@ -111,6 +117,14 @@ export function orderSummary(order: OrderSummaryInput): OrderSummaryView {
       ? money(order.discountAmount)
       : 0;
 
+  // Rabat ilościowy przycinamy do łącznego upustu – gdyby zapisany ślad kiedyś
+  // rozjechał się z kwotami pozycji, dopisek nie może obiecywać więcej, niż
+  // klient realnie zaoszczędził
+  const quantityAmount =
+    typeof order.quantityDiscountAmount === "number" && order.quantityDiscountAmount > 0
+      ? Math.min(money(order.quantityDiscountAmount), discountTotal)
+      : 0;
+
   const shippingLabel: OrderSummaryView["shippingLabel"] =
     order.shippingMethod === "pickup"
       ? "pickup"
@@ -128,6 +142,11 @@ export function orderSummary(order: OrderSummaryInput): OrderSummaryView {
     discountPercent: shownDiscountPercent(catalogTotal, catalogTotal - discountTotal),
     codeAmount,
     codeLabel: order.discountCode || null,
+    quantityAmount,
+    quantityPercent:
+      typeof order.quantityDiscountPercent === "number" && order.quantityDiscountPercent > 0
+        ? order.quantityDiscountPercent
+        : 0,
     shippingShown,
     shippingLabel,
     total: money(order.total),

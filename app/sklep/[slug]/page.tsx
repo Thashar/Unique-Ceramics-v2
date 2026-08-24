@@ -12,8 +12,13 @@ import { db, withDbRetry } from "@/lib/db";
 import { getSettings, settingNumber } from "@/lib/settings";
 import { getCategories, categoryLabel } from "@/lib/categories";
 import ProductPriceTag from "@/components/ui/ProductPriceTag";
-import ProductBundleNotes from "@/components/ui/ProductBundleNotes";
-import { BUNDLED_SHIPPING_KEY, bundleFromSettings, bundlePrice } from "@/lib/bundled-shipping";
+import QuantityPromoNotes from "@/components/ui/QuantityPromoNotes";
+import {
+  findActiveFreeShipping,
+  findActiveQuantityPromo,
+  toFreeShippingConfig,
+  toQuantityConfig,
+} from "@/lib/promos";
 import {
   DISCOUNT_HOLD_CATALOG_MS,
   activeDiscountPercent,
@@ -97,32 +102,32 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const [product, settings, categories] = await Promise.all([
+  const hold = { holdMs: DISCOUNT_HOLD_CATALOG_MS };
+  const [product, settings, categories, quantityPromoRow, freeShippingRow] = await Promise.all([
     getProduct(slug),
-    getSettings([
-      "shipping_time",
-      "shipping_cost",
-      "shipping_cost_parcel_locker",
-      "shipping_free_enabled",
-      "shipping_free_from",
-      BUNDLED_SHIPPING_KEY,
-    ]),
+    getSettings(["shipping_time", "shipping_cost", "shipping_cost_parcel_locker"]),
     getCategories(),
+    findActiveQuantityPromo(hold),
+    findActiveFreeShipping(hold),
   ]);
 
   if (!product) notFound();
 
-  const bundle = bundleFromSettings(settings);
+  const quantityPromo = toQuantityConfig(quantityPromoRow);
+  const freeShipping = toFreeShippingConfig(freeShippingRow);
   // Rabat produktowy liczymy raz – ta sama wartość idzie do ceny, danych
   // strukturalnych i koszyka. Poza oknem obowiązywania (patrz `lib/product-price`)
   // wychodzi 0, więc karta wraca do ceny podstawowej sama
-  const discountPercent = activeDiscountPercent(product, { holdMs: DISCOUNT_HOLD_CATALOG_MS });
+  const discountPercent = activeDiscountPercent(product, hold);
   // Termin pokazujemy tylko przy realnie działającym rabacie
   const discountEndsAt = discountPercent > 0 ? product.discountEndsAt : null;
   const shippingTime = settings.shipping_time || "2–4 dni robocze";
-  const shippingCost = settingNumber(settings.shipping_cost, 18);
-  const freeEnabled = settings.shipping_free_enabled === "true";
-  const freeFrom = settingNumber(settings.shipping_free_from, 300);
+  // Klient nie wybrał jeszcze metody dostawy, więc podajemy **najtańszą** stawkę
+  // i piszemy „od” – wcześniej karta pokazywała samą cenę kuriera jako jedyną
+  const shippingCostCourier = settingNumber(settings.shipping_cost, 18);
+  const shippingCostParcel = settingNumber(settings.shipping_cost_parcel_locker, 18);
+  const cheapestShipping = Math.min(shippingCostCourier, shippingCostParcel);
+  const shippingVaries = shippingCostCourier !== shippingCostParcel;
 
   const BASE = "https://uniqueceramics.pl";
   const jsonLd = {
@@ -140,10 +145,10 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     offers: {
       "@type": "Offer",
       url: `${BASE}/sklep/${product.slug}`,
-      // W promocji „Wielosztuki” dane strukturalne muszą podawać tę samą
-      // cenę, którą widzi odwiedzający z pustym koszykiem
-      // Cena dla wyszukiwarek to kwota realnie do zapłaty: po rabacie produktowym
-      price: bundlePrice(discountedPrice(product.price, discountPercent), bundle).toFixed(2),
+      // Cena dla wyszukiwarek to kwota za jedną sztukę: po rabacie produktowym.
+      // Rabatu ilościowego tu nie uwzględniamy – zależy od zawartości koszyka,
+      // a wyszukiwarka porównuje cenę pojedynczego produktu
+      price: discountedPrice(product.price, discountPercent).toFixed(2),
       priceCurrency: "PLN",
       availability: product.stock > 0
         ? "https://schema.org/InStock"
@@ -157,9 +162,9 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         "@type": "OfferShippingDetails",
         shippingRate: {
           "@type": "MonetaryAmount",
-          // W promocji „Wielosztuki” wysyłka jest wliczona w cenę katalogową,
-          // więc wyszukiwarce podajemy 0 – inaczej doliczałaby ją drugi raz
-          value: (bundle.enabled ? 0 : shippingCost).toFixed(2),
+          // Najtańsza dostępna metoda – to samo, co pokazuje karta produktu.
+          // Trwająca promocja „Darmowa wysyłka” bez progu zeruje stawkę
+          value: (freeShipping && freeShipping.minOrderValue === 0 ? 0 : cheapestShipping).toFixed(2),
           currency: "PLN",
         },
         deliveryTime: {
@@ -222,11 +227,9 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               {product.name}
             </h1>
             <p className="font-serif text-2xl text-espresso mb-6">
-              {/* W promocji „Wielosztuki” cena katalogowa zawiera narzut na wysyłkę;
-                  przeceniony produkt pokazuje cenę przekreśloną, nową i procent */}
+              {/* Przeceniony produkt pokazuje cenę przekreśloną, nową i procent */}
               <ProductPriceTag
                 price={product.price}
-                bundle={bundle}
                 discountPercent={discountPercent}
                 size="lg"
               />
@@ -310,19 +313,19 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
             {/* Wysyłka */}
             <div className="mt-6 pt-6 border-t border-sand space-y-3">
-              {bundle.enabled ? (
-                /* Promocja „Wielosztuki” – darmowa wysyłka i zachęta do rabatu,
-                   obie na zielono, w jednym miejscu pod przyciskiem koszyka */
-                <ProductBundleNotes bundle={bundle} />
-              ) : (
-                <div className="flex items-center gap-3 text-xs text-charcoal/80">
-                  <Truck size={14} strokeWidth={1.5} className="shrink-0 text-clay" />
-                  <span>
-                    Wysyłka {shippingCost.toFixed(0)} zł
-                    {freeEnabled && ` · bezpłatna od ${freeFrom.toFixed(0)} zł`}
-                  </span>
-                </div>
-              )}
+              {/* „od”, bo koszt zależy od metody wybieranej dopiero przy
+                  zamówieniu – karta pokazuje najtańszą dostępną stawkę.
+                  Gdy obie metody kosztują tyle samo, „od” byłoby mylące. */}
+              <div className="flex items-center gap-3 text-xs text-charcoal/80">
+                <Truck size={14} strokeWidth={1.5} className="shrink-0 text-clay" />
+                <span>
+                  Wysyłka {shippingVaries ? "od " : ""}
+                  {cheapestShipping.toFixed(2).replace(".", ",")} zł
+                </span>
+              </div>
+              {/* Trwające promocje – darmowa wysyłka i zachęta do rabatu
+                  ilościowego, obie na zielono, pod przyciskiem koszyka */}
+              <QuantityPromoNotes quantityPromo={quantityPromo} freeShipping={freeShipping} />
               <div className="flex items-center gap-3 text-xs text-charcoal/80">
                 <Clock size={14} strokeWidth={1.5} className="shrink-0 text-clay" />
                 <span>Czas realizacji: {shippingTime}</span>
