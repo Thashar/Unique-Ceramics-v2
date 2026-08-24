@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 
 import { useState } from "react";
 import { useSession, signOut } from "next-auth/react";
-import { User, Lock, CheckCircle, Download, Trash2, ShieldAlert } from "lucide-react";
+import { User, Lock, Mail, CheckCircle, Download, Trash2, ShieldAlert } from "lucide-react";
 
 export default function ProfilePage() {
   const { data: session, update } = useSession();
@@ -17,12 +17,23 @@ export default function ProfilePage() {
   const [savingPassword, setSavingPassword] = useState(false);
   const [passwordMsg, setPasswordMsg] = useState("");
 
+  const [newEmail, setNewEmail] = useState("");
+  const [emailPassword, setEmailPassword] = useState("");
+  const [savingEmail, setSavingEmail] = useState(false);
+  const [emailMsg, setEmailMsg] = useState("");
+  const [emailSent, setEmailSent] = useState(false);
+
   const [deletePassword, setDeletePassword] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [deleteMsg, setDeleteMsg] = useState("");
 
-  // Konto połączone z Google ma ustawiony obraz i nie ma hasła
-  const isOAuth = Boolean(session?.user?.image);
+  // Czy konto ma własne hasło. Bierzemy to z sesji (`auth.ts` czyta to z bazy),
+  // a nie z obecności avatara – ta heurystyka myliła się przy kontach z hasłem,
+  // które miały ustawione zdjęcie
+  const hasPassword = session?.user?.hasPassword !== false;
+  const isOAuth = !hasPassword;
+  // E-mail konta Google pochodzi stamtąd i nie ma czym potwierdzić tożsamości
+  const canChangeEmail = hasPassword;
 
   async function handleDeleteAccount(e: React.FormEvent) {
     e.preventDefault();
@@ -63,6 +74,30 @@ export default function ProfilePage() {
       setTimeout(() => setNameSaved(false), 3000);
     }
     setSavingName(false);
+  }
+
+  async function handleChangeEmail(e: React.FormEvent) {
+    e.preventDefault();
+    setSavingEmail(true);
+    setEmailMsg("");
+    setEmailSent(false);
+    const res = await fetch("/api/account/email-change", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ newEmail, currentPassword: emailPassword }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.ok) {
+      setEmailSent(true);
+      setEmailMsg(
+        `Wysłaliśmy link potwierdzający na ${data.newEmail ?? newEmail}. Adres zmieni się po kliknięciu w niego.`
+      );
+      setNewEmail("");
+      setEmailPassword("");
+    } else {
+      setEmailMsg(data.error ?? "Nie udało się rozpocząć zmiany adresu.");
+    }
+    setSavingEmail(false);
   }
 
   async function handleChangePassword(e: React.FormEvent) {
@@ -111,7 +146,11 @@ export default function ProfilePage() {
               disabled
               className="w-full bg-sand/50 border border-sand px-4 py-3 text-charcoal/80 text-sm cursor-not-allowed"
             />
-            <p className="text-xs text-charcoal/80 mt-1.5">Adres e-mail nie może być zmieniony.</p>
+            <p className="text-xs text-charcoal/80 mt-1.5">
+              {canChangeEmail
+                ? "Adres zmienisz niżej – potwierdzenie przyjdzie na nową skrzynkę."
+                : "Adres pochodzi z konta Google i zmienia się go po stronie Google."}
+            </p>
           </div>
           <button
             type="submit"
@@ -122,6 +161,69 @@ export default function ProfilePage() {
           </button>
         </form>
       </div>
+
+      {/* Zmiana adresu e-mail – tylko konta z własnym hasłem.
+          E-mail jest loginem, więc zmiana wymaga hasła **i** potwierdzenia
+          z nowej skrzynki; sam formularz nic jeszcze nie zmienia. */}
+      {canChangeEmail && (
+        <div className="bg-cream p-8">
+          <h3 className="text-xs tracking-widest uppercase text-clay mb-6 flex items-center gap-2">
+            <Mail size={14} strokeWidth={1.5} />
+            Zmiana adresu e-mail
+          </h3>
+          <form onSubmit={handleChangeEmail} className="space-y-5">
+            <div>
+              <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">
+                Nowy adres e-mail
+              </label>
+              <input
+                type="email"
+                required
+                autoComplete="email"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                className="w-full bg-warm-white border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors"
+              />
+            </div>
+            <div>
+              <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">
+                Aktualne hasło
+              </label>
+              <input
+                type="password"
+                required
+                autoComplete="current-password"
+                value={emailPassword}
+                onChange={(e) => setEmailPassword(e.target.value)}
+                className="w-full bg-warm-white border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors"
+              />
+            </div>
+            <p className="text-xs text-charcoal/80 leading-relaxed">
+              Na nowy adres wyślemy link potwierdzający, ważny godzinę. Dopiero po
+              kliknięciu w niego adres się zmieni – i będziesz nim logować się do sklepu.
+              O prośbie powiadomimy też obecny adres.
+            </p>
+            {emailMsg && (
+              <p
+                className={`text-sm px-4 py-3 ${
+                  emailSent
+                    ? "bg-green-50 border border-green-200 text-green-800"
+                    : "bg-red-50 border border-red-200 text-red-700"
+                }`}
+              >
+                {emailMsg}
+              </p>
+            )}
+            <button
+              type="submit"
+              disabled={savingEmail}
+              className="inline-flex items-center gap-2 bg-clay hover:bg-terracotta hover:text-espresso disabled:bg-sand text-warm-white text-xs tracking-widest uppercase px-6 py-3 transition-colors"
+            >
+              {savingEmail ? "Wysyłanie..." : "Wyślij link potwierdzający"}
+            </button>
+          </form>
+        </div>
+      )}
 
       {/* Zmiana hasła */}
       <div className="bg-cream p-8">

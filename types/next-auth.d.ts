@@ -5,6 +5,8 @@ declare module "next-auth" {
     user: {
       id: string;
       role: string;
+      /** Czy konto ma własne hasło (false = logowanie wyłącznie przez Google). */
+      hasPassword?: boolean;
     } & DefaultSession["user"];
   }
 
@@ -19,5 +21,6 @@ declare module "next-auth/jwt" {
     id: string;
     role: string;
     tokenVersion?: number;
+    hasPassword?: boolean;
   }
 }

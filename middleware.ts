@@ -15,6 +15,26 @@ export default auth((req) => {
     nextUrl.pathname.startsWith("/konto") ||
     nextUrl.pathname.startsWith("/admin");
 
+  // Logowanie i rejestracja nie mają sensu dla kogoś, kto już jest zalogowany –
+  // odsyłamy go do panelu konta zamiast pokazywać pusty formularz. Tu, a nie na
+  // stronach: obie są klienckie, więc sprawdzenie w komponencie mignęłoby
+  // formularzem przed przekierowaniem.
+  const isAuthPage =
+    nextUrl.pathname === "/logowanie" || nextUrl.pathname === "/rejestracja";
+
+  if (session && isAuthPage) {
+    // `callbackUrl` zostaje uszanowany – po wygaśnięciu sesji middleware odsyła
+    // na logowanie właśnie z nim, a po ponownym wejściu klient ma wrócić tam,
+    // gdzie zmierzał. Przyjmujemy tylko ścieżki względne (bez otwartego
+    // przekierowania na obcą domenę).
+    const callbackUrl = nextUrl.searchParams.get("callbackUrl");
+    const target =
+      callbackUrl && callbackUrl.startsWith("/") && !callbackUrl.startsWith("//")
+        ? callbackUrl
+        : "/konto";
+    return NextResponse.redirect(new URL(target, nextUrl.origin));
+  }
+
   if (!session) {
     if (isAdminApi) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -34,5 +54,7 @@ export const config = {
     "/konto/:path*",
     "/admin/:path*",
     "/api/admin/:path*",
+    "/logowanie",
+    "/rejestracja",
   ],
 };

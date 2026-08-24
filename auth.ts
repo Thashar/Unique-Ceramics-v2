@@ -71,11 +71,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         try {
           const dbUser = await db.user.findUnique({
             where: { id: token.id as string },
-            select: { tokenVersion: true, role: true },
+            select: { tokenVersion: true, role: true, password: true },
           });
           if (!dbUser) return null; // konto usunięte → wyloguj
           if ((token.tokenVersion ?? 0) !== dbUser.tokenVersion) return null; // hasło zmienione → wyloguj
           token.role = dbUser.role;
+          // Czy konto ma własne hasło (a nie tylko logowanie Google). Do tokena
+          // trafia **sam fakt**, nigdy hasło. Zastępuje kruchą heurystykę
+          // „ma avatar = konto Google" i decyduje, czy wolno zmienić e-mail
+          token.hasPassword = dbUser.password !== null;
         } catch {
           // Błąd DB — nie wylogowuj (fail-open na problem infrastruktury)
         }
@@ -86,6 +90,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (token) {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
+        session.user.hasPassword = token.hasPassword === true;
       }
       return session;
     },

@@ -25,6 +25,8 @@ model User {
   accounts Account[]
   sessions Session[]
   orders   Order[]
+
+  emailChange EmailChangeRequest?
 }
 
 model Account {
@@ -61,6 +63,27 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+/// Oczekująca zmiana adresu e-mail konta.
+///
+/// E-mail jest jednocześnie loginem, więc podmiana wymaga udowodnienia dostępu
+/// do **nowej** skrzynki – klient dostaje tam link potwierdzający.
+model EmailChangeRequest {
+  id     String @id @default(cuid())
+  /// Jedno oczekujące żądanie na konto – nowe zastępuje poprzednie (upsert),
+  /// dzięki czemu nie zbierają się ważne tokeny.
+  userId String @unique
+  /// Adres, na który zmieniamy – wolny w chwili żądania, sprawdzany ponownie
+  /// przy potwierdzeniu (ktoś mógł go w międzyczasie zarejestrować).
+  newEmail String
+  /// SHA-256 tokenu. Surowy token istnieje **wyłącznie** w wysłanym mailu –
+  /// wyciek bazy nie daje gotowych linków.
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 // ─── Sklep ────────────────────────────────────────────────────────────────────
