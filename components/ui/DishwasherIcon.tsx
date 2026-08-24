@@ -1,22 +1,8 @@
 /**
- * Ikona „można myć w zmywarce" – lucide nie ma takiego symbolu, a jest potrzebny
- * przy każdym produkcie.
- *
- * Rysunek: **dwa nachodzące talerze i krople wody** nad nimi. Sklep sprzedaje
- * ceramikę, więc symbol mówi o naczyniach, nie o sprzęcie AGD.
- *
- * ⚠️ **Talerze nie mają kołnierza (okręgu wewnątrz okręgu).** Wcześniejsza wersja
- * rysowała współśrodkowe okręgi oddalone o 2,2 jednostki – przy kresce 1,5 zostawało
- * między nimi 0,7 prześwitu, więc zlewały się w ciemną tarczę i ikona odstawała
- * czernią od `Truck` i `Clock` obok (zmierzone: 26,3 wobec 24,9 dla `Clock`
- * w realnym rozmiarze wyświetlania). Dwa **osobne, nachodzące** talerze dają
- * 22,9 – lekko poniżej sąsiadów – przy tej samej, lucide'owej kresce 1,5.
- * Nie wracaj do współśrodkowych okręgów.
- *
- * Konwencja lucide (viewBox 24, `currentColor`, kreska 1,5, zaokrąglone końce),
- * żeby ikona stała równo obok pozostałych. Krople to ścieżki zerowej długości
- * z zaokrąglonym końcem – ich średnica równa się grubości kreski, więc cała
- * ikona skaluje się jednym parametrem.
+ * Ikona „można myć w zmywarce" – lucide nie ma zmywarki, a symbol jest potrzebny
+ * przy każdym produkcie. Rysunek trzyma się konwencji reszty ikon w sklepie
+ * (viewBox 24, `currentColor`, kreska 1,5, zaokrąglone końce), żeby stał równo
+ * obok `Truck` i `Clock` na karcie produktu.
  */
 export default function DishwasherIcon({
   size = 20,
@@ -40,21 +26,12 @@ export default function DishwasherIcon({
       className={className}
       aria-hidden="true"
     >
-      {/* Krople wody – wachlarz rozchodzący się na boki i w dół */}
-      <path d="M12 2.3v.01" />
-      <path d="M8.8 3.5v.01" />
-      <path d="M15.2 3.5v.01" />
-      <path d="M12 5.2v.01" />
-      <path d="M5.6 5.4v.01" />
-      <path d="M18.4 5.4v.01" />
-      <path d="M9.2 7v.01" />
-      <path d="M14.8 7v.01" />
-
-      {/* Przedni talerz */}
-      <circle cx="9.6" cy="15.6" r="5.9" />
-      {/* Tylny talerz – widoczny wyłącznie poza obrysem przedniego. Łuk musi być
-          większy niż półokrąg (large-arc = 1), inaczej chowa się w przednim. */}
-      <path d="M12.2 10.3A5.9 5.9 0 1 1 12.2 20.9" />
+      {/* obudowa i panel sterowania */}
+      <rect x="3.5" y="2.5" width="17" height="19" rx="2" />
+      <path d="M3.5 7.5h17" />
+      <circle cx="17.5" cy="5" r="0.5" fill="currentColor" stroke="none" />
+      {/* kropla wody w komorze – znak mycia */}
+      <path d="M12 10.5c2.1 2 3.2 3.6 3.2 4.9a3.2 3.2 0 0 1-6.4 0c0-1.3 1.1-2.9 3.2-4.9z" />
     </svg>
   );
 }
