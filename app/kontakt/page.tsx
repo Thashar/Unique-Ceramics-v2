@@ -2,7 +2,9 @@
 export const revalidate = 300;
 
 import type { Metadata } from "next";
-import { Phone, Mail, Clock, MapPin } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, Gift, Phone, Mail, Clock, MapPin } from "lucide-react";
+import CustomOrderPoints from "@/components/ui/CustomOrderPoints";
 import ClayRule from "@/components/ui/ClayRule";
 import InstagramIcon from "@/components/ui/InstagramIcon";
 import WhatsAppIcon from "@/components/ui/WhatsAppIcon";
@@ -196,18 +198,34 @@ export default async function ContactPage() {
                 </div>
               </div>
 
-              <div className="mt-12 p-8 bg-cream">
-                <h3 className="font-serif text-xl text-espresso mb-4">Zamówienie indywidualne</h3>
-                <p className="text-charcoal/80 text-sm leading-relaxed mb-6">
+              {/* Ten sam materiał co pas zamówień indywidualnych na końcu katalogu
+                  (`app/sklep/CustomOrderTile.tsx`) i zamknięcie FAQ na /warsztaty:
+                  ciemne tło, ikona prezentu, te same trzy hasła i przycisk w ramce */}
+              <div className="mt-12 p-7 sm:p-8 bg-espresso">
+                <span
+                  className="inline-flex items-center justify-center w-11 h-11 rounded-full border border-terracotta/40 bg-terracotta/10 text-terracotta mb-5"
+                  aria-hidden="true"
+                >
+                  <Gift size={20} strokeWidth={1.5} />
+                </span>
+                <h3 className="font-serif text-xl text-cream mb-3">Zamówienie indywidualne</h3>
+                <p className="text-sand/90 text-sm leading-relaxed mb-5">
                   Tworzę ceramikę na zamówienie – zestawy ślubne, prezenty firmowe,
                   naczynia z personalizacją. Czas realizacji: 4+ tygodnie.
                 </p>
-                <a
+                <CustomOrderPoints className="mb-6" />
+                <Link
                   href="/zamowienie-indywidualne"
-                  className="inline-block text-xs tracking-widest uppercase text-clay border-b border-clay pb-0.5 hover:text-espresso hover:border-espresso transition-colors"
+                  className="group inline-flex items-center gap-3 border border-terracotta/50 hover:border-terracotta hover:bg-terracotta hover:text-espresso text-cream text-xs tracking-widest uppercase px-6 py-3.5 transition-all duration-300"
                 >
                   Wypełnij formularz
-                </a>
+                  <ArrowRight
+                    size={14}
+                    strokeWidth={1.5}
+                    className="group-hover:translate-x-1 transition-transform"
+                    aria-hidden="true"
+                  />
+                </Link>
               </div>
             </div>
 

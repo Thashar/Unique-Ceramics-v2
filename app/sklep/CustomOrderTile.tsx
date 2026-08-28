@@ -1,12 +1,6 @@
 import Link from "next/link";
-import { ArrowRight, Gift, Globe, Package, Palette } from "lucide-react";
-
-/** Trzy powody z tekstu zaproszenia, każdy z własną ikoną. */
-const POINTS = [
-  { icon: Palette, label: "Zrealizuję Twój projekt" },
-  { icon: Package, label: "Pojedyncza sztuka lub komplet" },
-  { icon: Globe, label: "Wysyłka także za granicę" },
-];
+import { ArrowRight, Gift } from "lucide-react";
+import CustomOrderPoints from "@/components/ui/CustomOrderPoints";
 
 /**
  * Zaproszenie do zamówień indywidualnych na końcu siatki produktów.
@@ -58,19 +52,8 @@ export default function CustomOrderTile() {
           Potrzebujesz ceramiki na zamówienie?
         </h3>
         {/* Trzy hasła zamiast akapitu – to samo, co niosło zdanie, ale czytelne
-            jednym rzutem oka. Na telefonie jedno pod drugim: obok siebie łamały
-            się w poszarpaną siatkę */}
-        <ul className="flex flex-col md:flex-row md:flex-wrap gap-2 md:gap-x-6 md:gap-y-2 mt-3 sm:mt-4">
-          {POINTS.map(({ icon: Icon, label }) => (
-            <li
-              key={label}
-              className="flex items-center gap-2 text-sand/90 text-[12px] sm:text-[13px]"
-            >
-              <Icon size={14} strokeWidth={1.5} className="text-terracotta shrink-0" aria-hidden="true" />
-              {label}
-            </li>
-          ))}
-        </ul>
+            jednym rzutem oka. Ta sama lista stoi w bloku na `/kontakt` */}
+        <CustomOrderPoints inline className="mt-3 sm:mt-4" />
       </div>
 
       <Link

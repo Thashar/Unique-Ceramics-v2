@@ -335,15 +335,18 @@ export default async function WorkshopsPage() {
                 ))}
               </div>
 
-              {/* Zamknięcie sekcji – bez tego strona urywała się na ostatnim pytaniu */}
-              <div className="mt-12 bg-warm-white border border-sand p-7 flex flex-wrap items-center justify-between gap-5">
+              {/* Zamknięcie sekcji – bez tego strona urywała się na ostatnim pytaniu.
+                  Ciemne tło i przycisk w ramce jak pas zamówień indywidualnych
+                  w sklepie (`app/sklep/CustomOrderTile.tsx`) – oba domykają listę,
+                  więc mają wyglądać tak samo */}
+              <div className="mt-12 bg-espresso p-7 flex flex-wrap items-center justify-between gap-5">
                 <div>
-                  <p className="font-serif text-xl text-espresso mb-1">Nie ma tu Twojego pytania?</p>
-                  <p className="text-sm text-charcoal/80">Napisz albo zadzwoń – chętnie wszystko wyjaśnię.</p>
+                  <p className="font-serif text-xl text-cream mb-1">Nie ma tu Twojego pytania?</p>
+                  <p className="text-sm text-sand/90">Napisz albo zadzwoń – chętnie wszystko wyjaśnię.</p>
                 </div>
                 <Link
                   href="/kontakt"
-                  className="bg-clay hover:bg-terracotta hover:text-espresso text-warm-white text-xs tracking-widest uppercase px-8 py-4 transition-colors whitespace-nowrap"
+                  className="border border-terracotta/50 hover:border-terracotta hover:bg-terracotta hover:text-espresso text-cream text-xs tracking-widest uppercase px-8 py-4 transition-all duration-300 whitespace-nowrap"
                 >
                   Napisz do mnie
                 </Link>
