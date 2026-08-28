@@ -30,7 +30,8 @@ export default function ForeignShippingNote({
   if (!prominent) {
     return (
       <p className={`text-xs text-charcoal/80 ${className}`}>
-        Wysyłam na terenie Polski. Zamówienia z zagranicy realizuję po indywidualnej wycenie –{" "}
+        Sklep prowadzi wysyłkę na terenie Polski. Zamówienia z zagranicy realizuję po
+        indywidualnej wycenie –{" "}
         <Link
           href="/zamowienie-indywidualne"
           className="text-clay underline hover:text-espresso transition-colors"
