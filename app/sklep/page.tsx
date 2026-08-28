@@ -11,6 +11,7 @@ import ProductGrid from "./ProductGrid";
 import FloatingOrderButton from "./FloatingOrderButton";
 import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/seo";
+import BreadcrumbSchema from "@/components/seo/BreadcrumbSchema";
 
 export const metadata: Metadata = pageMetadata({
   title: "Sklep ceramiczny – ceramika ręcznie robiona",
@@ -66,6 +67,7 @@ export default async function ShopPage({
 
   return (
     <>
+      <BreadcrumbSchema items={[{ name: "Sklep", path: "/sklep" }]} />
       <Header />
       <div className="min-h-[100svh] bg-warm-white">
         <h1 className="sr-only">Sklep ceramiczny – sklep z ceramiką ręcznie robioną, Gliwice</h1>

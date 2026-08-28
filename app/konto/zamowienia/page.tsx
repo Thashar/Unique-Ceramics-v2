@@ -6,7 +6,11 @@ import Link from "next/link";
 import { Package, ChevronRight, ShoppingBag } from "lucide-react";
 import OrderStatusBadge from "@/components/account/OrderStatusBadge";
 
-export const metadata = { title: "Moje zamówienia" };
+export const metadata = {
+  title: "Moje zamówienia",
+  robots: { index: false, follow: false },
+  alternates: { canonical: "https://uniqueceramics.pl/konto/zamowienia" },
+};
 
 export default async function OrdersPage() {
   const session = await auth();

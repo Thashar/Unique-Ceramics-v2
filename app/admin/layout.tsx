@@ -1,7 +1,14 @@
+import type { Metadata } from "next";
 import { requireAdmin } from "@/lib/admin-auth";
 import { redirect } from "next/navigation";
 import AdminNav from "@/components/admin/AdminNav";
 import BfcacheGuard from "@/components/admin/BfcacheGuard";
+
+// Panel jest za logowaniem, ale bez tego dziedziczył `index, follow` z layoutu
+export const metadata: Metadata = {
+  title: "Panel",
+  robots: { index: false, follow: false },
+};
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await requireAdmin();

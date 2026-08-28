@@ -15,6 +15,7 @@ import { sanitizeRichHtml } from "@/lib/sanitize-html";
 import { hexToRgba } from "@/lib/overlay";
 import { parseGallery } from "@/lib/gallery";
 import { pageMetadata } from "@/lib/seo";
+import BreadcrumbSchema from "@/components/seo/BreadcrumbSchema";
 
 export const metadata: Metadata = pageMetadata({
   title: "Warsztaty ceramiczne",
@@ -46,6 +47,19 @@ type WorkshopFaq = {
   question: string;
   answer: string;
 };
+
+/**
+ * Kwota z etykiety ceny („od 80 zł / os." → 80). Etykieta jest dowolnym tekstem
+ * z panelu, a schema.org wymaga liczby – wpisanie tam całego napisu dawało
+ * niepoprawne dane strukturalne. Bez liczby (np. „wycena indywidualna")
+ * ofertę pomijamy, zamiast zgadywać.
+ */
+function priceFrom(label: string): number | null {
+  const match = label.replace(/\s/g, "").match(/(\d+(?:[.,]\d+)?)/);
+  if (!match) return null;
+  const value = Number(match[1].replace(",", "."));
+  return Number.isFinite(value) && value > 0 ? value : null;
+}
 
 function parseJson<T>(json: string): T[] {
   try {
@@ -100,11 +114,23 @@ export default async function WorkshopsPage() {
     },
     url: `${BASE}/warsztaty`,
     inLanguage: "pl-PL",
-    offers: {
-      "@type": "Offer",
-      price: w.priceLabel,
-      priceCurrency: "PLN",
-    },
+    // Etykieta mówi „od tylu zł”, więc kwotę podajemy jako cenę minimalną,
+    // a nie jako cenę dokładną
+    ...(priceFrom(w.priceLabel) !== null
+      ? {
+          offers: {
+            "@type": "Offer",
+            priceCurrency: "PLN",
+            availability: "https://schema.org/InStock",
+            url: `${BASE}/warsztaty`,
+            priceSpecification: {
+              "@type": "PriceSpecification",
+              priceCurrency: "PLN",
+              minPrice: priceFrom(w.priceLabel),
+            },
+          },
+        }
+      : {}),
     courseMode: "in-person",
     hasCourseInstance: {
       "@type": "CourseInstance",
@@ -123,6 +149,21 @@ export default async function WorkshopsPage() {
     },
   }));
 
+  // FAQ jest widoczne na stronie, więc może pojechać też jako dane
+  // strukturalne – pytania i odpowiedzi biorą się z panelu
+  const faqSchema =
+    faq.length > 0
+      ? {
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: faq.map((item) => ({
+            "@type": "Question",
+            name: item.question,
+            acceptedAnswer: { "@type": "Answer", text: item.answer },
+          })),
+        }
+      : null;
+
   return (
     <>
       {courseSchemas.length > 0 && (
@@ -131,6 +172,13 @@ export default async function WorkshopsPage() {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(courseSchemas) }}
         />
       )}
+      {faqSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+        />
+      )}
+      <BreadcrumbSchema items={[{ name: "Warsztaty", path: "/warsztaty" }]} />
       <Header />
       <main className="flex-1">
         {/* Hero */}

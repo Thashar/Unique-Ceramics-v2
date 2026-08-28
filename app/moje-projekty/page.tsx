@@ -6,6 +6,7 @@ import Image from "next/image";
 import { sanitizeRichHtml } from "@/lib/sanitize-html";
 import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/seo";
+import BreadcrumbSchema from "@/components/seo/BreadcrumbSchema";
 
 export const revalidate = 300;
 
@@ -21,6 +22,7 @@ export default async function ProjectsPage() {
 
   return (
     <>
+      <BreadcrumbSchema items={[{ name: "Moje projekty", path: "/moje-projekty" }]} />
       <Header />
       <main className="flex-1">
         {/* Nagłówek */}

@@ -13,14 +13,31 @@ import { getSettings } from "@/lib/settings";
 import { sanitizeRichHtml } from "@/lib/sanitize-html";
 import { hexToRgba } from "@/lib/overlay";
 import { parseGallery } from "@/lib/gallery";
-import { pageMetadata } from "@/lib/seo";
+import { pageMetadata, SITE_URL } from "@/lib/seo";
+import BreadcrumbSchema from "@/components/seo/BreadcrumbSchema";
+
+/** Właścicielka pracowni – nazwisko jest w tytule strony i w danych strukturalnych. */
+const OWNER_NAME = "Alicja Ulbrich";
 
 export const metadata: Metadata = pageMetadata({
-  title: "O mnie",
+  title: `O mnie – ${OWNER_NAME}`,
   description:
-    "Poznaj historię Unique Ceramics – pracowni ceramicznej z okolic Gliwic. Ręcznie robiona ceramika tworzona z pasji do gliny na Śląsku.",
+    `${OWNER_NAME} i pracownia Unique Ceramics z okolic Gliwic. Poznaj historię ręcznie robionej ceramiki tworzonej z pasji do gliny na Śląsku.`,
   path: "/o-mnie",
 });
+
+// Dane strukturalne osoby – wiążą nazwisko z marką (wyszukiwarka pokazuje
+// wtedy pracownię przy zapytaniu o imię i nazwisko, i odwrotnie)
+const personSchema = {
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "@id": `${SITE_URL}/o-mnie#person`,
+  name: OWNER_NAME,
+  jobTitle: "Ceramiczka",
+  url: `${SITE_URL}/o-mnie`,
+  worksFor: { "@id": `${SITE_URL}/#business` },
+  knowsAbout: ["ceramika artystyczna", "ceramika użytkowa", "warsztaty ceramiczne"],
+};
 
 export default async function AboutPage() {
   const s = await getSettings([
@@ -42,6 +59,11 @@ export default async function AboutPage() {
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(personSchema) }}
+      />
+      <BreadcrumbSchema items={[{ name: "O mnie", path: "/o-mnie" }]} />
       <Header />
       <main className="flex-1">
         {/* Hero */}

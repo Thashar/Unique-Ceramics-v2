@@ -87,6 +87,11 @@ export default async function LocalBusinessSchema() {
       longitude: 18.5182082,
     },
     hasMap: `https://maps.google.com/?q=${mapQuery}`,
+    founder: {
+      "@type": "Person",
+      "@id": `${BASE}/o-mnie#person`,
+      name: "Alicja Ulbrich",
+    },
     priceRange: "$$",
     currenciesAccepted: "PLN",
     paymentAccepted: "Bank Transfer, BLIK",

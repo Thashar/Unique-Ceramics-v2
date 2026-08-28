@@ -4,6 +4,7 @@ export const metadata: Metadata = {
   title: "Logowanie",
   description: "Zaloguj się do swojego konta Unique Ceramics.",
   robots: { index: false, follow: false },
+  alternates: { canonical: "https://uniqueceramics.pl/logowanie" },
 };
 
 export default function LoginLayout({ children }: { children: React.ReactNode }) {

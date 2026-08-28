@@ -12,6 +12,7 @@ import { getSettings } from "@/lib/settings";
 import { normalizeHours } from "@/lib/opening-hours";
 import ContactForm from "@/components/contact/ContactForm";
 import { pageMetadata } from "@/lib/seo";
+import BreadcrumbSchema from "@/components/seo/BreadcrumbSchema";
 
 export const metadata: Metadata = pageMetadata({
   title: "Kontakt",
@@ -69,6 +70,7 @@ export default async function ContactPage() {
 
   return (
     <>
+      <BreadcrumbSchema items={[{ name: "Kontakt", path: "/kontakt" }]} />
       <Header />
       <main className="flex-1">
         {/* Nagłówek */}

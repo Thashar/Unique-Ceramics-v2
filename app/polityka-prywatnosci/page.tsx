@@ -14,7 +14,6 @@ export const metadata: Metadata = pageMetadata({
   description:
     "Polityka prywatności sklepu Unique Ceramics – jakie dane zbieramy, w jakim celu i jakie masz prawa.",
   path: "/polityka-prywatnosci",
-  noIndex: true,
 });
 
 export default async function PolitykaPrywatnosci() {

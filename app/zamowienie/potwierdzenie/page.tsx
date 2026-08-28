@@ -7,6 +7,7 @@ export const metadata: Metadata = {
   title: "Potwierdzenie zamówienia",
   description: "Dziękujemy za złożenie zamówienia w Unique Ceramics.",
   robots: { index: false, follow: false },
+  alternates: { canonical: "https://uniqueceramics.pl/zamowienie/potwierdzenie" },
 };
 import { CheckCircle, Clock, XCircle } from "lucide-react";
 import { db } from "@/lib/db";

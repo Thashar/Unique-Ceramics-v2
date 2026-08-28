@@ -7,6 +7,7 @@ export const metadata: Metadata = {
   title: "Zamówienie",
   description: "Sfinalizuj swoje zamówienie w Unique Ceramics.",
   robots: { index: false, follow: false },
+  alternates: { canonical: "https://uniqueceramics.pl/zamowienie" },
 };
 import { db } from "@/lib/db";
 import { getSettings, settingNumber } from "@/lib/settings";

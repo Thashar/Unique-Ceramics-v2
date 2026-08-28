@@ -68,3 +68,27 @@ export function pageMetadata({
     },
   };
 }
+
+/**
+ * Ścieżka względna → pełny adres. JSON-LD i podglądy linków wymagają adresów
+ * absolutnych; zdjęcia produktów bywają z naszego Storage (już absolutne),
+ * a starsze siedzą w `public/` jako `/images/...`.
+ */
+export function absoluteUrl(url: string): string {
+  if (/^https?:\/\//i.test(url)) return url;
+  return `${SITE_URL}${url.startsWith("/") ? "" : "/"}${url}`;
+}
+
+/**
+ * Skraca tekst do długości meta description. Opis produktu z panelu bywa
+ * wielokrotnie dłuższy i ma nowe wiersze, a wyszukiwarka i tak utnie go
+ * w połowie zdania – lepiej uciąć samemu, na granicy słowa.
+ */
+export function metaDescription(text: string, max = 160): string {
+  const clean = text.replace(/\s+/g, " ").trim();
+  if (clean.length <= max) return clean;
+  const cut = clean.slice(0, max - 1);
+  const lastSpace = cut.lastIndexOf(" ");
+  const trimmed = lastSpace > max * 0.6 ? cut.slice(0, lastSpace) : cut;
+  return `${trimmed.replace(/[.,;:–-]+$/, "")}…`;
+}

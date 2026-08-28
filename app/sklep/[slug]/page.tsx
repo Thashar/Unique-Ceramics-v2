@@ -25,6 +25,8 @@ import {
   discountedPrice,
 } from "@/lib/product-price";
 import { formatWarsaw } from "@/lib/warsaw-time";
+import BreadcrumbSchema from "@/components/seo/BreadcrumbSchema";
+import { absoluteUrl, metaDescription } from "@/lib/seo";
 
 export const revalidate = 60;
 
@@ -44,6 +46,19 @@ export async function generateStaticParams() {
   }
 }
 
+/**
+ * Data ważności ceny w danych strukturalnych: koniec przeceny, a gdy jej nie ma –
+ * rok do przodu. Google ostrzega o ofercie bez `priceValidUntil`, a data
+ * z przeszłości każe mu uznać cenę za nieaktualną.
+ *
+ * Osobna funkcja, bo `Date.now()` nie może paść w ciele komponentu
+ * (reguła `react-hooks/purity`).
+ */
+function priceValidUntilDate(endsAt: Date | null): string {
+  const YEAR_MS = 365 * 24 * 3600 * 1000;
+  return (endsAt ?? new Date(Date.now() + YEAR_MS)).toISOString().slice(0, 10);
+}
+
 const getProduct = cache(async (slug: string) => {
   try {
     return await db.product.findUnique({ where: { slug, active: true } });
@@ -55,12 +70,14 @@ const getProduct = cache(async (slug: string) => {
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const product = await getProduct(slug);
-  if (!product) return { title: "Produkt nie istnieje" };
+  if (!product) return { title: "Produkt nie istnieje", robots: { index: false, follow: false } };
 
   const url = `https://uniqueceramics.pl/sklep/${slug}`;
-  const description =
+  // Opis z panelu bywa kilkusetznakowy – do meta idzie przycięty na granicy słowa
+  const description = metaDescription(
     product.description?.trim() ||
-    `${product.name} – ręcznie robiona ceramika artystyczna. Każdy egzemplarz jest niepowtarzalny.`;
+      `${product.name} – ręcznie robiona ceramika artystyczna. Każdy egzemplarz jest niepowtarzalny.`
+  );
 
   // Podgląd linku bierze zdjęcie z /api/og/[slug]: zdjęcia produktów są w WebP,
   // którego WhatsApp nie renderuje, a trasa oddaje kadr 1200×630 w JPEG.
@@ -77,7 +94,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     : [];
 
   return {
-    title: `${product.name} – Unique Ceramics`,
+    // Bez marki – dokłada ją szablon tytułu z layoutu („%s | Unique Ceramics”).
+    // Wpisana tutaj drugi raz dawała „… – Unique Ceramics | Unique Ceramics”
+    title: product.name,
     description,
     alternates: { canonical: url },
     // Uwaga: `openGraph` ze strony zastępuje ten z layoutu w całości,
@@ -130,13 +149,17 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const shippingVaries = shippingCostCourier !== shippingCostParcel;
 
   const BASE = "https://uniqueceramics.pl";
+  const priceValidUntil = priceValidUntilDate(discountEndsAt);
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
     name: product.name,
     description: product.description
       ?? `${product.name} – ręcznie robiona ceramika artystyczna. Każdy egzemplarz jest unikalny.`,
-    image: product.images,
+    // Absolutne adresy – zdjęcia z `public/` są zapisane jako `/images/...`,
+    // a Google odrzuca w danych strukturalnych ścieżki względne
+    image: product.images.map(absoluteUrl),
     sku: product.slug,
     brand: {
       "@type": "Brand",
@@ -150,6 +173,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       // a wyszukiwarka porównuje cenę pojedynczego produktu
       price: discountedPrice(product.price, discountPercent).toFixed(2),
       priceCurrency: "PLN",
+      priceValidUntil,
+      itemCondition: "https://schema.org/NewCondition",
       availability: product.stock > 0
         ? "https://schema.org/InStock"
         : "https://schema.org/OutOfStock",
@@ -177,17 +202,18 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           addressCountry: "PL",
         },
       },
+      // Zwroty zgodnie z regulaminem: 14 dni na odstąpienie, odesłanie pocztą,
+      // koszt zwrotu po stronie kupującego. Bez tego Google zgłasza brak
+      // zasad zwrotów w raporcie „Merchant listings”
+      hasMerchantReturnPolicy: {
+        "@type": "MerchantReturnPolicy",
+        applicableCountry: "PL",
+        returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
+        merchantReturnDays: 14,
+        returnMethod: "https://schema.org/ReturnByMail",
+        returnFees: "https://schema.org/ReturnFeesCustomerResponsibility",
+      },
     },
-  };
-
-  const breadcrumbLd = {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Strona główna", item: BASE },
-      { "@type": "ListItem", position: 2, name: "Sklep", item: `${BASE}/sklep` },
-      { "@type": "ListItem", position: 3, name: product.name, item: `${BASE}/sklep/${product.slug}` },
-    ],
   };
 
   return (
@@ -196,9 +222,11 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }}
+      <BreadcrumbSchema
+        items={[
+          { name: "Sklep", path: "/sklep" },
+          { name: product.name, path: `/sklep/${product.slug}` },
+        ]}
       />
       <Header />
       <main className="min-h-[100svh] bg-warm-white">

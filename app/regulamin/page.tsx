@@ -14,7 +14,6 @@ export const metadata: Metadata = pageMetadata({
   description:
     "Regulamin sklepu internetowego Unique Ceramics – zamówienia, płatności, dostawa, reklamacje i zwroty.",
   path: "/regulamin",
-  noIndex: true,
 });
 
 export default async function RegulaminPage() {

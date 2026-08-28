@@ -63,7 +63,10 @@ export const metadata: Metadata = {
   authors: [{ name: "Unique Ceramics", url: BASE }],
   creator: "Unique Ceramics",
   publisher: "Unique Ceramics",
-  alternates: { canonical: BASE },
+  // UWAGA: **nie ustawiaj tu `alternates.canonical`** – metadane dziedziczą się
+  // w dół, więc każda podstrona bez własnego canonicala ogłaszałaby się kopią
+  // strony głównej. Canonical strony głównej siedzi w `app/page.tsx`,
+  // a podstrony biorą go z `pageMetadata()` (`lib/seo.ts`).
   openGraph: {
     siteName: "Unique Ceramics",
     locale: "pl_PL",
@@ -92,7 +95,17 @@ export const metadata: Metadata = {
   robots: {
     index: true,
     follow: true,
-    googleBot: { index: true, follow: true },
+    googleBot: {
+      index: true,
+      follow: true,
+      // O tym, KTÓRE zdjęcie trafia do wyniku wyszukiwania, decyduje Google.
+      // Bez `max-image-preview: large` wolno mu pokazać najwyżej miniaturkę
+      // albo nic – to jedyne ustawienie, którym w ogóle na to wpływamy.
+      // `-1` = bez limitu długości opisu i podglądu wideo.
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
   },
   verification: {
     google: "5KNu8ULw4D7P-wbXmsGMLp4Ly-2HeLFkq4_7Lp7ej2s",

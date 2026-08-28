@@ -4,6 +4,7 @@ export const metadata: Metadata = {
   title: "Koszyk",
   description: "Twój koszyk zakupowy – Unique Ceramics.",
   robots: { index: false, follow: false },
+  alternates: { canonical: "https://uniqueceramics.pl/koszyk" },
 };
 
 export default function CartLayout({ children }: { children: React.ReactNode }) {

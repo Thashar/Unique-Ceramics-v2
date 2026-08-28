@@ -11,6 +11,7 @@ export const metadata: Metadata = {
   title: "Zmiana adresu e-mail",
   description: "Potwierdzenie zmiany adresu e-mail konta w Unique Ceramics.",
   robots: { index: false, follow: false },
+  alternates: { canonical: "https://uniqueceramics.pl/zmiana-emaila" },
 };
 
 /**
