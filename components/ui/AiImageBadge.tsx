@@ -4,12 +4,22 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Sparkles, Info } from "lucide-react";
 
-/** Treść wyjaśnienia – ta sama wszędzie, gdzie pokazujemy znaczek. */
+/**
+ * Treść wyjaśnienia – ta sama wszędzie, gdzie pokazujemy znaczek.
+ *
+ * **Musi zgadzać się z regulaminem** (punkty I.5 i I.6): model zmienia wyłącznie
+ * tło, scenerię, oświetlenie i kadr, sam produkt zostaje nienaruszony, a rekwizyty
+ * ze zdjęcia nie wchodzą w skład zamówienia. Zmieniając jedno, popraw drugie –
+ * rozjazd między znacznikiem a regulaminem działa na niekorzyść sklepu.
+ */
 export const AI_IMAGE_NOTICE =
-  "Wybrane elementy grafiki, takie jak tło lub elementy towarzyszące zostały wygenerowane przy wsparciu AI.";
+  "Tło, sceneria i oświetlenie tego zdjęcia zostały przygotowane przy wsparciu AI. " +
+  "Sam produkt jest odwzorowaniem rzeczywistego wyrobu – kształt, proporcje, liczba " +
+  "sztuk i kolor szkliwa pozostają niezmienione. Elementy dekoracyjne widoczne na " +
+  "zdjęciu nie wchodzą w skład zamówienia (patrz regulamin, pkt I.5 i I.6).";
 
 /** Szerokość dymka i odstęp od znaczka (px). */
-const TIP_WIDTH = 224;
+const TIP_WIDTH = 268;
 const TIP_GAP = 8;
 /** Poniżej tylu pikseli od górnej krawędzi dymek nie zmieści się nad znaczkiem. */
 const TIP_FLIP_TOP = 140;
