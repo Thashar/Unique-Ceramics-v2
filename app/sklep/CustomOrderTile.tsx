@@ -1,63 +1,79 @@
 import Link from "next/link";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Globe, Package, Palette, Sparkles } from "lucide-react";
+
+/** Trzy powody z tekstu zaproszenia, każdy z własną ikoną. */
+const POINTS = [
+  { icon: Palette, label: "Twój projekt" },
+  { icon: Package, label: "Pojedyncza sztuka lub komplet" },
+  { icon: Globe, label: "Wysyłka także za granicę" },
+];
 
 /**
- * Ostatni kafelek siatki produktów: zaproszenie do zamówień indywidualnych.
+ * Zaproszenie do zamówień indywidualnych na końcu siatki produktów.
  *
- * Zastąpił pływający przycisk, który zasłaniał produkty i który dało się
- * schować na stałe. Kafelek stoi **na końcu każdej strony katalogu i każdej
- * kategorii** – także wtedy, gdy produktów jest więcej, niż mieści się na
- * jednej stronie, więc klient trafia na niego niezależnie od tego, gdzie
- * skończy przeglądanie.
+ * **Zajmuje cały wiersz (`col-span-full`), a nie jedno pole siatki.** Dwie
+ * wcześniejsze wersje udawały kartę produktu i obie wyszły źle: w katalogu na
+ * telefonie kafelki mają około 110 px szerokości, więc tekst łamał się co dwa
+ * słowa i powstawał wąski słupek liter, a wśród zdjęć produktów sam blok tekstu
+ * odstawał od reszty. Pas przez całą szerokość czyta się jak domknięcie listy,
+ * ma miejsce na treść w każdej rozdzielczości i nie konkuruje z kafelkami.
  *
- * Wspomina o wysyłce zagranicznej, bo to tą drogą przyjmujemy takie
- * zamówienia (patrz `components/checkout/ForeignShippingNote.tsx`).
+ * **Układ zmienia się raz, na `md` (768 px):**
+ * - poniżej (telefony 360–430 px, małe tablety) wszystko idzie w kolumnie,
+ *   a przycisk jest na pełną szerokość – na wąskim ekranie łatwiej w niego trafić
+ *   i nie zostaje osamotniony przy krawędzi;
+ * - od `md` w górę ikona, tekst i przycisk stoją w rzędzie. Świadomie **nie na
+ *   `sm`**: przy 640–767 px rząd z nagłówkiem, trzema hasłami i przyciskiem
+ *   robił się ciasny.
  *
- * `h-full` – siatka rozciąga elementy do wysokości wiersza, więc kafelek
- * zrównuje się z sąsiednimi kartami produktów.
+ * Rozmiary tekstu i odstępy rosną stopniowo (`sm`, `md`), więc pas wygląda
+ * tak samo dobrze na 360 px i na 1920 px. Tekst może się zwężać (`min-w-0`),
+ * przycisk nie (`shrink-0`).
+ *
+ * Ciemne tło (`espresso`) to ten sam materiał co stopka i sekcje strony
+ * głównej – element jest wyraźny, ale zostaje w palecie sklepu.
+ *
+ * Zastąpił pływający przycisk, który zasłaniał produkty i dało się go schować
+ * na stałe. Stoi na końcu **każdej strony** katalogu i każdej kategorii.
  */
-export default function CustomOrderTile({ compact = false }: { compact?: boolean }) {
+export default function CustomOrderTile() {
   return (
     <Link
       href="/zamowienie-indywidualne"
-      className="group flex h-full flex-col justify-between border border-clay/30 bg-cream hover:border-clay hover:bg-mist transition-colors duration-300 p-4 md:p-5"
+      className="group col-span-full flex flex-col md:flex-row md:items-center gap-5 md:gap-7 bg-espresso p-5 sm:p-7 md:p-8 transition-colors duration-300"
     >
-      <div>
-        <p
-          className={`flex items-center gap-1.5 tracking-widest uppercase text-clay ${
-            compact ? "text-[9px] mb-1.5" : "text-[11px] mb-3"
-          }`}
-        >
-          <Sparkles size={compact ? 11 : 13} strokeWidth={1.5} aria-hidden="true" />
+      <span
+        className="inline-flex items-center justify-center w-11 h-11 md:w-14 md:h-14 rounded-full border border-terracotta/40 bg-terracotta/10 text-terracotta shrink-0 transition-colors duration-300 group-hover:bg-terracotta/20"
+        aria-hidden="true"
+      >
+        <Sparkles strokeWidth={1.5} className="w-5 h-5 md:w-6 md:h-6" />
+      </span>
+
+      <div className="flex-1 min-w-0">
+        <p className="text-[10px] sm:text-[11px] tracking-widest uppercase text-terracotta mb-1.5 sm:mb-2">
           Zamówienia indywidualne
         </p>
-        <h3
-          className={`font-serif text-espresso leading-snug ${
-            compact ? "text-sm mb-1.5" : "text-lg md:text-xl mb-3"
-          }`}
-        >
+        <h3 className="font-serif text-lg sm:text-xl md:text-2xl text-cream leading-snug">
           Potrzebujesz ceramiki na zamówienie?
         </h3>
-        <p
-          className={`text-charcoal/80 leading-relaxed ${compact ? "text-[11px]" : "text-sm"}`}
-        >
-          Chcesz wcielić w życie swój projekt? A może zamówić z wysyłką do innego kraju?
-          Zapraszam do sekcji zamówień indywidualnych.
-        </p>
+        {/* Trzy hasła zamiast akapitu – to samo, co niosło zdanie, ale czytelne
+            jednym rzutem oka i bez ściany liter na wąskim ekranie */}
+        <ul className="flex flex-wrap gap-x-5 gap-y-2 mt-3 sm:mt-4">
+          {POINTS.map(({ icon: Icon, label }) => (
+            <li
+              key={label}
+              className="flex items-center gap-2 text-sand/90 text-[12px] sm:text-[13px]"
+            >
+              <Icon size={14} strokeWidth={1.5} className="text-terracotta shrink-0" aria-hidden="true" />
+              {label}
+            </li>
+          ))}
+        </ul>
       </div>
 
-      <span
-        className={`inline-flex items-center gap-2 tracking-widest uppercase text-clay group-hover:text-espresso transition-colors ${
-          compact ? "text-[9px] mt-3" : "text-xs mt-5"
-        }`}
-      >
+      <span className="w-full md:w-auto shrink-0 inline-flex items-center justify-center gap-3 border border-terracotta/50 group-hover:border-terracotta group-hover:bg-terracotta group-hover:text-espresso text-cream text-[11px] sm:text-xs tracking-widest uppercase px-5 sm:px-6 py-3 sm:py-3.5 transition-all duration-300">
         Napisz do mnie
-        <ArrowRight
-          size={compact ? 11 : 14}
-          strokeWidth={1.5}
-          className="group-hover:translate-x-1 transition-transform"
-          aria-hidden="true"
-        />
+        <ArrowRight size={14} strokeWidth={1.5} aria-hidden="true" />
       </span>
     </Link>
   );

@@ -114,7 +114,7 @@ export default function ProductGrid({ products, kategoria, dbError, categories, 
           {kategoria ? "Brak produktów w tej kategorii." : "Sklep jest w przygotowaniu."}
         </p>
         {/* Pusta kategoria to najlepszy moment na zamówienie indywidualne */}
-        <div className="max-w-sm mx-auto mt-10 text-left">
+        <div className="max-w-3xl mx-auto mt-10 text-left grid">
           <CustomOrderTile />
         </div>
       </div>
@@ -210,10 +210,10 @@ export default function ProductGrid({ products, kategoria, dbError, categories, 
             freeShippingNote={freeShippingNote}
           />
         ))}
-        {/* Ostatni kafelek każdej strony – także przy stronicowaniu, żeby
-            zaproszenie do zamówień indywidualnych trafiło do klienta
-            niezależnie od tego, gdzie skończy przeglądanie */}
-        <CustomOrderTile compact={compact} />
+        {/* Domknięcie każdej strony – pas przez cały wiersz siatki
+            (`col-span-full`), także przy stronicowaniu, żeby zaproszenie
+            trafiło do klienta niezależnie od tego, gdzie skończy przeglądanie */}
+        <CustomOrderTile />
       </div>
 
       {pageCount > 1 && (
