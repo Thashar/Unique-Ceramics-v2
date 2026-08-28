@@ -4,6 +4,7 @@ import { useState, useSyncExternalStore } from "react";
 import { LayoutGrid, Grid3X3, ShoppingBag } from "lucide-react";
 import ProductCard from "@/components/ui/ProductCard";
 import AiImageBadge from "@/components/ui/AiImageBadge";
+import CustomOrderTile from "./CustomOrderTile";
 import { isAiGeneratedImage } from "@/lib/ai";
 import type { getShopProducts } from "@/lib/products";
 import { categoryLabel, type Category } from "@/lib/category-defaults";
@@ -112,6 +113,10 @@ export default function ProductGrid({ products, kategoria, dbError, categories, 
         <p className="text-charcoal/80 text-sm">
           {kategoria ? "Brak produktów w tej kategorii." : "Sklep jest w przygotowaniu."}
         </p>
+        {/* Pusta kategoria to najlepszy moment na zamówienie indywidualne */}
+        <div className="max-w-sm mx-auto mt-10 text-left">
+          <CustomOrderTile />
+        </div>
       </div>
     );
   }
@@ -205,6 +210,10 @@ export default function ProductGrid({ products, kategoria, dbError, categories, 
             freeShippingNote={freeShippingNote}
           />
         ))}
+        {/* Ostatni kafelek każdej strony – także przy stronicowaniu, żeby
+            zaproszenie do zamówień indywidualnych trafiło do klienta
+            niezależnie od tego, gdzie skończy przeglądanie */}
+        <CustomOrderTile compact={compact} />
       </div>
 
       {pageCount > 1 && (

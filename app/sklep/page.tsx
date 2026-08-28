@@ -10,7 +10,6 @@ import { DISCOUNT_HOLD_CATALOG_MS } from "@/lib/product-price";
 import { categoryPath } from "@/lib/category-seo";
 import ProductGrid from "./ProductGrid";
 import CategoryBar from "./CategoryBar";
-import FloatingOrderButton from "./FloatingOrderButton";
 import { loadCatalog } from "./catalog";
 import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/seo";
@@ -80,9 +79,6 @@ export default async function ShopPage({
           <ProductGrid products={products} dbError={dbError} categories={dbCategories} quantityTeaser={quantityTeaser} freeShippingNote={freeShippingNote} />
         </div>
       </div>
-
-      {/* Pływający przycisk zamówień indywidualnych */}
-      <FloatingOrderButton />
 
       <Footer />
     </>

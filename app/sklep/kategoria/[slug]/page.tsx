@@ -21,7 +21,6 @@ import {
 } from "@/lib/category-seo";
 import ProductGrid from "../../ProductGrid";
 import CategoryBar from "../../CategoryBar";
-import FloatingOrderButton from "../../FloatingOrderButton";
 import { loadCatalog } from "../../catalog";
 
 /** Kategorie mają stały, niewielki zbiór adresów – pre-generujemy wszystkie. */
@@ -152,7 +151,6 @@ export default async function CategoryPage({
         </div>
       </div>
 
-      <FloatingOrderButton />
       <Footer />
     </>
   );
