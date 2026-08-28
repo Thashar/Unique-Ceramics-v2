@@ -11,6 +11,17 @@ import {
   GalleryHorizontal, BarChart2,
 } from "lucide-react";
 
+/**
+ * Liczba nowych zamówień przy pozycjach menu. Kształt powtórzony zamiast
+ * importu z `lib/admin-badges.ts` – tamten moduł ciągnie Prismę, a to jest
+ * komponent kliencki.
+ */
+export type NewOrderCounts = { orders: number; customOrders: number };
+
+/** Adresy, przy których pokazujemy licznik nowych zamówień. */
+const ORDERS_HREF = "/admin/zamowienia";
+const CUSTOM_ORDERS_HREF = "/admin/zamowienia-indywidualne";
+
 const topLinks = [
   { href: "/admin",                         label: "Dashboard",         icon: LayoutDashboard },
   { href: "/admin/kategorie",               label: "Kategorie",         icon: Tag },
@@ -46,7 +57,13 @@ const paymentItems = [
   { id: "platnosci_stripe",   label: "Stripe (karta)" },
 ];
 
-function AdminNavInner({ onClose }: { onClose?: () => void }) {
+function AdminNavInner({
+  onClose,
+  newOrders,
+}: {
+  onClose?: () => void;
+  newOrders: NewOrderCounts;
+}) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const activeSection = searchParams.get("s") ?? "strona_glowna";
@@ -70,6 +87,13 @@ function AdminNavInner({ onClose }: { onClose?: () => void }) {
       <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
         {topLinks.map(({ href, label, icon: Icon }) => {
           const active = pathname === href || (href !== "/admin" && pathname.startsWith(href));
+          // Czerwony znaczek z liczbą nowych zamówień – tylko przy dwóch pozycjach
+          const badge =
+            href === ORDERS_HREF
+              ? newOrders.orders
+              : href === CUSTOM_ORDERS_HREF
+                ? newOrders.customOrders
+                : 0;
           return (
             <Link
               key={href}
@@ -83,7 +107,19 @@ function AdminNavInner({ onClose }: { onClose?: () => void }) {
             >
               <Icon size={16} strokeWidth={active ? 2 : 1.5} />
               {label}
-              {active && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-terracotta" />}
+              {badge > 0 && (
+                <span
+                  className="ml-auto min-w-5 h-5 px-1.5 flex items-center justify-center rounded-full bg-red-600 text-white text-[10px] font-medium tabular-nums"
+                  aria-label={`Nowe zamówienia: ${badge}`}
+                >
+                  {badge > 99 ? "99+" : badge}
+                </span>
+              )}
+              {/* Kropka aktywnej pozycji ustępuje licznikowi – dwa znaczki obok
+                  siebie tylko zaśmiecałyby wiersz, a stan aktywny niesie też tło */}
+              {active && badge === 0 && (
+                <span className="ml-auto w-1.5 h-1.5 rounded-full bg-terracotta" />
+              )}
             </Link>
           );
         })}
@@ -192,7 +228,7 @@ function AdminNavInner({ onClose }: { onClose?: () => void }) {
   );
 }
 
-export default function AdminNav() {
+export default function AdminNav({ newOrders }: { newOrders: NewOrderCounts }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -207,7 +243,7 @@ export default function AdminNav() {
           </div>
         </div>
         <Suspense fallback={null}>
-          <AdminNavInner />
+          <AdminNavInner newOrders={newOrders} />
         </Suspense>
       </aside>
 
@@ -255,7 +291,7 @@ export default function AdminNav() {
           </button>
         </div>
         <Suspense fallback={null}>
-          <AdminNavInner onClose={() => setOpen(false)} />
+          <AdminNavInner onClose={() => setOpen(false)} newOrders={newOrders} />
         </Suspense>
       </aside>
     </>
