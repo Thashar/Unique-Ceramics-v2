@@ -7,16 +7,19 @@ import { Sparkles, Info } from "lucide-react";
 /**
  * Treść wyjaśnienia – ta sama wszędzie, gdzie pokazujemy znaczek.
  *
+ * Mowa o **zdjęciach w liczbie mnogiej** – znaczek opisuje całą galerię produktu,
+ * listę w katalogu albo sekcję na stronie głównej, a nie pojedynczy kadr.
+ *
  * **Musi zgadzać się z regulaminem** (punkty I.5 i I.6): model zmienia wyłącznie
  * tło, scenerię, oświetlenie i kadr, sam produkt zostaje nienaruszony, a rekwizyty
  * ze zdjęcia nie wchodzą w skład zamówienia. Zmieniając jedno, popraw drugie –
  * rozjazd między znacznikiem a regulaminem działa na niekorzyść sklepu.
  */
 export const AI_IMAGE_NOTICE =
-  "Tło, sceneria i oświetlenie tego zdjęcia zostały przygotowane przy wsparciu AI. " +
-  "Sam produkt jest odwzorowaniem rzeczywistego wyrobu – kształt, proporcje, liczba " +
+  "Tło, sceneria i oświetlenie części zdjęć zostały przygotowane przy wsparciu AI. " +
+  "Same produkty są odwzorowaniem rzeczywistych wyrobów – kształt, proporcje, liczba " +
   "sztuk i kolor szkliwa pozostają niezmienione. Elementy dekoracyjne widoczne na " +
-  "zdjęciu nie wchodzą w skład zamówienia (patrz regulamin, pkt I.5 i I.6).";
+  "zdjęciach nie wchodzą w skład zamówienia (patrz regulamin, pkt I.5 i I.6).";
 
 /** Szerokość dymka i odstęp od znaczka (px). */
 const TIP_WIDTH = 268;

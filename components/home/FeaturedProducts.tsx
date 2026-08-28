@@ -3,6 +3,8 @@ import { ArrowRight } from "lucide-react";
 import { getFeaturedProducts } from "@/lib/products";
 import { getCategories, type Category } from "@/lib/categories";
 import { DISCOUNT_HOLD_HOME_MS, activeDiscountPercent } from "@/lib/product-price";
+import AiImageBadge from "@/components/ui/AiImageBadge";
+import { isAiGeneratedImage } from "@/lib/ai";
 import ProductCarousel from "@/components/home/ProductCarousel";
 import DesktopCarousel from "@/components/home/DesktopCarousel";
 
@@ -25,6 +27,10 @@ export default async function FeaturedProducts() {
     discountPercent: activeDiscountPercent(p, { holdMs: DISCOUNT_HOLD_HOME_MS }),
   }));
 
+  // Znaczek AI dotyczy całej sekcji – tak samo jak w pasku narzędzi katalogu.
+  // Na kafelkach go nie ma (decyzja właściciela 22.08.2026)
+  const aiImages = products.some((p) => p.images.some(isAiGeneratedImage));
+
   return (
     <section
       className="bg-warm-white overflow-hidden flex flex-col pt-14 md:pt-20"
@@ -40,17 +46,22 @@ export default async function FeaturedProducts() {
                 Wybrane prace
               </h2>
             </div>
-            <Link
-              href="/sklep"
-              className="inline-flex items-center gap-2 text-sm tracking-widest uppercase text-clay hover:text-espresso transition-colors group"
-            >
-              Cały sklep
-              <ArrowRight
-                size={15}
-                className="group-hover:translate-x-1 transition-transform"
-                strokeWidth={1.5}
-              />
-            </Link>
+            {/* Znaczek AI po lewej od odnośnika do sklepu – ta sama informacja
+                co w katalogu i przy galerii produktu */}
+            <div className="flex items-center gap-5">
+              {aiImages && <AiImageBadge size="lg" />}
+              <Link
+                href="/sklep"
+                className="inline-flex items-center gap-2 text-sm tracking-widest uppercase text-clay hover:text-espresso transition-colors group shrink-0"
+              >
+                Cały sklep
+                <ArrowRight
+                  size={15}
+                  className="group-hover:translate-x-1 transition-transform"
+                  strokeWidth={1.5}
+                />
+              </Link>
+            </div>
           </div>
         </div>
 
