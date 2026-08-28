@@ -339,19 +339,17 @@ export default function Header({ topOffset = false, showProjects = true }: { top
             height={40}
             className="h-9 w-auto transition-all duration-500 brightness-0 invert"
           />
+          {/* Napis ma być **dokładnie w kolorze logo** – czysta biel, w obu
+              stanach headera i bez przygaszania przezroczystością. Wcześniej
+              nad jasnymi sekcjami szedł `text-cream` (ciepła kość słoniowa),
+              co obok białego logo czytało się jako brudny, kawowy odcień,
+              a `/70` na podtytule dawało wrażenie szarej obwódki.
+              Logo nie zmienia koloru na hoverze, więc napis też nie. */}
           <div className="flex flex-col leading-none pt-1.5">
-            <span
-              className={`font-serif text-base sm:text-lg font-semibold tracking-wide transition-colors duration-500 ${
-                dark ? "text-cream group-hover:text-terracotta" : "text-white group-hover:text-white/80"
-              }`}
-            >
+            <span className="font-serif text-base sm:text-lg font-semibold tracking-wide text-white">
               Unique Ceramics
             </span>
-            <span
-              className={`text-[6.5px] tracking-[0.18em] uppercase mt-0.5 transition-colors duration-500 ${
-                dark ? "text-cream/70" : "text-white/70"
-              }`}
-            >
+            <span className="text-[6.5px] tracking-[0.18em] uppercase mt-0.5 text-white">
               Ręcznie tworzone z sercem
             </span>
           </div>

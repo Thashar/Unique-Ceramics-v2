@@ -2,7 +2,7 @@ import { cache } from "react";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ChevronLeft, Truck, Clock, AlertTriangle } from "lucide-react";
+import { Truck, Clock, AlertTriangle } from "lucide-react";
 import Header from "@/components/layout/HeaderWrapper";
 import Footer from "@/components/layout/Footer";
 import DishwasherIcon from "@/components/ui/DishwasherIcon";
@@ -27,6 +27,7 @@ import {
 import { formatWarsaw } from "@/lib/warsaw-time";
 import BreadcrumbSchema from "@/components/seo/BreadcrumbSchema";
 import { absoluteUrl, metaDescription } from "@/lib/seo";
+import { categoryPath } from "@/lib/category-seo";
 
 export const revalidate = 60;
 
@@ -132,6 +133,11 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
   if (!product) notFound();
 
+  // Kategoria produktu jako pozycja z listy – potrzebny jest jej adres, nie
+  // sama etykieta. `null` = kategoria usunięta po przypisaniu produktu;
+  // wtedy okruszki mają o jeden poziom mniej, zamiast prowadzić donikąd
+  const category = categories.find((c) => c.slug === product.category) ?? null;
+
   const quantityPromo = toQuantityConfig(quantityPromoRow);
   const freeShipping = toFreeShippingConfig(freeShippingRow);
   // Rabat produktowy liczymy raz – ta sama wartość idzie do ceny, danych
@@ -225,19 +231,44 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       <BreadcrumbSchema
         items={[
           { name: "Sklep", path: "/sklep" },
+          ...(category
+            ? [{ name: category.label, path: categoryPath(category.slug) }]
+            : []),
           { name: product.name, path: `/sklep/${product.slug}` },
         ]}
       />
       <Header />
       <main className="min-h-[100svh] bg-warm-white">
         <div className="max-w-7xl mx-auto px-6 lg:px-10 pt-6 pb-2">
-          <Link
-            href="/sklep"
-            className="inline-flex items-center gap-1.5 text-xs tracking-widest uppercase text-clay hover:text-espresso transition-colors"
-          >
-            <ChevronLeft size={14} strokeWidth={1.5} />
-            Sklep
-          </Link>
+          {/* Okruszki: droga powrotna dla klienta i link do kategorii z każdej
+              karty produktu. Nazwa produktu dopiero od `sm:` – na telefonie
+              łamałaby się na drugi wiersz */}
+          <nav aria-label="Okruszki">
+            <ol className="flex items-center gap-2 text-xs tracking-widest uppercase text-clay">
+              <li>
+                <Link href="/sklep" className="hover:text-espresso transition-colors">
+                  Sklep
+                </Link>
+              </li>
+              {category && (
+                <>
+                  <li aria-hidden="true" className="text-charcoal/80">/</li>
+                  <li>
+                    <Link
+                      href={categoryPath(category.slug)}
+                      className="hover:text-espresso transition-colors"
+                    >
+                      {category.label}
+                    </Link>
+                  </li>
+                </>
+              )}
+              <li aria-hidden="true" className="hidden sm:block text-charcoal/80">/</li>
+              <li className="hidden sm:block text-charcoal/80 truncate max-w-xs">
+                {product.name}
+              </li>
+            </ol>
+          </nav>
         </div>
 
         <div className="max-w-7xl mx-auto px-6 lg:px-10 py-8 grid grid-cols-1 lg:grid-cols-2 gap-12 xl:gap-20">
@@ -247,9 +278,20 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           {/* Informacje */}
           <div className="lg:pt-4 flex flex-col">
             {/* Etykieta kategorii z panelu – w `Product.category` siedzi slug,
-                więc bez tego mapowania nazwa traciła polskie znaki */}
+                więc bez tego mapowania nazwa traciła polskie znaki. Prowadzi do
+                strony kategorii: klient ma drogę do podobnych rzeczy, a kategoria
+                dostaje link z każdej karty produktu */}
             <p className="text-xs tracking-[0.25em] uppercase text-clay mb-3">
-              {categoryLabel(product.category, categories)}
+              {category ? (
+                <Link
+                  href={categoryPath(category.slug)}
+                  className="hover:text-espresso transition-colors"
+                >
+                  {category.label}
+                </Link>
+              ) : (
+                categoryLabel(product.category, categories)
+              )}
             </p>
             <h1 className="font-serif text-3xl md:text-4xl text-espresso leading-tight mb-4">
               {product.name}

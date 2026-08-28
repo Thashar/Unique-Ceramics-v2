@@ -1,6 +1,7 @@
 ﻿import { permanentRedirect } from "next/navigation";
 import Header from "@/components/layout/HeaderWrapper";
 import Footer from "@/components/layout/Footer";
+import ClayRule from "@/components/ui/ClayRule";
 import { getCategories } from "@/lib/categories";
 import { findActiveFreeShipping, findActiveQuantityPromo, toQuantityConfig } from "@/lib/promos";
 import { quantityPromoTeaser } from "@/lib/quantity-promo";
@@ -60,15 +61,28 @@ export default async function ShopPage({
       <BreadcrumbSchema items={[{ name: "Sklep", path: "/sklep" }]} />
       <Header />
       <div className="min-h-[100svh] bg-warm-white">
-        <h1 className="sr-only">Sklep ceramiczny – sklep z ceramiką ręcznie robioną, Gliwice</h1>
         <CategoryBar
           categories={dbCategories}
           activeSlug={null}
           vacationEnabled={vacationEnabled}
         />
 
+        {/* Nagłówek katalogu – ten sam układ co na stronach kategorii
+            (ozdobnik, widoczny h1, zdanie wstępu). Wcześniej h1 był `sr-only`;
+            widoczny nagłówek czyta się tak samo dobrze dla klienta i dla
+            wyszukiwarki, a strony sklepu nie odstają od siebie */}
+        <div className="max-w-7xl mx-auto px-6 lg:px-10 pt-8 md:pt-12">
+          <ClayRule className="mb-6" />
+          <h1 className="font-serif text-3xl md:text-4xl text-espresso mb-4">Sklep</h1>
+          <p className="text-charcoal/80 leading-relaxed max-w-2xl">
+            Ceramika użytkowa i dekoracyjna wykonana ręcznie w pracowni pod Gliwicami.
+            Każdą sztukę formuję i szkliwię pojedynczo, więc dwie nigdy nie są
+            identyczne – wybierz kategorię albo przejrzyj wszystko, co jest teraz dostępne.
+          </p>
+        </div>
+
         {/* Siatka produktów */}
-        <div className="max-w-7xl mx-auto px-6 lg:px-10 pt-3 pb-16 md:pt-8 md:pb-16">
+        <div className="max-w-7xl mx-auto px-6 lg:px-10 pt-6 pb-16 md:pt-8 md:pb-16">
           <ProductGrid products={products} dbError={dbError} categories={dbCategories} quantityTeaser={quantityTeaser} freeShippingNote={freeShippingNote} />
         </div>
       </div>
