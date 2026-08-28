@@ -1,11 +1,21 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Sparkles, Info } from "lucide-react";
 
 /** Treść wyjaśnienia – ta sama wszędzie, gdzie pokazujemy znaczek. */
 export const AI_IMAGE_NOTICE =
   "Wybrane elementy grafiki, takie jak tło lub elementy towarzyszące zostały wygenerowane przy wsparciu AI.";
+
+/** Szerokość dymka i odstęp od znaczka (px). */
+const TIP_WIDTH = 224;
+const TIP_GAP = 8;
+/** Poniżej tylu pikseli od górnej krawędzi dymek nie zmieści się nad znaczkiem. */
+const TIP_FLIP_TOP = 140;
+
+/** Wyliczona pozycja dymka w układzie okna (`position: fixed`). */
+type TipPos = { top: number; left: number; width: number; below: boolean };
 
 /** Rozmiary dopasowane do miejsca: karta produktu, kafelek listy, widok kompaktowy. */
 const SIZES = {
@@ -21,11 +31,14 @@ const SIZES = {
  * drobnych informacji na karcie produktu (ikony `clay`, tekst `charcoal/80`,
  * oba powyżej progu kontrastu AA na jasnym tle).
  *
- * Dymek z wyjaśnieniem pojawia się po najechaniu kursorem, a na dotyku po
+ * Dymek z wyjaśnieniem idzie **portalem do `body`** (`position: fixed`, pozycja
+ * liczona od znaczka) – w katalogu leży pod przyklejonym paskiem kategorii
+ * i headerem, a te są w osobnych warstwach, więc `z-index` wewnątrz listy nic
+ * by nie dał. Pojawia się po najechaniu kursorem, a na dotyku po
  * kliknięciu – dlatego całość jest przyciskiem, a nie samym napisem. Znaczek
  * bywa umieszczany w kadrze z gestami albo wewnątrz linku, więc zdarzenia
  * zatrzymujemy na nim: kliknięcie ma pokazać wyjaśnienie, a nie otworzyć
- * produktu ani włączyć lupy.
+ * produktu ani podglądu zdjęcia.
  */
 export default function AiImageBadge({
   size = "md",
@@ -41,8 +54,40 @@ export default function AiImageBadge({
   className?: string;
 }) {
   const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState<TipPos | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const s = SIZES[size];
+
+  /**
+   * Pozycja dymka liczona od znaczka. Dymek jedzie **portalem do `body`**
+   * z `position: fixed`, bo w katalogu leży pod przyklejonym paskiem kategorii
+   * (`z-30`) i headerem (`z-50`) – żadne `z-index` wewnątrz listy nie wyniosłoby
+   * go nad nie. Trzyma się krawędzi okna: wychodząc poza ekran, przesuwa się
+   * do środka, a przy górnej krawędzi rozwija w dół zamiast w górę.
+   */
+  const measure = () => {
+    const rect = buttonRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const width = Math.min(TIP_WIDTH, window.innerWidth - 2 * TIP_GAP);
+    const raw = align === "right" ? rect.right - width : rect.left;
+    const left = Math.min(
+      Math.max(TIP_GAP, raw),
+      Math.max(TIP_GAP, window.innerWidth - width - TIP_GAP)
+    );
+    const below = rect.top < TIP_FLIP_TOP;
+    setPos({
+      top: below ? rect.bottom + TIP_GAP : rect.top - TIP_GAP,
+      left,
+      width,
+      below,
+    });
+  };
+
+  const show = () => {
+    measure();
+    setOpen(true);
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -53,45 +98,60 @@ export default function AiImageBadge({
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") setOpen(false);
     };
+    // Znaczek jedzie ze stroną, dymek jest przypięty do okna – po przewinięciu
+    // albo obróceniu ekranu trzeba go przeliczyć, inaczej zostałby w miejscu
+    const onReflow = () => measure();
 
     document.addEventListener("mousedown", onPointerDown);
     document.addEventListener("touchstart", onPointerDown);
     document.addEventListener("keydown", onKeyDown);
+    window.addEventListener("scroll", onReflow, true);
+    window.addEventListener("resize", onReflow);
     return () => {
       document.removeEventListener("mousedown", onPointerDown);
       document.removeEventListener("touchstart", onPointerDown);
       document.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("scroll", onReflow, true);
+      window.removeEventListener("resize", onReflow);
     };
-  }, [open]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, align]);
 
   return (
     <div ref={wrapperRef} className={`relative inline-flex ${className}`}>
-      {open && (
-        <p
-          role="tooltip"
-          // Domyślnie dymek wyrasta w prawo od znaczka – ten stoi zwykle przy lewej
-          // krawędzi kolumny, więc w drugą stronę wychodziłby poza układ strony.
-          // Przy prawym marginesie (pasek narzędzi katalogu) jest odwrotnie
-          className={`absolute bottom-full ${
-            align === "right" ? "right-0" : "left-0"
-          } mb-2 z-20 w-56 max-w-[70vw] bg-espresso text-cream text-[11px] leading-relaxed px-3 py-2.5 shadow-lg`}
-        >
-          {notice}
-        </p>
-      )}
+      {open &&
+        pos &&
+        createPortal(
+          <p
+            role="tooltip"
+            // z-[60] – wyżej niż przyklejony pasek kategorii (z-30) i header (z-50)
+            className="fixed z-[60] bg-espresso text-cream text-[11px] leading-relaxed px-3 py-2.5 shadow-lg"
+            style={{
+              top: pos.top,
+              left: pos.left,
+              width: pos.width,
+              transform: pos.below ? undefined : "translateY(-100%)",
+            }}
+          >
+            {notice}
+          </p>,
+          document.body
+        )}
       <button
+        ref={buttonRef}
         type="button"
-        // Karta produktu na liście jest linkiem, a kadr galerii ma gesty i lupę –
-        // bez zatrzymania zdarzeń kliknięcie w znaczek robiłoby coś innego niż
-        // pokazanie wyjaśnienia
+        // Karta produktu na liście jest linkiem, a kadr galerii ma gesty i otwiera
+        // podgląd – bez zatrzymania zdarzeń kliknięcie w znaczek robiłoby coś innego
+        // niż pokazanie wyjaśnienia
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
-          setOpen((v) => !v);
+          if (open) setOpen(false);
+          else show();
         }}
         onPointerDown={(e) => e.stopPropagation()}
         onTouchStart={(e) => e.stopPropagation()}
-        onMouseEnter={() => setOpen(true)}
+        onMouseEnter={show}
         onMouseLeave={() => setOpen(false)}
         aria-label={notice}
         aria-expanded={open}

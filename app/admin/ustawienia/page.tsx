@@ -23,6 +23,12 @@ export default async function AdminSettingsPage({
   const settings = await getSettings([
     "home_hero_image",
     "home_hero_position",
+    "home_hero_eyebrow",
+    "home_hero_title",
+    "home_hero_text",
+    "home_hero_cta_primary",
+    "home_hero_cta_secondary",
+    "home_hero_scroll",
     "home_about_image",
     "home_about_position",
     "home_workshops_image",

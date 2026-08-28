@@ -1,6 +1,7 @@
 import { unstable_cache } from "next/cache";
 import { db, withDbRetry } from "@/lib/db";
 import { AI_MODEL_DEFAULT, AI_PRESET_DEFAULT, AI_TEXT_MODEL_DEFAULT } from "@/lib/ai";
+import { HOME_HERO_DEFAULT } from "@/lib/home-hero";
 
 /** Klucze kontaktowe używane w stopce i w danych strukturalnych. */
 export const CONTACT_KEYS = [
@@ -177,6 +178,13 @@ const DEFAULTS: Record<string, string> = {
   polityka_prywatnosci: POLITYKA_DEFAULT,
   home_hero_image: "",
   home_hero_position: "50% 50%",
+  // Teksty hero – edytowalne w /admin/ustawienia (zakładka „Strona główna")
+  home_hero_eyebrow: HOME_HERO_DEFAULT.eyebrow,
+  home_hero_title: HOME_HERO_DEFAULT.title,
+  home_hero_text: HOME_HERO_DEFAULT.text,
+  home_hero_cta_primary: HOME_HERO_DEFAULT.ctaPrimary,
+  home_hero_cta_secondary: HOME_HERO_DEFAULT.ctaSecondary,
+  home_hero_scroll: HOME_HERO_DEFAULT.scroll,
   home_about_image: "",
   home_about_position: "50% 50%",
   home_workshops_image: "",

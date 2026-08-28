@@ -31,11 +31,13 @@ import HomeScrollSnap from "@/components/home/HomeScrollSnap";
 import Header from "@/components/layout/HeaderWrapper";
 import FooterWithInstagram from "@/components/layout/FooterWithInstagram";
 import { getSettings } from "@/lib/settings";
+import { HOME_HERO_SETTING_KEYS } from "@/lib/home-hero";
 
 export default async function Home() {
   const s = await getSettings([
     "contact_instagram",
     "home_hero_image", "home_hero_position",
+    ...HOME_HERO_SETTING_KEYS,
     "home_about_image", "home_about_position",
     "home_workshops_image", "home_workshops_position",
   ]);
@@ -45,7 +47,16 @@ export default async function Home() {
       <HomeScrollSnap />
       <Header hideVacation />
       <main className="flex-1">
-        <Hero heroImage={s.home_hero_image} heroPosition={s.home_hero_position} />
+        <Hero
+          heroImage={s.home_hero_image}
+          heroPosition={s.home_hero_position}
+          eyebrow={s.home_hero_eyebrow}
+          title={s.home_hero_title}
+          text={s.home_hero_text}
+          ctaPrimary={s.home_hero_cta_primary}
+          ctaSecondary={s.home_hero_cta_secondary}
+          scrollLabel={s.home_hero_scroll}
+        />
         <FeaturedProducts />
         <AboutTeaser aboutImage={s.home_about_image} aboutPosition={s.home_about_position} />
         <WorkshopsTeaser workshopsImage={s.home_workshops_image} workshopsPosition={s.home_workshops_position} />

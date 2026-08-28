@@ -12,6 +12,7 @@ import GalleryEditor from "@/components/admin/GalleryEditor";
 import WorkshopsOffersEditor from "@/components/admin/WorkshopsOffersEditor";
 import AiPromptPresets from "@/components/admin/AiPromptPresets";
 import { parseGallery, galleryHead } from "@/lib/gallery";
+import { HOME_HERO_DEFAULT } from "@/lib/home-hero";
 import {
   AI_IMAGE_MODELS,
   AI_MODEL_PRICING,
@@ -35,6 +36,12 @@ interface Props {
   initial: {
     home_hero_image: string;
     home_hero_position: string;
+    home_hero_eyebrow: string;
+    home_hero_title: string;
+    home_hero_text: string;
+    home_hero_cta_primary: string;
+    home_hero_cta_secondary: string;
+    home_hero_scroll: string;
     home_about_image: string;
     home_about_position: string;
     home_workshops_image: string;
@@ -325,6 +332,13 @@ export default function SettingsForm({ section, initial, aiUsage }: Props) {
   // Strona główna
   const [homeHeroImage, setHomeHeroImage] = useState(initial.home_hero_image);
   const [homeHeroPos, setHomeHeroPos] = useState(initial.home_hero_position);
+  // Teksty hero – każdy element osobno, bo puste pole ma go ukryć
+  const [heroEyebrow, setHeroEyebrow] = useState(initial.home_hero_eyebrow);
+  const [heroTitle, setHeroTitle] = useState(initial.home_hero_title);
+  const [heroText, setHeroText] = useState(initial.home_hero_text);
+  const [heroCtaPrimary, setHeroCtaPrimary] = useState(initial.home_hero_cta_primary);
+  const [heroCtaSecondary, setHeroCtaSecondary] = useState(initial.home_hero_cta_secondary);
+  const [heroScroll, setHeroScroll] = useState(initial.home_hero_scroll);
   const [homeAboutImage, setHomeAboutImage] = useState(initial.home_about_image);
   const [homeAboutPos, setHomeAboutPos] = useState(initial.home_about_position);
   const [homeWorkshopsImage, setHomeWorkshopsImage] = useState(initial.home_workshops_image);
@@ -467,7 +481,7 @@ export default function SettingsForm({ section, initial, aiUsage }: Props) {
 
       {section === "strona_glowna" && (
         <div className="max-w-2xl space-y-8">
-          <h2 className="font-serif text-2xl text-espresso">Strona główna – zdjęcia</h2>
+          <h2 className="font-serif text-2xl text-espresso">Strona główna</h2>
 
           <div className="space-y-4">
             <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/80">Sekcja hero (nagłówek)</h3>
@@ -481,6 +495,54 @@ export default function SettingsForm({ section, initial, aiUsage }: Props) {
               imageUrl={homeHeroImage}
               value={homeHeroPos}
               onChange={setHomeHeroPos}
+            />
+          </div>
+
+          <div className="border-t border-sand pt-6 space-y-4">
+            <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/80">Teksty sekcji hero</h3>
+            <p className="text-xs text-charcoal/80">
+              Napisy na pierwszym ekranie strony głównej. <strong>Puste pole ukrywa dany element</strong> –
+              można zostawić samo zdjęcie. W nagłówku i opisie Enter łamie wiersz.
+            </p>
+            <Field
+              label="Napis nad nagłówkiem"
+              value={heroEyebrow}
+              setter={setHeroEyebrow}
+              placeholder={HOME_HERO_DEFAULT.eyebrow}
+            />
+            <MultilineField
+              label="Nagłówek"
+              value={heroTitle}
+              setter={setHeroTitle}
+              placeholder={HOME_HERO_DEFAULT.title}
+              rows={2}
+            />
+            <MultilineField
+              label="Opis pod nagłówkiem"
+              value={heroText}
+              setter={setHeroText}
+              placeholder={HOME_HERO_DEFAULT.text}
+              rows={4}
+            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Field
+                label="Przycisk 1 (do sklepu)"
+                value={heroCtaPrimary}
+                setter={setHeroCtaPrimary}
+                placeholder={HOME_HERO_DEFAULT.ctaPrimary}
+              />
+              <Field
+                label={"Przycisk 2 (do „O mnie”)"}
+                value={heroCtaSecondary}
+                setter={setHeroCtaSecondary}
+                placeholder={HOME_HERO_DEFAULT.ctaSecondary}
+              />
+            </div>
+            <Field
+              label="Napis przy strzałce na dole"
+              value={heroScroll}
+              setter={setHeroScroll}
+              placeholder={HOME_HERO_DEFAULT.scroll}
             />
           </div>
 
@@ -518,12 +580,18 @@ export default function SettingsForm({ section, initial, aiUsage }: Props) {
             onClick={() => save([
               { key: "home_hero_image",        value: homeHeroImage },
               { key: "home_hero_position",     value: homeHeroPos },
+              { key: "home_hero_eyebrow",         value: heroEyebrow },
+              { key: "home_hero_title",           value: heroTitle },
+              { key: "home_hero_text",            value: heroText },
+              { key: "home_hero_cta_primary",     value: heroCtaPrimary },
+              { key: "home_hero_cta_secondary",   value: heroCtaSecondary },
+              { key: "home_hero_scroll",          value: heroScroll },
               { key: "home_about_image",       value: homeAboutImage },
               { key: "home_about_position",       value: homeAboutPos },
               { key: "home_workshops_image",      value: homeWorkshopsImage },
               { key: "home_workshops_position",   value: homeWorkshopsPos },
             ])}
-            label="Zapisz zdjęcia strony głównej"
+            label="Zapisz stronę główną"
           />
         </div>
       )}
