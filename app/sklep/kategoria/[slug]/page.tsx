@@ -12,10 +12,9 @@ import { getSetting } from "@/lib/settings";
 import { findActiveFreeShipping, findActiveQuantityPromo, toQuantityConfig } from "@/lib/promos";
 import { quantityPromoTeaser } from "@/lib/quantity-promo";
 import { DISCOUNT_HOLD_CATALOG_MS } from "@/lib/product-price";
-import { SITE_URL, absoluteUrl, pageMetadata } from "@/lib/seo";
+import { SITE_URL, absoluteUrl, metaDescription, pageMetadata } from "@/lib/seo";
 import {
   categoryDescription,
-  categoryIntro,
   categoryIntroKey,
   categoryPath,
   categoryTitle,
@@ -47,9 +46,14 @@ export async function generateMetadata({
     return { title: "Kategoria nie istnieje", robots: { index: false, follow: false } };
   }
 
+  // Opis idzie **tylko** do metadanych – na stronie go nie drukujemy.
+  // Własny tekst z panelu ma pierwszeństwo; przycinamy go, bo w wyniku
+  // wyszukiwania i tak zmieści się około 160 znaków
+  const custom = (await getSetting(categoryIntroKey(slug))).trim();
+
   return pageMetadata({
     title: categoryTitle(category.label),
-    description: categoryDescription(category.label),
+    description: metaDescription(custom || categoryDescription(category.label)),
     path: categoryPath(slug),
     ogTitle: `${category.label} – Unique Ceramics`,
   });
@@ -68,9 +72,10 @@ export default async function CategoryPage({
   // przed wyczerpaniem puli (Supabase: 15 połączeń w trybie sesji)
   const vacationEnabled = (await getSetting("vacation_enabled")) === "true";
   const categories = await getCategories();
-  // Własny opis kategorii z panelu; pusty = tekst generowany z nazwy
-  const customIntro = (await getSetting(categoryIntroKey(slug))).trim();
-  const intro = customIntro || categoryIntro(category.label);
+  // Opis kategorii **nie jest drukowany na stronie** – trafia do metadanych
+  // (patrz `generateMetadata`) i do danych strukturalnych niżej
+  const customDescription = (await getSetting(categoryIntroKey(slug))).trim();
+  const description = customDescription || categoryDescription(category.label);
 
   const hold = { holdMs: DISCOUNT_HOLD_CATALOG_MS };
   const quantityTeaser = quantityPromoTeaser(toQuantityConfig(await findActiveQuantityPromo(hold)));
@@ -86,7 +91,7 @@ export default async function CategoryPage({
     "@id": `${SITE_URL}${categoryPath(slug)}#collection`,
     url: `${SITE_URL}${categoryPath(slug)}`,
     name: categoryTitle(category.label),
-    description: intro,
+    description,
     isPartOf: { "@id": `${SITE_URL}/#website` },
     inLanguage: "pl-PL",
     ...(products.length > 0
@@ -126,12 +131,13 @@ export default async function CategoryPage({
           vacationEnabled={vacationEnabled}
         />
 
-        {/* Nagłówek kategorii – w przeciwieństwie do `/sklep` jest widoczny:
-            to on niesie nazwę kategorii dla czytelnika i dla wyszukiwarki */}
+        {/* Nagłówek kategorii. Opisu tu **nie ma świadomie** – idzie wyłącznie
+            do metadanych i danych strukturalnych (decyzja właściciela 28.08.2026).
+            Nie dodawaj go z powrotem jako ukrytego akapitu – tekst niewidoczny
+            dla użytkownika, a podany robotowi, to cloaking */}
         <div className="max-w-7xl mx-auto px-6 lg:px-10 pt-8 md:pt-12">
           <ClayRule className="mb-6" />
-          <h1 className="font-serif text-3xl md:text-4xl text-espresso mb-4">{category.label}</h1>
-          <p className="text-charcoal/80 leading-relaxed max-w-2xl">{intro}</p>
+          <h1 className="font-serif text-3xl md:text-4xl text-espresso">{category.label}</h1>
         </div>
 
         <div className="max-w-7xl mx-auto px-6 lg:px-10 pt-6 pb-16 md:pt-8 md:pb-16">

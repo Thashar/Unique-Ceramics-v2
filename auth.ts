@@ -56,7 +56,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   callbacks: {
     async jwt({ token, user }) {
-      // Logowanie — zapisz id, rolę i bieżącą wersję tokenu
+      // Logowanie – zapisz id, rolę i bieżącą wersję tokenu
       if (user) {
         token.id = user.id;
         token.role = user.role ?? "USER";
@@ -64,7 +64,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         return token;
       }
 
-      // Kolejne żądania — zweryfikuj wersję tokenu względem DB.
+      // Kolejne żądania – zweryfikuj wersję tokenu względem DB.
       // Pozwala natychmiast unieważnić sesje po zmianie hasła (bump tokenVersion)
       // oraz wylogować z usuniętego konta. Odświeża też rolę.
       if (token.id) {
@@ -81,7 +81,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           // „ma avatar = konto Google" i decyduje, czy wolno zmienić e-mail
           token.hasPassword = dbUser.password !== null;
         } catch {
-          // Błąd DB — nie wylogowuj (fail-open na problem infrastruktury)
+          // Błąd DB – nie wylogowuj (fail-open na problem infrastruktury)
         }
       }
       return token;

@@ -71,7 +71,7 @@ function parseJson<T>(json: string): T[] {
 }
 
 // Wprowadzenie: tekst do lewej w węższej kolumnie, bez wyróżniania pierwszego
-// akapitu — całość jednolita, hierarchię otwarcia niesie sam ozdobnik.
+// akapitu – całość jednolita, hierarchię otwarcia niesie sam ozdobnik.
 const INTRO_PROSE =
   "text-charcoal/80 text-lg leading-relaxed [&_p]:mb-4 [&_strong]:text-espresso";
 
@@ -202,7 +202,7 @@ export default async function WorkshopsPage() {
           </div>
         )}
 
-        {/* Wprowadzenie — ozdobnik (kreska z mozaiką) nad tekstem do lewej.
+        {/* Wprowadzenie – ozdobnik (kreska z mozaiką) nad tekstem do lewej.
             Treść w panelu pozostaje zwykłym HTML-em, bez wyróżnień na akapitach. */}
         <div className="bg-warm-white py-16 px-6 lg:px-10">
           {hasGallery ? (

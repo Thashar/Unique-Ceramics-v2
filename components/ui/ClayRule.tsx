@@ -1,13 +1,13 @@
 /**
  * Ozdobnik otwierający blok treści: mozaika kafelków szkliwa osadzona
  * w cienkiej kresce. Kafelki 10 px w kolorach gliny (terracotta / clay / sand)
- * z różnym kryciem — jak próbnik szkliw.
+ * z różnym kryciem – jak próbnik szkliw.
  *
  * Czysto dekoracyjny, więc `aria-hidden`. Synchroniczny i bez stanu, można
  * używać w komponentach serwerowych.
  */
 
-// 9 kolumn × 2 rzędy. Krycie zróżnicowane celowo nieregularnie — równy rytm
+// 9 kolumn × 2 rzędy. Krycie zróżnicowane celowo nieregularnie – równy rytm
 // wyglądał jak wykres. Kolejność: najpierw cały górny rząd, potem dolny.
 const COLUMNS = 9;
 const TILES = [

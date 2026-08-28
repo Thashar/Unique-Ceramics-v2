@@ -3,18 +3,21 @@
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import type { Category } from "@/lib/category-defaults";
-import { categoryIntro, categoryIntroKey, categoryPath } from "@/lib/category-seo";
+import { categoryDescription, categoryIntroKey, categoryPath } from "@/lib/category-seo";
 
-/** Tyle znaków wystarcza na dwa–trzy zdania; dłuższy tekst i tak nikt nie czyta. */
-const MAX_LENGTH = 800;
+/** Tyle Google pokazuje pod tytułem – dłuższy opis utnie w połowie zdania. */
+const SHOWN_LENGTH = 160;
+/** Twardy limit pola: zapas na dokończenie myśli, reszta i tak nie wejdzie. */
+const MAX_LENGTH = 300;
 
 /**
- * Opisy stron kategorii (`/sklep/kategoria/…`) – tekst pod nagłówkiem, który
- * czyta klient **i** wyszukiwarka.
+ * Opisy kategorii **dla wyszukiwarki**: tekst trafia do `<meta description>`
+ * i do danych strukturalnych, ale **nie jest drukowany na stronie**
+ * (decyzja właściciela 28.08.2026). To jedyny legalny sposób na tekst
+ * „widoczny tylko w wyszukiwarce” – ukryty akapit na stronie byłby cloakingiem.
  *
- * Puste pole nie zostawia pustej strony: wtedy wchodzi tekst generowany z nazwy
- * kategorii (podpowiedź w polu pokazuje dokładnie ten tekst). Własny opis jest
- * jednak wart więcej – szablon powtarza się na każdej kategorii.
+ * Puste pole = opis układany z nazwy kategorii (podpowiedź pokazuje dokładnie
+ * ten tekst). Własny jest wart więcej: szablon powtarza się na każdej kategorii.
  *
  * Zapis idzie przez zwykłe ustawienia (`category_intro_{slug}`), więc nie
  * wymagał zmian w bazie, a `/api/admin/settings` odświeża przy okazji strony.
@@ -58,11 +61,13 @@ export default function CategoryIntros({
 
   return (
     <section className="mt-12 max-w-2xl">
-      <h2 className="font-serif text-2xl text-espresso mb-2">Opisy kategorii</h2>
+      <h2 className="font-serif text-2xl text-espresso mb-2">Opisy kategorii dla wyszukiwarki</h2>
       <p className="text-sm text-charcoal/80 mb-6">
-        Tekst pod nagłówkiem na stronie kategorii. Puste pole = tekst układany automatycznie
-        z nazwy kategorii (widoczny jako podpowiedź). Własny opis jest lepszy – wyszukiwarki
-        nisko oceniają teksty powtarzalne.
+        Tekst, który Google pokazuje pod tytułem strony w wynikach wyszukiwania.
+        <strong> Na samej stronie nie jest widoczny.</strong> Puste pole = opis układany
+        automatycznie z nazwy kategorii (widoczny jako podpowiedź). Własny jest lepszy –
+        wyszukiwarki nisko oceniają teksty powtarzalne. Zmieść się w {SHOWN_LENGTH} znakach,
+        bo dłuższy zostanie ucięty.
       </p>
 
       <div className="space-y-6">
@@ -81,11 +86,16 @@ export default function CategoryIntros({
               onChange={(e) =>
                 setValues((prev) => ({ ...prev, [cat.slug]: e.target.value }))
               }
-              placeholder={categoryIntro(cat.label)}
+              placeholder={categoryDescription(cat.label)}
               maxLength={MAX_LENGTH}
-              rows={4}
+              rows={3}
               className="w-full bg-warm-white border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors resize-y"
             />
+            {/* Licznik ostrzega dopiero po przekroczeniu tego, co widać w wyniku */}
+            <p className="mt-1 text-[11px] text-charcoal/80 tabular-nums">
+              {(values[cat.slug] ?? "").length} / {SHOWN_LENGTH} znaków
+              {(values[cat.slug] ?? "").length > SHOWN_LENGTH && " – nadmiar zostanie ucięty"}
+            </p>
           </div>
         ))}
       </div>

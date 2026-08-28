@@ -28,7 +28,7 @@ try {
     if (!process.env[key]) process.env[key] = val;
   }
 } catch {
-  // brak .env.local — OK, może być .env
+  // brak .env.local – OK, może być .env
 }
 
 const DRY_RUN = process.argv.includes("--dry-run");
@@ -110,7 +110,7 @@ function getPublicUrl(name) {
 // ─── Główna logika ────────────────────────────────────────────────────────────
 
 async function main() {
-  console.log(DRY_RUN ? "🔍  TRYB DRY-RUN — brak zmian\n" : "🚀  Start konwersji\n");
+  console.log(DRY_RUN ? "🔍  TRYB DRY-RUN – brak zmian\n" : "🚀  Start konwersji\n");
 
   // 1. Lista plików w Storage
   console.log("📂  Pobieram listę plików z Supabase Storage...");
@@ -169,13 +169,13 @@ async function main() {
   }
 
   if (DRY_RUN) {
-    console.log("\n🔍  Dry-run — żadnych zmian nie wprowadzono.");
+    console.log("\n🔍  Dry-run – żadnych zmian nie wprowadzono.");
     return;
   }
 
   // 3. Aktualizuj URLe w bazie danych
   if (urlMap.size === 0) {
-    console.log("\n⚠️  Brak udanych konwersji — baza danych bez zmian.");
+    console.log("\n⚠️  Brak udanych konwersji – baza danych bez zmian.");
     return;
   }
 

@@ -228,7 +228,7 @@ export default function Header({ topOffset = false, showProjects = true }: { top
     if (document.readyState !== "complete") window.addEventListener("load", schedule);
 
     // Pomiary kontrolne po starcie. Bez nich błędny odczyt (np. gdy układ nie
-    // był jeszcze gotowy) utrzymywał się aż do pierwszego przewinięcia —
+    // był jeszcze gotowy) utrzymywał się aż do pierwszego przewinięcia –
     // użytkownik widział ciemny header nad hero i nic go nie naprawiało.
     const recheck = RECHECK_DELAYS.map((ms) => window.setTimeout(schedule, ms));
 

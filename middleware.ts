@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 export default auth((req) => {
   const { nextUrl, auth: session } = req;
 
-  // Trasy API admina — druga warstwa ochrony obok requireAdmin() w handlerach.
+  // Trasy API admina – druga warstwa ochrony obok requireAdmin() w handlerach.
   // (Sama rola ADMIN jest weryfikowana w DB przez requireAdmin; tu blokujemy
   // brak sesji, by błąd w pojedynczym handlerze nie odsłaniał trasy.)
   const isAdminApi = nextUrl.pathname.startsWith("/api/admin");
