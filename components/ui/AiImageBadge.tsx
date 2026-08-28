@@ -29,9 +29,15 @@ const SIZES = {
  */
 export default function AiImageBadge({
   size = "md",
+  align = "left",
+  notice = AI_IMAGE_NOTICE,
   className = "",
 }: {
   size?: keyof typeof SIZES;
+  /** Treść wyjaśnienia – domyślnie ta o zdjęciach produktów. */
+  notice?: string;
+  /** Z której krawędzi znaczka wyrasta dymek – przy prawym marginesie strony `right`. */
+  align?: "left" | "right";
   className?: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -63,11 +69,14 @@ export default function AiImageBadge({
       {open && (
         <p
           role="tooltip"
-          // Dymek wyrasta w prawo od znaczka – ten stoi przy lewej krawędzi kolumny,
-          // więc w drugą stronę wychodziłby poza układ strony na wąskim ekranie
-          className="absolute bottom-full left-0 mb-2 z-20 w-56 max-w-[70vw] bg-espresso text-cream text-[11px] leading-relaxed px-3 py-2.5 shadow-lg"
+          // Domyślnie dymek wyrasta w prawo od znaczka – ten stoi zwykle przy lewej
+          // krawędzi kolumny, więc w drugą stronę wychodziłby poza układ strony.
+          // Przy prawym marginesie (pasek narzędzi katalogu) jest odwrotnie
+          className={`absolute bottom-full ${
+            align === "right" ? "right-0" : "left-0"
+          } mb-2 z-20 w-56 max-w-[70vw] bg-espresso text-cream text-[11px] leading-relaxed px-3 py-2.5 shadow-lg`}
         >
-          {AI_IMAGE_NOTICE}
+          {notice}
         </p>
       )}
       <button
@@ -84,7 +93,7 @@ export default function AiImageBadge({
         onTouchStart={(e) => e.stopPropagation()}
         onMouseEnter={() => setOpen(true)}
         onMouseLeave={() => setOpen(false)}
-        aria-label={AI_IMAGE_NOTICE}
+        aria-label={notice}
         aria-expanded={open}
         className={`inline-flex items-center tracking-wider uppercase text-charcoal/80 hover:text-espresso transition-colors ${s.gap} ${s.text}`}
       >

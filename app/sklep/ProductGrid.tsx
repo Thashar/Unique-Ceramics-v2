@@ -3,6 +3,8 @@
 import { useState, useSyncExternalStore } from "react";
 import { LayoutGrid, Grid3X3, ShoppingBag } from "lucide-react";
 import ProductCard from "@/components/ui/ProductCard";
+import AiImageBadge from "@/components/ui/AiImageBadge";
+import { isAiGeneratedImage } from "@/lib/ai";
 import type { getShopProducts } from "@/lib/products";
 import { categoryLabel, type Category } from "@/lib/category-defaults";
 
@@ -119,6 +121,9 @@ export default function ProductGrid({ products, kategoria, dbError, categories, 
   // numer strony może wypaść poza zakres, a lista i tak ma pokazać istniejącą stronę
   const currentPage = Math.min(page, pageCount);
   const visible = products.slice((currentPage - 1) * perPage, currentPage * perPage);
+  // Znaczek AI w pasku narzędzi dotyczy całej listy – pokazujemy go, gdy
+  // którykolwiek z produktów ma zdjęcie z modelu (na kafelkach go nie ma)
+  const aiImages = products.some((p) => p.images.some(isAiGeneratedImage));
 
   return (
     <>
@@ -176,6 +181,10 @@ export default function ProductGrid({ products, kategoria, dbError, categories, 
               <Grid3X3 size={18} strokeWidth={1.5} />
             </button>
           </div>
+
+          {/* Ta sama informacja co na karcie produktu – dymek wyrasta w lewo,
+              bo znaczek stoi przy prawej krawędzi listy */}
+          {aiImages && <AiImageBadge size="lg" align="right" />}
         </div>
       </div>
 

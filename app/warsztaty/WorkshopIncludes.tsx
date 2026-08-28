@@ -2,8 +2,12 @@
 
 import { useState } from "react";
 import ImageGallery from "@/components/ui/ImageGallery";
+import AiImageBadge from "@/components/ui/AiImageBadge";
 import { ICON_MAP, CheckCircle } from "./icons";
 import type { GalleryImage } from "@/lib/gallery";
+
+/** Wyjaśnienie pod galerią – zdjęcia warsztatów powstały przy wsparciu AI. */
+const AI_NOTICE = "Zdjęcia w tej sekcji zostały wygenerowane przy wsparciu AI.";
 
 export type WorkshopInclude = {
   id: number;
@@ -57,13 +61,20 @@ export default function WorkshopIncludes({ includes, images, title }: Props) {
         </ul>
       </div>
 
-      <ImageGallery
-        images={images}
-        alt="Zdjęcia z warsztatów ceramicznych"
-        className="aspect-[4/3] rounded-sm w-full max-w-xl mx-auto lg:mx-0"
-        sizes="(max-width: 640px) 100vw, 576px"
-        onIndexChange={setActive}
-      />
+      <div className="w-full max-w-xl mx-auto lg:mx-0 flex flex-col gap-2">
+        <ImageGallery
+          images={images}
+          alt="Zdjęcia z warsztatów ceramicznych"
+          className="aspect-[4/3] rounded-sm w-full"
+          sizes="(max-width: 640px) 100vw, 576px"
+          onIndexChange={setActive}
+        />
+        {/* Zdjęcia w tej sekcji powstały z modelu – ten sam znaczek co przy
+            galerii produktu, tylko z opisem dopasowanym do warsztatów */}
+        <div className="flex">
+          <AiImageBadge size="lg" notice={AI_NOTICE} />
+        </div>
+      </div>
     </div>
   );
 }
