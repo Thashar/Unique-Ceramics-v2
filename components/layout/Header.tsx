@@ -24,10 +24,13 @@ const VACATION_BANNER_H = 20;
 const SCROLL_DELTA = 8;
 const HIDE_AFTER = 120;
 
-// Kontrolne przeliczenia przezroczystości po wejściu na stronę główną (ms).
-// Zabezpieczenie przed wyścigiem: gdyby pierwszy pomiar trafił w moment
-// niegotowego układu, stan naprawia się sam, bez czekania na przewinięcie.
-const RECHECK_DELAYS = [400, 1200, 2500];
+// Ile ciemnej sekcji musi być widoczne w oknie, żeby header był przezroczysty.
+const VISIBLE_RATIO = 0.3;
+
+// Progi obserwatora przecięcia – zagęszczone wokół VISIBLE_RATIO, żeby przejście
+// przez próg zawsze wywołało callback (obserwator zgłasza się przy przekroczeniu
+// progu, więc rzadka lista potrafiłaby przegapić moment zmiany).
+const IO_THRESHOLDS = [0, 0.1, 0.2, 0.25, 0.3, 0.35, 0.4, 0.5, 0.75, 1];
 
 const ALL_NAV_LINKS = [
   { href: "/sklep",         label: "Sklep",          always: true  },
@@ -153,36 +156,32 @@ export default function Header({ topOffset = false, showProjects = true }: { top
     return () => document.removeEventListener("keydown", handler);
   }, [menuOpen]);
 
+  // Przezroczystość headera na stronie głównej.
+  //
+  // **Dlaczego obserwator, a nie pomiar przy zdarzeniach:** wcześniej stan liczył
+  // się z `getBoundingClientRect()` przy `scroll`/`resize` plus kilka kontrolnych
+  // przeliczeń po starcie. Taki pomiar jest migawką – wystarczyło, że jedna
+  // wypadła w złym momencie (układ jeszcze się układał, trwało programowe
+  // przewijanie), a błędny wynik zostawał **na stałe**, bo `scroll` odpala się
+  // tylko przy zmianie pozycji i nic go już nie poprawiało. Stąd „od czasu do
+  // czasu ciemny header nad hero”, którego nie dawało się powtórzyć na żądanie.
+  //
+  // `IntersectionObserver` liczy to samo, ale przelicza **sam**: przy pierwszej
+  // obserwacji, po doładowaniu zdjęć i fontów, po zmianie rozmiaru okna, po
+  // powrocie z bfcache i przy każdym przekroczeniu progu widoczności. Nie ma
+  // migawki, więc nie ma czego przegapić.
   useEffect(() => {
     if (!isHome) return;
 
     let raf = 0;
+    let fadeRaf = 0;
     let retries = 0;
+    let observer: IntersectionObserver | null = null;
     const mobileMq = window.matchMedia("(max-width: 1023px)");
     const headerNode = headerRef.current;
-
-    function measure() {
-      const sections = document.querySelectorAll<HTMLElement>('[data-header-theme="transparent"]');
-
-      // Sekcji może jeszcze nie być w DOM (hydratacja / strumieniowany HTML).
-      // Nie wolno wtedy zgadywać na ciemny header – strona główna zaczyna się
-      // od jasnej sekcji (Hero), więc zostajemy przy przezroczystym i ponawiamy
-      // pomiar w kolejnych klatkach, aż układ będzie gotowy (~1,5 s).
-      if (sections.length === 0) {
-        if (retries++ < 90) raf = requestAnimationFrame(measure);
-        return;
-      }
-      retries = 0;
-
-      let visible = false;
-      for (const el of sections) {
-        const rect = el.getBoundingClientRect();
-        const vis = Math.min(rect.bottom, window.innerHeight) - Math.max(rect.top, 0);
-        if (el.offsetHeight && vis / el.offsetHeight >= 0.3) { visible = true; break; }
-      }
-      setTransparentVisible(visible);
-      fade();
-    }
+    // Ile z każdej ciemnej sekcji widać w oknie (0–1). Obserwator zgłasza tylko
+    // sekcje, które się zmieniły, więc stan wszystkich trzymamy tutaj.
+    const visibility = new Map<Element, number>();
 
     // Zanikanie headera po zjechaniu poniżej „punktu zero" stopki (jej górnej
     // krawędzi), żeby nie zasłaniał treści stopki; przy powrocie w górę
@@ -205,42 +204,69 @@ export default function Header({ topOffset = false, showProjects = true }: { top
       node.style.pointerEvents = opacity < 0.05 ? "none" : "";
     }
 
-    // Pomiar zawsze w kolejnej klatce – po ustabilizowaniu układu, nie w trakcie
-    // zdarzenia (chroni przed odczytem rect-a sprzed programowego scrolla).
-    function schedule() {
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(measure);
+    function apply() {
+      let visible = false;
+      for (const ratio of visibility.values()) {
+        if (ratio >= VISIBLE_RATIO) { visible = true; break; }
+      }
+      setTransparentVisible(visible);
     }
 
-    scheduleRef.current = schedule;
-    schedule();
+    function observe() {
+      const sections = document.querySelectorAll<HTMLElement>('[data-header-theme="transparent"]');
 
-    // scroll – zwykłe przewijanie
-    // resize / orientationchange – zmiana wysokości viewportu (zwijanie paska
-    //   adresu na mobile, obrót ekranu, zmiana rozmiaru okna)
-    // pageshow – powrót z bfcache (wejście „wstecz" z zewnętrznej strony)
-    // load – układ ustabilizowany po wczytaniu zasobów; łapie też wymuszony
-    //   przez HomeScrollSnap powrót na górę strony po przywróceniu scrolla
-    window.addEventListener("scroll", schedule, { passive: true });
-    window.addEventListener("resize", schedule);
-    window.addEventListener("orientationchange", schedule);
-    window.addEventListener("pageshow", schedule);
-    if (document.readyState !== "complete") window.addEventListener("load", schedule);
+      // Sekcji może jeszcze nie być w DOM (hydratacja / strumieniowany HTML).
+      // Nie wolno wtedy zgadywać na ciemny header – strona główna zaczyna się
+      // od ciemnej sekcji (Hero), więc zostajemy przy przezroczystym i ponawiamy
+      // próbę w kolejnych klatkach, aż układ będzie gotowy (~1,5 s).
+      if (sections.length === 0) {
+        if (retries++ < 90) raf = requestAnimationFrame(observe);
+        return;
+      }
 
-    // Pomiary kontrolne po starcie. Bez nich błędny odczyt (np. gdy układ nie
-    // był jeszcze gotowy) utrzymywał się aż do pierwszego przewinięcia –
-    // użytkownik widział ciemny header nad hero i nic go nie naprawiało.
-    const recheck = RECHECK_DELAYS.map((ms) => window.setTimeout(schedule, ms));
+      observer = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            // Udział widocznej części w wysokości sekcji – to samo, co dawniej
+            // liczył `rect`, tylko podane przez przeglądarkę. Sekcja bez wysokości
+            // (jeszcze nieułożona) nie może przestawić headera na ciemny
+            const height = entry.boundingClientRect.height;
+            if (height > 0) visibility.set(entry.target, entry.intersectionRect.height / height);
+          }
+          if (visibility.size > 0) apply();
+          fade();
+        },
+        { threshold: IO_THRESHOLDS }
+      );
+
+      for (const el of sections) observer.observe(el);
+    }
+
+    observe();
+
+    // Obserwator odpowiada za motyw headera; zdarzenia zostają wyłącznie dla
+    // zanikania w stopce, które musi jechać klatka po klatce razem z palcem.
+    function onScroll() {
+      cancelAnimationFrame(fadeRaf);
+      fadeRaf = requestAnimationFrame(fade);
+    }
+
+    scheduleRef.current = onScroll;
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    window.addEventListener("orientationchange", onScroll);
+    window.addEventListener("pageshow", onScroll);
 
     return () => {
       cancelAnimationFrame(raf);
-      for (const id of recheck) clearTimeout(id);
+      cancelAnimationFrame(fadeRaf);
+      observer?.disconnect();
       scheduleRef.current = () => {};
-      window.removeEventListener("scroll", schedule);
-      window.removeEventListener("resize", schedule);
-      window.removeEventListener("orientationchange", schedule);
-      window.removeEventListener("pageshow", schedule);
-      window.removeEventListener("load", schedule);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      window.removeEventListener("orientationchange", onScroll);
+      window.removeEventListener("pageshow", onScroll);
       // Poza stroną główną header musi być w pełni widoczny
       if (headerNode) {
         headerNode.style.opacity = "";
@@ -331,7 +357,18 @@ export default function Header({ topOffset = false, showProjects = true }: { top
     >
       <div className="max-w-7xl mx-auto px-6 lg:px-10 h-20 flex items-center justify-between">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-3 group" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
+        {/* Płynny powrót na górę tylko wtedy, gdy już jesteśmy na stronie głównej.
+            Przy wejściu z innej strony animacja przewijania trwa dłużej niż sama
+            nawigacja i biegnie dalej w nowym dokumencie, walcząc z ustawieniem
+            pozycji na zero – strona lądowała wtedy w losowym miejscu, a header
+            zostawał ciemny nad widocznym hero. */}
+        <Link
+          href="/"
+          className="flex items-center gap-3 group"
+          onClick={() => {
+            if (isHome) window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+        >
           <Image
             src="/images/logo.webp"
             alt="Unique Ceramics"
