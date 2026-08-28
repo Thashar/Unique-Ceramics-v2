@@ -314,6 +314,21 @@ export const getContactSettings = unstable_cache(
 );
 
 /**
+ * Dane do JSON-LD w layoucie: kontakt + **zdjęcie hero**. Hero jest głównym
+ * obrazem strony, więc wskazujemy je wyszukiwarce jako `image` firmy –
+ * to najbliższe wskazaniu palcem, jakie w ogóle istnieje (o tym, które
+ * zdjęcie trafi do wyniku, i tak decyduje Google).
+ *
+ * Osobny cache, bo layout renderuje się przy każdym żądaniu – niecachowany
+ * `getSettings` biłby wtedy w bazę za każdym razem.
+ */
+export const getSchemaSettings = unstable_cache(
+  async () => getSettings([...CONTACT_KEYS, "home_hero_image"]),
+  ["schema-settings"],
+  { revalidate: 3600, tags: ["settings"] }
+);
+
+/**
  * Liczba z ustawienia sklepu. **Zero jest poprawną wartością** – wzorzec
  * `Number(value) || fallback` traktował je jak brak i cicho przywracał default,
  * przez co nie dało się ustawić darmowej wysyłki (`shipping_cost = 0`) ani progu

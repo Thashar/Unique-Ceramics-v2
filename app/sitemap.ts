@@ -1,5 +1,7 @@
 import { MetadataRoute } from "next";
 import { db, withDbRetry } from "@/lib/db";
+import { getSetting } from "@/lib/settings";
+import { absoluteUrl } from "@/lib/seo";
 
 // Odświeżaj sitemapę co godzinę – nowe produkty trafiają do niej bez deployu
 export const revalidate = 3600;
@@ -19,24 +21,37 @@ const staticRoutes: MetadataRoute.Sitemap = [
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  let products: { slug: string; updatedAt: Date }[] = [];
+  let products: { slug: string; updatedAt: Date; images: string[] }[] = [];
   try {
     products = await withDbRetry(() =>
       db.product.findMany({
         where: { active: true },
-        select: { slug: true, updatedAt: true },
+        select: { slug: true, updatedAt: true, images: true },
       })
     );
   } catch {
     // DB not available – return static routes only
   }
 
+  // Zdjęcia w sitemapie: mówią wyszukiwarce, które obrazy należą do której
+  // strony. Hero jest głównym zdjęciem strony głównej (patrz `primaryImageOfPage`
+  // w `app/page.tsx`), a karta produktu wnosi swoje zdjęcia
+  // `getSetting` ma własny try/catch – przy niedostępnej bazie odda pusty string
+  const heroImage = await getSetting("home_hero_image");
+
+  const routes: MetadataRoute.Sitemap = staticRoutes.map((route) =>
+    route.url === BASE && heroImage
+      ? { ...route, images: [absoluteUrl(heroImage)] }
+      : route
+  );
+
   const productRoutes: MetadataRoute.Sitemap = products.map((p) => ({
     url: `${BASE}/sklep/${p.slug}`,
     lastModified: p.updatedAt,
     changeFrequency: "weekly",
     priority: 0.8,
+    ...(p.images.length ? { images: p.images.map(absoluteUrl) } : {}),
   }));
 
-  return [...staticRoutes, ...productRoutes];
+  return [...routes, ...productRoutes];
 }

@@ -5,7 +5,7 @@ export const revalidate = 3600;
 export const metadata: Metadata = {
   title: "Unique Ceramics – Ceramika Gliwice",
   description:
-    "Pracownia ceramiczna z okolic Gliwic. Ręcznie robiona ceramika użytkowa i dekoracyjna – kubki, miski, naczynia. Każdy egzemplarz jest niepowtarzalny.",
+    "Pracownia ceramiczna z okolic Gliwic. Ręcznie robiona ceramika użytkowa i dekoracyjna – kubki, miski, naczynia, ozdoby. Każdy egzemplarz jest niepowtarzalny.",
   alternates: { canonical: "https://uniqueceramics.pl" },
   openGraph: {
     title: "Unique Ceramics – Ceramika Gliwice",
@@ -32,6 +32,7 @@ import Header from "@/components/layout/HeaderWrapper";
 import FooterWithInstagram from "@/components/layout/FooterWithInstagram";
 import { getSettings } from "@/lib/settings";
 import { HOME_TEXT_SETTING_KEYS } from "@/lib/home-sections";
+import { SITE_URL, absoluteUrl } from "@/lib/seo";
 
 export default async function Home() {
   const s = await getSettings([
@@ -42,8 +43,38 @@ export default async function Home() {
     "home_workshops_image", "home_workshops_position",
   ]);
 
+  // Zdjęcie hero jako **główny obraz strony**. Wyszukiwarce nie da się
+  // nakazać, które zdjęcie pokaże przy wyniku, ale `primaryImageOfPage`
+  // (razem z `image` firmy w LocalBusiness i sitemapą obrazków) jest
+  // najmocniejszym sygnałem, jaki możemy wysłać
+  const pageSchema = s.home_hero_image
+    ? {
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        "@id": `${SITE_URL}/#webpage`,
+        url: SITE_URL,
+        name: "Unique Ceramics – Ceramika Gliwice",
+        isPartOf: { "@id": `${SITE_URL}/#website` },
+        about: { "@id": `${SITE_URL}/#business` },
+        inLanguage: "pl-PL",
+        primaryImageOfPage: {
+          "@type": "ImageObject",
+          "@id": `${SITE_URL}/#primaryimage`,
+          url: absoluteUrl(s.home_hero_image),
+          contentUrl: absoluteUrl(s.home_hero_image),
+          caption: "Ręcznie robiona ceramika z pracowni Unique Ceramics",
+        },
+      }
+    : null;
+
   return (
     <>
+      {pageSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(pageSchema) }}
+        />
+      )}
       <HomeScrollSnap />
       <Header hideVacation />
       <main className="flex-1">

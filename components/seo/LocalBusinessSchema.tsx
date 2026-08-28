@@ -1,4 +1,5 @@
-import { getContactSettings } from "@/lib/settings";
+import { getSchemaSettings } from "@/lib/settings";
+import { absoluteUrl } from "@/lib/seo";
 import { parseOpeningHours, parseCityLine } from "@/lib/opening-hours";
 
 const BASE = "https://uniqueceramics.pl";
@@ -53,7 +54,13 @@ const websiteSchema = {
  * czemu `app/layout.tsx` pozostaje synchroniczny.
  */
 export default async function LocalBusinessSchema() {
-  const s = await getContactSettings();
+  const s = await getSchemaSettings();
+
+  // Główne zdjęcie firmy = hero ze strony głównej (ustawiane w panelu).
+  // Bez wgranego hero zostaje statyczny obrazek podglądu linków.
+  const mainImage = s.home_hero_image
+    ? absoluteUrl(s.home_hero_image)
+    : `${BASE}/images/OpenGraph.jpg`;
 
   const { postalCode, locality } = parseCityLine(s.contact_address_city);
   const openingHours = parseOpeningHours(s.contact_hours);
@@ -67,10 +74,10 @@ export default async function LocalBusinessSchema() {
     "@id": `${BASE}/#business`,
     name: "Unique Ceramics",
     description:
-      "Pracownia ceramiki artystycznej tworząca ręcznie robione naczynia użytkowe i dekoracyjne. Kubki, filiżanki, miski, talerze i świeczniki wykonywane z pasją – każdy egzemplarz jest niepowtarzalny.",
+      "Pracownia ceramiki artystycznej tworząca ręcznie robione naczynia użytkowe i dekoracyjne. Kubki, miski, talerze, świeczniki i ozdoby wykonywane z pasją – każdy egzemplarz jest niepowtarzalny.",
     url: BASE,
     logo: `${BASE}/images/logo.webp`,
-    image: `${BASE}/images/OpenGraph.jpg`,
+    image: mainImage,
     telephone: s.contact_phone.replace(/\s/g, ""),
     email: s.contact_email,
     address: {
