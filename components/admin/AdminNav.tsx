@@ -230,6 +230,10 @@ function AdminNavInner({
 
 export default function AdminNav({ newOrders }: { newOrders: NewOrderCounts }) {
   const [open, setOpen] = useState(false);
+  // Na telefonie menu jest schowane pod hamburgerem, więc licznik przy nim musi
+  // podsumować wszystkie znaczki z listy – inaczej nowe zamówienie byłoby
+  // widoczne dopiero po otwarciu panelu
+  const totalNew = newOrders.orders + newOrders.customOrders;
 
   return (
     <>
@@ -255,10 +259,15 @@ export default function AdminNav({ newOrders }: { newOrders: NewOrderCounts }) {
         </div>
         <button
           onClick={() => setOpen(true)}
-          className="p-2 text-white/70 hover:text-white transition-colors"
-          aria-label="Menu"
+          className="relative p-2 text-white/70 hover:text-white transition-colors"
+          aria-label={totalNew > 0 ? `Menu – nowe zamówienia: ${totalNew}` : "Menu"}
         >
           <Menu size={22} strokeWidth={1.5} />
+          {totalNew > 0 && (
+            <span className="absolute top-0 right-0 min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full bg-red-600 text-white text-[10px] font-medium tabular-nums">
+              {totalNew > 99 ? "99+" : totalNew}
+            </span>
+          )}
         </button>
       </header>
 
