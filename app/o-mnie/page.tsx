@@ -102,7 +102,7 @@ export default async function AboutPage() {
             <div className={hasGallery ? "lg:col-span-7" : ""}>
               <ClayRule className="mb-7" />
               <div
-                className="space-y-5 text-charcoal/80 leading-relaxed [&_p]:mb-4 [&_h2]:font-serif [&_h2]:text-2xl [&_h2]:text-espresso [&_h2]:mb-4 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:mb-4 [&_strong]:text-espresso"
+                className="space-y-5 text-charcoal/80 leading-relaxed [&_p]:mb-4 [&_h2]:font-serif [&_h2]:text-2xl [&_h2]:text-espresso [&_h2]:mb-4 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:mb-4 [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:mb-4 [&_ol]:space-y-2 [&_strong]:text-espresso"
                 dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(story) }}
               />
 

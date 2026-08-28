@@ -21,19 +21,22 @@ export const CONTACT_KEYS = [
   "contact_address_region",
 ];
 
-const REGULAMIN_DEFAULT = `<h2>I. Postanowienia ogólne</h2>
+const REGULAMIN_DEFAULT = `<p>Regulamin określa zasady sprzedaży w sklepie internetowym <strong>uniqueceramics.pl</strong>. Sprzedawcą jest <strong>Alicja Ulbrich</strong>, prowadząca pracownię ceramiczną pod marką <strong>Unique Ceramics</strong>.</p>
+<h2>I. Postanowienia ogólne</h2>
 <ol>
-<li>Sklep internetowy dostępny pod adresem <strong>uniqueceramics.pl</strong> prowadzony jest przez osobę fizyczną działającą pod marką <strong>Unique Ceramics</strong>.</li>
-<li>Kontakt ze sprzedawcą: e-mail <a href="mailto:kontakt@uniqueceramics.pl">kontakt@uniqueceramics.pl</a>, telefon <a href="tel:+48668443706">+48 668 443 706</a>.</li>
+<li>Sklep internetowy dostępny pod adresem <strong>uniqueceramics.pl</strong> prowadzi <strong>Alicja Ulbrich</strong>, osoba fizyczna działająca pod marką <strong>Unique Ceramics</strong>, z pracownią przy ul. Familijnej 23, 44-164 Kleszczów.</li>
+<li>Kontakt ze sprzedawcą: e-mail <a href="mailto:kontakt@uniqueceramics.pl">kontakt@uniqueceramics.pl</a>, telefon <a href="tel:+48664782179">+48 664 782 179</a>.</li>
 <li>Wszystkie produkty oferowane w sklepie są wykonywane ręcznie. Każdy egzemplarz jest niepowtarzalny i może nieznacznie różnić się od zdjęcia prezentowanego w sklepie – jest to naturalna cecha ceramiki rzemieślniczej, a nie wada towaru.</li>
 <li>Pęknięcia szkliwa (crackle) są naturalnym efektem wypalania ceramiki i nie stanowią wady fizycznej produktu.</li>
+<li>Część zdjęć produktów jest przygotowywana z użyciem narzędzi sztucznej inteligencji. Ingerencja obejmuje <strong>wyłącznie tło, scenerię, oświetlenie i kadr</strong>. Sam produkt widoczny na zdjęciu jest odwzorowaniem rzeczywistego wyrobu i nie podlega zmianom w zakresie kształtu, proporcji, liczby elementów zestawu ani koloru szkliwa. Zdjęcia przygotowane w ten sposób są oznaczone w sklepie znacznikiem „AI”.</li>
+<li>Przedmioty widoczne na zdjęciach jako elementy dekoracji (m.in. tkaniny, rośliny, kamienie oraz naczynia i akcesoria niebędące przedmiotem oferty) mają charakter wyłącznie aranżacyjny i <strong>nie wchodzą w skład zamówienia</strong>. Przedmiotem sprzedaży jest wyrób opisany w tytule i opisie produktu.</li>
 <li>Klientem może być wyłącznie osoba pełnoletnia, posiadająca pełną zdolność do czynności prawnych.</li>
-<li>Ceny podane w sklepie są cenami brutto (zawierają podatek VAT) i nie obejmują kosztów dostawy.</li>
+<li>Ceny podane w sklepie są cenami ostatecznymi za towar i nie obejmują kosztów dostawy. <strong>Sprzedawca nie jest podatnikiem podatku VAT</strong>, w związku z czym do podanych cen nie jest doliczany podatek VAT.</li>
 <li>Do korzystania ze sklepu niezbędne jest urządzenie z dostępem do internetu oraz przeglądarka internetowa.</li>
 </ol>
 <h2>II. Zamówienia</h2>
 <ol>
-<li>Zamówienia można składać poprzez formularz na stronie lub drogą e-mailową pod adresem kontakt@uniqueceramics.pl.</li>
+<li>Zamówienia można składać poprzez formularz na stronie lub drogą e-mailową pod adresem kontakt@uniqueceramics.pl. Złożenie zamówienia nie wymaga zakładania konta.</li>
 <li>Po złożeniu zamówienia Klient otrzymuje e-mail z potwierdzeniem przyjęcia zamówienia do realizacji.</li>
 <li>Umowa sprzedaży zostaje zawarta z chwilą potwierdzenia zamówienia przez sprzedawcę.</li>
 <li>Realizacja zamówienia na produkty dostępne od ręki rozpoczyna się po zaksięgowaniu płatności – zazwyczaj w ciągu 3–5 dni roboczych.</li>
@@ -42,20 +45,22 @@ const REGULAMIN_DEFAULT = `<h2>I. Postanowienia ogólne</h2>
 </ol>
 <h2>III. Płatność i dostawa</h2>
 <ol>
-<li>Dostępna forma płatności: <strong>przelew bankowy</strong>. Dane do przelewu przesyłane są e-mailem po złożeniu zamówienia. Płatność powinna zostać zrealizowana w ciągu 7 dni od daty złożenia zamówienia.</li>
-<li>Wysyłka realizowana jest za pośrednictwem wybranego przewoźnika (kurier lub Poczta Polska).</li>
-<li>Koszt dostawy wynosi <strong>18 zł</strong>. Przy zamówieniach o wartości 300 zł i powyżej dostawa jest <strong>bezpłatna</strong>.</li>
-<li>Czas dostawy po wysłaniu przesyłki wynosi zazwyczaj 1–3 dni robocze na terenie Polski.</li>
+<li>Dostępne formy płatności: <strong>przelew bankowy</strong>, <strong>BLIK</strong> oraz <strong>płatność kartą</strong> obsługiwana przez operatora Stripe. Lista metod dostępnych w danym momencie prezentowana jest przy składaniu zamówienia.</li>
+<li>Przy płatności przelewem dane do przelewu przesyłane są e-mailem po złożeniu zamówienia. Płatność powinna zostać zrealizowana w ciągu 7 dni od daty złożenia zamówienia.</li>
+<li>Dostępne sposoby dostawy to przesyłka kurierska, paczkomat InPost oraz odbiór osobisty w pracowni.</li>
+<li>Koszt dostawy zależy od wybranego sposobu dostawy i jest podawany przy składaniu zamówienia, przed jego potwierdzeniem. Odbiór osobisty jest bezpłatny. Sprzedawca może okresowo oferować bezpłatną dostawę – warunki takiej promocji prezentowane są w sklepie.</li>
+<li>Czas dostawy po nadaniu przesyłki wynosi zazwyczaj 1–3 dni robocze na terenie Polski.</li>
 <li>Sprzedawca nie ponosi odpowiedzialności za opóźnienia wynikające z działania przewoźnika.</li>
-<li>Do każdego zamówienia dołączany jest paragon lub faktura (na życzenie).</li>
+<li>Na życzenie Klienta Sprzedawca wystawia rachunek. Sprzedawca nie wystawia faktur VAT, ponieważ nie jest podatnikiem podatku VAT.</li>
 </ol>
 <h2>IV. Reklamacje</h2>
 <ol>
-<li>Sprzedawca odpowiada wobec Klienta będącego konsumentem z tytułu rękojmi za wady fizyczne i prawne zakupionego towaru.</li>
+<li>Sprzedawca odpowiada wobec Klienta będącego konsumentem za zgodność towaru z umową.</li>
 <li>Reklamację należy zgłosić e-mailem na adres <a href="mailto:kontakt@uniqueceramics.pl">kontakt@uniqueceramics.pl</a>, opisując wadę i dołączając zdjęcia.</li>
 <li>Sprzedawca rozpatruje reklamację w terminie 14 dni kalendarzowych od jej otrzymania.</li>
 <li>W przypadku uwzględnienia reklamacji Klient może żądać naprawy towaru, wymiany na nowy, obniżenia ceny albo odstąpienia od umowy.</li>
 <li>Różnice w wyglądzie wynikające z ręcznego wykonania, naturalnych właściwości szkliwa (np. crackle) oraz nierówności faktury nie stanowią wady towaru.</li>
+<li>Różnice w tle, scenerii i oświetleniu zdjęcia, wynikające ze sposobu przygotowania fotografii (pkt I.5), nie stanowią wady towaru. Podstawą oceny zgodności towaru z umową jest wyrób opisany w karcie produktu.</li>
 <li>Klient będący konsumentem ma prawo skorzystać z pozasądowych sposobów rozpatrywania reklamacji, w tym zwrócić się do Powiatowego Rzecznika Konsumentów lub skorzystać z platformy ODR: <a href="https://ec.europa.eu/consumers/odr" target="_blank" rel="noopener">ec.europa.eu/consumers/odr</a>.</li>
 </ol>
 <h2>V. Prawo odstąpienia od umowy</h2>
@@ -70,18 +75,20 @@ const REGULAMIN_DEFAULT = `<h2>I. Postanowienia ogólne</h2>
 </ol>
 <h2>VI. Ochrona danych osobowych i pliki cookie</h2>
 <ol>
-<li>Administratorem danych osobowych Klientów jest właściciel sklepu Unique Ceramics. Dane przetwarzane są wyłącznie w celu realizacji zamówień i kontaktu z Klientem.</li>
+<li>Administratorem danych osobowych Klientów jest <strong>Alicja Ulbrich</strong>, prowadząca sklep pod marką Unique Ceramics. Dane przetwarzane są wyłącznie w celu realizacji zamówień i kontaktu z Klientem.</li>
 <li>Podanie danych osobowych jest dobrowolne, lecz niezbędne do realizacji zamówienia.</li>
 <li>Klientowi przysługuje prawo dostępu do swoich danych, ich poprawiania oraz usunięcia. W tym celu należy napisać na adres <a href="mailto:kontakt@uniqueceramics.pl">kontakt@uniqueceramics.pl</a>.</li>
-<li>Dane nie są udostępniane osobom trzecim, z wyjątkiem przewoźnika w zakresie niezbędnym do realizacji dostawy.</li>
+<li>Dane nie są udostępniane osobom trzecim, z wyjątkiem przewoźnika oraz operatora płatności w zakresie niezbędnym do realizacji zamówienia.</li>
+<li>Szczegółowe zasady przetwarzania danych opisuje <a href="https://uniqueceramics.pl/polityka-prywatnosci">Polityka prywatności</a>.</li>
 <li>Strona wykorzystuje pliki cookie niezbędne do prawidłowego działania koszyka oraz pliki analityczne. Korzystanie ze strony bez zmiany ustawień przeglądarki oznacza zgodę na stosowanie plików cookie.</li>
 </ol>
 <h2>VII. Postanowienia końcowe</h2>
 <ol>
 <li>Sprzedawca zastrzega sobie prawo do zmiany Regulaminu. Zmiany nie dotyczą zamówień złożonych przed datą zmiany.</li>
-<li>W sprawach nieuregulowanych niniejszym Regulaminem zastosowanie mają przepisy prawa polskiego, w szczególności Kodeksu Cywilnego oraz Ustawy o prawach konsumenta.</li>
+<li>W sprawach nieuregulowanych niniejszym Regulaminem zastosowanie mają przepisy prawa polskiego, w szczególności Kodeksu cywilnego oraz ustawy o prawach konsumenta.</li>
 <li>Ewentualne spory rozstrzygane są przez właściwy sąd powszechny. Konsument może skorzystać z pozasądowych sposobów rozstrzygania sporów.</li>
-</ol>`;
+</ol>
+<p>Data ostatniej aktualizacji: <strong>28 sierpnia 2026 r.</strong></p>`;
 
 const POLITYKA_DEFAULT = `<p>Niniejsza Polityka Prywatności określa zasady przetwarzania i ochrony danych osobowych Użytkowników korzystających ze sklepu internetowego Unique Ceramics dostępnego pod adresem <strong>uniqueceramics.pl</strong>.</p>
 <h2>I. Administrator danych osobowych</h2>
