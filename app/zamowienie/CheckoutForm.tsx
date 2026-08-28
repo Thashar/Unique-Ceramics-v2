@@ -618,20 +618,23 @@ export default function CheckoutForm({
                       </button>
                     </div>
                   ) : (
-                    <div className="flex gap-2">
+                    // Pole i przycisk jedno pod drugim: kolumna podsumowania jest
+                    // wąska, więc w rzędzie na pole zostawało tyle miejsca, że
+                    // ucinało nawet słowo „Kod rabatowy”
+                    <div className="space-y-2">
                       <input
                         value={codeInput}
                         onChange={(e) => { setCodeInput(e.target.value.toUpperCase()); setCodeError(""); }}
                         onKeyDown={(e) => { if (e.key === "Enter") applyCode(e); }}
                         placeholder="Kod rabatowy"
                         aria-label="Kod rabatowy"
-                        className="flex-1 min-w-0 bg-warm-white border border-sand focus:border-clay outline-none px-3 py-2 text-espresso text-sm uppercase tracking-wider"
+                        className="w-full bg-warm-white border border-sand focus:border-clay outline-none px-3 py-2.5 text-espresso text-sm uppercase tracking-wider"
                       />
                       <button
                         type="button"
                         onClick={applyCode}
                         disabled={codeChecking || !codeInput.trim()}
-                        className="shrink-0 inline-flex items-center gap-2 border border-sand bg-warm-white hover:bg-sand disabled:opacity-40 disabled:cursor-not-allowed text-espresso text-xs tracking-widest uppercase px-4 py-2 transition-colors"
+                        className="w-full inline-flex items-center justify-center gap-2 border border-sand bg-warm-white hover:bg-sand disabled:opacity-40 disabled:cursor-not-allowed text-espresso text-xs tracking-widest uppercase px-4 py-2.5 transition-colors"
                       >
                         {codeChecking && <Loader2 size={13} className="animate-spin" aria-hidden="true" />}
                         Zastosuj
