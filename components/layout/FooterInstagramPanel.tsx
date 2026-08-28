@@ -57,26 +57,30 @@ export default function FooterInstagramPanel({ instagram }: { instagram?: string
         />
       </a>
 
-      <div className="mt-5 flex items-center gap-3 self-start">
-        {contacts.facebook ? (
-          <a
-            href={contacts.facebook}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Facebook"
-            className="inline-flex items-center justify-center w-11 h-11 rounded-full border border-terracotta/50 text-cream hover:border-terracotta hover:bg-terracotta hover:text-espresso transition-all duration-300"
-          >
-            <FacebookIcon size={16} />
-          </a>
-        ) : (
-          <>
-            <span className="inline-flex items-center justify-center w-11 h-11 rounded-full border border-sand/20 text-sand/60">
-              <FacebookIcon size={16} />
-            </span>
-            <span className="text-xs text-sand/60">Facebook – wkrótce</span>
-          </>
-        )}
-      </div>
+      {/* Facebook w tej samej konwencji co przycisk Instagrama – bez profilu
+          zostaje ta sama ramka, tylko przygaszona i nieklikalna */}
+      {contacts.facebook ? (
+        <a
+          href={contacts.facebook}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="group mt-3 inline-flex items-center gap-3 border border-terracotta/50 hover:border-terracotta hover:bg-terracotta hover:text-espresso text-cream text-sm tracking-widest uppercase px-6 py-3.5 transition-all duration-300 self-start"
+        >
+          <FacebookIcon size={14} />
+          Facebook
+          <ArrowRight
+            size={13}
+            strokeWidth={1.5}
+            className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300"
+          />
+        </a>
+      ) : (
+        <span className="mt-3 inline-flex items-center gap-3 border border-sand/20 text-sand/60 text-sm tracking-widest uppercase px-6 py-3.5 self-start">
+          <FacebookIcon size={14} />
+          Facebook
+          <span className="text-[10px] tracking-[0.2em] text-sand/60">wkrótce</span>
+        </span>
+      )}
     </motion.div>
   );
 }

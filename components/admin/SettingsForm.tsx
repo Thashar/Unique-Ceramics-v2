@@ -12,7 +12,11 @@ import GalleryEditor from "@/components/admin/GalleryEditor";
 import WorkshopsOffersEditor from "@/components/admin/WorkshopsOffersEditor";
 import AiPromptPresets from "@/components/admin/AiPromptPresets";
 import { parseGallery, galleryHead } from "@/lib/gallery";
-import { HOME_HERO_DEFAULT } from "@/lib/home-hero";
+import {
+  HOME_ABOUT_DEFAULT,
+  HOME_HERO_DEFAULT,
+  HOME_WORKSHOPS_DEFAULT,
+} from "@/lib/home-sections";
 import {
   AI_IMAGE_MODELS,
   AI_MODEL_PRICING,
@@ -44,8 +48,16 @@ interface Props {
     home_hero_scroll: string;
     home_about_image: string;
     home_about_position: string;
+    home_about_eyebrow: string;
+    home_about_title: string;
+    home_about_text: string;
+    home_about_cta: string;
     home_workshops_image: string;
     home_workshops_position: string;
+    home_workshops_eyebrow: string;
+    home_workshops_title: string;
+    home_workshops_text: string;
+    home_workshops_cta: string;
     about_hero_image: string;
     about_hero_position: string;
     about_hero_overlay_color: string;
@@ -227,6 +239,39 @@ function MultilineField({ label, value, setter, placeholder, rows = 3 }: {
   );
 }
 
+/**
+ * Teksty pełnoekranowej sekcji strony głównej („O mnie", „Warsztaty").
+ * Ten sam układ pól co w hero – tam jednak są dwa przyciski i napis przy
+ * strzałce, więc hero ma własny zestaw pól zamiast tego komponentu.
+ */
+function SectionTextFields({
+  eyebrow, setEyebrow, title, setTitle, text, setText, cta, setCta, defaults, ctaLabel,
+}: {
+  eyebrow: string;
+  setEyebrow: (v: string) => void;
+  title: string;
+  setTitle: (v: string) => void;
+  text: string;
+  setText: (v: string) => void;
+  cta: string;
+  setCta: (v: string) => void;
+  defaults: { eyebrow: string; title: string; text: string; cta: string };
+  ctaLabel: string;
+}) {
+  return (
+    <div className="space-y-4 pt-2">
+      <p className="text-xs text-charcoal/80">
+        Napisy na tej sekcji. <strong>Puste pole ukrywa dany element</strong>. W nagłówku Enter łamie
+        wiersz, a w opisie pusta linia robi odstęp między akapitami.
+      </p>
+      <Field label="Napis nad nagłówkiem" value={eyebrow} setter={setEyebrow} placeholder={defaults.eyebrow} />
+      <MultilineField label="Nagłówek" value={title} setter={setTitle} placeholder={defaults.title} rows={2} />
+      <MultilineField label="Opis" value={text} setter={setText} placeholder={defaults.text} rows={5} />
+      <Field label={ctaLabel} value={cta} setter={setCta} placeholder={defaults.cta} />
+    </div>
+  );
+}
+
 const noopSubscribe = () => () => {};
 
 /**
@@ -343,6 +388,15 @@ export default function SettingsForm({ section, initial, aiUsage }: Props) {
   const [homeAboutPos, setHomeAboutPos] = useState(initial.home_about_position);
   const [homeWorkshopsImage, setHomeWorkshopsImage] = useState(initial.home_workshops_image);
   const [homeWorkshopsPos, setHomeWorkshopsPos] = useState(initial.home_workshops_position);
+  // Teksty sekcji „O mnie" i „Warsztaty" – ten sam układ pól co w hero
+  const [aboutEyebrow, setAboutEyebrow] = useState(initial.home_about_eyebrow);
+  const [aboutTitle, setAboutTitle] = useState(initial.home_about_title);
+  const [aboutText, setAboutText] = useState(initial.home_about_text);
+  const [aboutCta, setAboutCta] = useState(initial.home_about_cta);
+  const [workshopsEyebrow, setWorkshopsEyebrow] = useState(initial.home_workshops_eyebrow);
+  const [workshopsTitle, setWorkshopsTitle] = useState(initial.home_workshops_title);
+  const [workshopsText, setWorkshopsText] = useState(initial.home_workshops_text);
+  const [workshopsCta, setWorkshopsCta] = useState(initial.home_workshops_cta);
 
   // O mnie
   const [aboutImage, setAboutImage] = useState(initial.about_hero_image);
@@ -559,6 +613,18 @@ export default function SettingsForm({ section, initial, aiUsage }: Props) {
               value={homeAboutPos}
               onChange={setHomeAboutPos}
             />
+            <SectionTextFields
+              eyebrow={aboutEyebrow}
+              setEyebrow={setAboutEyebrow}
+              title={aboutTitle}
+              setTitle={setAboutTitle}
+              text={aboutText}
+              setText={setAboutText}
+              cta={aboutCta}
+              setCta={setAboutCta}
+              defaults={HOME_ABOUT_DEFAULT}
+              ctaLabel={'Przycisk (do „O mnie”)'}
+            />
           </div>
 
           <div className="border-t border-sand pt-6 space-y-4">
@@ -574,6 +640,18 @@ export default function SettingsForm({ section, initial, aiUsage }: Props) {
               value={homeWorkshopsPos}
               onChange={setHomeWorkshopsPos}
             />
+            <SectionTextFields
+              eyebrow={workshopsEyebrow}
+              setEyebrow={setWorkshopsEyebrow}
+              title={workshopsTitle}
+              setTitle={setWorkshopsTitle}
+              text={workshopsText}
+              setText={setWorkshopsText}
+              cta={workshopsCta}
+              setCta={setWorkshopsCta}
+              defaults={HOME_WORKSHOPS_DEFAULT}
+              ctaLabel={'Przycisk (do „Warsztaty”)'}
+            />
           </div>
 
           <SaveButton
@@ -588,8 +666,16 @@ export default function SettingsForm({ section, initial, aiUsage }: Props) {
               { key: "home_hero_scroll",          value: heroScroll },
               { key: "home_about_image",       value: homeAboutImage },
               { key: "home_about_position",       value: homeAboutPos },
+              { key: "home_about_eyebrow",        value: aboutEyebrow },
+              { key: "home_about_title",          value: aboutTitle },
+              { key: "home_about_text",           value: aboutText },
+              { key: "home_about_cta",            value: aboutCta },
               { key: "home_workshops_image",      value: homeWorkshopsImage },
               { key: "home_workshops_position",   value: homeWorkshopsPos },
+              { key: "home_workshops_eyebrow",    value: workshopsEyebrow },
+              { key: "home_workshops_title",      value: workshopsTitle },
+              { key: "home_workshops_text",       value: workshopsText },
+              { key: "home_workshops_cta",        value: workshopsCta },
             ])}
             label="Zapisz stronę główną"
           />

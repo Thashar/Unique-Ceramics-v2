@@ -1,7 +1,11 @@
 import { unstable_cache } from "next/cache";
 import { db, withDbRetry } from "@/lib/db";
 import { AI_MODEL_DEFAULT, AI_PRESET_DEFAULT, AI_TEXT_MODEL_DEFAULT } from "@/lib/ai";
-import { HOME_HERO_DEFAULT } from "@/lib/home-hero";
+import {
+  HOME_ABOUT_DEFAULT,
+  HOME_HERO_DEFAULT,
+  HOME_WORKSHOPS_DEFAULT,
+} from "@/lib/home-sections";
 
 /** Klucze kontaktowe używane w stopce i w danych strukturalnych. */
 export const CONTACT_KEYS = [
@@ -187,8 +191,18 @@ const DEFAULTS: Record<string, string> = {
   home_hero_scroll: HOME_HERO_DEFAULT.scroll,
   home_about_image: "",
   home_about_position: "50% 50%",
+  // Teksty sekcji „O mnie" na stronie głównej
+  home_about_eyebrow: HOME_ABOUT_DEFAULT.eyebrow,
+  home_about_title: HOME_ABOUT_DEFAULT.title,
+  home_about_text: HOME_ABOUT_DEFAULT.text,
+  home_about_cta: HOME_ABOUT_DEFAULT.cta,
   home_workshops_image: "",
   home_workshops_position: "50% 50%",
+  // Teksty sekcji „Warsztaty" na stronie głównej
+  home_workshops_eyebrow: HOME_WORKSHOPS_DEFAULT.eyebrow,
+  home_workshops_title: HOME_WORKSHOPS_DEFAULT.title,
+  home_workshops_text: HOME_WORKSHOPS_DEFAULT.text,
+  home_workshops_cta: HOME_WORKSHOPS_DEFAULT.cta,
   about_hero_image: "",
   about_hero_position: "50% 50%",
   about_hero_overlay_color: "#2C2825",

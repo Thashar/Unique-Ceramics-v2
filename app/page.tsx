@@ -31,13 +31,13 @@ import HomeScrollSnap from "@/components/home/HomeScrollSnap";
 import Header from "@/components/layout/HeaderWrapper";
 import FooterWithInstagram from "@/components/layout/FooterWithInstagram";
 import { getSettings } from "@/lib/settings";
-import { HOME_HERO_SETTING_KEYS } from "@/lib/home-hero";
+import { HOME_TEXT_SETTING_KEYS } from "@/lib/home-sections";
 
 export default async function Home() {
   const s = await getSettings([
     "contact_instagram",
     "home_hero_image", "home_hero_position",
-    ...HOME_HERO_SETTING_KEYS,
+    ...HOME_TEXT_SETTING_KEYS,
     "home_about_image", "home_about_position",
     "home_workshops_image", "home_workshops_position",
   ]);
@@ -58,8 +58,22 @@ export default async function Home() {
           scrollLabel={s.home_hero_scroll}
         />
         <FeaturedProducts />
-        <AboutTeaser aboutImage={s.home_about_image} aboutPosition={s.home_about_position} />
-        <WorkshopsTeaser workshopsImage={s.home_workshops_image} workshopsPosition={s.home_workshops_position} />
+        <AboutTeaser
+          aboutImage={s.home_about_image}
+          aboutPosition={s.home_about_position}
+          eyebrow={s.home_about_eyebrow}
+          title={s.home_about_title}
+          text={s.home_about_text}
+          cta={s.home_about_cta}
+        />
+        <WorkshopsTeaser
+          workshopsImage={s.home_workshops_image}
+          workshopsPosition={s.home_workshops_position}
+          eyebrow={s.home_workshops_eyebrow}
+          title={s.home_workshops_title}
+          text={s.home_workshops_text}
+          cta={s.home_workshops_cta}
+        />
         {/* Treść SEO o obszarze obsługi – dostępna dla wyszukiwarek i czytników ekranu,
             niewidoczna wizualnie (sr-only). Uzupełnia areaServed w JSON-LD (app/layout.tsx).
             Świadomie NIE używamy display:none (Google traktuje to jako ukrywanie treści). */}

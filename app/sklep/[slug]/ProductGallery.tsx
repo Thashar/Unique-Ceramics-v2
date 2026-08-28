@@ -38,8 +38,6 @@ export default function ProductGallery({
   const [zoomOpen, setZoomOpen] = useState(false);
   const frameRef = useRef<HTMLDivElement>(null);
   const gesture = useRef<Gesture | null>(null);
-  /** Czy palec przesunął się na tyle, że gest nie jest już stuknięciem. */
-  const moved = useRef(false);
 
   // Pasek miniatur: własny wskaźnik przewijania zamiast systemowego scrollbara.
   // Pokazuje się w trakcie przesuwania i gaśnie powoli po puszczeniu – tak samo
@@ -90,7 +88,6 @@ export default function ProductGallery({
   const handleTouchStart = (e: React.TouchEvent) => {
     const t = e.touches[0];
     if (!t) return;
-    moved.current = false;
     if (!hasMany) return;
     gesture.current = { x: t.clientX, y: t.clientY, axis: "none" };
   };
@@ -101,8 +98,6 @@ export default function ProductGallery({
     const t = e.touches[0];
     const dx = t.clientX - g.x;
     const dy = t.clientY - g.y;
-
-    if (Math.abs(dx) > AXIS_LOCK_PX || Math.abs(dy) > AXIS_LOCK_PX) moved.current = true;
 
     // Kierunek ustalamy raz: pionowe przewijanie strony ma pierwszeństwo
     if (g.axis === "none") {
@@ -131,25 +126,7 @@ export default function ProductGallery({
     go(offset < 0 ? 1 : -1);
   };
 
-  /**
-   * Kliknięcie albo stuknięcie w kadr otwiera podgląd w osobnym oknie – tam
-   * zdjęcie da się powiększyć. Zastąpiło lupę przesuwaną po kadrze, która na
-   * telefonie wymagała przytrzymania i zasłaniała podgląd palcem.
-   */
-  const handleClick = (e: React.MouseEvent) => {
-    // Strzałki mają zmieniać zdjęcie, a nie otwierać podgląd
-    if ((e.target as HTMLElement).closest("button")) return;
-    // Po przesunięciu taśmy palcem przeglądarka i tak wysyła `click`
-    if (moved.current) return;
-    setZoomOpen(true);
-  };
-
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      setZoomOpen(true);
-      return;
-    }
     if (!hasMany) return;
     if (e.key === "ArrowLeft") {
       e.preventDefault();
@@ -174,26 +151,21 @@ export default function ProductGallery({
     <div className="flex flex-col gap-4">
       <div
         ref={frameRef}
-        className="relative aspect-[4/3] overflow-hidden bg-cream group select-none cursor-zoom-in"
+        className="relative aspect-[4/3] overflow-hidden bg-cream group select-none"
         // pan-y: gest w pionie przewija stronę, w poziomie obsługujemy sami
         style={{ touchAction: "pan-y", WebkitTouchCallout: "none" }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         onTouchCancel={handleTouchEnd}
-        onClick={handleClick}
         // Bez tego długie przytrzymanie otwiera menu przeglądarki („Otwórz grafikę
         // w nowej karcie…”), które zasłania kadr i przerywa gest przesuwania
         onContextMenu={(e) => e.preventDefault()}
         onKeyDown={handleKeyDown}
-        tabIndex={0}
-        role={hasMany ? "group" : "button"}
+        tabIndex={hasMany ? 0 : -1}
+        role={hasMany ? "group" : undefined}
         aria-roledescription={hasMany ? "karuzela" : undefined}
-        aria-label={
-          hasMany
-            ? `Zdjęcia produktu ${name} – otwórz powiększenie`
-            : `Zdjęcie produktu ${name} – otwórz powiększenie`
-        }
+        aria-label={hasMany ? `Zdjęcia produktu ${name}` : undefined}
       >
         <div
           className="flex h-full w-full"
@@ -221,13 +193,16 @@ export default function ProductGallery({
           ))}
         </div>
 
-        {/* Podpowiedź, że zdjęcie da się otworzyć w powiększeniu */}
-        <span
-          aria-hidden="true"
-          className="absolute top-3 right-3 w-9 h-9 flex items-center justify-center bg-warm-white/85 text-espresso shadow-sm transition-colors group-hover:bg-warm-white"
+        {/* Jedyne wejście do podglądu – kliknięcie w samo zdjęcie go nie otwiera
+            (decyzja właściciela 28.08.2026), żeby nie kolidowało z gestami */}
+        <button
+          type="button"
+          onClick={() => setZoomOpen(true)}
+          aria-label="Powiększ zdjęcie"
+          className="absolute top-3 right-3 w-9 h-9 flex items-center justify-center bg-warm-white/85 text-espresso shadow-sm transition-colors hover:bg-warm-white cursor-zoom-in"
         >
           <Expand size={16} strokeWidth={1.5} />
-        </span>
+        </button>
 
         {hasMany && (
           <>

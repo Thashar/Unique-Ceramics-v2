@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
-import { HOME_HERO_DEFAULT } from "@/lib/home-hero";
+import { HOME_HERO_DEFAULT } from "@/lib/home-sections";
 
 /**
  * Sekcja hero strony głównej. **Cały tekst pochodzi z ustawień**
