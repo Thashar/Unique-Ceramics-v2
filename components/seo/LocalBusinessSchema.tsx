@@ -36,14 +36,9 @@ const websiteSchema = {
   description: "Sklep z ręcznie robioną ceramiką artystyczną",
   inLanguage: "pl-PL",
   publisher: { "@id": `${BASE}/#business` },
-  potentialAction: {
-    "@type": "SearchAction",
-    target: {
-      "@type": "EntryPoint",
-      urlTemplate: `${BASE}/sklep?kategoria={search_term_string}`,
-    },
-    "query-input": "required name=search_term_string",
-  },
+  // Bez `potentialAction`/SearchAction: sklep nie ma wyszukiwarki, a deklaracja
+  // wskazywała na wycofany filtr `?kategoria=` (dziś przekierowywany). Google
+  // wycofał zresztą pole wyszukiwania w wynikach pod koniec 2024 r.
 };
 
 /**

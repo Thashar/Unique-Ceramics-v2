@@ -1,14 +1,16 @@
-﻿import Link from "next/link";
+﻿import { permanentRedirect } from "next/navigation";
 import Header from "@/components/layout/HeaderWrapper";
 import Footer from "@/components/layout/Footer";
 import { getCategories } from "@/lib/categories";
 import { findActiveFreeShipping, findActiveQuantityPromo, toQuantityConfig } from "@/lib/promos";
 import { quantityPromoTeaser } from "@/lib/quantity-promo";
-import { getShopProducts } from "@/lib/products";
 import { getSetting } from "@/lib/settings";
-import { DISCOUNT_HOLD_CATALOG_MS, activeDiscountPercent } from "@/lib/product-price";
+import { DISCOUNT_HOLD_CATALOG_MS } from "@/lib/product-price";
+import { categoryPath } from "@/lib/category-seo";
 import ProductGrid from "./ProductGrid";
+import CategoryBar from "./CategoryBar";
 import FloatingOrderButton from "./FloatingOrderButton";
+import { loadCatalog } from "./catalog";
 import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/seo";
 import BreadcrumbSchema from "@/components/seo/BreadcrumbSchema";
@@ -30,8 +32,20 @@ export default async function ShopPage({
 
   // Zapytania sekwencyjne – każde zwalnia połączenie przed kolejnym,
   // co chroni przed wyczerpaniem puli (Supabase: 15 połączeń w trybie sesji).
-  const vacationEnabled = (await getSetting("vacation_enabled")) === "true";
   const dbCategories = await getCategories();
+
+  // Stare adresy filtra (`/sklep?kategoria=kubki`) prowadzą teraz na własną
+  // stronę kategorii – ten wariant nie mógł trafić do wyników wyszukiwania,
+  // bo canonicalizował się do `/sklep`. Nieznana kategoria po prostu pokazuje
+  // pełny katalog, zamiast zostawiać klienta z pustą listą
+  if (kategoria && kategoria !== "wszystkie") {
+    const known = dbCategories.some((c) => c.slug === kategoria);
+    // 308, nie 307 – ten schemat adresów jest wycofany na stałe, więc stary
+    // link ma przekazać swoje sygnały nowej stronie
+    permanentRedirect(known ? categoryPath(kategoria) : "/sklep");
+  }
+
+  const vacationEnabled = (await getSetting("vacation_enabled")) === "true";
   // Trwające promocje – w katalogu pokazujemy je jako zachęty pod ceną.
   // `holdMs` = okno ISR tej strony: promocji kończącej się w czasie życia
   // zapisanego HTML-a nie reklamujemy, bo checkout już by jej nie policzył
@@ -39,31 +53,7 @@ export default async function ShopPage({
   const quantityTeaser = quantityPromoTeaser(toQuantityConfig(await findActiveQuantityPromo(hold)));
   const freeShippingNote = (await findActiveFreeShipping(hold)) !== null;
 
-  let products: Awaited<ReturnType<typeof getShopProducts>>["inStock"] = [];
-  let dbError = false;
-  try {
-    const { inStock, soldOut } = await getShopProducts();
-    const filterFn =
-      kategoria && kategoria !== "wszystkie"
-        ? (p: (typeof inStock)[0]) => p.category === kategoria
-        : () => true;
-    // Rabat rozstrzygamy tutaj, na serwerze: kafelek dostaje procent
-    // obowiązujący teraz (0 poza oknem rabatu), a nie surowe pole z bazy
-    products = [...inStock.filter(filterFn), ...soldOut.filter(filterFn)].map((p) => ({
-      ...p,
-      discountPercent: activeDiscountPercent(p, { holdMs: DISCOUNT_HOLD_CATALOG_MS }),
-    }));
-  } catch (e) {
-    dbError = true;
-    console.error("DB error in /sklep:", e);
-  }
-
-  const CATEGORIES = [
-    { value: "wszystkie", label: "Wszystkie" },
-    ...dbCategories.map((c) => ({ value: c.slug, label: c.label })),
-  ];
-
-  const activeCategory = kategoria ?? "wszystkie";
+  const { products, dbError } = await loadCatalog();
 
   return (
     <>
@@ -71,38 +61,15 @@ export default async function ShopPage({
       <Header />
       <div className="min-h-[100svh] bg-warm-white">
         <h1 className="sr-only">Sklep ceramiczny – sklep z ceramiką ręcznie robioną, Gliwice</h1>
-        {/* Filtry kategorii */}
-        {/* Pasek przykleja się pod headerem. --header-offset ustawia Header:
-            gdy na mobile chowa się przy przewijaniu w dół, pasek podjeżdża pod
-            samą górę (albo pod baner urlopowy) i zostaje jedynym stałym elementem.
-            Fallback w var() odpowiada stanowi przed hydratacją. */}
-        <div
-          className="border-b border-sand bg-cream sticky z-30 shadow-sm"
-          style={{
-            top: `var(--header-offset, ${vacationEnabled ? "100px" : "80px"})`,
-            transition: "top 300ms ease",
-          }}
-        >
-          <div className="max-w-7xl mx-auto px-6 lg:px-10 flex gap-1.5 md:gap-2 overflow-x-auto py-2 md:py-4 no-scrollbar">
-            {CATEGORIES.map((cat) => (
-              <Link
-                key={cat.value}
-                href={cat.value === "wszystkie" ? "/sklep" : `/sklep?kategoria=${cat.value}`}
-                className={`shrink-0 px-3 py-1 md:px-5 md:py-2 text-[10px] md:text-xs tracking-wider md:tracking-widest uppercase transition-all duration-200 ${
-                  activeCategory === cat.value
-                    ? "bg-espresso text-warm-white"
-                    : "bg-clay text-cream hover:bg-espresso"
-                }`}
-              >
-                {cat.label}
-              </Link>
-            ))}
-          </div>
-        </div>
+        <CategoryBar
+          categories={dbCategories}
+          activeSlug={null}
+          vacationEnabled={vacationEnabled}
+        />
 
         {/* Siatka produktów */}
         <div className="max-w-7xl mx-auto px-6 lg:px-10 pt-3 pb-16 md:pt-8 md:pb-16">
-          <ProductGrid products={products} kategoria={kategoria} dbError={dbError} categories={dbCategories} quantityTeaser={quantityTeaser} freeShippingNote={freeShippingNote} />
+          <ProductGrid products={products} dbError={dbError} categories={dbCategories} quantityTeaser={quantityTeaser} freeShippingNote={freeShippingNote} />
         </div>
       </div>
 

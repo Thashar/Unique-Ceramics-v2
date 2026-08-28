@@ -3,6 +3,9 @@ export const dynamic = "force-dynamic";
 import { db } from "@/lib/db";
 import { DEFAULT_CATEGORIES, type Category } from "@/lib/categories";
 import CategoriesManager from "@/components/admin/CategoriesManager";
+import CategoryIntros from "@/components/admin/CategoryIntros";
+import { getSettings } from "@/lib/settings";
+import { categoryIntroKey } from "@/lib/category-seo";
 
 export default async function CategoriesPage() {
   let categories: Category[] = [];
@@ -18,11 +21,19 @@ export default async function CategoriesPage() {
     migrationNeeded = true;
   }
 
+  // Opisy stron kategorii siedzą w ustawieniach (`category_intro_{slug}`),
+  // więc dodanie ich nie wymagało zmiany w bazie
+  const introSettings = await getSettings(categories.map((c) => categoryIntroKey(c.slug)));
+  const intros = Object.fromEntries(
+    categories.map((c) => [c.slug, introSettings[categoryIntroKey(c.slug)] ?? ""])
+  );
+
   return (
     <div>
       <h1 className="font-serif text-3xl text-espresso mb-2">Kategorie</h1>
       <p className="text-sm text-charcoal/80 mb-8">
-        Kategorie wyświetlane jako filtry w sklepie. Slug jest używany w URL (?kategoria=…) i musi pasować do wartości wpisanej w produktach.
+        Kategorie wyświetlane jako filtry w sklepie. Slug jest używany w adresie strony kategorii
+        (/sklep/kategoria/…) i musi pasować do wartości wpisanej w produktach.
       </p>
 
       {migrationNeeded ? (
@@ -45,7 +56,10 @@ CREATE UNIQUE INDEX "Category_slug_key" ON "Category"("slug");`}</pre>
           <p className="text-red-700 text-xs">Po wykonaniu odśwież tę stronę.</p>
         </div>
       ) : (
-        <CategoriesManager initialCategories={categories} />
+        <>
+          <CategoriesManager initialCategories={categories} />
+          <CategoryIntros categories={categories} initial={intros} />
+        </>
       )}
     </div>
   );
