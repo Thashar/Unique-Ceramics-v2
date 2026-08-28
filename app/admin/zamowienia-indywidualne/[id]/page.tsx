@@ -117,6 +117,7 @@ export default async function AdminCustomOrderDetailPage({
       {/* Formularz klienta + status */}
       <CustomOrderActions
         orderId={order.id}
+        orderNumber={order.orderNumber}
         currentStatus={order.status}
         currentNotes={order.adminNotes}
         currentPrice={order.price}

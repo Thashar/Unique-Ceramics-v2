@@ -5,6 +5,7 @@ import Image from "next/image";
 import { ShoppingBag, ArrowRight, Trash2, Plus, Minus } from "lucide-react";
 import { useCart, useCartPriceSync } from "@/lib/cart";
 import ClayRule from "@/components/ui/ClayRule";
+import ForeignShippingNote from "@/components/checkout/ForeignShippingNote";
 import { priceOrder } from "@/lib/discount-code";
 import { nextTierHintText, type QuantityPromoConfig } from "@/lib/quantity-promo";
 import { freeShippingMissing, type FreeShippingConfig } from "@/lib/free-shipping";
@@ -248,6 +249,9 @@ export default function CartView({
             >
               ← Kontynuuj zakupy
             </Link>
+            {/* Strona koszyka jest cachowana (ISR), więc bez podpowiedzi z adresu
+                IP – wariant dwujęzyczny pokazuje dopiero formularz zamówienia */}
+            <ForeignShippingNote className="mt-4" />
           </div>
         </div>
       </div>

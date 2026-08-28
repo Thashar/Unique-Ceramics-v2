@@ -31,6 +31,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 export default function CustomOrderActions({
   orderId,
+  orderNumber,
   currentStatus,
   currentNotes,
   currentPrice,
@@ -44,6 +45,8 @@ export default function CustomOrderActions({
   currentPostcode,
 }: {
   orderId: string;
+  /** Numer zamówienia indywidualnego – w temacie maila widnieje jako IND-{n}. */
+  orderNumber: number;
   currentStatus: string;
   currentNotes: string | null;
   currentPrice: number | null;
@@ -78,7 +81,10 @@ export default function CustomOrderActions({
   const [saved,  setSaved]  = useState(false);
   const [error,  setError]  = useState("");
 
-  const mailSubject = encodeURIComponent("Odpowiedz na zamowienie indywidualne");
+  // Numer w temacie, żeby klient od razu wiedział, której wyceny dotyczy odpowiedź
+  const mailSubject = encodeURIComponent(
+    `Odpowiedź na zamówienie indywidualne IND-${orderNumber}`
+  );
 
   function handleStatusChange(newStatus: string) {
     if (newStatus === "PAID" && (!paidAmount || parseFloat(paidAmount) <= 0)) {

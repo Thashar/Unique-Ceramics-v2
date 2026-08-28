@@ -18,12 +18,16 @@ import {
   toQuantityConfig,
 } from "@/lib/promos";
 import { validateAddress } from "@/lib/address-validation";
+import { isForeignVisitor } from "@/lib/visitor-country";
 import Header from "@/components/layout/HeaderWrapper";
 import Footer from "@/components/layout/Footer";
 import CheckoutForm from "./CheckoutForm";
 
 export default async function CheckoutPage() {
   const session = await auth();
+  // Podpowiedź z adresu IP – decyduje wyłącznie o tym, czy informacja
+  // o wysyłce zagranicznej dostanie drugie zdanie po angielsku
+  const foreignVisitor = await isForeignVisitor();
 
   // Strona jest force-dynamic, więc promocje czytamy bez `holdMs` – klient
   // widzi dokładnie to, co za chwilę policzy `/api/checkout`
@@ -100,6 +104,7 @@ export default async function CheckoutPage() {
           shippingCostCourier={settingNumber(settings.shipping_cost, 18)}
           shippingCostParcelLocker={settingNumber(settings.shipping_cost_parcel_locker, 18)}
           inpostToken={process.env.INPOST_GEOWIDGET_TOKEN ?? null}
+          foreignVisitor={foreignVisitor}
           savedAddressComplete={savedAddressComplete}
         />
       </main>

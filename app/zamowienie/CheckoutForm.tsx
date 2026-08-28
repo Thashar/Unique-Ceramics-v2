@@ -19,6 +19,7 @@ import { nextTierHintText, type QuantityPromoConfig } from "@/lib/quantity-promo
 import { freeShippingMissing, type FreeShippingConfig } from "@/lib/free-shipping";
 import { validateAddress, validateContact } from "@/lib/address-validation";
 import ClayRule from "@/components/ui/ClayRule";
+import ForeignShippingNote from "@/components/checkout/ForeignShippingNote";
 import dynamic from "next/dynamic";
 
 const InPostWidget = dynamic(() => import("@/components/checkout/InPostWidget"), { ssr: false });
@@ -50,6 +51,8 @@ interface Props {
   shippingCostCourier: number;
   shippingCostParcelLocker: number;
   inpostToken: string | null;
+  /** Podpowiedź z adresu IP – decyduje tylko o wariancie informacji o wysyłce zagranicznej. */
+  foreignVisitor?: boolean;
   savedAddressComplete: boolean | null; // null = gość
 }
 
@@ -74,6 +77,7 @@ export default function CheckoutForm({
   shippingCostCourier,
   shippingCostParcelLocker,
   inpostToken,
+  foreignVisitor = false,
   savedAddressComplete,
 }: Props) {
   const router = useRouter();
@@ -462,6 +466,10 @@ export default function CheckoutForm({
                   <FieldError msg={fieldErrors.parcelLocker} />
                 </div>
               )}
+
+              {/* Stawki i metody są policzone dla Polski – klient z zagranicy
+                  musi wiedzieć, że wysyłka jest możliwa po wycenie */}
+              <ForeignShippingNote prominent={foreignVisitor} className="mt-4" />
             </div>
 
             {/* Adres dostawy – ukryty przy paczkomacie i odbiorze osobistym */}
