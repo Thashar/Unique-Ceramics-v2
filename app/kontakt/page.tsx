@@ -197,36 +197,6 @@ export default async function ContactPage() {
                   </div>
                 </div>
               </div>
-
-              {/* Ten sam materiał co pas zamówień indywidualnych na końcu katalogu
-                  (`app/sklep/CustomOrderTile.tsx`) i zamknięcie FAQ na /warsztaty:
-                  ciemne tło, ikona prezentu, te same trzy hasła i przycisk w ramce */}
-              <div className="mt-12 p-7 sm:p-8 bg-espresso">
-                <span
-                  className="inline-flex items-center justify-center w-11 h-11 rounded-full border border-terracotta/40 bg-terracotta/10 text-terracotta mb-5"
-                  aria-hidden="true"
-                >
-                  <Gift size={20} strokeWidth={1.5} />
-                </span>
-                <h3 className="font-serif text-xl text-cream mb-3">Zamówienie indywidualne</h3>
-                <p className="text-sand/90 text-sm leading-relaxed mb-5">
-                  Tworzę ceramikę na zamówienie – zestawy ślubne, prezenty firmowe,
-                  naczynia z personalizacją. Czas realizacji: 4+ tygodnie.
-                </p>
-                <CustomOrderPoints className="mb-6" />
-                <Link
-                  href="/zamowienie-indywidualne"
-                  className="group inline-flex items-center gap-3 border border-terracotta/50 hover:border-terracotta hover:bg-terracotta hover:text-espresso text-cream text-xs tracking-widest uppercase px-6 py-3.5 transition-all duration-300"
-                >
-                  Wypełnij formularz
-                  <ArrowRight
-                    size={14}
-                    strokeWidth={1.5}
-                    className="group-hover:translate-x-1 transition-transform"
-                    aria-hidden="true"
-                  />
-                </Link>
-              </div>
             </div>
 
             {/* Formularz */}
@@ -234,6 +204,47 @@ export default async function ContactPage() {
               <ClayRule className="mb-7" />
               <h2 className="font-serif text-2xl text-espresso mb-8">Napisz wiadomość</h2>
               <ContactForm workshopOptions={workshopOptions} />
+            </div>
+
+            {/* Zaproszenie do zamówień indywidualnych **przez obie kolumny**
+                (`lg:col-span-2`) – w wąskiej kolumnie kontaktu robiło się z niego
+                wysokie pudło, a pas przez całą szerokość domyka stronę tak samo
+                jak koniec katalogu. Stoi **po formularzu w kodzie**, więc na telefonie
+                ląduje pod przyciskiem wysyłki, a nie przed nim.
+                Ten sam materiał co `app/sklep/CustomOrderTile.tsx`
+                i zamknięcie FAQ na /warsztaty: tło espresso, ikona prezentu w kółku,
+                te same trzy hasła i przycisk w ramce */}
+            <div className="lg:col-span-2 flex flex-col md:flex-row md:items-center gap-5 md:gap-7 bg-espresso p-6 sm:p-7 md:p-8">
+              <span
+                className="inline-flex items-center justify-center w-11 h-11 md:w-14 md:h-14 rounded-full border border-terracotta/40 bg-terracotta/10 text-terracotta shrink-0"
+                aria-hidden="true"
+              >
+                <Gift strokeWidth={1.5} className="w-5 h-5 md:w-6 md:h-6" />
+              </span>
+
+              <div className="flex-1 min-w-0">
+                <h3 className="font-serif text-xl md:text-2xl text-cream mb-2">
+                  Zamówienie indywidualne
+                </h3>
+                <p className="text-sand/90 text-sm leading-relaxed">
+                  Tworzę ceramikę na zamówienie – zestawy ślubne, prezenty firmowe,
+                  naczynia z personalizacją. Czas realizacji: 4+ tygodnie.
+                </p>
+                <CustomOrderPoints inline className="mt-4" />
+              </div>
+
+              <Link
+                href="/zamowienie-indywidualne"
+                className="group w-full md:w-auto shrink-0 inline-flex items-center justify-center gap-3 border border-terracotta/50 hover:border-terracotta hover:bg-terracotta hover:text-espresso text-cream text-[11px] sm:text-xs tracking-widest uppercase px-5 sm:px-6 py-3 sm:py-3.5 transition-all duration-300"
+              >
+                Wypełnij formularz
+                <ArrowRight
+                  size={14}
+                  strokeWidth={1.5}
+                  className="group-hover:translate-x-1 transition-transform"
+                  aria-hidden="true"
+                />
+              </Link>
             </div>
           </div>
         </div>
