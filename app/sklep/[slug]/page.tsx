@@ -170,7 +170,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const cheapestShipping = Math.min(shippingCostCourier, shippingCostParcel);
   const shippingVaries = shippingCostCourier !== shippingCostParcel;
 
-  // Karuzela „Podobne produkty" – punktacja w `lib/similar-products.ts`
+  // Karuzela „Mogą Ci się spodobać" – punktacja w `lib/similar-products.ts`
   // (kategoria, zbliżona cena, wyróżnienie, trwająca przecena). Wyprzedanych
   // nie pokazujemy, więc bierzemy wyłącznie `inStock`
   const similar = similarProducts(catalog.inStock, product, {
