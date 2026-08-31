@@ -44,16 +44,21 @@ export default function SimilarProducts({
         <ClayRule className="mb-7" />
         <h2 className="font-serif text-2xl md:text-3xl text-espresso mb-8">{title}</h2>
 
-        {/* Kafelki węższe niż kolumna – wystający fragment następnego mówi,
-            że taśmę da się przesunąć, bez dokładania strzałek */}
-        <div ref={attach} onScroll={onScroll} className={`flex gap-6 md:gap-8 ${DRAG_SCROLL_CLASS}`}>
+        {/* Kafelki są **o połowę węższe** od kart katalogu (decyzja właściciela
+            31.08.2026) i idą w wariancie `compact`, żeby tytuł i cena zgadzały
+            się ze zmniejszonym kadrem. Na telefonie zostają trzy w rzędzie –
+            przy czterech nazwa produktu łamała się co słowo. Kafelek węższy niż
+            kolumna sprawia, że wystający fragment następnego mówi, że taśmę da
+            się przesunąć, bez dokładania strzałek */}
+        <div ref={attach} onScroll={onScroll} className={`flex gap-3 md:gap-4 ${DRAG_SCROLL_CLASS}`}>
           {products.map((product) => (
             <div
               key={product.id}
-              className="w-[45%] sm:w-[38%] md:w-[30%] lg:w-[23%] shrink-0"
+              className="w-[28%] sm:w-[24%] md:w-[18%] lg:w-[12%] shrink-0"
             >
               <ProductCard
                 product={product}
+                compact
                 categoryLabel={categoryLabel(product.category, categories)}
               />
             </div>
