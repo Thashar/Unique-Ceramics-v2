@@ -186,6 +186,14 @@ const WORKSHOPS_FAQ_DEFAULT = JSON.stringify([
   { id: 5, question: "Jak zarezerwować miejsce?",            answer: "Napisz do mnie przez formularz kontaktowy lub zadzwoń." },
 ]);
 
+/**
+  * Profil Facebooka sklepu. Trzymamy go w kodzie, bo ma być widoczny zawsze –
+  * pusty wpis w bazie (tak zapisuje się nietknięte pole w panelu) wraca do tej
+  * wartości. Panel nadal może podmienić adres na inny; żeby ukryć link
+  * w stopce, trzeba wyczyścić tę stałą.
+  */
+export const CONTACT_FACEBOOK_DEFAULT = "https://www.facebook.com/61594149231933/";
+
 const DEFAULTS: Record<string, string> = {
   regulamin: REGULAMIN_DEFAULT,
   polityka_prywatnosci: POLITYKA_DEFAULT,
@@ -239,7 +247,7 @@ const DEFAULTS: Record<string, string> = {
   contact_phone: "+48 668 443 706",
   contact_email: "kontakt@uniqueceramics.pl",
   contact_instagram: "@unique.ceramics",
-  contact_facebook: "",
+  contact_facebook: CONTACT_FACEBOOK_DEFAULT,
   contact_youtube: "",
   contact_whatsapp: "",
   contact_hours: "Wt–Czw 17:00–19:00\nSo 15:00–17:00",

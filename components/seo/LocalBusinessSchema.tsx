@@ -1,4 +1,4 @@
-import { getSchemaSettings } from "@/lib/settings";
+import { CONTACT_FACEBOOK_DEFAULT, getSchemaSettings } from "@/lib/settings";
 import { absoluteUrl } from "@/lib/seo";
 import { parseOpeningHours, parseCityLine } from "@/lib/opening-hours";
 
@@ -59,6 +59,8 @@ export default async function LocalBusinessSchema() {
 
   const { postalCode, locality } = parseCityLine(s.contact_address_city);
   const openingHours = parseOpeningHours(s.contact_hours);
+  // Ten sam fallback co w /api/public/contacts – profil ma być też w `sameAs`
+  const facebook = s.contact_facebook || CONTACT_FACEBOOK_DEFAULT;
   const mapQuery = encodeURIComponent(
     [s.contact_address_street, s.contact_address_city].filter(Boolean).join(", ")
   );
@@ -103,7 +105,7 @@ export default async function LocalBusinessSchema() {
     areaServed: AREA_SERVED,
     sameAs: [
       `https://www.instagram.com/${s.contact_instagram.replace(/^@/, "")}`,
-      ...(s.contact_facebook ? [s.contact_facebook] : []),
+      ...(facebook ? [facebook] : []),
       ...(s.contact_youtube ? [s.contact_youtube] : []),
     ],
     hasOfferCatalog: {

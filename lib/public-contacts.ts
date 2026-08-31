@@ -29,7 +29,7 @@ export const CONTACTS_DEFAULTS: PublicContacts = {
   phone: "+48 668 443 706",
   email: "kontakt@uniqueceramics.pl",
   instagram: "@unique.ceramics",
-  facebook: "",
+  facebook: "https://www.facebook.com/61594149231933/",
   youtube: "",
   whatsapp: "",
   hours: "Wt–Czw 17:00–19:00\nSo 15:00–17:00",
@@ -48,9 +48,10 @@ function normalize(j: Partial<PublicContacts>): PublicContacts {
     phone: j.phone || CONTACTS_DEFAULTS.phone,
     email: j.email || CONTACTS_DEFAULTS.email,
     instagram: j.instagram || CONTACTS_DEFAULTS.instagram,
+    // Facebook też jest stały – pusty wpis wraca do adresu z kodu
+    facebook: j.facebook || CONTACTS_DEFAULTS.facebook,
     // Reszta jest opcjonalna: wyczyszczone w panelu = ukryte w stopce,
     // dlatego tu świadomie NIE wracamy do defaultów
-    facebook: j.facebook ?? "",
     youtube: j.youtube ?? "",
     whatsapp: j.whatsapp ?? "",
     // normalizeHours: honoruje też starszy zapis z `<br>` wpisanym w panelu
