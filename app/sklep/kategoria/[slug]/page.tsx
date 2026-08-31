@@ -15,7 +15,6 @@ import { DISCOUNT_HOLD_CATALOG_MS } from "@/lib/product-price";
 import { SITE_URL, absoluteUrl, metaDescription, pageMetadata } from "@/lib/seo";
 import {
   categoryDescription,
-  categoryIntroKey,
   categoryPath,
   categoryTitle,
 } from "@/lib/category-seo";
@@ -46,13 +45,11 @@ export async function generateMetadata({
   }
 
   // Opis idzie **tylko** do metadanych – na stronie go nie drukujemy.
-  // Własny tekst z panelu ma pierwszeństwo; przycinamy go, bo w wyniku
-  // wyszukiwania i tak zmieści się około 160 znaków
-  const custom = (await getSetting(categoryIntroKey(slug))).trim();
-
+  // Układa go szablon z nazwy kategorii; przycinamy, bo w wyniku wyszukiwania
+  // i tak zmieści się około 160 znaków
   return pageMetadata({
     title: categoryTitle(category.label),
-    description: metaDescription(custom || categoryDescription(category.label)),
+    description: metaDescription(categoryDescription(category.label)),
     path: categoryPath(slug),
     ogTitle: `${category.label} – Unique Ceramics`,
   });
@@ -73,8 +70,7 @@ export default async function CategoryPage({
   const categories = await getCategories();
   // Opis kategorii **nie jest drukowany na stronie** – trafia do metadanych
   // (patrz `generateMetadata`) i do danych strukturalnych niżej
-  const customDescription = (await getSetting(categoryIntroKey(slug))).trim();
-  const description = customDescription || categoryDescription(category.label);
+  const description = categoryDescription(category.label);
 
   const hold = { holdMs: DISCOUNT_HOLD_CATALOG_MS };
   const quantityTeaser = quantityPromoTeaser(toQuantityConfig(await findActiveQuantityPromo(hold)));

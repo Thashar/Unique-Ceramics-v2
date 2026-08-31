@@ -3,11 +3,8 @@ export const dynamic = "force-dynamic";
 import { db } from "@/lib/db";
 import { DEFAULT_CATEGORIES, type Category } from "@/lib/categories";
 import CategoriesManager from "@/components/admin/CategoriesManager";
-import CategoryIntros from "@/components/admin/CategoryIntros";
 import CollectionsManager from "@/components/admin/CollectionsManager";
 import type { Collection } from "@/lib/collection-defaults";
-import { getSettings } from "@/lib/settings";
-import { categoryIntroKey } from "@/lib/category-seo";
 
 export default async function CategoriesPage() {
   let categories: Category[] = [];
@@ -33,13 +30,6 @@ export default async function CategoriesPage() {
   } catch {
     collections = [];
   }
-
-  // Opisy stron kategorii siedzą w ustawieniach (`category_intro_{slug}`),
-  // więc dodanie ich nie wymagało zmiany w bazie
-  const introSettings = await getSettings(categories.map((c) => categoryIntroKey(c.slug)));
-  const intros = Object.fromEntries(
-    categories.map((c) => [c.slug, introSettings[categoryIntroKey(c.slug)] ?? ""])
-  );
 
   return (
     <div>
@@ -71,7 +61,6 @@ CREATE UNIQUE INDEX "Category_slug_key" ON "Category"("slug");`}</pre>
       ) : (
         <>
           <CategoriesManager initialCategories={categories} />
-          <CategoryIntros categories={categories} initial={intros} />
           <CollectionsManager initial={collections} />
         </>
       )}

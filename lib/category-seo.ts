@@ -14,9 +14,8 @@
  * użytkownikowi to cloaking, za który Google karze ręcznie.
  *
  * Teksty są **generowane z nazwy kategorii**, żeby nowa kategoria od razu miała
- * komplet metadanych. Właściciel może je nadpisać własnym opisem w panelu
- * (ustawienie `category_intro_{slug}`, zakładka Kategorie) – i powinien, bo
- * własny tekst jest dla wyszukiwarki wart więcej niż szablon.
+ * komplet metadanych. Ręczna edycja opisów w panelu została wycofana
+ * (decyzja właściciela 31.08.2026) – nie wracaj do ustawień `category_intro_*`.
  *
  * Moduł neutralny (bez bazy) – korzysta z niego strona serwerowa i panel.
  */
@@ -24,11 +23,6 @@
 /** Adres strony kategorii. */
 export function categoryPath(slug: string): string {
   return `/sklep/kategoria/${slug}`;
-}
-
-/** Klucz ustawienia z własnym opisem kategorii. */
-export function categoryIntroKey(slug: string): string {
-  return `category_intro_${slug}`;
 }
 
 /**
