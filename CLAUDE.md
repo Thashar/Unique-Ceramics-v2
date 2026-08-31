@@ -568,7 +568,15 @@ W treściach interfejsu, komentarzach i dokumentacji używaj **półpauzy `–`*
 
 ## Bezpieczeństwo – zasady
 
-- **Nagłówki** (`next.config.ts`): CSP, X-Frame-Options DENY, nosniff, Referrer-Policy, HSTS, Permissions-Policy. Nowe zewnętrzne źródła (skrypty, iframy, obrazy) wymagają aktualizacji CSP. `optimizePackageImports` dla framer-motion i lucide-react; `compiler.removeConsole` usuwa `console.log` z bundle klienta (zachowane `error`/`warn`).
+- **Nagłówki** (`next.config.ts`): CSP, X-Frame-Options DENY, nosniff, Referrer-Policy, HSTS, Permissions-Policy.
+  Dodatkowo `noIndexImageHeaders` daje **`X-Robots-Tag: noindex`** obrazom, które nie mają trafiać
+  do Grafiki Google – dziś wordmark `thashar-wordmark.webp` (Google listował go jako grafikę
+  strony „Regulamin | Unique Ceramics”). Reguła obejmuje **dwa adresy tego samego pliku**:
+  bezpośredni z `public/` i wariant z optymalizatora (`/_next/image` z dopasowaniem po `has.query.url`
+  – samo `source: "/_next/image"` objęłoby też zdjęcia produktów, które mają być indeksowane).
+  **Nie dokładaj do tego `Disallow` w `app/robots.ts`** – zablokowany plik nigdy nie zostanie pobrany,
+  więc Googlebot nie zobaczy `noindex` i obraz zostanie w indeksie. `logo.webp` celowo **nie** ma
+  tej blokady: jest znakiem marki i idzie jako `logo` firmy w `LocalBusinessSchema`. Nowe zewnętrzne źródła (skrypty, iframy, obrazy) wymagają aktualizacji CSP. `optimizePackageImports` dla framer-motion i lucide-react; `compiler.removeConsole` usuwa `console.log` z bundle klienta (zachowane `error`/`warn`).
 - **Nie ładuj skryptów z CDN** – zależności tylko przez npm (CSP je zablokuje).
 - **Kwoty i stany magazynowe** liczone wyłącznie po stronie serwera; checkout dekrementuje stock w transakcji z utworzeniem zamówienia.
 - **Nigdy nie pokazuj `e.message` użytkownikowi** – szczegóły błędów tylko do `console.error`, na stronie komunikat ogólny.

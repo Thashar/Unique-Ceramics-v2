@@ -27,6 +27,35 @@ const securityHeaders = [
   },
 ];
 
+/**
+ * Obrazy, które mają zniknąć z Grafiki Google. Googlebot musi je **pobrać**,
+ * żeby zobaczyć `X-Robots-Tag: noindex` – dlatego NIE blokujemy ich w robots.txt
+ * (disallow uniemożliwiłby odczytanie nagłówka i obraz zostałby w indeksie).
+ * Wzorzec pokrywa dwa adresy tego samego pliku: bezpośredni z `public/`
+ * i wariant z optymalizatora (`/_next/image?url=...`).
+ */
+const NOINDEX_IMAGE_PATTERN = "thashar-wordmark";
+
+const noIndexImageHeaders = [
+  {
+    source: "/images/thashar-wordmark.webp",
+    headers: [{ key: "X-Robots-Tag", value: "noindex" }],
+  },
+  {
+    // `has` na parametrze `url` – sam `source: "/_next/image"` objąłby
+    // wszystkie zdjęcia produktów, które mają być indeksowane
+    source: "/_next/image",
+    has: [
+      {
+        type: "query" as const,
+        key: "url",
+        value: `.*${NOINDEX_IMAGE_PATTERN}.*`,
+      },
+    ],
+    headers: [{ key: "X-Robots-Tag", value: "noindex" }],
+  },
+];
+
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   // pdfkit i sharp to paczki natywne – nie mogą przechodzić przez bundler
@@ -105,6 +134,7 @@ const nextConfig: NextConfig = {
         source: "/(.*)",
         headers: securityHeaders,
       },
+      ...noIndexImageHeaders,
     ];
   },
 };
