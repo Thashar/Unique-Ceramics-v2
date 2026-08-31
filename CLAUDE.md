@@ -165,7 +165,7 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` – zwracają wartość z DB l
 | `contact_email` | E-mail (default: kontakt@uniqueceramics.pl) |
 | `contact_instagram` | Handle Instagram (default: @unique.ceramics) |
 | `contact_whatsapp` | Numer WhatsApp (opcjonalny; pusty = ukryty). Link `wa.me/{cyfry}` w stopce i na /kontakt |
-| `contact_facebook` | URL profilu Facebook (opcjonalny; pusty = ukryty w stopce) |
+| `contact_facebook` | URL profilu Facebook (opcjonalny; pusty = ukryty w stopce i na /kontakt). Na `/kontakt` adres pokazujemy **bez protokołu, „www." i końcowego ukośnika** – pełny URL rozpychał kolumnę danych kontaktowych |
 | `contact_youtube` | URL kanału YouTube (opcjonalny; pusty = ukryty w stopce) |
 | `contact_hours` | Godziny otwarcia (default: dwa wiersze – Wt–Czw 17:00–19:00 / So 15:00–17:00). Pole w panelu jest **wieloliniowe** – Enter łamie wiersz, a stopka i /kontakt renderują go przez `whitespace-pre-line`. Pokazywane pod adresem w kolumnie „Gdzie mnie znajdziesz"; parsowane przez `lib/opening-hours.ts` do `openingHoursSpecification` w JSON-LD |
 | `contact_address_street` | Ulica i numer pracowni (default: ul. Familijna 23) |
