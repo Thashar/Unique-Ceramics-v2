@@ -40,30 +40,30 @@ export default function ProductGallery({
   const gesture = useRef<Gesture | null>(null);
 
   // Pasek miniatur: własny wskaźnik przewijania zamiast systemowego scrollbara.
-  // Gdy rząd miniatur nie mieści się w kolumnie, wskaźnik stoi pod nim **na stałe**
-  // (przygaszony) – inaczej nic nie zdradzało, że dalej są kolejne zdjęcia.
-  // W trakcie przesuwania rozjaśnia się i jedzie z palcem, potem wraca do spoczynku.
+  // **Widoczny tylko w trakcie przesuwania** (decyzja właściciela 31.08.2026) –
+  // w spoczynku pod miniaturami nie ma paska. Nie rób go stałym i nie dokładaj
+  // strzałek: rząd przesuwa się przeciągnięciem, kursorem tak samo jak palcem.
   const thumbsRef = useRef<HTMLDivElement>(null);
   const [thumbHint, setThumbHint] = useState({ visible: false, progress: 0, size: 1 });
-  const [thumbsScrollable, setThumbsScrollable] = useState(false);
   const thumbHintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /**
-   * Pomiar taśmy miniatur: czy w ogóle da się ją przewinąć i jak długi ma być
-   * wskaźnik. Siedzi w **callback ref** z `ResizeObserver`, a nie w efekcie –
-   * pomiar musi się powtórzyć po każdej zmianie szerokości kolumny (obrót
-   * telefonu, zmiana okna), a reguła `react-hooks/set-state-in-effect`
-   * nie pozwala ustawiać stanu w `useEffect`.
+   * Pomiar taśmy miniatur (jak długi jest wskaźnik i gdzie stoi) oraz
+   * **przeciąganie rzędu kursorem**. Siedzi w callback refie z `ResizeObserver`,
+   * a nie w efekcie – pomiar musi się powtórzyć po każdej zmianie szerokości
+   * kolumny, a reguła `react-hooks/set-state-in-effect` nie pozwala ustawiać
+   * stanu w `useEffect`.
+   *
+   * Myszą taśmy nie dało się ruszyć w ogóle (poziomego scrolla mysz nie daje),
+   * więc łapiemy zdarzenia **pointer**: wciśnięty lewy przycisk przesuwa rząd
+   * dokładnie tak, jak robi to palec na dotyku. Dotyk zostawiamy przeglądarce –
+   * natywne przewijanie jest płynniejsze i nie psuje pionowego scrolla strony.
    */
   const attachThumbs = useCallback((el: HTMLDivElement | null) => {
     thumbsRef.current = el;
-    if (!el) {
-      setThumbsScrollable(false);
-      return;
-    }
+    if (!el) return;
     const measure = () => {
       const scrollable = el.scrollWidth - el.clientWidth;
-      setThumbsScrollable(scrollable > 1);
       setThumbHint((prev) => ({
         ...prev,
         size: el.scrollWidth > 0 ? el.clientWidth / el.scrollWidth : 1,
@@ -74,29 +74,65 @@ export default function ProductGallery({
     const observer = new ResizeObserver(measure);
     observer.observe(el);
 
-    /**
-     * Kółko myszy nad miniaturami przesuwa je w poziomie – bez tego na
-     * desktopie nie było jak sięgnąć po dalsze zdjęcia (poziomego scrolla
-     * mysz sama nie daje). Na krańcu taśmy oddajemy ruch stronie, żeby
-     * przewijanie nie zatrzymywało się na galerii. Listener dopinamy ręcznie,
-     * bo React podpina `wheel` pasywnie, a tu potrzebny jest `preventDefault`.
-     */
-    const onWheel = (e: WheelEvent) => {
-      const scrollable = el.scrollWidth - el.clientWidth;
-      if (scrollable <= 1) return;
-      const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
-      if (delta === 0) return;
-      const atStart = delta < 0 && el.scrollLeft <= 0;
-      const atEnd = delta > 0 && el.scrollLeft >= scrollable - 1;
-      if (atStart || atEnd) return;
+    let dragging = false;
+    let startX = 0;
+    let startScroll = 0;
+    let moved = 0;
+
+    const onPointerDown = (e: PointerEvent) => {
+      if (e.pointerType !== "mouse" || e.button !== 0) return;
+      if (el.scrollWidth - el.clientWidth <= 1) return;
+      dragging = true;
+      startX = e.clientX;
+      startScroll = el.scrollLeft;
+      moved = 0;
+      // Bez tego przeciągnięcie startuje natywne przenoszenie obrazka
       e.preventDefault();
-      el.scrollLeft += delta;
     };
-    el.addEventListener("wheel", onWheel, { passive: false });
+
+    const onPointerMove = (e: PointerEvent) => {
+      if (!dragging) return;
+      const dx = e.clientX - startX;
+      moved = Math.max(moved, Math.abs(dx));
+      el.scrollLeft = startScroll - dx;
+    };
+
+    const blockClick = (clickEvent: Event) => {
+      clickEvent.preventDefault();
+      clickEvent.stopPropagation();
+    };
+    let unblockTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const onPointerUp = () => {
+      if (!dragging) return;
+      dragging = false;
+      // Przeciągnięcie nie może kończyć się zmianą zdjęcia – kliknięcie
+      // wypadające po ruchu ponad próg zatrzymujemy jeszcze przed miniaturą.
+      // Blokadę zdejmujemy po chwili także wtedy, gdy kliknięcie nie przyszło
+      // (palec/kursor puszczony poza taśmą) – inaczej zjadłaby następny klik
+      if (moved > AXIS_LOCK_PX) {
+        el.addEventListener("click", blockClick, { capture: true, once: true });
+        if (unblockTimer) clearTimeout(unblockTimer);
+        unblockTimer = setTimeout(
+          () => el.removeEventListener("click", blockClick, { capture: true }),
+          120
+        );
+      }
+    };
+
+    el.addEventListener("pointerdown", onPointerDown);
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", onPointerUp);
+    window.addEventListener("pointercancel", onPointerUp);
 
     return () => {
       observer.disconnect();
-      el.removeEventListener("wheel", onWheel);
+      if (unblockTimer) clearTimeout(unblockTimer);
+      el.removeEventListener("pointerdown", onPointerDown);
+      el.removeEventListener("click", blockClick, { capture: true });
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+      window.removeEventListener("pointercancel", onPointerUp);
     };
   }, []);
 
@@ -309,11 +345,13 @@ export default function ProductGallery({
       {hasMany && (
         <div>
           {/* Systemowy scrollbar chowamy (`no-scrollbar`) – jego miejsce zajmuje
-              wskaźnik niżej, widoczny tylko w trakcie przesuwania */}
+              wskaźnik niżej, widoczny tylko w trakcie przesuwania. Rząd przesuwa
+              się przeciągnięciem: palcem natywnie, kursorem przez obsługę
+              wskaźnika w `attachThumbs` (stąd `cursor-grab` i `select-none`) */}
           <div
             ref={attachThumbs}
             onScroll={handleThumbsScroll}
-            className="flex gap-3 overflow-x-auto no-scrollbar"
+            className="flex gap-3 overflow-x-auto no-scrollbar select-none cursor-grab active:cursor-grabbing"
           >
             {images.map((img, i) => (
               <button
@@ -335,29 +373,25 @@ export default function ProductGallery({
                   src={img}
                   alt={`${name} ${i + 1}`}
                   fill
-                  className="object-contain"
+                  className="object-contain pointer-events-none"
+                  draggable={false}
                   sizes="(max-width: 767px) 33vw, 112px"
                 />
               </button>
             ))}
           </div>
 
-          {/* Wskaźnik przewijania: tor widoczny, dopóki rząd miniatur da się
-              przesunąć, a suwak stoi na nim stale (przygaszony) i rozjaśnia się
-              na czas ruchu. Przesunięcie i szerokość bez animacji – mają jechać
-              razem z palcem, animujemy samą przezroczystość */}
-          <div
-            className={`relative mt-2 h-1 rounded-full transition-colors ${
-              thumbsScrollable ? "bg-sand" : "bg-transparent"
-            }`}
-            aria-hidden="true"
-          >
+          {/* Wskaźnik przewijania: zapala się od razu przy ruchu taśmy i gaśnie
+              powoli po jego ustaniu – w spoczynku pod miniaturami nie ma paska.
+              Przesunięcie i szerokość bez animacji – mają jechać razem z palcem,
+              animujemy samą przezroczystość */}
+          <div className="relative mt-2 h-0.5" aria-hidden="true">
             <div
               className="absolute inset-y-0 bg-clay rounded-full"
               style={{
                 width: `${thumbHint.size * 100}%`,
                 left: `${thumbHint.progress * (100 - thumbHint.size * 100)}%`,
-                opacity: thumbHint.visible ? 1 : thumbsScrollable ? 0.55 : 0,
+                opacity: thumbHint.visible ? 1 : 0,
                 transition: thumbHint.visible
                   ? "opacity 120ms ease-out"
                   : `opacity ${THUMB_HINT_FADE_MS}ms ease-in`,
