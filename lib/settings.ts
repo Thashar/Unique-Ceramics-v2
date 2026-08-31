@@ -1,6 +1,7 @@
 import { unstable_cache } from "next/cache";
 import { db, withDbRetry } from "@/lib/db";
 import { AI_MODEL_DEFAULT, AI_PRESET_DEFAULT, AI_TEXT_MODEL_DEFAULT } from "@/lib/ai";
+import { ABOUT_VALUES_DEFAULT_JSON, ABOUT_VALUES_TITLE_DEFAULT } from "@/lib/about-values";
 import {
   HOME_ABOUT_DEFAULT,
   HOME_HERO_DEFAULT,
@@ -219,6 +220,8 @@ const DEFAULTS: Record<string, string> = {
   about_content_image: "",
   about_content_position: "50% 50%",
   about_story: ABOUT_STORY_DEFAULT,
+  about_values_title: ABOUT_VALUES_TITLE_DEFAULT,
+  about_values: ABOUT_VALUES_DEFAULT_JSON,
   workshops_hero_image: "",
   workshops_hero_position: "50% 50%",
   workshops_hero_overlay_color: "#2C2825",

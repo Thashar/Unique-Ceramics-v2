@@ -60,7 +60,7 @@ export default async function ProjectsPage() {
                     <h2 className="font-serif text-2xl text-espresso">{project.title}</h2>
                     {project.description && (
                       <div
-                        className="text-charcoal/80 text-sm leading-relaxed [&_p]:mb-3 [&_h2]:font-serif [&_h2]:text-xl [&_h2]:text-espresso [&_h2]:mb-2 [&_h3]:font-medium [&_h3]:text-espresso [&_h3]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1 [&_strong]:font-semibold [&_em]:italic"
+                        className="rich-content rich-content-sm"
                         dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(project.description) }}
                       />
                     )}

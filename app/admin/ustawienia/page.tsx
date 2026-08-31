@@ -50,6 +50,8 @@ export default async function AdminSettingsPage({
     "about_content_image",
     "about_content_position",
     "about_story",
+    "about_values_title",
+    "about_values",
     "workshops_hero_image",
     "workshops_hero_position",
     "workshops_hero_overlay_color",

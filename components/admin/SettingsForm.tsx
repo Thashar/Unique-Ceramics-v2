@@ -11,7 +11,9 @@ import FocalPointPicker from "@/components/admin/FocalPointPicker";
 import GalleryEditor from "@/components/admin/GalleryEditor";
 import WorkshopsOffersEditor from "@/components/admin/WorkshopsOffersEditor";
 import AiPromptPresets from "@/components/admin/AiPromptPresets";
+import AboutValuesEditor from "@/components/admin/AboutValuesEditor";
 import { parseGallery, galleryHead } from "@/lib/gallery";
+import { ABOUT_VALUES_TITLE_DEFAULT } from "@/lib/about-values";
 import {
   HOME_ABOUT_DEFAULT,
   HOME_HERO_DEFAULT,
@@ -67,6 +69,8 @@ interface Props {
     about_content_image: string;
     about_content_position: string;
     about_story: string;
+    about_values_title: string;
+    about_values: string;
     workshops_hero_image: string;
     workshops_hero_position: string;
     workshops_hero_overlay_color: string;
@@ -409,6 +413,8 @@ export default function SettingsForm({ section, initial, aiUsage }: Props) {
     JSON.stringify(parseGallery(initial.about_content_gallery, initial.about_content_image, initial.about_content_position))
   );
   const [aboutStory, setAboutStory] = useState(initial.about_story);
+  const [aboutValuesTitle, setAboutValuesTitle] = useState(initial.about_values_title);
+  const [aboutValues, setAboutValues] = useState(initial.about_values);
 
   // Warsztaty
   const [workshopsImage, setWorkshopsImage] = useState(initial.workshops_hero_image);
@@ -724,6 +730,22 @@ export default function SettingsForm({ section, initial, aiUsage }: Props) {
             <RichEditor value={aboutStory} onChange={setAboutStory} />
           </div>
 
+          <div className="border-t border-sand pt-6 space-y-4">
+            <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/80">Sekcja „Jak pracuję&rdquo;</h3>
+            <p className="text-xs text-charcoal/80">Karty pod treścią strony. Pusty nagłówek ukrywa sam tytuł sekcji, brak kart – całą sekcję.</p>
+            <div className="space-y-1.5">
+              <label className="block text-xs tracking-widest uppercase text-charcoal/80">Nagłówek sekcji</label>
+              <input
+                type="text"
+                value={aboutValuesTitle}
+                onChange={(e) => setAboutValuesTitle(e.target.value)}
+                className="w-full bg-warm-white border border-sand text-espresso text-sm px-3 py-2 outline-none focus:border-clay"
+                placeholder={ABOUT_VALUES_TITLE_DEFAULT}
+              />
+            </div>
+            <AboutValuesEditor json={aboutValues} onChange={setAboutValues} />
+          </div>
+
           <SaveButton
             onClick={() => save([
               { key: "about_hero_image",           value: aboutImage },
@@ -736,6 +758,8 @@ export default function SettingsForm({ section, initial, aiUsage }: Props) {
               { key: "about_content_image",        value: galleryHead(aboutGallery).url },
               { key: "about_content_position",     value: galleryHead(aboutGallery).position },
               { key: "about_story",                value: aboutStory },
+              { key: "about_values_title",         value: aboutValuesTitle },
+              { key: "about_values",               value: aboutValues },
             ])}
             label="Zapisz stronę O mnie"
           />
@@ -782,7 +806,7 @@ export default function SettingsForm({ section, initial, aiUsage }: Props) {
 
           <div className="border-t border-sand pt-6">
             <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-3">Tekst wprowadzający</label>
-            <RichEditor value={workshopsIntro} onChange={setWorkshopsIntro} />
+            <RichEditor value={workshopsIntro} onChange={setWorkshopsIntro} contentClass="rich-content-lg" />
           </div>
 
           <div className="border-t border-sand pt-6 space-y-4">

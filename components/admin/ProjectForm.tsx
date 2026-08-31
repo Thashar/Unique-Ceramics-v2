@@ -157,7 +157,7 @@ export default function ProjectForm({ project }: { project?: Project }) {
         <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-3">
           Opis
         </label>
-        <RichEditor value={description} onChange={setDescription} />
+        <RichEditor value={description} onChange={setDescription} contentClass="rich-content-sm" />
       </div>
 
       {/* Kolejność */}

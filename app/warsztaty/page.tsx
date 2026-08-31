@@ -73,7 +73,7 @@ function parseJson<T>(json: string): T[] {
 // Wprowadzenie: tekst do lewej w węższej kolumnie, bez wyróżniania pierwszego
 // akapitu – całość jednolita, hierarchię otwarcia niesie sam ozdobnik.
 const INTRO_PROSE =
-  "text-charcoal/80 text-lg leading-relaxed [&_p]:mb-4 [&_strong]:text-espresso";
+  "rich-content rich-content-lg";
 
 export default async function WorkshopsPage() {
   const s = await getSettings([

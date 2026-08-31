@@ -13,6 +13,7 @@ import { getSettings } from "@/lib/settings";
 import { sanitizeRichHtml } from "@/lib/sanitize-html";
 import { hexToRgba } from "@/lib/overlay";
 import { parseGallery } from "@/lib/gallery";
+import { parseAboutValues } from "@/lib/about-values";
 import { pageMetadata, SITE_URL } from "@/lib/seo";
 import BreadcrumbSchema from "@/components/seo/BreadcrumbSchema";
 
@@ -46,6 +47,7 @@ export default async function AboutPage() {
     "about_hero_height",
     "about_content_gallery", "about_content_image", "about_content_position",
     "about_story",
+    "about_values_title", "about_values",
   ]);
   const heroImage = s.about_hero_image;
   const heroPos = s.about_hero_position || "50% 50%";
@@ -56,6 +58,9 @@ export default async function AboutPage() {
   const gallery = parseGallery(s.about_content_gallery, s.about_content_image, s.about_content_position);
   const hasGallery = gallery.length > 0;
   const story = s.about_story;
+  // Sekcja „Jak pracuję” – treść z panelu; pusta lista ukrywa całą sekcję
+  const values = parseAboutValues(s.about_values);
+  const valuesTitle = s.about_values_title?.trim() ?? "";
 
   return (
     <>
@@ -102,7 +107,7 @@ export default async function AboutPage() {
             <div className={hasGallery ? "lg:col-span-7" : ""}>
               <ClayRule className="mb-7" />
               <div
-                className="space-y-5 text-charcoal/80 leading-relaxed [&_p]:mb-4 [&_h2]:font-serif [&_h2]:text-2xl [&_h2]:text-espresso [&_h2]:mb-4 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:mb-4 [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:mb-4 [&_ol]:space-y-2 [&_strong]:text-espresso"
+                className="rich-content"
                 dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(story) }}
               />
 
@@ -137,25 +142,28 @@ export default async function AboutPage() {
           </div>
         </div>
 
-        {/* Wartości */}
-        <div className="bg-cream py-20 px-6 lg:px-10">
-          <div className="max-w-7xl mx-auto">
-            <h2 className="font-serif text-[2rem] md:text-4xl text-espresso mb-5 text-center">Jak pracuję</h2>
-            <ClayRule align="center" className="max-w-[220px] mx-auto mb-12" />
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-              {[
-                { title: "Ręcznie", text: "Każdy przedmiot tworzę osobiście. Nie korzystam z produkcji seryjnej ani odlewów." },
-                { title: "Z uwagą", text: "Dbam o każdy detal – od kształtu, przez glazurę, aż po opakowanie." },
-                { title: "Z pasją", text: "Ceramika to nie tylko zawód – to sposób, w jaki postrzegam i tworzę piękno." },
-              ].map(({ title, text }) => (
-                <div key={title} className="text-center">
-                  <h3 className="font-serif text-2xl text-espresso mb-4">{title}</h3>
-                  <p className="text-charcoal/80 leading-relaxed text-sm">{text}</p>
-                </div>
-              ))}
+        {/* Wartości – treść z ustawień (about_values_title, about_values) */}
+        {values.length > 0 && (
+          <div className="bg-cream py-20 px-6 lg:px-10">
+            <div className="max-w-7xl mx-auto">
+              {valuesTitle && (
+                <h2 className="font-serif text-[2rem] md:text-4xl text-espresso mb-5 text-center">{valuesTitle}</h2>
+              )}
+              <ClayRule align="center" className="max-w-[220px] mx-auto mb-12" />
+              {/* Kolumn tyle, ile kart (maks. 3) – przy dwóch nie zostaje puste pole */}
+              <div className={`grid grid-cols-1 gap-10 ${values.length === 1 ? "" : values.length === 2 ? "md:grid-cols-2" : "md:grid-cols-3"}`}>
+                {values.map((value) => (
+                  <div key={value.id} className="text-center">
+                    {value.title && <h3 className="font-serif text-2xl text-espresso mb-4">{value.title}</h3>}
+                    {value.text && (
+                      <p className="text-charcoal/80 leading-relaxed text-sm whitespace-pre-line">{value.text}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </main>
       <Footer />
     </>

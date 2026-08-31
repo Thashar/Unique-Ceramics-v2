@@ -60,6 +60,16 @@ function priceValidUntilDate(endsAt: Date | null): string {
   return (endsAt ?? new Date(Date.now() + YEAR_MS)).toISOString().slice(0, 10);
 }
 
+/**
+ * Data, od której obowiązuje pokazana cena (`Offer.validFrom` – Google wymienia je
+ * w raporcie „Merchant listings” jako pole opcjonalne). Przy działającej przecenie
+ * jest to jej start, poza nią – ostatnia zmiana produktu, czyli i jego ceny.
+ * Nigdy nie podajemy daty z przyszłości: oferta obowiązuje już teraz.
+ */
+function priceValidFromDate(startsAt: Date | null, updatedAt: Date): string {
+  return (startsAt ?? updatedAt).toISOString().slice(0, 10);
+}
+
 const getProduct = cache(async (slug: string) => {
   try {
     return await db.product.findUnique({ where: { slug, active: true } });
@@ -156,6 +166,10 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
   const BASE = "https://uniqueceramics.pl";
   const priceValidUntil = priceValidUntilDate(discountEndsAt);
+  const priceValidFrom = priceValidFromDate(
+    discountPercent > 0 ? product.discountStartsAt : null,
+    product.updatedAt,
+  );
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -179,6 +193,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       // a wyszukiwarka porównuje cenę pojedynczego produktu
       price: discountedPrice(product.price, discountPercent).toFixed(2),
       priceCurrency: "PLN",
+      validFrom: priceValidFrom,
       priceValidUntil,
       itemCondition: "https://schema.org/NewCondition",
       availability: product.stock > 0
