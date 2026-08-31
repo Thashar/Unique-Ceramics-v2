@@ -1086,7 +1086,7 @@ export default function SettingsForm({ section, initial, aiUsage }: Props) {
         <div className="max-w-2xl space-y-6">
           <h2 className="font-serif text-2xl text-espresso">Proponowane produkty</h2>
           <p className="text-xs text-charcoal/80 leading-relaxed">
-            Pod kartą produktu stoi karuzela „Podobne produkty” – do {SIMILAR_LIMIT} pozycji,
+            Pod kartą produktu stoi karuzela „Mogą Ci się spodobać” – do {SIMILAR_LIMIT} pozycji,
             bez wyprzedanych. Każdy produkt ze sklepu dostaje punkty za to, czym przypomina
             oglądany, a do karuzeli trafiają te z najwyższym wynikiem.
           </p>

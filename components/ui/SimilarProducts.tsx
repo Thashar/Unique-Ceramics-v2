@@ -18,7 +18,7 @@ type CarouselProduct = {
 };
 
 /**
- * Karuzela „Podobne produkty” pod kartą produktu. Dobór robi serwer
+ * Karuzela „Mogą Ci się spodobać” pod kartą produktu. Dobór robi serwer
  * (`lib/similar-products.ts`), tutaj zostaje sama prezentacja.
  *
  * Taśma przewija się tak samo jak miniatury w galerii – palcem, kursorem
@@ -28,7 +28,7 @@ type CarouselProduct = {
 export default function SimilarProducts({
   products,
   categories,
-  title = "Podobne produkty",
+  title = "Mogą Ci się spodobać",
 }: {
   products: CarouselProduct[];
   categories: Category[];

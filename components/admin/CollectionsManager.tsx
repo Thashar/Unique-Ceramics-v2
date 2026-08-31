@@ -104,7 +104,7 @@ export default function CollectionsManager({ initial }: { initial: Collection[] 
       <h2 className="font-serif text-2xl text-espresso mb-2">Kolekcje</h2>
       <p className="text-sm text-charcoal/80 mb-6">
         Kolekcja to seria produktów powstałych razem (np. „Zima 2026”). Produkt przypisujesz do niej
-        w jego formularzu. W sekcji „Podobne produkty” na karcie produktu kolekcja **waży więcej niż
+        w jego formularzu. W sekcji „Mogą Ci się spodobać” na karcie produktu kolekcja **waży więcej niż
         kategoria** – najpierw pokazujemy resztę serii.
       </p>
 
