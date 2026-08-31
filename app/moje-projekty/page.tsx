@@ -1,9 +1,9 @@
-﻿import Header from "@/components/layout/HeaderWrapper";
+import Header from "@/components/layout/HeaderWrapper";
 import Footer from "@/components/layout/Footer";
 import ClayRule from "@/components/ui/ClayRule";
+import ProjectCard from "./ProjectCard";
 import { getProjects } from "@/lib/portfolio";
-import Image from "next/image";
-import { sanitizeRichHtml } from "@/lib/sanitize-html";
+import { projectSlugs } from "@/lib/portfolio-slug";
 import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/seo";
 import BreadcrumbSchema from "@/components/seo/BreadcrumbSchema";
@@ -19,6 +19,8 @@ export const metadata: Metadata = pageMetadata({
 
 export default async function ProjectsPage() {
   const projects = await getProjects();
+  // Adresy liczymy z całej listy – patrz `lib/portfolio-slug.ts`
+  const slugs = projectSlugs(projects);
 
   return (
     <>
@@ -33,7 +35,8 @@ export default async function ProjectsPage() {
           </div>
         </div>
 
-        {/* Lista projektów */}
+        {/* Siatka projektów – ten sam układ co katalog sklepu: zdjęcie i tytuł,
+            reszta (wszystkie zdjęcia, opis) dopiero po wejściu w projekt */}
         <div className="max-w-7xl mx-auto px-6 lg:px-10 py-16">
           <ClayRule className="mb-10" />
           {projects.length === 0 ? (
@@ -42,30 +45,14 @@ export default async function ProjectsPage() {
               <p className="text-charcoal/80 text-sm">Projekty pojawią się wkrótce.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
               {projects.map((project) => (
-                <article key={project.id} className="space-y-5">
-                  {project.images[0] && (
-                    <div className="relative w-full aspect-[4/3] overflow-hidden bg-mist">
-                      <Image
-                        src={project.images[0]}
-                        alt={project.title}
-                        fill
-                        className="object-cover hover:scale-105 transition-transform duration-700"
-                        sizes="(max-width: 768px) 100vw, 50vw"
-                      />
-                    </div>
-                  )}
-                  <div className="space-y-3">
-                    <h2 className="font-serif text-2xl text-espresso">{project.title}</h2>
-                    {project.description && (
-                      <div
-                        className="rich-content rich-content-sm"
-                        dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(project.description) }}
-                      />
-                    )}
-                  </div>
-                </article>
+                <ProjectCard
+                  key={project.id}
+                  title={project.title}
+                  slug={slugs.get(project.id) ?? project.id}
+                  image={project.images[0]}
+                />
               ))}
             </div>
           )}

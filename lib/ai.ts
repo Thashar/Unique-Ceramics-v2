@@ -98,12 +98,24 @@ const BACKGROUND_RULE = `BACKGROUND COLOR IS MANDATORY: a soft, light, warm beig
 const REALISM_RULE = `THE RESULT MUST LOOK LIKE A REAL PHOTOGRAPH: an authentic photo taken with a real camera in a real place, not a 3D render, CGI, illustration, painting, drawing, collage or obviously AI-generated picture. Keep real-world materials and surfaces with their natural texture and small imperfections - the grain of the clay, slight irregularities of the handmade form, tiny specks and unevenness of the glaze, the weave of fabric, the grain of wood. Lighting, reflections, contact shadows and depth of field must be physically believable and consistent across the whole frame. Avoid a plastic, waxy or over-polished look, avoid oversharpening, heavy retouching, glow, artificial haze and exaggerated contrast. A viewer must be able to take the image for an ordinary product photograph.`
 
 /**
+ * **Reguła nadrzędna** – granica, której modelowi nie wolno przekroczyć: sama
+ * ceramika ma zostać taka sama jak na zdjęciu źródłowym. Kąt ujęcia, kształt
+ * i kolor to trzy rzeczy, po których klient rozpoznaje przedmiot, a model lubił
+ * je „poprawiać”: obracał kubek, podnosił kamerę nad przedmiot, wygładzał
+ * ręcznie robioną formę. Reguła stoi **pierwsza** i wprost rozstrzyga konflikt
+ * z opisem sceny (także z presetem ułożonym przez model) na korzyść wierności
+ * przedmiotu – opis sceny nie może kazać przestawić ani przemalować ceramiki.
+ */
+const IDENTITY_RULE = `ABSOLUTE, NON-NEGOTIABLE RULE - THE CERAMIC ITSELF MUST STAY IDENTICAL TO THE ORIGINAL PHOTO. Treat the ceramic in the source image as a fixed, unmodifiable object that is only being re-photographed in a new setting. Keep EXACTLY the same camera angle, viewpoint, eye level and perspective on the product as in the original photo: do not rotate, turn, tilt or flip the piece, do not move the camera around it, above it or below it, do not switch between eye-level, three-quarter and top-down views, and do not show any side, face or interior that is not visible in the original. Keep EXACTLY the same shape and silhouette: the same proportions, wall and rim profile, curvature, handle shape and position, spout, foot, lid and every detail of the form, including the small irregularities of a handmade piece - do not re-model, redraw, straighten, smooth, idealise or "fix" anything. Keep EXACTLY the same colors, glaze and decoration: the same hue and finish, and every pattern, drawing, lettering or motif in the same place, at the same size and in the same orientation. Nothing may be added to the ceramic and nothing removed from it. If any part of the scene description would require a different angle, shape, color, decoration or arrangement of the product, IGNORE that part of the scene description - fidelity of the product always wins. Only the background, surroundings, props, lighting and framing may change.`;
+
+/**
  * Reguły dotyczące samego produktu. Doklejamy je do **każdego** promptu –
  * także do tych wygenerowanych i zapisanych jako preset – bo to one pilnują,
- * żeby zdjęcie nadal przedstawiało ten konkretny produkt: kadr, kolor szkliwa,
- * komplet sztuk i skalę. Preset opisuje wyłącznie scenę wokół przedmiotu.
+ * żeby zdjęcie nadal przedstawiało ten konkretny produkt: ten sam kąt i kształt,
+ * kadr, kolor szkliwa, komplet sztuk i skalę. Preset opisuje wyłącznie scenę
+ * wokół przedmiotu.
  */
-export const AI_PRODUCT_RULES = `${ORIENTATION_RULE} ${COLOR_RULE} ${SET_RULE} ${SIZE_RULE} ${REALISM_RULE}`;
+export const AI_PRODUCT_RULES = `${IDENTITY_RULE} ${ORIENTATION_RULE} ${COLOR_RULE} ${SET_RULE} ${SIZE_RULE} ${REALISM_RULE}`;
 
 /** Scena wariantu „AI” – produkt na jednolitym, matowym tle (zdjęcie katalogowe). */
 export const AI_SCENE_PLAIN = `A photorealistic, detailed portrait of the specific ceramic product, centrally placed and perfectly sharp, isolated and resting on a seamless, solid matte background surface. ${BACKGROUND_RULE} Natural, soft, diffused daylight from the side highlights the glaze and texture of the main ceramic piece, without darkening the backdrop. Clean, high-end catalog quality, 8k resolution. If the original photo shows several pieces, arrange them all together in one balanced composition on that same background.`;
@@ -259,6 +271,7 @@ Zasady:
 - Opisuj wyłącznie SCENĘ: tło, powierzchnię, rekwizyty, kolorystykę otoczenia, światło, głębię ostrości, nastrój i jakość zdjęcia.
 - NIE pisz nic o samym produkcie: o jego kolorze, kształcie, wielkości, liczbie sztuk, proporcjach kadru ani o rozdzielczości wyniku. Te reguły są dodawane osobno i nie wolno ich powtarzać ani zmieniać.
 - Nie każ modelowi zmieniać, stylizować ani „poprawiać" ceramiki – rekwizyty i tło mają jedynie otaczać produkt.
+- Nie opisuj ujęcia produktu: żadnego obracania, przechylania, zdjęć z góry, z boku ani „pokaż wnętrze". Kąt, kształt i kolor ceramiki mają zostać takie jak na zdjęciu źródłowym – ustawiasz wyłącznie scenerię wokół.
 - Zachowaj klasę zdjęcia katalogowego: fotorealizm, naturalne, miękkie światło, czysta kompozycja.
 - Scena ma wyglądać jak PRAWDZIWE zdjęcie zrobione aparatem w prawdziwym miejscu – nigdy jak render 3D, ilustracja, rysunek czy grafika komputerowa. Opisuj realne materiały i faktury, wiarygodne światło i cienie.
 - Maksymalnie ${AI_PRESET_LIMITS.scene} znaków.

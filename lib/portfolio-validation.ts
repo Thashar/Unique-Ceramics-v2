@@ -1,7 +1,9 @@
 // Walidacja danych projektu portfolio (POST/PUT). Treść trafia na publiczną
 // stronę, więc walidujemy defensywnie typy, długości i tablicę zdjęć.
 
-const MAX_IMAGES = 30;
+/** Limit zdjęć w projekcie – ten sam po stronie panelu (`ProjectForm`). */
+export const PROJECT_MAX_IMAGES = 30;
+const MAX_IMAGES = PROJECT_MAX_IMAGES;
 const MAX_IMAGE_LEN = 1000;
 
 export type ValidProject = {

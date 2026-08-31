@@ -1,16 +1,34 @@
 "use client";
 
 import { useState } from "react";
+import { SITE_URL } from "@/lib/seo";
 
 type Status = "idle" | "sending" | "success" | "error";
 
+/** Temat ustawiany z automatu, gdy klient przychodzi z karty wyprzedanego produktu. */
+const PRODUCT_SUBJECT = "Zamówienie ze sklepu";
+
 interface Props {
   workshopOptions?: string[];
+  /**
+   * Slug produktu, o który klient chce zapytać (przycisk „Zapytaj o produkt”
+   * przy wyprzedanym towarze). Adres z query czyta `ContactFormParams` –
+   * tutaj przychodzi już gotowa wartość, dzięki czemu sam formularz renderuje
+   * się także na serwerze, bez granicy Suspense.
+   */
+  productSlug?: string;
 }
 
-export default function ContactForm({ workshopOptions = [] }: Props) {
+export default function ContactForm({ workshopOptions = [], productSlug = "" }: Props) {
+  // Slug przepuszczamy przez ten sam wzorzec co adresy produktów – do treści
+  // wiadomości trafia wtedy wyłącznie nasz własny link
+  const safeSlug = /^[a-z0-9-]{1,120}$/.test(productSlug) ? productSlug : "";
+  const productMessage = safeSlug
+    ? `Chcę zapytać o produkt: ${SITE_URL}/sklep/${safeSlug}\n\n`
+    : "";
+
   const [status, setStatus] = useState<Status>("idle");
-  const [subject, setSubject] = useState("");
+  const [subject, setSubject] = useState(safeSlug ? PRODUCT_SUBJECT : "");
   const [workshopType, setWorkshopType] = useState("");
 
   const showWorkshopSelect = subject === "Warsztaty" && workshopOptions.length > 0;
@@ -102,7 +120,7 @@ export default function ContactForm({ workshopOptions = [] }: Props) {
           className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors"
         >
           <option value="">Wybierz temat</option>
-          <option>Zamówienie ze sklepu</option>
+          <option>{PRODUCT_SUBJECT}</option>
           <option>Zamówienie indywidualne</option>
           <option>Warsztaty</option>
           <option>Inne</option>
@@ -134,6 +152,7 @@ export default function ContactForm({ workshopOptions = [] }: Props) {
         <textarea
           name="message"
           required
+          defaultValue={productMessage}
           rows={5}
           className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors resize-none"
           placeholder="Jak mogę pomóc?"

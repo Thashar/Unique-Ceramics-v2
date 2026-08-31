@@ -2,6 +2,8 @@ import { MetadataRoute } from "next";
 import { db, withDbRetry } from "@/lib/db";
 import { getSetting } from "@/lib/settings";
 import { getCategories } from "@/lib/categories";
+import { getProjects } from "@/lib/portfolio";
+import { projectSlugs, projectPath } from "@/lib/portfolio-slug";
 import { categoryPath } from "@/lib/category-seo";
 import { absoluteUrl } from "@/lib/seo";
 
@@ -63,5 +65,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...(p.images.length ? { images: p.images.map(absoluteUrl) } : {}),
   }));
 
-  return [...routes, ...categoryRoutes, ...productRoutes];
+  // Strony projektów portfolio – adresy liczone tak samo jak w `/moje-projekty`
+  const projects = await getProjects();
+  const projectSlugMap = projectSlugs(projects);
+  const projectRoutes: MetadataRoute.Sitemap = projects.map((project) => ({
+    url: `${BASE}${projectPath(projectSlugMap.get(project.id) ?? project.id)}`,
+    lastModified: project.updatedAt,
+    changeFrequency: "monthly",
+    priority: 0.5,
+    ...(project.images.length ? { images: project.images.map(absoluteUrl) } : {}),
+  }));
+
+  return [...routes, ...categoryRoutes, ...productRoutes, ...projectRoutes];
 }

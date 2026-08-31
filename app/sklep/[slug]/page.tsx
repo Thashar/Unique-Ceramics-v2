@@ -6,7 +6,7 @@ import { Truck, Clock, AlertTriangle } from "lucide-react";
 import Header from "@/components/layout/HeaderWrapper";
 import Footer from "@/components/layout/Footer";
 import DishwasherIcon from "@/components/ui/DishwasherIcon";
-import ProductGallery from "./ProductGallery";
+import ProductGallery from "@/components/ui/ProductGallery";
 import AddToCartSection from "./AddToCartSection";
 import { db, withDbRetry } from "@/lib/db";
 import { getSettings, settingNumber } from "@/lib/settings";

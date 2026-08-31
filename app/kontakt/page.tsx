@@ -1,6 +1,7 @@
 ﻿// Treść zmienia się rzadko – ISR; zapis ustawień w adminie odświeża cache
 export const revalidate = 300;
 
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, Gift, Phone, Mail, Clock, MapPin } from "lucide-react";
@@ -13,6 +14,7 @@ import Footer from "@/components/layout/Footer";
 import { getSettings } from "@/lib/settings";
 import { normalizeHours } from "@/lib/opening-hours";
 import ContactForm from "@/components/contact/ContactForm";
+import ContactFormParams from "@/components/contact/ContactFormParams";
 import { pageMetadata } from "@/lib/seo";
 import BreadcrumbSchema from "@/components/seo/BreadcrumbSchema";
 
@@ -203,7 +205,13 @@ export default async function ContactPage() {
             <div>
               <ClayRule className="mb-7" />
               <h2 className="font-serif text-2xl text-espresso mb-8">Napisz wiadomość</h2>
-              <ContactForm workshopOptions={workshopOptions} />
+              {/* `?produkt=` (przycisk „Zapytaj o produkt" przy wyprzedanym towarze)
+                  czyta `ContactFormParams`, a `useSearchParams` na stronie ISR wymaga
+                  granicy Suspense. Fallbackiem jest **ten sam formularz bez prefillu**,
+                  więc w prerenderze siedzi gotowy formularz, a nie pusta ramka */}
+              <Suspense fallback={<ContactForm workshopOptions={workshopOptions} />}>
+                <ContactFormParams workshopOptions={workshopOptions} />
+              </Suspense>
             </div>
 
             {/* Zaproszenie do zamówień indywidualnych **przez obie kolumny**

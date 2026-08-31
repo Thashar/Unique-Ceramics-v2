@@ -13,14 +13,8 @@ import {
   normalizeDiscountPercent,
 } from "@/lib/product-price";
 import { dateToWarsawLocal, formatWarsaw, warsawLocalToDate } from "@/lib/warsaw-time";
-import { AI_VARIANT_LABEL, isAiGeneratedImage, type AiVariant } from "@/lib/ai";
-
-/** Treść potwierdzenia przed płatnym wywołaniem modelu. */
-const AI_CONFIRM: Record<AiVariant, string> = {
-  ai: "Wygenerować przez AI zdjęcie tego produktu na jednolitym, matowym tle?\n\nPowstanie nowe zdjęcie dodane na końcu listy – oryginał zostaje bez zmian.",
-  ai_plus:
-    "Wygenerować przez AI zdjęcie tego produktu w wystylizowanej scenie (len, eukaliptus, kamienie)?\n\nPowstanie nowe zdjęcie dodane na końcu listy – oryginał zostaje bez zmian.",
-};
+import { AI_VARIANT_LABEL, type AiVariant } from "@/lib/ai";
+import AiImageButtons, { AI_CONFIRM, type AiGenerating } from "@/components/admin/AiImageButtons";
 
 const HOUR_MS = 3_600_000;
 
@@ -98,7 +92,7 @@ export default function ProductForm({
   const [durationPreset, setDurationPreset] = useState(base?.discountEndsAt ? "custom" : "");
   const [uploading, setUploading] = useState(false);
   // Które zdjęcie jest właśnie przerabiane przez AI (indeks + wariant)
-  const [generating, setGenerating] = useState<{ idx: number; variant: AiVariant } | null>(null);
+  const [generating, setGenerating] = useState<AiGenerating>(null);
   const [filling, setFilling] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -421,43 +415,9 @@ export default function ProductForm({
                   <X size={14} />
                 </button>
               </div>
-              {/* Stopka kafelka ma stałą wysokość, żeby kafelki z przyciskami AI
-                  i te z plakietką stały równo w jednym rzędzie */}
-              {/* Zdjęcia z AI nie idą do modelu ponownie – kolejne pokolenie gubi produkt */}
-              {isAiGeneratedImage(url) ? (
-                <p className="mt-1 h-6 flex items-center justify-center gap-1 text-[9px] sm:text-[10px] uppercase whitespace-nowrap text-charcoal/80">
-                  <Sparkles size={11} aria-hidden="true" />
-                  Wygenerowane
-                </p>
-              ) : (
-              <div className="flex gap-1 mt-1 h-6">
-                {(["ai", "ai_plus"] as AiVariant[]).map((variant) => {
-                  const busy = generating?.idx === i && generating.variant === variant;
-                  return (
-                    <button
-                      key={variant}
-                      type="button"
-                      onClick={() => generateWithAi(i, variant)}
-                      disabled={generating !== null}
-                      title={
-                        variant === "ai"
-                          ? "AI – produkt na jednolitym tle"
-                          : "AI+ – produkt w wystylizowanej scenie"
-                      }
-                      aria-label={`Wygeneruj wersję ${AI_VARIANT_LABEL[variant]} ze zdjęcia ${i + 1}`}
-                      className="flex-1 inline-flex items-center justify-center gap-0.5 border border-sand bg-cream hover:bg-sand text-espresso text-[9px] sm:text-[10px] uppercase transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                    >
-                      {busy ? (
-                        <Loader2 size={11} className="animate-spin" aria-hidden="true" />
-                      ) : (
-                        <Sparkles size={11} aria-hidden="true" />
-                      )}
-                      {AI_VARIANT_LABEL[variant]}
-                    </button>
-                  );
-                })}
-              </div>
-              )}
+              {/* Przyciski AI / AI+ (albo plakietka „Wygenerowane”) – wspólny
+                  komponent z formularzem projektu portfolio */}
+              <AiImageButtons index={i} url={url} generating={generating} onGenerate={generateWithAi} />
             </div>
           ))}
           {images.length < PRODUCT_MAX_IMAGES && (

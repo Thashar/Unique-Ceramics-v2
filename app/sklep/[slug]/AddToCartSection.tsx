@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Check, ShoppingBag, Plus, Minus } from "lucide-react";
+import Link from "next/link";
+import { Check, ShoppingBag, Plus, Minus, MessageCircle } from "lucide-react";
 import { useCart } from "@/lib/cart";
 
 type Product = {
@@ -46,13 +47,25 @@ export default function AddToCartSection({ product }: { product: Product }) {
 
   if (product.stock === 0) {
     return (
-      <button
-        disabled
-        className="w-full flex items-center justify-center gap-3 text-sm tracking-widest uppercase py-5 bg-sand text-charcoal/80"
-      >
-        <ShoppingBag size={18} strokeWidth={1.5} />
-        Wyprzedano
-      </button>
+      <>
+        <button
+          disabled
+          className="w-full flex items-center justify-center gap-3 text-sm tracking-widest uppercase py-5 bg-sand text-charcoal/80"
+        >
+          <ShoppingBag size={18} strokeWidth={1.5} />
+          Wyprzedano
+        </button>
+        {/* Wyprzedana rzecz nie musi kończyć wizyty: każdą wykonuję ręcznie,
+            więc klient może o nią zapytać. Slug jedzie w adresie, a formularz
+            kontaktowy sam wstawia z niego link do produktu w treści wiadomości */}
+        <Link
+          href={`/kontakt?produkt=${product.slug}`}
+          className="mt-3 w-full flex items-center justify-center gap-3 text-sm tracking-widest uppercase py-5 bg-clay hover:bg-terracotta hover:text-espresso text-warm-white transition-colors"
+        >
+          <MessageCircle size={18} strokeWidth={1.5} />
+          Zapytaj o produkt
+        </Link>
+      </>
     );
   }
 
