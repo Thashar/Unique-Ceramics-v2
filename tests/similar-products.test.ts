@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  MAX_SIMILARITY_SCORE,
   SIMILAR_LIMIT,
+  normalizeMinScore,
   similarProducts,
   similarityScore,
   type SimilarProduct,
@@ -114,6 +116,35 @@ describe("kolekcje", () => {
     expect(similarityScore(viewed, inCollection)).toBeGreaterThan(
       similarityScore(viewed, noCollection)
     );
+  });
+});
+
+describe("próg punktowy z panelu", () => {
+  it("odrzuca produkty poniżej progu", () => {
+    const sameCategory = product({ slug: "kubek", category: "kubki", price: 400 });
+    const other = product({ slug: "miska", category: "miski", price: 100 });
+    // 100 pkt = tylko ta sama kategoria (miska ma same punkty za cenę)
+    const result = similarProducts([sameCategory, other], current, { minScore: 100 });
+    expect(result.map((p) => p.slug)).toEqual(["kubek"]);
+  });
+
+  it("próg ponad wszystko daje pustą sekcję zamiast przypadkowych produktów", () => {
+    const catalog = [product({ slug: "a" }), product({ slug: "b" })];
+    expect(similarProducts(catalog, current, { minScore: MAX_SIMILARITY_SCORE })).toHaveLength(0);
+  });
+
+  it("szum rozstrzygający remisy nie przepycha produktu przez próg", () => {
+    // Kandydat ma dokładnie 100 pkt + ułamek szumu; próg 101 musi go odrzucić
+    const exact = product({ slug: "rowno-sto", category: "kubki", price: 1000 });
+    expect(similarProducts([exact], current, { minScore: 101 })).toHaveLength(0);
+    expect(similarProducts([exact], current, { minScore: 100 })).toHaveLength(1);
+  });
+
+  it("normalizeMinScore przycina śmieci i wartości spoza zakresu", () => {
+    expect(normalizeMinScore("abc")).toBe(0);
+    expect(normalizeMinScore(-5)).toBe(0);
+    expect(normalizeMinScore("100")).toBe(100);
+    expect(normalizeMinScore(99999)).toBe(MAX_SIMILARITY_SCORE);
   });
 });
 

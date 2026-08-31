@@ -38,15 +38,70 @@ export const SIMILAR_LIMIT = 8;
  * innymi produktami z tej samej półki. Produkt bez kolekcji nie dostaje tych
  * punktów, a `null` nie łączy się z `null` (brak serii to nie jest wspólna seria).
  */
-const SCORE_SAME_COLLECTION = 250;
-const SCORE_SAME_CATEGORY = 100;
+export const SCORE_SAME_COLLECTION = 250;
+export const SCORE_SAME_CATEGORY = 100;
 /** Cena bliska (do 30 %) i umiarkowanie bliska (do 60 %) – klient porównuje w podobnym progu. */
-const SCORE_PRICE_CLOSE = 25;
-const SCORE_PRICE_NEAR = 10;
+export const SCORE_PRICE_CLOSE = 25;
+export const SCORE_PRICE_NEAR = 10;
 const PRICE_CLOSE_RATIO = 0.3;
 const PRICE_NEAR_RATIO = 0.6;
-const SCORE_FEATURED = 8;
-const SCORE_DISCOUNTED = 5;
+export const SCORE_FEATURED = 8;
+export const SCORE_DISCOUNTED = 5;
+
+/**
+ * Punktacja opisana słowami – panel („Ustawienia → Proponowane") pokazuje ją
+ * wprost z tych wartości, żeby opis nigdy nie rozjechał się z algorytmem.
+ */
+export const SIMILARITY_RULES: { points: number; label: string; hint: string }[] = [
+  {
+    points: SCORE_SAME_COLLECTION,
+    label: "Ta sama kolekcja",
+    hint: "Produkty z jednej serii polecają się nawzajem przed wszystkim innym.",
+  },
+  {
+    points: SCORE_SAME_CATEGORY,
+    label: "Ta sama kategoria",
+    hint: "Np. kubek przy kubku.",
+  },
+  {
+    points: SCORE_PRICE_CLOSE,
+    label: "Cena w granicach 30 %",
+    hint: "Klient porównuje rzeczy w podobnym progu cenowym.",
+  },
+  {
+    points: SCORE_PRICE_NEAR,
+    label: "Cena w granicach 60 %",
+    hint: "Zamiast punktów za cenę bliską – nie sumuje się z nimi.",
+  },
+  {
+    points: SCORE_FEATURED,
+    label: "Produkt wyróżniony",
+    hint: "Zaznaczony jako wyróżniony w formularzu produktu.",
+  },
+  {
+    points: SCORE_DISCOUNTED,
+    label: "Trwająca przecena",
+    hint: "Rabat produktowy działający w chwili wyświetlenia karty.",
+  },
+];
+
+/** Gotowe progi do wyboru w panelu – opisane skutkiem, nie samą liczbą. */
+export const SIMILARITY_THRESHOLDS: { value: number; label: string }[] = [
+  { value: 0, label: "Bez progu – zawsze pokazuj 8 najlepiej dopasowanych" },
+  { value: SCORE_PRICE_CLOSE, label: `Co najmniej zbliżona cena (${SCORE_PRICE_CLOSE} pkt)` },
+  { value: SCORE_SAME_CATEGORY, label: `Tylko ta sama kategoria lub kolekcja (${SCORE_SAME_CATEGORY} pkt)` },
+  { value: SCORE_SAME_COLLECTION, label: `Tylko ta sama kolekcja (${SCORE_SAME_COLLECTION} pkt)` },
+];
+
+/** Najwyższy sensowny próg – powyżej niego nic już nie przechodzi. */
+export const MAX_SIMILARITY_SCORE =
+  SCORE_SAME_COLLECTION + SCORE_SAME_CATEGORY + SCORE_PRICE_CLOSE + SCORE_FEATURED + SCORE_DISCOUNTED;
+
+/** Domyślny próg: bez progu – sekcja ma się pokazywać na każdej karcie. */
+export const DEFAULT_MIN_SCORE = 0;
+
+/** Ustawienie z progiem punktowym (panel: Ustawienia → Proponowane). */
+export const SIMILAR_MIN_SCORE_KEY = "similar_min_score";
 
 /**
  * Stabilny „szum” rozstrzygający remisy: ta sama para produktów zawsze daje tę
@@ -104,8 +159,14 @@ export function similarProducts(
   current: Pick<SimilarProduct, "id" | "slug" | "category" | "price" | "collection">,
   {
     limit = SIMILAR_LIMIT,
+    minScore = DEFAULT_MIN_SCORE,
     isDiscounted,
-  }: { limit?: number; isDiscounted?: (product: SimilarProduct) => boolean } = {},
+  }: {
+    limit?: number;
+    /** Próg z panelu: produkt poniżej niego nie trafia do proponowanych. */
+    minScore?: number;
+    isDiscounted?: (product: SimilarProduct) => boolean;
+  } = {},
 ): SimilarProduct[] {
   return products
     .filter((p) => p.id !== current.id && p.stock > 0)
@@ -115,7 +176,17 @@ export function similarProducts(
         discounted: isDiscounted?.(product) ?? false,
       }),
     }))
+    // Remisy rozstrzyga szum < 1 pkt, więc próg porównujemy do pełnych punktów –
+    // inaczej „100 pkt" wpuszczałoby albo odrzucało zależnie od losowej końcówki
+    .filter((entry) => Math.floor(entry.score) >= minScore)
     .sort((a, b) => b.score - a.score)
     .slice(0, limit)
     .map((entry) => entry.product);
+}
+
+/** Próg z ustawień: liczba całkowita 0–`MAX_SIMILARITY_SCORE`, śmieci → default. */
+export function normalizeMinScore(value: string | number | null | undefined): number {
+  const parsed = typeof value === "number" ? value : parseInt(String(value ?? ""), 10);
+  if (!Number.isFinite(parsed) || parsed < 0) return DEFAULT_MIN_SCORE;
+  return Math.min(Math.round(parsed), MAX_SIMILARITY_SCORE);
 }

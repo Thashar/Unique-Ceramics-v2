@@ -1,6 +1,7 @@
 import { unstable_cache } from "next/cache";
 import { db, withDbRetry } from "@/lib/db";
 import { AI_MODEL_DEFAULT, AI_PRESET_DEFAULT, AI_TEXT_MODEL_DEFAULT } from "@/lib/ai";
+import { DEFAULT_MIN_SCORE, SIMILAR_MIN_SCORE_KEY } from "@/lib/similar-products";
 import { ABOUT_VALUES_DEFAULT_JSON, ABOUT_VALUES_TITLE_DEFAULT } from "@/lib/about-values";
 import {
   HOME_ABOUT_DEFAULT,
@@ -274,6 +275,7 @@ const DEFAULTS: Record<string, string> = {
   ai_prompt_presets: "[]",
   ai_prompt_preset_ai: AI_PRESET_DEFAULT.ai,
   ai_prompt_preset_ai_plus: AI_PRESET_DEFAULT.ai_plus,
+  [SIMILAR_MIN_SCORE_KEY]: String(DEFAULT_MIN_SCORE),
   // Kurs do przeliczenia kosztów AI (Google rozlicza w USD) – edytowalny w panelu
   ai_usd_pln_rate: "4.00",
   // Działalność nierejestrowana – minimalne wynagrodzenie (aktualizuj co rok!)

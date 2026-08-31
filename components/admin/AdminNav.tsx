@@ -46,6 +46,7 @@ const settingsItems: { id: string; label: string; href?: string }[] = [
   { id: "urlop",            label: "Urlop" },
   { id: "zam_indywidualne", label: "Zam. indywidualne" },
   { id: "ai",               label: "AI (zdjęcia i opisy)" },
+  { id: "proponowane",      label: "Proponowane" },
   // Promocje i kody rabatowe mają własne strony (lista + formularze), więc
   // pozycje prowadzą pod adres, a nie do zakładki ustawień
   { id: "promocje",         label: "Promocje", href: "/admin/promocje" },

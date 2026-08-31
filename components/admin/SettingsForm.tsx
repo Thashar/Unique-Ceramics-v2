@@ -15,6 +15,14 @@ import AboutValuesEditor from "@/components/admin/AboutValuesEditor";
 import { parseGallery, galleryHead } from "@/lib/gallery";
 import { ABOUT_VALUES_TITLE_DEFAULT } from "@/lib/about-values";
 import {
+  MAX_SIMILARITY_SCORE,
+  SIMILARITY_RULES,
+  SIMILARITY_THRESHOLDS,
+  SIMILAR_LIMIT,
+  SIMILAR_MIN_SCORE_KEY,
+  normalizeMinScore,
+} from "@/lib/similar-products";
+import {
   HOME_ABOUT_DEFAULT,
   HOME_HERO_DEFAULT,
   HOME_WORKSHOPS_DEFAULT,
@@ -117,6 +125,7 @@ interface Props {
     ai_prompt_presets: string;
     ai_prompt_preset_ai: string;
     ai_prompt_preset_ai_plus: string;
+    similar_min_score: string;
   };
   /** Statystyki zużycia AI – liczone tylko dla zakładki „AI (zdjęcia)” */
   aiUsage?: AiUsageStats | null;
@@ -413,6 +422,9 @@ export default function SettingsForm({ section, initial, aiUsage }: Props) {
     JSON.stringify(parseGallery(initial.about_content_gallery, initial.about_content_image, initial.about_content_position))
   );
   const [aboutStory, setAboutStory] = useState(initial.about_story);
+  const [similarMinScore, setSimilarMinScore] = useState(
+    String(normalizeMinScore(initial.similar_min_score))
+  );
   const [aboutValuesTitle, setAboutValuesTitle] = useState(initial.about_values_title);
   const [aboutValues, setAboutValues] = useState(initial.about_values);
 
@@ -1066,6 +1078,89 @@ export default function SettingsForm({ section, initial, aiUsage }: Props) {
               { key: "custom_order_notify_email_enabled", value: customOrderNotifyEnabled ? "true" : "false" },
             ])}
             label="Zapisz"
+          />
+        </div>
+      )}
+
+      {section === "proponowane" && (
+        <div className="max-w-2xl space-y-6">
+          <h2 className="font-serif text-2xl text-espresso">Proponowane produkty</h2>
+          <p className="text-xs text-charcoal/80 leading-relaxed">
+            Pod kartą produktu stoi karuzela „Podobne produkty” – do {SIMILAR_LIMIT} pozycji,
+            bez wyprzedanych. Każdy produkt ze sklepu dostaje punkty za to, czym przypomina
+            oglądany, a do karuzeli trafiają te z najwyższym wynikiem.
+          </p>
+
+          <div className="border border-sand">
+            <div className="flex items-center justify-between px-4 py-2 bg-cream text-[11px] tracking-widest uppercase text-charcoal/80">
+              <span>Podobieństwo</span>
+              <span>Punkty</span>
+            </div>
+            <div className="divide-y divide-sand">
+              {SIMILARITY_RULES.map((rule) => (
+                <div key={rule.label} className="flex items-start justify-between gap-4 px-4 py-3">
+                  <div>
+                    <p className="text-sm text-espresso">{rule.label}</p>
+                    <p className="text-[11px] text-charcoal/80 mt-0.5">{rule.hint}</p>
+                  </div>
+                  <span className="text-sm font-medium text-espresso tabular-nums shrink-0">
+                    +{rule.points}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <p className="text-[11px] text-charcoal/80">
+            Punkty się sumują – produkt z tej samej kolekcji i kategorii, w zbliżonej cenie,
+            zbiera {SIMILARITY_RULES[0].points + SIMILARITY_RULES[1].points + SIMILARITY_RULES[2].points} pkt.
+            Remisy rozstrzygane są stale, więc kolejność nie skacze przy odświeżeniu strony.
+          </p>
+
+          <div className="border-t border-sand pt-6 space-y-3">
+            <label className="block text-xs tracking-widest uppercase text-charcoal/80">
+              Minimalna liczba punktów
+            </label>
+            <select
+              value={similarMinScore}
+              onChange={(e) => setSimilarMinScore(e.target.value)}
+              className="w-full bg-warm-white border border-sand text-espresso text-sm px-3 py-2 outline-none focus:border-clay"
+            >
+              {SIMILARITY_THRESHOLDS.map((threshold) => (
+                <option key={threshold.value} value={String(threshold.value)}>
+                  {threshold.label}
+                </option>
+              ))}
+              {/* Wartość spoza listy (wpisana wcześniej ręcznie) ma zostać widoczna */}
+              {!SIMILARITY_THRESHOLDS.some((t) => String(t.value) === similarMinScore) && (
+                <option value={similarMinScore}>Własny próg: {similarMinScore} pkt</option>
+              )}
+            </select>
+            <div className="flex items-center gap-3">
+              <input
+                type="number"
+                min={0}
+                max={MAX_SIMILARITY_SCORE}
+                step={1}
+                value={similarMinScore}
+                onChange={(e) => setSimilarMinScore(e.target.value)}
+                className="w-28 bg-warm-white border border-sand text-espresso text-sm px-3 py-2 outline-none focus:border-clay"
+              />
+              <span className="text-[11px] text-charcoal/80">
+                pkt (0–{MAX_SIMILARITY_SCORE}); 0 = bez progu
+              </span>
+            </div>
+            <p className="text-[11px] text-charcoal/80 leading-relaxed">
+              Produkt poniżej progu nie trafi do karuzeli. Przy wysokim progu sekcja potrafi
+              zniknąć z karty produktu – to zamierzone: lepiej nie proponować nic, niż coś
+              niepasującego. Zmiana działa po odświeżeniu stron sklepu (do minuty).
+            </p>
+          </div>
+
+          <SaveButton
+            onClick={() => save([
+              { key: SIMILAR_MIN_SCORE_KEY, value: String(normalizeMinScore(similarMinScore)) },
+            ])}
+            label="Zapisz ustawienia proponowanych"
           />
         </div>
       )}

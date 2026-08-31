@@ -30,7 +30,7 @@ import BreadcrumbSchema from "@/components/seo/BreadcrumbSchema";
 import { absoluteUrl, metaDescription } from "@/lib/seo";
 import { categoryPath } from "@/lib/category-seo";
 import { getShopProducts } from "@/lib/products";
-import { similarProducts } from "@/lib/similar-products";
+import { SIMILAR_MIN_SCORE_KEY, normalizeMinScore, similarProducts } from "@/lib/similar-products";
 
 export const revalidate = 60;
 
@@ -138,7 +138,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const hold = { holdMs: DISCOUNT_HOLD_CATALOG_MS };
   const [product, settings, categories, quantityPromoRow, freeShippingRow, catalog] = await Promise.all([
     getProduct(slug),
-    getSettings(["shipping_time", "shipping_cost", "shipping_cost_parcel_locker"]),
+    getSettings(["shipping_time", "shipping_cost", "shipping_cost_parcel_locker", SIMILAR_MIN_SCORE_KEY]),
     getCategories(),
     findActiveQuantityPromo(hold),
     findActiveFreeShipping(hold),
@@ -174,6 +174,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   // (kategoria, zbliżona cena, wyróżnienie, trwająca przecena). Wyprzedanych
   // nie pokazujemy, więc bierzemy wyłącznie `inStock`
   const similar = similarProducts(catalog.inStock, product, {
+    // Próg punktowy z panelu (Ustawienia → Proponowane); 0 = bez progu
+    minScore: normalizeMinScore(settings[SIMILAR_MIN_SCORE_KEY]),
     isDiscounted: (candidate) => activeDiscountPercent(candidate, hold) > 0,
   });
 

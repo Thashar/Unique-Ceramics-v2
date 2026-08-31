@@ -4,10 +4,11 @@ import { redirect } from "next/navigation";
 import { getSettings } from "@/lib/settings";
 import { getAiUsageStats } from "@/lib/ai-usage";
 import SettingsForm from "@/components/admin/SettingsForm";
+import { SIMILAR_MIN_SCORE_KEY } from "@/lib/similar-products";
 
 const VALID_SECTIONS = new Set([
   "strona_glowna", "omnie", "warsztaty", "regulamin", "polityka",
-  "kontakt", "wysylka", "urlop", "zam_indywidualne", "ai",
+  "kontakt", "wysylka", "urlop", "zam_indywidualne", "ai", "proponowane",
   "platnosci_przelew", "platnosci_stripe",
 ]);
 
@@ -98,6 +99,7 @@ export default async function AdminSettingsPage({
     "ai_prompt_presets",
     "ai_prompt_preset_ai",
     "ai_prompt_preset_ai_plus",
+    SIMILAR_MIN_SCORE_KEY,
   ]);
 
   // Statystyki zużycia AI potrzebne tylko na jednej zakładce – nie odpytuj bazy poza nią
