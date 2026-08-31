@@ -21,6 +21,8 @@ export type ValidProduct = {
   price: number;
   images: string[];
   category: string;
+  /** Slug kolekcji (serii) albo null – produkt nie musi należeć do żadnej. */
+  collection: string | null;
   stock: number;
   featured: boolean;
   active: boolean;
@@ -103,6 +105,14 @@ export function validateProduct(
     return { ok: false, error: "Kategoria jest wymagana." };
   }
 
+  // Kolekcja jest opcjonalna: brak, pusty string i null znaczą „poza serią".
+  // Slug sprawdzamy tym samym wzorcem co adresy – trafia do zapytań o produkty
+  const collectionRaw = typeof b.collection === "string" ? b.collection.trim() : "";
+  if (collectionRaw && (collectionRaw.length > 100 || !SLUG_RE.test(collectionRaw))) {
+    return { ok: false, error: "Nieprawidłowa kolekcja." };
+  }
+  const collection = collectionRaw || null;
+
   // Obrazy – tablica niepustych stringów
   if (!Array.isArray(b.images)) {
     return { ok: false, error: "Pole obrazów ma nieprawidłowy format." };
@@ -145,6 +155,7 @@ export function validateProduct(
       price: Math.round(price * 100) / 100,
       images,
       category,
+      collection,
       stock,
       featured: Boolean(b.featured),
       active: Boolean(b.active),

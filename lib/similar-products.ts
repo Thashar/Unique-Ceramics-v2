@@ -4,7 +4,8 @@
  * Katalog jest mały i **bardzo nierówny** – połowa kategorii ma jeden produkt,
  * więc sama reguła „inne z tej samej kategorii” dawałaby na tych kartach pustą
  * sekcję. Dlatego kandydatem jest cały katalog, a kolejność ustala punktacja:
- * kategoria waży najwięcej, dalej zbliżona cena, wyróżnienie i trwająca przecena.
+ * najwyżej **kolekcja** (seria), potem kategoria, dalej zbliżona cena,
+ * wyróżnienie i trwająca przecena.
  *
  * Wyprzedanych **nie pokazujemy w ogóle** (decyzja właściciela 31.08.2026):
  * karuzela ma prowadzić do rzeczy, które da się kupić od ręki.
@@ -15,6 +16,8 @@ export type SimilarProduct = {
   slug: string;
   name: string;
   category: string;
+  /** Slug kolekcji (serii) albo null – produkt nie musi należeć do żadnej. */
+  collection?: string | null;
   price: number;
   images: string[];
   stock: number;
@@ -29,6 +32,13 @@ export type SimilarProduct = {
 /** Ile kafelków pokazuje karuzela. */
 export const SIMILAR_LIMIT = 8;
 
+/**
+ * Kolekcja (seria) waży **więcej niż kategoria** – to świadomy wybór właściciela:
+ * rzeczy zrobione razem tworzą komplet, więc mają się polecać nawzajem przed
+ * innymi produktami z tej samej półki. Produkt bez kolekcji nie dostaje tych
+ * punktów, a `null` nie łączy się z `null` (brak serii to nie jest wspólna seria).
+ */
+const SCORE_SAME_COLLECTION = 250;
 const SCORE_SAME_CATEGORY = 100;
 /** Cena bliska (do 30 %) i umiarkowanie bliska (do 60 %) – klient porównuje w podobnym progu. */
 const SCORE_PRICE_CLOSE = 25;
@@ -61,11 +71,14 @@ function priceDistance(current: number, candidate: number): number {
 }
 
 export function similarityScore(
-  current: Pick<SimilarProduct, "slug" | "category" | "price">,
+  current: Pick<SimilarProduct, "slug" | "category" | "price" | "collection">,
   candidate: SimilarProduct,
   { discounted = false }: { discounted?: boolean } = {},
 ): number {
   let score = 0;
+  if (current.collection && candidate.collection === current.collection) {
+    score += SCORE_SAME_COLLECTION;
+  }
   if (candidate.category === current.category) score += SCORE_SAME_CATEGORY;
 
   const distance = priceDistance(current.price, candidate.price);
@@ -88,7 +101,7 @@ export function similarityScore(
  */
 export function similarProducts(
   products: SimilarProduct[],
-  current: Pick<SimilarProduct, "id" | "slug" | "category" | "price">,
+  current: Pick<SimilarProduct, "id" | "slug" | "category" | "price" | "collection">,
   {
     limit = SIMILAR_LIMIT,
     isDiscounted,

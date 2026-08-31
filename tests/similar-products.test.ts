@@ -90,6 +90,33 @@ describe("similarProducts", () => {
   });
 });
 
+describe("kolekcje", () => {
+  it("stawia produkty z tej samej kolekcji przed tymi z tej samej kategorii", () => {
+    const inCollection = product({ slug: "z-serii", category: "miski", collection: "zima-2026" });
+    const sameCategory = product({ slug: "z-kategorii", category: "kubki", featured: true });
+    const viewed = { ...current, collection: "zima-2026" };
+    const result = similarProducts([inCollection, sameCategory], viewed);
+    expect(result[0].slug).toBe("z-serii");
+  });
+
+  it("brak kolekcji po obu stronach nie jest wspólną kolekcją", () => {
+    const a = product({ slug: "a", category: "miski", collection: null });
+    const b = product({ slug: "b", category: "kubki", collection: null });
+    const viewed = { ...current, collection: null };
+    // Kubek z tej samej kategorii ma wygrać – oba są „bez serii", ale to nie łączy
+    expect(similarProducts([a, b], viewed)[0].slug).toBe("b");
+  });
+
+  it("produkt bez kolekcji nie zbiera punktów za serię oglądanego", () => {
+    const viewed = { ...current, collection: "zima-2026" };
+    const noCollection = product({ slug: "bez-serii", collection: null });
+    const inCollection = product({ slug: "w-serii", collection: "zima-2026" });
+    expect(similarityScore(viewed, inCollection)).toBeGreaterThan(
+      similarityScore(viewed, noCollection)
+    );
+  });
+});
+
 describe("similarityScore", () => {
   it("premiuje wyróżnienie i trwającą przecenę", () => {
     const plain = product({ slug: "zwykly" });

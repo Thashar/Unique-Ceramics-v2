@@ -43,6 +43,8 @@ type Product = {
   price: number;
   images: string[];
   category: string;
+  /** Slug kolekcji (serii) albo null – produkt nie musi należeć do żadnej. */
+  collection: string | null;
   stock: number;
   featured: boolean;
   active: boolean;
@@ -54,6 +56,7 @@ type Product = {
 };
 
 type Category = { slug: string; label: string };
+type Collection = { slug: string; label: string };
 
 /** Dane początkowe bez identyfikatora – formularz zostaje w trybie dodawania (duplikowanie produktu). */
 export type ProductDraft = Omit<Product, "id">;
@@ -62,10 +65,12 @@ export default function ProductForm({
   product,
   initial,
   categories,
+  collections = [],
 }: {
   product?: Product;
   initial?: ProductDraft;
   categories: Category[];
+  collections?: Collection[];
 }) {
   const router = useRouter();
   // `product` = edycja istniejącego (PUT + możliwość usunięcia),
@@ -77,6 +82,8 @@ export default function ProductForm({
     description: base?.description ?? "",
     price: base?.price?.toString() ?? "",
     category: base?.category ?? categories[0]?.slug ?? "",
+    // Pusty string = brak kolekcji; przy zapisie idzie do bazy jako null
+    collection: base?.collection ?? "",
     stock: base?.stock?.toString() ?? "0",
     discountPercent: base?.discountPercent?.toString() ?? "0",
     // Pola dat trzymamy w formacie <input type="datetime-local">, czyli
@@ -327,6 +334,8 @@ export default function ProductForm({
       ...form,
       price: parseFloat(form.price),
       stock: parseInt(form.stock),
+      // Puste pole w selekcie = produkt poza kolekcjami
+      collection: form.collection || null,
       // Puste pole = brak rabatu; walidację zakresu robi validateProduct
       discountPercent: parseInt(form.discountPercent) || 0,
       // Daty wpisywane są w czasie polskim – do bazy idą jako moment w UTC
@@ -469,6 +478,19 @@ export default function ProductForm({
             className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm">
             {categories.map((c) => <option key={c.slug} value={c.slug}>{c.label}</option>)}
           </select>
+        </div>
+        <div>
+          <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">Kolekcja</label>
+          <select value={form.collection} onChange={(e) => set("collection", e.target.value)}
+            className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm">
+            <option value="">Bez kolekcji</option>
+            {collections.map((c) => <option key={c.slug} value={c.slug}>{c.label}</option>)}
+          </select>
+          <p className="text-[11px] text-charcoal/80 mt-1">
+            {collections.length === 0
+              ? "Kolekcje dodajesz w zakładce Kategorie."
+              : "Produkty z tej samej kolekcji polecają się nawzajem przed resztą kategorii."}
+          </p>
         </div>
         <div>
           <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">Cena (zł) *</label>

@@ -4,6 +4,8 @@ import { db } from "@/lib/db";
 import { DEFAULT_CATEGORIES, type Category } from "@/lib/categories";
 import CategoriesManager from "@/components/admin/CategoriesManager";
 import CategoryIntros from "@/components/admin/CategoryIntros";
+import CollectionsManager from "@/components/admin/CollectionsManager";
+import type { Collection } from "@/lib/collection-defaults";
 import { getSettings } from "@/lib/settings";
 import { categoryIntroKey } from "@/lib/category-seo";
 
@@ -19,6 +21,17 @@ export default async function CategoriesPage() {
   } catch {
     // Tabela Category nie istnieje w bazie – migracja nie została uruchomiona
     migrationNeeded = true;
+  }
+
+  // Kolekcje (serie produktów) – osobna tabela, migracja ręczna, więc brak
+  // tabeli nie może wywrócić strony kategorii
+  let collections: Collection[] = [];
+  try {
+    collections = await db.collection.findMany({
+      orderBy: [{ order: "asc" }, { createdAt: "asc" }],
+    });
+  } catch {
+    collections = [];
   }
 
   // Opisy stron kategorii siedzą w ustawieniach (`category_intro_{slug}`),
@@ -59,6 +72,7 @@ CREATE UNIQUE INDEX "Category_slug_key" ON "Category"("slug");`}</pre>
         <>
           <CategoriesManager initialCategories={categories} />
           <CategoryIntros categories={categories} initial={intros} />
+          <CollectionsManager initial={collections} />
         </>
       )}
     </div>

@@ -167,6 +167,9 @@ model Product {
   price       Float
   images      String[]
   category    String   @default("inne")
+  // Kolekcja (seria produktów) – slug z modelu Collection albo null.
+  // W doborze podobnych produktów waży wiecej niz kategoria.
+  collection  String?
   stock       Int      @default(0)
   featured        Boolean  @default(false)
   active          Boolean  @default(true)
@@ -182,6 +185,7 @@ model Product {
 
   @@index([active, featured])
   @@index([active, category])
+  @@index([active, collection])
   @@index([active, stock])
   @@index([active, featured, createdAt(sort: Desc)])
   @@index([slug, active])
@@ -350,6 +354,15 @@ model Category {
 }
 
 // ─── Zużycie AI (generowanie zdjęć produktów) ────────────────────────────────
+
+model Collection {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  label     String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
 
 model AiImageUsage {
   id           String   @id @default(cuid())
