@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { ShoppingBag, ChevronLeft, ChevronRight, Expand } from "lucide-react";
 import AiImageBadge from "@/components/ui/AiImageBadge";
@@ -40,11 +40,65 @@ export default function ProductGallery({
   const gesture = useRef<Gesture | null>(null);
 
   // Pasek miniatur: własny wskaźnik przewijania zamiast systemowego scrollbara.
-  // Pokazuje się w trakcie przesuwania i gaśnie powoli po puszczeniu – tak samo
-  // na dotyku i na myszy (zdarzenie `scroll` obsługuje oba przypadki).
+  // Gdy rząd miniatur nie mieści się w kolumnie, wskaźnik stoi pod nim **na stałe**
+  // (przygaszony) – inaczej nic nie zdradzało, że dalej są kolejne zdjęcia.
+  // W trakcie przesuwania rozjaśnia się i jedzie z palcem, potem wraca do spoczynku.
   const thumbsRef = useRef<HTMLDivElement>(null);
   const [thumbHint, setThumbHint] = useState({ visible: false, progress: 0, size: 1 });
+  const [thumbsScrollable, setThumbsScrollable] = useState(false);
   const thumbHintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  /**
+   * Pomiar taśmy miniatur: czy w ogóle da się ją przewinąć i jak długi ma być
+   * wskaźnik. Siedzi w **callback ref** z `ResizeObserver`, a nie w efekcie –
+   * pomiar musi się powtórzyć po każdej zmianie szerokości kolumny (obrót
+   * telefonu, zmiana okna), a reguła `react-hooks/set-state-in-effect`
+   * nie pozwala ustawiać stanu w `useEffect`.
+   */
+  const attachThumbs = useCallback((el: HTMLDivElement | null) => {
+    thumbsRef.current = el;
+    if (!el) {
+      setThumbsScrollable(false);
+      return;
+    }
+    const measure = () => {
+      const scrollable = el.scrollWidth - el.clientWidth;
+      setThumbsScrollable(scrollable > 1);
+      setThumbHint((prev) => ({
+        ...prev,
+        size: el.scrollWidth > 0 ? el.clientWidth / el.scrollWidth : 1,
+        progress: scrollable > 1 ? Math.min(1, Math.max(0, el.scrollLeft / scrollable)) : 0,
+      }));
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+
+    /**
+     * Kółko myszy nad miniaturami przesuwa je w poziomie – bez tego na
+     * desktopie nie było jak sięgnąć po dalsze zdjęcia (poziomego scrolla
+     * mysz sama nie daje). Na krańcu taśmy oddajemy ruch stronie, żeby
+     * przewijanie nie zatrzymywało się na galerii. Listener dopinamy ręcznie,
+     * bo React podpina `wheel` pasywnie, a tu potrzebny jest `preventDefault`.
+     */
+    const onWheel = (e: WheelEvent) => {
+      const scrollable = el.scrollWidth - el.clientWidth;
+      if (scrollable <= 1) return;
+      const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+      if (delta === 0) return;
+      const atStart = delta < 0 && el.scrollLeft <= 0;
+      const atEnd = delta > 0 && el.scrollLeft >= scrollable - 1;
+      if (atStart || atEnd) return;
+      e.preventDefault();
+      el.scrollLeft += delta;
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+
+    return () => {
+      observer.disconnect();
+      el.removeEventListener("wheel", onWheel);
+    };
+  }, []);
 
   // Oznaczenie dotyczy całej galerii: wystarczy, że jedno ze zdjęć produktu
   // powstało z modelu – wtedy podpis jest widoczny niezależnie od tego, które
@@ -80,6 +134,22 @@ export default function ProductGallery({
     },
     []
   );
+
+  // Zmiana zdjęcia strzałkami albo gestem przewija taśmę do jego miniatury –
+  // przy kilkunastu zdjęciach aktywna miniatura potrafiła zostać poza kadrem.
+  // Liczymy `scrollLeft` sami zamiast `scrollIntoView`, żeby nigdy nie ruszyć
+  // pionowego przewinięcia strony pod użytkownikiem
+  useEffect(() => {
+    const el = thumbsRef.current;
+    const thumb = el?.children[activeImage] as HTMLElement | undefined;
+    if (!el || !thumb) return;
+    const right = thumb.offsetLeft + thumb.offsetWidth;
+    if (thumb.offsetLeft < el.scrollLeft) {
+      el.scrollTo({ left: thumb.offsetLeft, behavior: "smooth" });
+    } else if (right > el.scrollLeft + el.clientWidth) {
+      el.scrollTo({ left: right - el.clientWidth, behavior: "smooth" });
+    }
+  }, [activeImage]);
 
   const go = (dir: -1 | 1) => {
     setActiveImage((prev) => Math.min(images.length - 1, Math.max(0, prev + dir)));
@@ -241,7 +311,7 @@ export default function ProductGallery({
           {/* Systemowy scrollbar chowamy (`no-scrollbar`) – jego miejsce zajmuje
               wskaźnik niżej, widoczny tylko w trakcie przesuwania */}
           <div
-            ref={thumbsRef}
+            ref={attachThumbs}
             onScroll={handleThumbsScroll}
             className="flex gap-3 overflow-x-auto no-scrollbar"
           >
@@ -272,16 +342,22 @@ export default function ProductGallery({
             ))}
           </div>
 
-          {/* Wskaźnik przewijania: zapala się od razu, gaśnie powoli po
-              puszczeniu. Przesunięcie i szerokość bez animacji – mają jechać
+          {/* Wskaźnik przewijania: tor widoczny, dopóki rząd miniatur da się
+              przesunąć, a suwak stoi na nim stale (przygaszony) i rozjaśnia się
+              na czas ruchu. Przesunięcie i szerokość bez animacji – mają jechać
               razem z palcem, animujemy samą przezroczystość */}
-          <div className="relative mt-2 h-0.5" aria-hidden="true">
+          <div
+            className={`relative mt-2 h-1 rounded-full transition-colors ${
+              thumbsScrollable ? "bg-sand" : "bg-transparent"
+            }`}
+            aria-hidden="true"
+          >
             <div
               className="absolute inset-y-0 bg-clay rounded-full"
               style={{
                 width: `${thumbHint.size * 100}%`,
                 left: `${thumbHint.progress * (100 - thumbHint.size * 100)}%`,
-                opacity: thumbHint.visible ? 1 : 0,
+                opacity: thumbHint.visible ? 1 : thumbsScrollable ? 0.55 : 0,
                 transition: thumbHint.visible
                   ? "opacity 120ms ease-out"
                   : `opacity ${THUMB_HINT_FADE_MS}ms ease-in`,
