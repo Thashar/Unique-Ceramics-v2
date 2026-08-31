@@ -7,6 +7,7 @@ import Header from "@/components/layout/HeaderWrapper";
 import Footer from "@/components/layout/Footer";
 import DishwasherIcon from "@/components/ui/DishwasherIcon";
 import ProductGallery from "@/components/ui/ProductGallery";
+import SimilarProducts from "@/components/ui/SimilarProducts";
 import AddToCartSection from "./AddToCartSection";
 import { db, withDbRetry } from "@/lib/db";
 import { getSettings, settingNumber } from "@/lib/settings";
@@ -28,6 +29,8 @@ import { formatWarsaw } from "@/lib/warsaw-time";
 import BreadcrumbSchema from "@/components/seo/BreadcrumbSchema";
 import { absoluteUrl, metaDescription } from "@/lib/seo";
 import { categoryPath } from "@/lib/category-seo";
+import { getShopProducts } from "@/lib/products";
+import { similarProducts } from "@/lib/similar-products";
 
 export const revalidate = 60;
 
@@ -133,12 +136,15 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const hold = { holdMs: DISCOUNT_HOLD_CATALOG_MS };
-  const [product, settings, categories, quantityPromoRow, freeShippingRow] = await Promise.all([
+  const [product, settings, categories, quantityPromoRow, freeShippingRow, catalog] = await Promise.all([
     getProduct(slug),
     getSettings(["shipping_time", "shipping_cost", "shipping_cost_parcel_locker"]),
     getCategories(),
     findActiveQuantityPromo(hold),
     findActiveFreeShipping(hold),
+    // Katalog jest już cachowany pod tagiem `products` – podobne produkty
+    // liczymy z niego w pamięci, bez dodatkowego zapytania do bazy
+    getShopProducts(),
   ]);
 
   if (!product) notFound();
@@ -163,6 +169,13 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const shippingCostParcel = settingNumber(settings.shipping_cost_parcel_locker, 18);
   const cheapestShipping = Math.min(shippingCostCourier, shippingCostParcel);
   const shippingVaries = shippingCostCourier !== shippingCostParcel;
+
+  // Karuzela „Podobne produkty" – punktacja w `lib/similar-products.ts`
+  // (kategoria, zbliżona cena, wyróżnienie, trwająca przecena). Wyprzedanych
+  // nie pokazujemy, więc bierzemy wyłącznie `inStock`
+  const similar = similarProducts(catalog.inStock, product, {
+    isDiscounted: (candidate) => activeDiscountPercent(candidate, hold) > 0,
+  });
 
   const BASE = "https://uniqueceramics.pl";
   const priceValidUntil = priceValidUntilDate(discountEndsAt);
@@ -418,6 +431,20 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             </div>
           </div>
         </div>
+
+        <SimilarProducts
+          products={similar.map((p) => ({
+            id: p.id,
+            slug: p.slug,
+            name: p.name,
+            category: p.category,
+            price: p.price,
+            images: p.images,
+            stock: p.stock,
+            discountPercent: activeDiscountPercent(p, hold),
+          }))}
+          categories={categories}
+        />
       </main>
       <Footer />
     </>

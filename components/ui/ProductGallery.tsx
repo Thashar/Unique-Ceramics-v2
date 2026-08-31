@@ -1,11 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { ShoppingBag, ChevronLeft, ChevronRight, Expand } from "lucide-react";
 import AiImageBadge from "@/components/ui/AiImageBadge";
 import ImageLightbox from "./ImageLightbox";
 import { isAiGeneratedImage } from "@/lib/ai";
+import { DRAG_SCROLL_CLASS, HINT_FADE_MS, useDragScroll } from "@/lib/use-drag-scroll";
 
 /** Poniżej tylu pikseli gest traktujemy jako drgnięcie palca, nie przesunięcie. */
 const AXIS_LOCK_PX = 8;
@@ -18,10 +19,6 @@ const EDGE_RESISTANCE = 3;
 /** Ile miniatur ma się zmieścić w rzędzie na telefonie (odstęp `gap-3` = 0,75 rem). */
 const THUMBS_PER_VIEW = 3;
 const THUMBS_GAP_REM = 0.75;
-/** Wskaźnik przewijania miniatur: po puszczeniu palca gaśnie powoli. */
-const THUMB_HINT_HIDE_MS = 600;
-const THUMB_HINT_FADE_MS = 700;
-
 type Gesture = { x: number; y: number; axis: "none" | "x" | "y" };
 
 export default function ProductGallery({
@@ -39,159 +36,22 @@ export default function ProductGallery({
   const frameRef = useRef<HTMLDivElement>(null);
   const gesture = useRef<Gesture | null>(null);
 
-  // Pasek miniatur: własny wskaźnik przewijania zamiast systemowego scrollbara.
-  // **Widoczny tylko w trakcie przesuwania** (decyzja właściciela 31.08.2026) –
-  // w spoczynku pod miniaturami nie ma paska. Nie rób go stałym i nie dokładaj
-  // strzałek: rząd przesuwa się przeciągnięciem, kursorem tak samo jak palcem.
-  const thumbsRef = useRef<HTMLDivElement>(null);
-  const [thumbHint, setThumbHint] = useState({ visible: false, progress: 0, size: 1 });
-  const thumbHintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  /**
-   * Pomiar taśmy miniatur (jak długi jest wskaźnik i gdzie stoi) oraz
-   * **przeciąganie rzędu kursorem**. Siedzi w callback refie z `ResizeObserver`,
-   * a nie w efekcie – pomiar musi się powtórzyć po każdej zmianie szerokości
-   * kolumny, a reguła `react-hooks/set-state-in-effect` nie pozwala ustawiać
-   * stanu w `useEffect`.
-   *
-   * Myszą taśmy nie dało się ruszyć w ogóle (poziomego scrolla mysz nie daje),
-   * więc łapiemy zdarzenia **pointer**: wciśnięty lewy przycisk przesuwa rząd
-   * dokładnie tak, jak robi to palec na dotyku. Dodatkowo kółko myszy przewija
-   * miniatury, oddając ruch stronie na krańcach taśmy. Dotyk zostawiamy
-   * przeglądarce – natywne przewijanie jest płynniejsze i nie psuje pionowego
-   * scrolla strony.
-   */
-  const attachThumbs = useCallback((el: HTMLDivElement | null) => {
-    thumbsRef.current = el;
-    if (!el) return;
-    const measure = () => {
-      const scrollable = el.scrollWidth - el.clientWidth;
-      setThumbHint((prev) => ({
-        ...prev,
-        size: el.scrollWidth > 0 ? el.clientWidth / el.scrollWidth : 1,
-        progress: scrollable > 1 ? Math.min(1, Math.max(0, el.scrollLeft / scrollable)) : 0,
-      }));
-    };
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(el);
-
-    let dragging = false;
-    let startX = 0;
-    let startScroll = 0;
-    let moved = 0;
-
-    const onPointerDown = (e: PointerEvent) => {
-      if (e.pointerType !== "mouse" || e.button !== 0) return;
-      if (el.scrollWidth - el.clientWidth <= 1) return;
-      dragging = true;
-      startX = e.clientX;
-      startScroll = el.scrollLeft;
-      moved = 0;
-      // Bez tego przeciągnięcie startuje natywne przenoszenie obrazka
-      e.preventDefault();
-    };
-
-    const onPointerMove = (e: PointerEvent) => {
-      if (!dragging) return;
-      const dx = e.clientX - startX;
-      moved = Math.max(moved, Math.abs(dx));
-      el.scrollLeft = startScroll - dx;
-    };
-
-    const blockClick = (clickEvent: Event) => {
-      clickEvent.preventDefault();
-      clickEvent.stopPropagation();
-    };
-    let unblockTimer: ReturnType<typeof setTimeout> | null = null;
-
-    const onPointerUp = () => {
-      if (!dragging) return;
-      dragging = false;
-      // Przeciągnięcie nie może kończyć się zmianą zdjęcia – kliknięcie
-      // wypadające po ruchu ponad próg zatrzymujemy jeszcze przed miniaturą.
-      // Blokadę zdejmujemy po chwili także wtedy, gdy kliknięcie nie przyszło
-      // (palec/kursor puszczony poza taśmą) – inaczej zjadłaby następny klik
-      if (moved > AXIS_LOCK_PX) {
-        el.addEventListener("click", blockClick, { capture: true, once: true });
-        if (unblockTimer) clearTimeout(unblockTimer);
-        unblockTimer = setTimeout(
-          () => el.removeEventListener("click", blockClick, { capture: true }),
-          120
-        );
-      }
-    };
-
-    /**
-     * Kółko myszy nad miniaturami też przesuwa rząd – drugi, wygodniejszy sposób
-     * obok przeciągania. Na krańcu taśmy ruch **oddajemy stronie**, żeby
-     * przewijanie nie zatrzymywało się na galerii. Listener dopinamy ręcznie,
-     * bo React podpina `wheel` pasywnie, a tu potrzebny jest `preventDefault`.
-     */
-    const onWheel = (e: WheelEvent) => {
-      const scrollable = el.scrollWidth - el.clientWidth;
-      if (scrollable <= 1) return;
-      const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
-      if (delta === 0) return;
-      const atStart = delta < 0 && el.scrollLeft <= 0;
-      const atEnd = delta > 0 && el.scrollLeft >= scrollable - 1;
-      if (atStart || atEnd) return;
-      e.preventDefault();
-      el.scrollLeft += delta;
-    };
-
-    el.addEventListener("pointerdown", onPointerDown);
-    el.addEventListener("wheel", onWheel, { passive: false });
-    window.addEventListener("pointermove", onPointerMove);
-    window.addEventListener("pointerup", onPointerUp);
-    window.addEventListener("pointercancel", onPointerUp);
-
-    return () => {
-      observer.disconnect();
-      if (unblockTimer) clearTimeout(unblockTimer);
-      el.removeEventListener("pointerdown", onPointerDown);
-      el.removeEventListener("wheel", onWheel);
-      el.removeEventListener("click", blockClick, { capture: true });
-      window.removeEventListener("pointermove", onPointerMove);
-      window.removeEventListener("pointerup", onPointerUp);
-      window.removeEventListener("pointercancel", onPointerUp);
-    };
-  }, []);
+  // Pasek miniatur: własny wskaźnik przewijania zamiast systemowego scrollbara,
+  // **widoczny tylko w trakcie przesuwania** (decyzja właściciela 31.08.2026).
+  // Przewijanie kursorem, palcem i kółkiem obsługuje wspólny `useDragScroll` –
+  // ta sama taśma co w karuzeli podobnych produktów.
+  const {
+    ref: thumbsRef,
+    attach: attachThumbs,
+    onScroll: handleThumbsScroll,
+    hint: thumbHint,
+  } = useDragScroll();
 
   // Oznaczenie dotyczy całej galerii: wystarczy, że jedno ze zdjęć produktu
   // powstało z modelu – wtedy podpis jest widoczny niezależnie od tego, które
   // zdjęcie akurat oglądamy (nie miga przy przełączaniu)
   const aiImage = images.some(isAiGeneratedImage);
   const hasMany = images.length > 1;
-
-  /**
-   * Wskaźnik przewijania miniatur. Zapala się przy każdym ruchu taśmy i gaśnie
-   * po chwili bez ruchu – dzięki temu na telefonie nie ma stałego paska pod
-   * miniaturami, a widać, że rząd da się przesunąć.
-   */
-  const handleThumbsScroll = () => {
-    const el = thumbsRef.current;
-    if (!el) return;
-    const scrollable = el.scrollWidth - el.clientWidth;
-    if (scrollable <= 1) return;
-    setThumbHint({
-      visible: true,
-      progress: Math.min(1, Math.max(0, el.scrollLeft / scrollable)),
-      size: el.clientWidth / el.scrollWidth,
-    });
-    if (thumbHintTimer.current) clearTimeout(thumbHintTimer.current);
-    thumbHintTimer.current = setTimeout(
-      () => setThumbHint((prev) => ({ ...prev, visible: false })),
-      THUMB_HINT_HIDE_MS
-    );
-  };
-
-  useEffect(
-    () => () => {
-      if (thumbHintTimer.current) clearTimeout(thumbHintTimer.current);
-    },
-    []
-  );
 
   // Zmiana zdjęcia strzałkami albo gestem przewija taśmę do jego miniatury –
   // przy kilkunastu zdjęciach aktywna miniatura potrafiła zostać poza kadrem.
@@ -207,7 +67,7 @@ export default function ProductGallery({
     } else if (right > el.scrollLeft + el.clientWidth) {
       el.scrollTo({ left: right - el.clientWidth, behavior: "smooth" });
     }
-  }, [activeImage]);
+  }, [activeImage, thumbsRef]);
 
   const go = (dir: -1 | 1) => {
     setActiveImage((prev) => Math.min(images.length - 1, Math.max(0, prev + dir)));
@@ -373,7 +233,7 @@ export default function ProductGallery({
           <div
             ref={attachThumbs}
             onScroll={handleThumbsScroll}
-            className="flex gap-3 overflow-x-auto no-scrollbar select-none cursor-grab active:cursor-grabbing"
+            className={`flex gap-3 ${DRAG_SCROLL_CLASS}`}
           >
             {images.map((img, i) => (
               <button
@@ -416,7 +276,7 @@ export default function ProductGallery({
                 opacity: thumbHint.visible ? 1 : 0,
                 transition: thumbHint.visible
                   ? "opacity 120ms ease-out"
-                  : `opacity ${THUMB_HINT_FADE_MS}ms ease-in`,
+                  : `opacity ${HINT_FADE_MS}ms ease-in`,
               }}
             />
           </div>
