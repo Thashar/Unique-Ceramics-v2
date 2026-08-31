@@ -8,6 +8,7 @@ import { ArrowRight, Gift, Phone, Mail, Clock, MapPin } from "lucide-react";
 import CustomOrderPoints from "@/components/ui/CustomOrderPoints";
 import ClayRule from "@/components/ui/ClayRule";
 import InstagramIcon from "@/components/ui/InstagramIcon";
+import FacebookIcon from "@/components/ui/FacebookIcon";
 import WhatsAppIcon from "@/components/ui/WhatsAppIcon";
 import Header from "@/components/layout/HeaderWrapper";
 import Footer from "@/components/layout/Footer";
@@ -42,6 +43,7 @@ export default async function ContactPage() {
     "contact_phone",
     "contact_email",
     "contact_instagram",
+    "contact_facebook",
     "contact_whatsapp",
     "contact_hours",
     "contact_address_street",
@@ -53,6 +55,7 @@ export default async function ContactPage() {
   const phone = settings.contact_phone;
   const email = settings.contact_email;
   const instagram = settings.contact_instagram;
+  const facebook = settings.contact_facebook;
   const whatsapp = settings.contact_whatsapp;
   const hours = normalizeHours(settings.contact_hours);
   const addrStreet = settings.contact_address_street;
@@ -68,6 +71,13 @@ export default async function ContactPage() {
     ? instagram.slice(1)
     : instagram;
   const instagramHref = `https://instagram.com/${instagramHandle}`;
+
+  // W panelu wpisuje się pełny URL profilu, a taki adres w kolumnie kontaktu
+  // czyta się źle – pokazujemy go bez protokołu, „www." i końcowego ukośnika
+  const facebookLabel = facebook
+    .replace(/^https?:\/\//, "")
+    .replace(/^www\./, "")
+    .replace(/\/$/, "");
 
   // Derive tel href (strip spaces)
   const phoneHref = `tel:${phone.replace(/\s/g, "")}`;
@@ -143,6 +153,23 @@ export default async function ContactPage() {
                     <p className="text-lg">{instagram}</p>
                   </div>
                 </a>
+
+                {facebook && (
+                  <a
+                    href={facebook}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-start gap-4 text-charcoal/80 hover:text-clay transition-colors group"
+                  >
+                    <div className="w-10 h-10 bg-cream rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-terracotta/10 transition-colors">
+                      <FacebookIcon size={18} className="text-clay" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs tracking-widest uppercase text-clay mb-1">Facebook</p>
+                      <p className="text-lg break-words">{facebookLabel}</p>
+                    </div>
+                  </a>
+                )}
 
                 {whatsapp && (
                   <a
