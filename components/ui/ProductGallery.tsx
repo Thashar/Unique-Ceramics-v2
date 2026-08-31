@@ -56,8 +56,10 @@ export default function ProductGallery({
    *
    * Myszą taśmy nie dało się ruszyć w ogóle (poziomego scrolla mysz nie daje),
    * więc łapiemy zdarzenia **pointer**: wciśnięty lewy przycisk przesuwa rząd
-   * dokładnie tak, jak robi to palec na dotyku. Dotyk zostawiamy przeglądarce –
-   * natywne przewijanie jest płynniejsze i nie psuje pionowego scrolla strony.
+   * dokładnie tak, jak robi to palec na dotyku. Dodatkowo kółko myszy przewija
+   * miniatury, oddając ruch stronie na krańcach taśmy. Dotyk zostawiamy
+   * przeglądarce – natywne przewijanie jest płynniejsze i nie psuje pionowego
+   * scrolla strony.
    */
   const attachThumbs = useCallback((el: HTMLDivElement | null) => {
     thumbsRef.current = el;
@@ -120,7 +122,26 @@ export default function ProductGallery({
       }
     };
 
+    /**
+     * Kółko myszy nad miniaturami też przesuwa rząd – drugi, wygodniejszy sposób
+     * obok przeciągania. Na krańcu taśmy ruch **oddajemy stronie**, żeby
+     * przewijanie nie zatrzymywało się na galerii. Listener dopinamy ręcznie,
+     * bo React podpina `wheel` pasywnie, a tu potrzebny jest `preventDefault`.
+     */
+    const onWheel = (e: WheelEvent) => {
+      const scrollable = el.scrollWidth - el.clientWidth;
+      if (scrollable <= 1) return;
+      const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+      if (delta === 0) return;
+      const atStart = delta < 0 && el.scrollLeft <= 0;
+      const atEnd = delta > 0 && el.scrollLeft >= scrollable - 1;
+      if (atStart || atEnd) return;
+      e.preventDefault();
+      el.scrollLeft += delta;
+    };
+
     el.addEventListener("pointerdown", onPointerDown);
+    el.addEventListener("wheel", onWheel, { passive: false });
     window.addEventListener("pointermove", onPointerMove);
     window.addEventListener("pointerup", onPointerUp);
     window.addEventListener("pointercancel", onPointerUp);
@@ -129,6 +150,7 @@ export default function ProductGallery({
       observer.disconnect();
       if (unblockTimer) clearTimeout(unblockTimer);
       el.removeEventListener("pointerdown", onPointerDown);
+      el.removeEventListener("wheel", onWheel);
       el.removeEventListener("click", blockClick, { capture: true });
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("pointerup", onPointerUp);
