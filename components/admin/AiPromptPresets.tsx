@@ -25,7 +25,7 @@ function newPresetId(): string {
  * Presety promptów dla przycisków AI i AI+ (zakładka „AI" w ustawieniach).
  *
  * Preset opisuje wyłącznie **scenę** – tło, rekwizyty, światło. Reguły dotyczące
- * produktu (kadr 4:3, wierność koloru, komplet sztuk, skala) dokleja
+ * produktu (niezmienny kąt ujęcia, kadr 4:3, wierność koloru, komplet sztuk, skala) dokleja
  * `buildImagePrompt` przy każdym generowaniu, więc żaden preset ich nie omija.
  *
  * Zmiany wracają do `SettingsForm` przez `onChange` i zapisuje je dopiero
@@ -233,8 +233,9 @@ export default function AiPromptPresets({
         <h3 className="font-serif text-xl text-espresso">Presety promptów</h3>
         <p className="text-[11px] text-charcoal/80 leading-relaxed mt-1">
           Preset opisuje <strong className="font-medium">scenę</strong> – tło, rekwizyty, światło
-          i nastrój zdjęcia. Informacje o samym produkcie (kadr 4:3, wierność koloru szkliwa,
-          komplet sztuk, niezmieniona wielkość) dokładane są automatycznie do każdego promptu,
+          i nastrój zdjęcia. Informacje o samym produkcie (ten sam kąt ujęcia, kadr 4:3,
+          wierność koloru szkliwa, komplet sztuk, niezmieniona wielkość) dokładane są
+          automatycznie do każdego promptu,
           więc żaden preset ich nie pominie.
         </p>
         <details className="text-[11px] text-charcoal/80 mt-2">

@@ -81,8 +81,8 @@ export async function POST(req: Request) {
     AI_PRESETS_SETTING_KEY,
   ]);
   const model = resolveAiModel(variant, settings[AI_MODEL_SETTING_KEY[variant]]);
-  // Scena z presetu wybranego dla tego przycisku; reguły produktu (kadr, kolor,
-  // komplet, skala) dokłada buildImagePrompt – preset nie może ich pominąć
+  // Scena z presetu wybranego dla tego przycisku; reguły produktu (kąt ujęcia,
+  // kadr, kolor, komplet, skala) dokłada buildImagePrompt – preset nie może ich pominąć
   const preset = resolveAiPreset(
     variant,
     settings[AI_PRESET_SETTING_KEY[variant]],
