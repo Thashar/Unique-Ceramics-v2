@@ -5,6 +5,8 @@ import Link from "next/link";
 import { ChevronLeft, TrendingUp, ShoppingBag, Package, Truck, CreditCard, BarChart2 } from "lucide-react";
 import DznSection from "@/components/admin/DznSection";
 import MonthlyReportsTable from "@/components/admin/MonthlyReportsTable";
+import ExternalSalesSection from "@/components/admin/ExternalSalesSection";
+import { listExternalSales } from "@/lib/external-sales";
 import { getSetting, getSettings } from "@/lib/settings";
 
 // ── Typy dla raw queries ───────────────────────────────────────────────────────
@@ -263,6 +265,45 @@ export default async function AnalitykiPage() {
   const customAllRevenue    = Number(customAllTimeAgg[0]?.total ?? 0);
   const customAllOrders     = Number(customAllTimeAgg[0]?.cnt   ?? 0);
 
+  // ── Sprzedaż poza sklepem (ręczne wpisy) ──────────────────────────────────
+  // Jarmarki i sprzedaż bezpośrednia. Liczymy w JS, a nie w SQL – wpisów są
+  // dziesiątki, a i tak potrzebujemy ich w całości do listy pod formularzem.
+  const { available: externalAvailable, sales: externalSales } = await listExternalSales();
+
+  const extKey = (d: Date) => `${d.getFullYear()}-${d.getMonth() + 1}`;
+
+  const externalMonthly = new Map<string, { rev: number; cnt: number }>();
+  const externalQuarterly: Record<number, { rev: number; cnt: number }> = {};
+  let extYearRevenue  = 0, extYearCount  = 0;
+  let extMonthRevenue = 0, extMonthCount = 0;
+  let extAllRevenue   = 0;
+
+  for (const sale of externalSales) {
+    const when = new Date(sale.soldAt);
+    const amount = Number(sale.amount);
+
+    extAllRevenue += amount;
+
+    const mKey = extKey(when);
+    const m = externalMonthly.get(mKey) ?? { rev: 0, cnt: 0 };
+    externalMonthly.set(mKey, { rev: m.rev + amount, cnt: m.cnt + 1 });
+
+    if (when >= yearStart) {
+      extYearRevenue += amount;
+      extYearCount   += 1;
+
+      const q = Math.ceil((when.getMonth() + 1) / 3);
+      const qd = externalQuarterly[q] ?? { rev: 0, cnt: 0 };
+      externalQuarterly[q] = { rev: qd.rev + amount, cnt: qd.cnt + 1 };
+    }
+    if (when >= monthStart) {
+      extMonthRevenue += amount;
+      extMonthCount   += 1;
+    }
+  }
+
+  const hasExternalSales = externalSales.length > 0;
+
   // ── Budujemy oś czasu 12 miesięcy ─────────────────────────────────────────
   const monthMap = new Map<string, RawMonthRow>();
   for (const r of monthlyRaw) {
@@ -280,6 +321,18 @@ export default async function AnalitykiPage() {
       });
     } else {
       monthMap.set(key, { yr: Number(r.yr), mo: Number(r.mo), cnt: Number(r.cnt), rev: Number(r.rev), ship: 0 });
+    }
+  }
+
+  // Sprzedaż poza sklepem trafia do tej samej mapy – na wykresie nie rozdzielamy
+  // źródeł, bo to jeden przychód właścicielki.
+  for (const [key, val] of externalMonthly) {
+    const existing = monthMap.get(key);
+    if (existing) {
+      monthMap.set(key, { ...existing, cnt: existing.cnt + val.cnt, rev: existing.rev + val.rev });
+    } else {
+      const [yr, mo] = key.split("-").map(Number);
+      monthMap.set(key, { yr, mo, cnt: val.cnt, rev: val.rev, ship: 0 });
     }
   }
 
@@ -310,14 +363,14 @@ export default async function AnalitykiPage() {
   }
 
   // ── Sumaryczne wartości (sklep + indywidualne) ─────────────────────────────
-  const yearRevenue  = Number(yearAgg._sum.total       ?? 0) + customYearRevenue;
+  const yearRevenue  = Number(yearAgg._sum.total       ?? 0) + customYearRevenue  + extYearRevenue;
   const yearShipping = Number(yearAgg._sum.shippingCost ?? 0) + customYearShipping;
-  const yearOrders   = Number(yearAgg._count  ?? 0)         + customYearOrders;
+  const yearOrders   = Number(yearAgg._count  ?? 0)         + customYearOrders   + extYearCount;
   const avgOrder     = yearOrders > 0 ? yearRevenue / yearOrders : 0;
-  const monthRevenue = Number(monthAgg._sum.total ?? 0)      + customMonthRevenue;
-  const monthOrders  = Number(monthAgg._count ?? 0)          + customMonthOrders;
-  const allRevenue   = Number(allTimeAgg._sum.total ?? 0)    + customAllRevenue;
-  const allOrders    = Number(allTimeAgg._count ?? 0)        + customAllOrders;
+  const monthRevenue = Number(monthAgg._sum.total ?? 0)      + customMonthRevenue + extMonthRevenue;
+  const monthOrders  = Number(monthAgg._count ?? 0)          + customMonthOrders  + extMonthCount;
+  const allRevenue   = Number(allTimeAgg._sum.total ?? 0)    + customAllRevenue   + extAllRevenue;
+  const allOrders    = Number(allTimeAgg._count ?? 0)        + customAllOrders    + externalSales.length;
 
   const totalShipping = shippingRaw.reduce((s, r) => s + Number(r.total), 0);
   const totalOrders   = statusRaw.reduce((s, r) => s + Number(r.cnt), 0);
@@ -340,6 +393,18 @@ export default async function AnalitykiPage() {
       quarterData[q].cnt += Number(r.cnt);
     } else {
       quarterData[q] = { rev: Number(r.rev), cnt: Number(r.cnt) };
+    }
+  }
+
+  // Sprzedaż poza sklepem wchodzi do limitu działalności nierejestrowanej – to
+  // przychód należny tak samo jak zamówienie ze sklepu.
+  for (const [qStr, val] of Object.entries(externalQuarterly)) {
+    const q = Number(qStr);
+    if (quarterData[q]) {
+      quarterData[q].rev += val.rev;
+      quarterData[q].cnt += val.cnt;
+    } else {
+      quarterData[q] = { rev: val.rev, cnt: val.cnt };
     }
   }
 
@@ -374,6 +439,13 @@ export default async function AnalitykiPage() {
       {hasCustomOrders && (
         <div className="bg-purple-50 border border-purple-200 px-4 py-2.5 text-xs text-purple-700">
           Dane uwzględniają zamówienia indywidualne ze statusem Opłacone lub Zrealizowane.
+        </div>
+      )}
+
+      {hasExternalSales && (
+        <div className="bg-amber-50 border border-amber-200 px-4 py-2.5 text-xs text-amber-800">
+          Dane uwzględniają sprzedaż poza sklepem wpisaną ręcznie ({externalSales.length}{" "}
+          {externalSales.length === 1 ? "wpis" : "wpisów"}, {fmt(extAllRevenue)} zł łącznie).
         </div>
       )}
 
@@ -420,7 +492,8 @@ export default async function AnalitykiPage() {
       <div className="bg-cream border border-sand/60 p-6">
         <h2 className="font-serif text-lg text-espresso mb-1">Przychód i zamówienia – ostatnie 12 miesięcy</h2>
         <p className="text-xs text-charcoal/80 mb-6">
-          Tylko opłacone · przychód rozpoznawany wg daty wpłaty · uwzględnia zamówienia indywidualne (Opłacone/Zrealizowane)
+          Tylko opłacone · przychód rozpoznawany wg daty wpłaty · uwzględnia zamówienia indywidualne
+          (Opłacone/Zrealizowane) i sprzedaż poza sklepem
         </p>
 
         {/* Wykres słupkowy */}
@@ -660,7 +733,28 @@ export default async function AnalitykiPage() {
             * Przychód zawiera zamówienia indywidualne: {fmt(customYearRevenue)} zł ({customYearOrders} zam.)
           </p>
         )}
+        {extYearCount > 0 && (
+          <p className="text-[10px] text-amber-700 mt-2 pt-3 border-t border-sand">
+            * Przychód zawiera sprzedaż poza sklepem: {fmt(extYearRevenue)} zł ({extYearCount}{" "}
+            {extYearCount === 1 ? "wpis" : "wpisów"})
+          </p>
+        )}
       </div>
+
+      {/* ── Sprzedaż poza sklepem (wpisy ręczne) ──────────────────────────── */}
+      <ExternalSalesSection
+        available={externalAvailable}
+        sales={externalSales.map((s) => ({
+          id: s.id,
+          soldAt: new Date(s.soldAt).toISOString(),
+          description: s.description,
+          amount: Number(s.amount),
+          note: s.note,
+        }))}
+        currentYear={now.getFullYear()}
+        yearTotal={extYearRevenue}
+        allTimeTotal={extAllRevenue}
+      />
 
       {/* ── Działalność nierejestrowana ───────────────────────────────────── */}
       <DznSection

@@ -389,3 +389,17 @@ model Setting {
   value     String   @db.Text
   updatedAt DateTime @updatedAt
 }
+
+// ─── Sprzedaż poza sklepem (wpisy ręczne w analityce) ─────────────────────────
+
+model ExternalSale {
+  id          String   @id @default(cuid())
+  soldAt      DateTime
+  description String
+  amount      Float
+  note        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([soldAt])
+}

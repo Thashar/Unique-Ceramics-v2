@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { requireAdmin } from "@/lib/admin-auth";
 import { db } from "@/lib/db";
 import { getSetting } from "@/lib/settings";
+import { getExternalSalesBetween } from "@/lib/external-sales";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const PDFDocument = require("pdfkit") as typeof import("pdfkit");
 
@@ -120,6 +121,11 @@ export async function GET(
     return new Response("Błąd bazy danych", { status: 500 });
   }
 
+  // Sprzedaż poza sklepem – ręczne wpisy z panelu analityk. Odczyt ma własny
+  // try/catch w module (migracja jest ręczna), więc brak tabeli daje pustą listę
+  // i raport wychodzi jak dotąd.
+  const externalSales = await getExternalSalesBetween(periodStart, periodEnd);
+
   // Data rozpoznania przychodu i filtr do bieżącego miesiąca
   const recognitionDate = (o: { paidAt: Date | null; createdAt: Date }) =>
     o.paidAt ?? o.createdAt;
@@ -142,12 +148,17 @@ export async function GET(
   const customRevenue  = customOrders.reduce((s, o) => s + (o.price        ?? 0), 0);
   const customShipping = customOrders.reduce((s, o) => s + (o.shippingCost ?? 0), 0);
 
+  // ── Sumy sprzedaży poza sklepem ───────────────────────────────────────────────
+  // Wpisy ręczne nie mają wysyłki, więc cała kwota jest przychodem z produktów.
+
+  const externalRevenue = externalSales.reduce((s, e) => s + e.amount, 0);
+
   // ── Łącznie ───────────────────────────────────────────────────────────────────
 
-  const totalCount    = orders.length + customOrders.length;
-  const totalRevenue  = shopRevenue  + customRevenue + customShipping;
+  const totalCount    = orders.length + customOrders.length + externalSales.length;
+  const totalRevenue  = shopRevenue  + customRevenue + customShipping + externalRevenue;
   const totalShipping = shopShipping + customShipping;
-  const totalProducts = shopProducts + customRevenue;
+  const totalProducts = shopProducts + customRevenue + externalRevenue;
 
   // ── Podatek dochodowy (PIT) ─────────────────────────────────────────────────
   // Podstawa opodatkowania = przychód z produktów. Wysyłka jest kosztem uzyskania
@@ -216,6 +227,14 @@ export async function GET(
     { label: "Cena",     w:  85, align: "right" as const },
   ];
   // 40+52+115+100+155+105+55+65+85 = 772 ✓
+
+  // Kolumny tabeli sprzedaży poza sklepem (suma = 772)
+  const EXT_COLS = [
+    { label: "Data",    w:  70, align: "left"  as const },
+    { label: "Opis",    w: 402, align: "left"  as const },
+    { label: "Notatka", w: 200, align: "left"  as const },
+    { label: "Kwota",   w: 100, align: "right" as const },
+  ];
 
   const FS      = 7;
   const FS_HDR  = 6.5;
@@ -288,6 +307,28 @@ export async function GET(
     return startY + HDR_H;
   }
 
+  // ── Nagłówek tabeli sprzedaży poza sklepem ────────────────────────────────────
+  function drawExternalTableHeader(startY: number): number {
+    doc.fillColor("#92400E").rect(ML, startY, TW, HDR_H).fill();
+    let cx = ML;
+    for (const col of EXT_COLS) {
+      doc.font(B).fontSize(FS_HDR).fillColor("#FAF8F5")
+         .text(col.label, cx + 4, startY + 3, {
+           width: col.w - 8,
+           align: col.align,
+           lineBreak: false,
+         });
+      cx += col.w;
+    }
+    cx = ML;
+    for (let i = 1; i < EXT_COLS.length; i++) {
+      cx += EXT_COLS[i - 1].w;
+      doc.strokeColor("#B45309").lineWidth(0.3)
+         .moveTo(cx, startY).lineTo(cx, startY + HDR_H).stroke();
+    }
+    return startY + HDR_H;
+  }
+
   // ── Nagłówek dokumentu ────────────────────────────────────────────────────────
   let posY = MT;
 
@@ -308,7 +349,8 @@ export async function GET(
          hour: "2-digit", minute: "2-digit",
        })}  ·  ` +
        `Okres: ${fmtDate(periodStart)} – ${fmtDate(periodEndDisplay)}  ·  ` +
-       `Sklep: ${orders.length} zam. oplaconych  ·  Indywidualne: ${customOrders.length} zam.`,
+       `Sklep: ${orders.length} zam. oplaconych  ·  Indywidualne: ${customOrders.length} zam.` +
+       (externalSales.length > 0 ? `  ·  Poza sklepem: ${externalSales.length} wpis.` : ""),
        ML, posY, { lineBreak: false }
      );
 
@@ -588,21 +630,117 @@ export async function GET(
        );
 
     posY += 16;
+  }
 
-    // Suma łączna
-    if (orders.length > 0) {
-      doc.strokeColor("#C4A882").lineWidth(1.2)
-         .moveTo(ML, posY).lineTo(ML + TW, posY).stroke();
-
-      posY += 8;
-
-      doc.font(B).fontSize(9).fillColor("#2C2825")
-         .text(
-           `LACZNIE ${totalCount} zamowien   |   Przychod brutto: ${fmtMoney(totalRevenue)}   |   ` +
-           `w tym wysylka: ${fmtMoney(totalShipping)}   |   Przychod netto: ${fmtMoney(totalProducts)}`,
-           ML, posY, { width: TW, align: "right", lineBreak: false }
-         );
+  // ── Tabela sprzedaży poza sklepem ─────────────────────────────────────────────
+  if (externalSales.length > 0) {
+    if (posY + 60 > PH - MBT - 4) {
+      doc.addPage();
+      pageNum++;
+      posY = MT;
+      drawFooter();
     }
+
+    posY += 4;
+    doc.font(B).fontSize(9).fillColor("#92400E")
+       .text("Sprzedaz poza sklepem (wpisy reczne)", ML, posY, { lineBreak: false });
+    posY += 14;
+
+    posY = drawExternalTableHeader(posY);
+
+    for (let idx = 0; idx < externalSales.length; idx++) {
+      const es = externalSales[idx];
+
+      const cells = [
+        fmtDate(new Date(es.soldAt)),
+        es.description,
+        es.note ?? "–",
+        fmtMoney(es.amount),
+      ];
+
+      let maxH = 0;
+      cells.forEach((text, ci) => {
+        const h = doc.font(R).fontSize(FS).heightOfString(text, { width: EXT_COLS[ci].w - 8 });
+        if (h > maxH) maxH = h;
+      });
+      const rowH = Math.max(Math.ceil(maxH * 1.2) + ROW_PAD * 2, 16);
+
+      if (posY + rowH > PH - MBT - 4) {
+        doc.addPage();
+        pageNum++;
+        posY = MT;
+        drawFooter();
+        posY = drawExternalTableHeader(posY);
+      }
+
+      doc.fillColor(idx % 2 === 0 ? "#FFFDF7" : "#FEF6E7")
+         .rect(ML, posY, TW, rowH)
+         .fill();
+
+      const cellH = rowH - ROW_PAD * 2;
+      let cx = ML;
+      cells.forEach((text, ci) => {
+        doc.font(R).fontSize(FS).fillColor("#2C2825")
+           .text(text, cx + 4, posY + ROW_PAD, {
+             width:     EXT_COLS[ci].w - 8,
+             height:    cellH,
+             ellipsis:  true,
+             align:     EXT_COLS[ci].align,
+             lineBreak: true,
+           });
+        cx += EXT_COLS[ci].w;
+      });
+
+      doc.strokeColor("#E8DFD0").lineWidth(0.3)
+         .moveTo(ML, posY + rowH)
+         .lineTo(ML + TW, posY + rowH)
+         .stroke();
+
+      posY += rowH;
+    }
+
+    doc.strokeColor("#B45309").lineWidth(0.8)
+       .moveTo(ML, posY).lineTo(ML + TW, posY).stroke();
+
+    posY += 8;
+
+    doc.font(B).fontSize(8).fillColor("#92400E")
+       .text(
+         `Lacznie ${externalSales.length} wpisow sprzedazy poza sklepem   |   ` +
+         `Przychod: ${fmtMoney(externalRevenue)}`,
+         ML, posY, { width: TW, align: "right", lineBreak: false }
+       );
+
+    posY += 16;
+  }
+
+  // ── Suma łączna ───────────────────────────────────────────────────────────────
+  // Rysujemy tylko wtedy, gdy w miesiącu było więcej niż jedno źródło przychodu –
+  // przy jednym powtarzałaby sumę stojącą tuż wyżej pod tabelą.
+  const sourceCount =
+    (orders.length         > 0 ? 1 : 0) +
+    (customOrders.length   > 0 ? 1 : 0) +
+    (externalSales.length  > 0 ? 1 : 0);
+
+  if (sourceCount > 1) {
+    if (posY + 30 > PH - MBT - 4) {
+      doc.addPage();
+      pageNum++;
+      posY = MT;
+      drawFooter();
+    }
+
+    doc.strokeColor("#C4A882").lineWidth(1.2)
+       .moveTo(ML, posY).lineTo(ML + TW, posY).stroke();
+
+    posY += 8;
+
+    doc.font(B).fontSize(9).fillColor("#2C2825")
+       .text(
+         `LACZNIE ${totalCount} pozycji   |   Przychod brutto: ${fmtMoney(totalRevenue)}   |   ` +
+         `w tym wysylka: ${fmtMoney(totalShipping)}   |   Przychod netto: ${fmtMoney(totalProducts)}`,
+         ML, posY, { width: TW, align: "right", lineBreak: false }
+       );
   }
 
   // ── Buffer ────────────────────────────────────────────────────────────────────
