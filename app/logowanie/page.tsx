@@ -9,7 +9,16 @@ import { Eye, EyeOff } from "lucide-react";
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") ?? "/konto";
+  // Tylko ścieżka względna – ta sama reguła co w `middleware.ts`. Logowanie
+  // hasłem przekierowuje ręcznie (`redirect: false`), więc adres absolutny albo
+  // protokołowo-względny („//evil.tld") wyprowadzałby klienta ze sklepu zaraz po
+  // poprawnym zalogowaniu. Middleware sprawdza to wyłącznie dla zalogowanego,
+  // czyli nie dla tego, kto właśnie stoi przed formularzem
+  const rawCallbackUrl = searchParams.get("callbackUrl");
+  const callbackUrl =
+    rawCallbackUrl && rawCallbackUrl.startsWith("/") && !rawCallbackUrl.startsWith("//")
+      ? rawCallbackUrl
+      : "/konto";
   const urlError = searchParams.get("error");
 
   const [email, setEmail] = useState("");

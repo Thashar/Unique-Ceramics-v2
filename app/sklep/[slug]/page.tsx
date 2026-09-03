@@ -31,6 +31,7 @@ import { absoluteUrl, metaDescription } from "@/lib/seo";
 import { categoryPath } from "@/lib/category-seo";
 import { getShopProducts } from "@/lib/products";
 import { SIMILAR_MIN_SCORE_KEY, normalizeMinScore, similarProducts } from "@/lib/similar-products";
+import { jsonLdHtml } from "@/lib/escape-html";
 
 export const revalidate = 60;
 
@@ -256,7 +257,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdHtml(jsonLd) }}
       />
       <BreadcrumbSchema
         items={[

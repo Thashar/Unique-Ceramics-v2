@@ -16,6 +16,7 @@ import { parseGallery } from "@/lib/gallery";
 import { parseAboutValues } from "@/lib/about-values";
 import { pageMetadata, SITE_URL } from "@/lib/seo";
 import BreadcrumbSchema from "@/components/seo/BreadcrumbSchema";
+import { jsonLdHtml } from "@/lib/escape-html";
 
 /** Właścicielka pracowni – nazwisko jest w tytule strony i w danych strukturalnych. */
 const OWNER_NAME = "Alicja Ulbrich";
@@ -66,7 +67,7 @@ export default async function AboutPage() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(personSchema) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdHtml(personSchema) }}
       />
       <BreadcrumbSchema items={[{ name: "O mnie", path: "/o-mnie" }]} />
       <Header />

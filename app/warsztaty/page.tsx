@@ -16,6 +16,7 @@ import { hexToRgba } from "@/lib/overlay";
 import { parseGallery } from "@/lib/gallery";
 import { pageMetadata } from "@/lib/seo";
 import BreadcrumbSchema from "@/components/seo/BreadcrumbSchema";
+import { jsonLdHtml } from "@/lib/escape-html";
 
 export const metadata: Metadata = pageMetadata({
   title: "Warsztaty ceramiczne",
@@ -169,13 +170,13 @@ export default async function WorkshopsPage() {
       {courseSchemas.length > 0 && (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(courseSchemas) }}
+          dangerouslySetInnerHTML={{ __html: jsonLdHtml(courseSchemas) }}
         />
       )}
       {faqSchema && (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+          dangerouslySetInnerHTML={{ __html: jsonLdHtml(faqSchema) }}
         />
       )}
       <BreadcrumbSchema items={[{ name: "Warsztaty", path: "/warsztaty" }]} />

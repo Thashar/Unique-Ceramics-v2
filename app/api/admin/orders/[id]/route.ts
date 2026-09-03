@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-auth";
 import { OrderStatus } from "@prisma/client";
 import { NextResponse } from "next/server";
+import { escapeHtml } from "@/lib/escape-html";
 
 const PAYMENT_STATUSES = ["PENDING", "PAID"];
 const SHIPPED_STATUSES = [OrderStatus.SHIPPED, OrderStatus.DELIVERED];
@@ -94,7 +95,7 @@ async function sendPaymentConfirmationEmail(order: {
     </div>
 
     <div style="padding:32px 40px;">
-      <p style="color:#4a3728;font-size:15px;margin:0 0 24px;">Cześć ${order.firstName},</p>
+      <p style="color:#4a3728;font-size:15px;margin:0 0 24px;">Cześć ${escapeHtml(order.firstName)},</p>
 
       <div style="background:#f0fdf4;border-left:3px solid #22c55e;padding:16px 20px;margin:0 0 24px;">
         <p style="margin:0 0 4px;font-family:Arial,sans-serif;font-size:11px;color:#15803d;letter-spacing:0.15em;text-transform:uppercase;">Płatność potwierdzona</p>
@@ -168,7 +169,7 @@ async function sendCancellationEmail(order: {
     </div>
 
     <div style="padding:32px 40px;">
-      <p style="color:#4a3728;font-size:15px;margin:0 0 24px;">Cześć ${order.firstName},</p>
+      <p style="color:#4a3728;font-size:15px;margin:0 0 24px;">Cześć ${escapeHtml(order.firstName)},</p>
 
       <div style="background:#fff5f5;border-left:3px solid #ef4444;padding:16px 20px;margin:0 0 24px;">
         <p style="margin:0 0 4px;font-family:Arial,sans-serif;font-size:11px;color:#b91c1c;letter-spacing:0.15em;text-transform:uppercase;">Zamówienie anulowane</p>
@@ -236,7 +237,7 @@ async function sendShippedEmail(order: {
     </div>
 
     <div style="padding:32px 40px;">
-      <p style="color:#4a3728;font-size:15px;margin:0 0 24px;">Cześć ${order.firstName},</p>
+      <p style="color:#4a3728;font-size:15px;margin:0 0 24px;">Cześć ${escapeHtml(order.firstName)},</p>
 
       <div style="background:#f0f9ff;border-left:3px solid #0284c7;padding:16px 20px;margin:0 0 24px;">
         <p style="margin:0 0 4px;font-family:Arial,sans-serif;font-size:11px;color:#0369a1;letter-spacing:0.15em;text-transform:uppercase;">Przesyłka w drodze</p>
@@ -252,7 +253,7 @@ async function sendShippedEmail(order: {
         </tr>
         <tr>
           <td style="padding:10px 16px;font-family:Arial,sans-serif;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#6b5748;">Numer listu</td>
-          <td style="padding:10px 16px;text-align:right;font-family:monospace;">${order.trackingNumber}</td>
+          <td style="padding:10px 16px;text-align:right;font-family:monospace;">${escapeHtml(order.trackingNumber)}</td>
         </tr>
       </table>
 

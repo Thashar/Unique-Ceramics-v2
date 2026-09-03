@@ -21,6 +21,7 @@ import {
 import ProductGrid from "../../ProductGrid";
 import CategoryBar from "../../CategoryBar";
 import { loadCatalog } from "../../catalog";
+import { jsonLdHtml } from "@/lib/escape-html";
 
 /** Kategorie mają stały, niewielki zbiór adresów – pre-generujemy wszystkie. */
 export async function generateStaticParams() {
@@ -110,7 +111,7 @@ export default async function CategoryPage({
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionSchema) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdHtml(collectionSchema) }}
       />
       <BreadcrumbSchema
         items={[

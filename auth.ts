@@ -3,7 +3,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
-import { db } from "@/lib/db";
+import { db, withDbRetry } from "@/lib/db";
 import { isRateLimited } from "@/lib/rate-limit";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -69,10 +69,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       // oraz wylogować z usuniętego konta. Odświeża też rolę.
       if (token.id) {
         try {
-          const dbUser = await db.user.findUnique({
-            where: { id: token.id as string },
-            select: { tokenVersion: true, role: true, password: true },
-          });
+          // Ponowienia jak w `requireAdmin` – pooler Supabase potrafi chwilowo
+          // odmówić połączenia (`EMAXCONNSESSION`), a to jedyne miejsce, które
+          // unieważnia JWT. Bez nich pojedyncza nieudana próba przedłużała
+          // życie sesji unieważnionej zmianą hasła aż do kolejnego żądania
+          const dbUser = await withDbRetry(() =>
+            db.user.findUnique({
+              where: { id: token.id as string },
+              select: { tokenVersion: true, role: true, password: true },
+            })
+          );
           if (!dbUser) return null; // konto usunięte → wyloguj
           if ((token.tokenVersion ?? 0) !== dbUser.tokenVersion) return null; // hasło zmienione → wyloguj
           token.role = dbUser.role;
@@ -81,7 +87,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           // „ma avatar = konto Google" i decyduje, czy wolno zmienić e-mail
           token.hasPassword = dbUser.password !== null;
         } catch {
-          // Błąd DB – nie wylogowuj (fail-open na problem infrastruktury)
+          // Baza milczy mimo ponowień – nie wylogowuj (fail-open na problem
+          // infrastruktury). Świadomy kompromis: token przechodzi z rolą
+          // zapisaną w sobie, ale panel admina zostaje fail-closed, bo
+          // `requireAdmin` przy tym samym błędzie przepuszcza wyjątek dalej
         }
       }
       return token;

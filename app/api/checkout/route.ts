@@ -11,6 +11,7 @@ import {
   toQuantityConfig,
 } from "@/lib/promos";
 import { validateAddress, validateContact } from "@/lib/address-validation";
+import { escapeHtml } from "@/lib/escape-html";
 import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
@@ -20,6 +21,13 @@ const PAYMENT_LABEL: Record<string, string> = {
   blik:     "BLIK",
   stripe:   "Karta (Stripe)",
 };
+
+/**
+ * Kod paczkomatu InPost – litery, cyfry i łącznik, np. `KRA012M`
+ * (widget zwraca `point.name`). Łącznik jest dopuszczony zapasowo, bo część
+ * punktów ma go w nazwie; żaden ze znaków wzorca nie ma znaczenia w HTML.
+ */
+const PARCEL_LOCKER_CODE_PATTERN = /^[A-Z0-9-]{3,20}$/i;
 
 /**
  * Zwalnia zamówienie, którego nie udało się doprowadzić do płatności: oddaje
@@ -201,15 +209,17 @@ function buildOrderEmail(params: {
   const isTransfer = paymentMethod === "transfer";
 
   const shippingLabel = SHIPPING_LABEL[shippingMethod ?? "courier"] ?? "Kurier";
+  // Mail jest sklejany ze stringów, więc każda wartość spoza tego pliku idzie
+  // przez `escapeHtml` – znaczniki poniżej są nasze, treść już nie
   const shippingInfo = shippingMethod === "parcel_locker" && parcelLockerCode
-    ? `${shippingLabel} – paczkomat <strong style="font-family:monospace;">${parcelLockerCode}</strong>`
+    ? `${shippingLabel} – paczkomat <strong style="font-family:monospace;">${escapeHtml(parcelLockerCode)}</strong>`
     : shippingLabel;
 
   const itemsHtml = items
     .map(
       (i) =>
         `<tr>
-          <td style="padding:8px 12px;border-bottom:1px solid #e8e0d6;">${i.name}</td>
+          <td style="padding:8px 12px;border-bottom:1px solid #e8e0d6;">${escapeHtml(i.name)}</td>
           <td style="padding:8px 12px;border-bottom:1px solid #e8e0d6;text-align:center;">×${i.quantity}</td>
           <td style="padding:8px 12px;border-bottom:1px solid #e8e0d6;text-align:right;">${(i.lineTotal ?? i.price * i.quantity).toFixed(2).replace(".", ",")} zł</td>
         </tr>`
@@ -226,7 +236,7 @@ function buildOrderEmail(params: {
       <h1 style="color:#f5f0eb;font-size:24px;margin:0;font-weight:normal;">Dziękuję za zamówienie!</h1>
     </div>
     <div style="padding:32px 40px;">
-      <p style="color:#4a3728;font-size:15px;margin:0 0 24px;">Cześć ${firstName},</p>
+      <p style="color:#4a3728;font-size:15px;margin:0 0 24px;">Cześć ${escapeHtml(firstName)},</p>
       <p style="color:#6b5748;font-size:14px;line-height:1.6;margin:0 0 24px;">
         Twoje zamówienie <strong style="color:#3d2b1f;">#${orderNumber}</strong> zostało przyjęte.
         ${isTransfer
@@ -236,7 +246,7 @@ function buildOrderEmail(params: {
       ${vacationNote ? `
       <div style="background:#fff8f0;border-left:3px solid #c87941;padding:16px 20px;margin:0 0 24px;">
         <p style="margin:0 0 4px;font-family:Arial,sans-serif;font-size:11px;color:#6b5748;letter-spacing:0.15em;text-transform:uppercase;">Informacja o realizacji</p>
-        <p style="margin:0;font-size:14px;color:#7a4a1e;line-height:1.5;">${vacationNote}</p>
+        <p style="margin:0;font-size:14px;color:#7a4a1e;line-height:1.5;">${escapeHtml(vacationNote)}</p>
       </div>` : ""}
 
       <div style="background:#f5f0eb;padding:12px 24px;margin:0 0 20px;font-size:13px;color:#4a3728;">
@@ -247,11 +257,11 @@ function buildOrderEmail(params: {
       ${isTransfer ? `
       <div style="background:#f5f0eb;border-left:3px solid #c87941;padding:20px 24px;margin:0 0 ${blikPhone ? "16px" : "28px"};">
         <p style="margin:0 0 6px;font-family:Arial,sans-serif;font-size:11px;color:#6b5748;letter-spacing:0.15em;text-transform:uppercase;">Przelew bankowy</p>
-        ${bankAccountName ? `<p style="margin:4px 0;font-size:14px;color:#3d2b1f;"><strong>Odbiorca:</strong> ${bankAccountName}</p>` : ""}
-        ${bankAccountNumber ? `<p style="margin:4px 0;font-size:14px;color:#3d2b1f;"><strong>Numer konta:</strong> <span style="font-family:monospace;">${bankAccountNumber}</span></p>` : ""}
-        ${bankName ? `<p style="margin:4px 0;font-size:14px;color:#3d2b1f;"><strong>Bank:</strong> ${bankName}</p>` : ""}
+        ${bankAccountName ? `<p style="margin:4px 0;font-size:14px;color:#3d2b1f;"><strong>Odbiorca:</strong> ${escapeHtml(bankAccountName)}</p>` : ""}
+        ${bankAccountNumber ? `<p style="margin:4px 0;font-size:14px;color:#3d2b1f;"><strong>Numer konta:</strong> <span style="font-family:monospace;">${escapeHtml(bankAccountNumber)}</span></p>` : ""}
+        ${bankName ? `<p style="margin:4px 0;font-size:14px;color:#3d2b1f;"><strong>Bank:</strong> ${escapeHtml(bankName)}</p>` : ""}
         <p style="margin:4px 0;font-size:14px;color:#3d2b1f;"><strong>Kwota:</strong> ${total.toFixed(2).replace(".", ",")} zł</p>
-        <p style="margin:4px 0;font-size:14px;color:#3d2b1f;"><strong>Tytuł przelewu:</strong> ${transferTitle} #${orderNumber}</p>
+        <p style="margin:4px 0;font-size:14px;color:#3d2b1f;"><strong>Tytuł przelewu:</strong> ${escapeHtml(transferTitle)} #${orderNumber}</p>
       </div>` : `
       <div style="background:#f5f0eb;border-left:3px solid #c87941;padding:20px 24px;margin:0 0 28px;">
         <p style="margin:0 0 6px;font-family:Arial,sans-serif;font-size:11px;color:#6b5748;letter-spacing:0.15em;text-transform:uppercase;">Płatność kartą</p>
@@ -263,9 +273,9 @@ function buildOrderEmail(params: {
       ${isTransfer && blikPhone ? `
       <div style="background:#f5f0eb;border-left:3px solid #c87941;padding:20px 24px;margin:0 0 28px;">
         <p style="margin:0 0 6px;font-family:Arial,sans-serif;font-size:11px;color:#6b5748;letter-spacing:0.15em;text-transform:uppercase;">Przelew BLIK na telefon</p>
-        <p style="margin:4px 0;font-size:14px;color:#3d2b1f;"><strong>Numer telefonu:</strong> <span style="font-family:monospace;">${blikPhone}</span></p>
+        <p style="margin:4px 0;font-size:14px;color:#3d2b1f;"><strong>Numer telefonu:</strong> <span style="font-family:monospace;">${escapeHtml(blikPhone)}</span></p>
         <p style="margin:4px 0;font-size:14px;color:#3d2b1f;"><strong>Kwota:</strong> ${total.toFixed(2).replace(".", ",")} zł</p>
-        <p style="margin:8px 0 0;font-size:12px;color:#6b5748;">W tytule przelewu BLIK wpisz: ${transferTitle} #${orderNumber}</p>
+        <p style="margin:8px 0 0;font-size:12px;color:#6b5748;">W tytule przelewu BLIK wpisz: ${escapeHtml(transferTitle)} #${orderNumber}</p>
       </div>` : ""}
 
       <table style="width:100%;border-collapse:collapse;margin:0 0 8px;font-size:14px;color:#4a3728;">
@@ -296,7 +306,7 @@ function buildOrderEmail(params: {
         </tr>` : ""}
         ${discountCode ? `
         <tr>
-          <td colspan="2" style="padding:0 12px 6px;text-align:right;font-size:12px;color:#2f6f3e;">w tym kod ${discountCode.code} (−${discountCode.percent}%): −${discountCode.amount.toFixed(2).replace(".", ",")} zł</td>
+          <td colspan="2" style="padding:0 12px 6px;text-align:right;font-size:12px;color:#2f6f3e;">w tym kod ${escapeHtml(discountCode.code)} (−${discountCode.percent}%): −${discountCode.amount.toFixed(2).replace(".", ",")} zł</td>
         </tr>` : ""}
         <tr>
           <td style="padding:6px 12px;text-align:right;color:#6b5748;">${shippingMethod === "pickup" ? "Odbiór osobisty" : "Wysyłka"}</td>
@@ -412,8 +422,18 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Nieprawidłowa metoda wysyłki" }, { status: 400 });
   }
 
-  if (shippingMethod === "parcel_locker" && !String(parcelLockerCode ?? "").trim()) {
-    return NextResponse.json({ error: "Brak kodu paczkomatu" }, { status: 400 });
+  if (shippingMethod === "parcel_locker") {
+    const lockerCode = String(parcelLockerCode ?? "").trim();
+    if (!lockerCode) {
+      return NextResponse.json({ error: "Brak kodu paczkomatu" }, { status: 400 });
+    }
+    // Kod z widgetu InPost to `point.name`, czyli litery i cyfry (np. KRA012M).
+    // Wzorzec jest tu obowiązkowy: pole trafia do treści maila wysyłanego na
+    // adres podany w żądaniu, więc dowolny ciąg pozwalał wstawić obcy HTML
+    // do wiadomości nadanej z domeny sklepu
+    if (!PARCEL_LOCKER_CODE_PATTERN.test(lockerCode)) {
+      return NextResponse.json({ error: "Nieprawidłowy kod paczkomatu" }, { status: 400 });
+    }
   }
 
   // Walidacja wymaganych pól

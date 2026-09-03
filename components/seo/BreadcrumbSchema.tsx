@@ -1,4 +1,5 @@
 import { SITE_URL } from "@/lib/seo";
+import { jsonLdHtml } from "@/lib/escape-html";
 
 /**
  * Okruszki (BreadcrumbList) w danych strukturalnych – dzięki nim wyszukiwarka
@@ -31,7 +32,7 @@ export default function BreadcrumbSchema({
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{ __html: jsonLdHtml(schema) }}
     />
   );
 }

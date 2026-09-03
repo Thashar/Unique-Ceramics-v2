@@ -1,6 +1,7 @@
 import { getSchemaSettings } from "@/lib/settings";
 import { absoluteUrl } from "@/lib/seo";
 import { parseOpeningHours, parseCityLine } from "@/lib/opening-hours";
+import { jsonLdHtml } from "@/lib/escape-html";
 
 const BASE = "https://uniqueceramics.pl";
 
@@ -123,11 +124,11 @@ export default async function LocalBusinessSchema() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdHtml(localBusinessSchema) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdHtml(websiteSchema) }}
       />
     </>
   );

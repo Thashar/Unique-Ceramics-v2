@@ -33,6 +33,7 @@ import FooterWithInstagram from "@/components/layout/FooterWithInstagram";
 import { getSettings } from "@/lib/settings";
 import { HOME_TEXT_SETTING_KEYS } from "@/lib/home-sections";
 import { SITE_URL, absoluteUrl } from "@/lib/seo";
+import { jsonLdHtml } from "@/lib/escape-html";
 
 export default async function Home() {
   const s = await getSettings([
@@ -72,7 +73,7 @@ export default async function Home() {
       {pageSchema && (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(pageSchema) }}
+          dangerouslySetInnerHTML={{ __html: jsonLdHtml(pageSchema) }}
         />
       )}
       <HomeScrollSnap />
