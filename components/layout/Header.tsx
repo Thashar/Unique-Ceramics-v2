@@ -373,7 +373,7 @@ export default function Header({ topOffset = false, showProjects = true }: { top
             zostawał ciemny nad widocznym hero. */}
         <Link
           href="/"
-          className="flex items-center gap-3 group"
+          className="flex min-w-0 items-center gap-2 sm:gap-3 group"
           onClick={() => {
             if (isHome) window.scrollTo({ top: 0, behavior: "smooth" });
           }}
@@ -383,7 +383,7 @@ export default function Header({ topOffset = false, showProjects = true }: { top
             alt="Unique Ceramics"
             width={40}
             height={40}
-            className="h-9 w-auto transition-all duration-500 brightness-0 invert"
+            className="h-9 w-auto shrink-0 transition-all duration-500 brightness-0 invert"
           />
           {/* Napis ma być **dokładnie w kolorze logo** – czysta biel, w obu
               stanach headera i bez przygaszania przezroczystością. Wcześniej
@@ -391,25 +391,46 @@ export default function Header({ topOffset = false, showProjects = true }: { top
               co obok białego logo czytało się jako brudny, kawowy odcień,
               a `/70` na podtytule dawało wrażenie szarej obwódki.
               Logo nie zmienia koloru na hoverze, więc napis też nie. */}
-          <div className="flex flex-col leading-none pt-1.5">
-            <span className="font-serif text-base sm:text-lg font-semibold tracking-wide text-white">
+          {/* Oba napisy skalują się płynnie (`clamp`) zamiast skakać na `sm:`.
+              Górne ograniczenia są **równe dotychczasowym rozmiarom** (18 px
+              i 6,5 px), więc na desktopie nic się nie zmienia – schodzą tylko
+              na wąskim widoku: przy szerokości okna ~320 px (mały telefon albo
+              duże powiększenie w przeglądarce) na napis zostaje około 100 px
+              i przy 16 px łamał się na dwa wiersze, razem z podtytułem.
+              `whitespace-nowrap` jest tu obowiązkowe – to wordmark, ma stać
+              w jednej linii, a nie zawijać się przy krawędzi.
+              Podtytuł ma własny `clamp` dobrany tak, żeby na całym zakresie
+              zostawał **mniej więcej tak szeroki jak tytuł** (stąd te ułamki:
+              0,40625rem = 6,5 px). Zmieniając jeden rozmiar, przelicz drugi. */}
+          {/* Kolumna **nie** ma `min-w-0` – z `whitespace-nowrap` oznaczałoby to
+              box węższy od tekstu, czyli napis wystający na ikony nawet wtedy,
+              gdy miejsca jest pod dostatkiem. Zwężać wolno się dopiero samemu
+              linkowi (ma `min-w-0`), a `overflow-hidden` przycina napis przy
+              krawędzi zamiast pozwolić mu wejść na koszyk – to ostatnia linia
+              obrony na wypadek ustawionej w przeglądarce minimalnej wielkości
+              czcionki, która potrafi rozdmuchać podtytuł z 6,5 px do 12 px. */}
+          <div className="flex flex-col overflow-hidden leading-none pt-1.5">
+            <span className="font-serif text-[length:clamp(0.8rem,0.62rem_+_0.9vw,1.125rem)] font-semibold tracking-wide whitespace-nowrap text-white">
               Unique Ceramics
             </span>
-            <span className="text-[6.5px] tracking-[0.18em] uppercase mt-0.5 text-white">
+            <span className="text-[length:clamp(0.3125rem,0.24rem_+_0.36vw,0.40625rem)] tracking-[0.18em] uppercase whitespace-nowrap mt-0.5 text-white">
               Ręcznie tworzone z sercem
             </span>
           </div>
         </Link>
 
         {/* Nav desktop */}
-        <nav className="hidden md:flex items-center gap-10">
+        {/* Odstępy i rozmiar rosną z szerokością okna. Przy `md` (768 px) pięć
+            pozycji przy `gap-10` i `text-sm` nie mieściło się obok wordmarku
+            i ikon – dopiero od `xl` jest na to miejsce. */}
+        <nav className="hidden md:flex items-center gap-4 lg:gap-8 xl:gap-10">
           {navLinks.map((link) => {
             const isActive = pathname === link.href || pathname.startsWith(link.href + "/");
             return (
               <Link
                 key={link.href}
                 href={link.href}
-                className={`group relative pb-1 text-sm tracking-widest uppercase transition-colors duration-300 ${
+                className={`group relative pb-1 text-xs lg:text-sm tracking-widest uppercase whitespace-nowrap transition-colors duration-300 ${
                   dark
                     ? isActive ? "text-terracotta" : "text-cream/75 hover:text-cream"
                     : isActive ? "text-cream" : "text-cream/75 hover:text-cream"
