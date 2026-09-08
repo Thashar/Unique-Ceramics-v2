@@ -8,6 +8,7 @@ import { useSession, signOut } from "next-auth/react";
 import { ShoppingBag, Menu, X, User, Package, LogOut, ChevronDown } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useCart } from "@/lib/cart";
+import { LOGO_SRC, LOGO_WIDTH, LOGO_HEIGHT } from "@/lib/logo";
 
 // Dystans (px) zjazdu poniżej górnej krawędzi stopki, na którym header
 // płynnie zanika do zera – dobrany tak, by zniknął zanim zacznie zasłaniać
@@ -379,10 +380,11 @@ export default function Header({ topOffset = false, showProjects = true }: { top
           }}
         >
           <Image
-            src="/images/logo.webp"
+            src={LOGO_SRC}
             alt="Unique Ceramics"
-            width={40}
-            height={40}
+            width={LOGO_WIDTH}
+            height={LOGO_HEIGHT}
+            sizes="36px"
             className="h-9 w-auto shrink-0 transition-all duration-500 brightness-0 invert"
           />
           {/* Napis ma być **dokładnie w kolorze logo** – czysta biel, w obu

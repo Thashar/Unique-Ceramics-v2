@@ -5,6 +5,7 @@ import FooterContactsClient from "./FooterContactsClient";
 import FooterAddressClient from "./FooterAddressClient";
 import FooterMap from "./FooterMap";
 import ThasharWordmark from "./ThasharWordmark";
+import { LOGO_SRC, LOGO_WIDTH, LOGO_HEIGHT } from "@/lib/logo";
 
 const NAV_LINKS = [
   ["Sklep", "/sklep"],
@@ -75,10 +76,11 @@ export default function FooterContent({ instagram }: { instagram?: string }) {
         <div className="relative max-w-7xl mx-auto flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
           <div className="flex items-center gap-2">
             <Image
-              src="/images/logo.webp"
+              src={LOGO_SRC}
               alt="Unique Ceramics"
-              width={24}
-              height={24}
+              width={LOGO_WIDTH}
+              height={LOGO_HEIGHT}
+              sizes="24px"
               className="h-5 sm:h-6 w-auto brightness-0 invert opacity-70"
             />
             <span className="font-serif text-[11px] sm:text-xs text-cream/70 tracking-wide whitespace-nowrap">Unique Ceramics</span>
