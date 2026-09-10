@@ -44,6 +44,31 @@ const noIndexImageHeaders = [
   },
 ];
 
+/**
+ * Pliki sharpa dołączane do śladu tras, które go używają – patrz komentarz
+ * przy `outputFileTracingIncludes`. `@img/colour` jest zwykłą zależnością sharpa
+ * (nie binarką platformową), ale trafia tu razem z resztą, żeby lista była kompletna.
+ */
+const SHARP_TRACE = [
+  "node_modules/sharp/**/*",
+  "node_modules/@img/colour/**/*",
+  "node_modules/@img/sharp-linux-x64/**/*",
+  "node_modules/@img/sharp-libvips-linux-x64/**/*",
+];
+
+/**
+ * Warianty platformowe sharpa, których runtime Vercela (Amazon Linux, glibc, x64)
+ * nigdy nie załaduje: build dla musl (Alpine) i wasm. To one odpowiadały za 43 MB
+ * z każdej funkcji korzystającej z sharpa.
+ */
+const SHARP_TRACE_EXCLUDE = [
+  "node_modules/@img/sharp-linuxmusl-x64/**/*",
+  "node_modules/@img/sharp-libvips-linuxmusl-x64/**/*",
+  "node_modules/@img/sharp-wasm32/**/*",
+  "node_modules/@img/sharp-freebsd-wasm32/**/*",
+  "node_modules/@img/sharp-webcontainers-wasm32/**/*",
+];
+
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   // pdfkit i sharp to paczki natywne – nie mogą przechodzić przez bundler
@@ -54,15 +79,42 @@ const nextConfig: NextConfig = {
   // przez `require`. Śledzenie plików (NFT) tego nie widzi i wycinało .so
   // z funkcji na produkcji – trasy padały wtedy na starcie z
   // `ERR_DLOPEN_FAILED: libvips-cpp.so.8.18.3: cannot open shared object file`
-  // (w panelu: „nie udało się wgrać zdjęcia (błąd 500)"). Dokładamy więc obie
-  // paczki jawnie do śladu tras, które używają sharpa.
+  // (w panelu: „nie udało się wgrać zdjęcia (błąd 500)"). Dokładamy więc paczki
+  // jawnie do śladu tras, które używają sharpa.
+  //
+  // ⚠️ **Wymieniamy konkretne paczki, nie `@img/**`.** Sam `sharp` wybiera binarkę
+  // `switch`em ze statycznymi `require`, więc NFT wciąga do śladu **wszystkie**
+  // zainstalowane warianty platformowe – także te, których Vercel nigdy nie
+  // uruchomi. Ślad jednej funkcji ważył przez to 104 MB, z czego 43 MB to build
+  // dla musl (Alpine) i wasm; przy sześciu takich trasach każdy deployment niósł
+  // ćwierć gigabajta martwego kodu i limit „Functions Storage" (10 GB na wszystkie
+  // deploymenty) został przekroczony (14,4 GB, 09.09.2026). Runtime Node na Vercelu
+  // to Amazon Linux – **glibc, x64** – więc zostaje `linux-x64`; resztę wycinamy
+  // niżej przez `outputFileTracingExcludes`.
+  //
+  // Dodając nową trasę z sharpem, dopisz ją do **obu** list.
   outputFileTracingIncludes: {
-    "/api/admin/upload": ["node_modules/sharp/**/*", "node_modules/@img/**/*"],
-    "/api/admin/rotate": ["node_modules/sharp/**/*", "node_modules/@img/**/*"],
-    "/api/admin/ai-image": ["node_modules/sharp/**/*", "node_modules/@img/**/*"],
-    "/api/admin/ai-text": ["node_modules/sharp/**/*", "node_modules/@img/**/*"],
-    "/api/og/[slug]": ["node_modules/sharp/**/*", "node_modules/@img/**/*"],
-    "/api/admin/image-variants": ["node_modules/sharp/**/*", "node_modules/@img/**/*"],
+    "/api/admin/upload": SHARP_TRACE,
+    "/api/admin/rotate": SHARP_TRACE,
+    "/api/admin/ai-image": SHARP_TRACE,
+    "/api/admin/ai-text": SHARP_TRACE,
+    // `[slug]` w kluczu jest wzorcem glob (klasa znaków), nie nazwą katalogu –
+    // wpis „/api/og/[slug]" nie pasował do niczego i ta trasa przez cały czas
+    // budowała się bez dołożonych plików sharpa
+    "/api/og/**": SHARP_TRACE,
+    "/api/admin/image-variants": SHARP_TRACE,
+  },
+
+  // Buildy sharpa dla platform, na których ten kod nigdy nie ruszy. `include`
+  // ich nie usunie – NFT dokłada je samo, widząc statyczne `require` w switchu
+  // wyboru binarki – więc trzeba je wyciąć wprost.
+  outputFileTracingExcludes: {
+    "/api/admin/upload": SHARP_TRACE_EXCLUDE,
+    "/api/admin/rotate": SHARP_TRACE_EXCLUDE,
+    "/api/admin/ai-image": SHARP_TRACE_EXCLUDE,
+    "/api/admin/ai-text": SHARP_TRACE_EXCLUDE,
+    "/api/og/**": SHARP_TRACE_EXCLUDE,
+    "/api/admin/image-variants": SHARP_TRACE_EXCLUDE,
   },
   experimental: {
     optimizePackageImports: ["framer-motion", "lucide-react"],

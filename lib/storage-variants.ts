@@ -51,7 +51,8 @@ type UploadResult = { url: string } | { error: string };
 async function putObject(
   supabase: SupabaseClient,
   name: string,
-  buffer: Buffer
+  buffer: Buffer,
+  { verify = true }: { verify?: boolean } = {}
 ): Promise<string | null> {
   const blob = new Blob([new Uint8Array(buffer)], { type: "image/webp" });
   const { error } = await supabase.storage.from(STORAGE_BUCKET).upload(name, blob, {
@@ -60,6 +61,10 @@ async function putObject(
     cacheControl: STORAGE_CACHE_CONTROL,
   });
   if (error) return error.message;
+  // Wariant sprawdzamy tylko przy pierwszym zapisie zdjęcia. Przy migracji byłby to
+  // trzeci dodatkowy round-trip na zdjęcie, a wariant zawsze da się wygenerować
+  // ponownie z oryginału – w odróżnieniu od samego oryginału
+  if (!verify) return null;
 
   try {
     const { data: info, error: infoError } = await supabase.storage
@@ -74,6 +79,13 @@ async function putObject(
     console.warn("[storage-variants] wyjątek przy odczycie metadanych pliku:", err);
   }
   return null;
+}
+
+/** Czytelny powód błędu – `Error`, string albo cokolwiek, co przyszło z biblioteki. */
+export function message(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  if (typeof err === "string") return err;
+  return "nieznany błąd";
 }
 
 /**
@@ -110,10 +122,17 @@ export async function writeMissingVariants(
 ): Promise<string[]> {
   const written: string[] = [];
   for (const width of widths) {
-    const payload = await buildVariant(source, width);
+    let payload: Buffer;
+    try {
+      payload = await buildVariant(source, width);
+    } catch (err) {
+      // Komunikat leci do panelu, więc musi mówić, na czym stanęło – sama nazwa
+      // pliku nie pozwala odróżnić błędu `sharp` od odmowy Storage
+      throw new Error(`nie udało się przygotować rozmiaru ${width} px: ${message(err)}`);
+    }
     const name = variantName(filename, width);
-    const error = await putObject(supabase, name, payload);
-    if (error) throw new Error(`zapis wariantu ${width}: ${error}`);
+    const error = await putObject(supabase, name, payload, { verify: false });
+    if (error) throw new Error(`nie udało się zapisać rozmiaru ${width} px: ${error}`);
     written.push(name);
   }
   return written;

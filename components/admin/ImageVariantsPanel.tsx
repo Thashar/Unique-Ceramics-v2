@@ -18,14 +18,15 @@ import { IMAGE_VARIANT_WIDTHS } from "@/lib/image-variants";
  */
 
 type Status = { total: number; pending: number };
-type Batch = { processed: number; remaining: number; failed: string[] };
+type Failed = { name: string; reason: string };
+type Batch = { processed: number; remaining: number; failed: Failed[] };
 
 export default function ImageVariantsPanel() {
   const [status, setStatus] = useState<Status | null>(null);
   const [loading, setLoading] = useState(false);
   const [running, setRunning] = useState(false);
   const [done, setDone] = useState(0);
-  const [failed, setFailed] = useState<string[]>([]);
+  const [failed, setFailed] = useState<Failed[]>([]);
   const [error, setError] = useState("");
   const [finished, setFinished] = useState(false);
 
@@ -55,7 +56,9 @@ export default function ImageVariantsPanel() {
     setFailed([]);
 
     let processedTotal = 0;
-    const problems = new Set<string>();
+    // Mapa po nazwie pliku – to samo zdjęcie wraca w kolejnych partiach, dopóki
+    // mu się nie uda, a powtórzona pozycja tylko rozmywałaby listę
+    const problems = new Map<string, string>();
 
     try {
       // Pętla kończy się, gdy nie zostaje nic do zrobienia **albo** gdy partia nie
@@ -72,9 +75,9 @@ export default function ImageVariantsPanel() {
 
         const batch = data as Batch;
         processedTotal += batch.processed;
-        batch.failed.forEach((name) => problems.add(name));
+        batch.failed.forEach(({ name, reason }) => problems.set(name, reason));
         setDone(processedTotal);
-        setFailed([...problems]);
+        setFailed([...problems].map(([name, reason]) => ({ name, reason })));
         setStatus((prev) => (prev ? { ...prev, pending: batch.remaining } : prev));
 
         if (batch.remaining === 0 || batch.processed === 0) break;
@@ -86,6 +89,13 @@ export default function ImageVariantsPanel() {
       setRunning(false);
     }
   }
+
+  // Gdy wszystkie zdjęcia padły z tego samego powodu (typowo: jedna przyczyna po
+  // stronie serwera), lista nazw niczego nie wnosi – wystarczy jeden komunikat
+  const commonReason =
+    failed.length > 1 && failed.every((f) => f.reason === failed[0].reason)
+      ? failed[0].reason
+      : "";
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -163,18 +173,32 @@ export default function ImageVariantsPanel() {
             )}
 
             {failed.length > 0 && (
-              <div className="text-sm text-amber-800 space-y-1">
+              <div className="text-sm text-amber-800 space-y-2">
                 <p className="flex items-center gap-2">
                   <AlertTriangle size={16} />
                   Nie udało się przetworzyć {failed.length}{" "}
-                  {failed.length === 1 ? "zdjęcia" : "zdjęć"} – spróbuj jeszcze raz.
+                  {failed.length === 1 ? "zdjęcia" : "zdjęć"}.
                 </p>
-                <ul className="text-[11px] text-charcoal/80 pl-6 list-disc">
-                  {failed.slice(0, 5).map((name) => (
-                    <li key={name} className="break-all">{name}</li>
-                  ))}
-                  {failed.length > 5 && <li>i {failed.length - 5} więcej</li>}
-                </ul>
+                {/* Powód jest ważniejszy niż nazwa pliku – bez niego nie da się
+                    rozpoznać, czy zawiódł magazyn, czy przetwarzanie zdjęcia.
+                    Ten sam powód dla wszystkich pozycji pokazujemy raz */}
+                {commonReason ? (
+                  <p className="text-xs text-charcoal/80 pl-6">
+                    Powód: <span className="text-espresso">{commonReason}</span>
+                  </p>
+                ) : (
+                  <ul className="text-[11px] text-charcoal/80 pl-6 list-disc space-y-1">
+                    {failed.slice(0, 5).map(({ name, reason }) => (
+                      <li key={name} className="break-all">
+                        {name} – <span className="text-espresso">{reason}</span>
+                      </li>
+                    ))}
+                    {failed.length > 5 && <li>i {failed.length - 5} więcej</li>}
+                  </ul>
+                )}
+                <p className="text-[11px] text-charcoal/80 pl-6">
+                  Spróbuj jeszcze raz – przetwarzane są wyłącznie zdjęcia, którym czegoś brakuje.
+                </p>
               </div>
             )}
 
