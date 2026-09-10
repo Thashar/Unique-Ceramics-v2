@@ -68,7 +68,9 @@ export default function ImageVariantsPanel() {
         const res = await fetch("/api/admin/image-variants", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({}),
+          // Zdjęcia, które już padły, odsyłamy do pominięcia – inaczej wracają
+          // na początek listy i migracja kręci się na nich w kółko
+          body: JSON.stringify({ skip: [...problems.keys()] }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data?.error ?? "Nie udało się przetworzyć zdjęć.");
@@ -80,7 +82,11 @@ export default function ImageVariantsPanel() {
         setFailed([...problems].map(([name, reason]) => ({ name, reason })));
         setStatus((prev) => (prev ? { ...prev, pending: batch.remaining } : prev));
 
-        if (batch.remaining === 0 || batch.processed === 0) break;
+        // Koniec, gdy nie zostało nic do zrobienia albo partia była pusta.
+        // Sama porażka nie kończy pętli – pominięte zdjęcia zwalniają miejsce
+        // następnym, więc katalog przechodzimy do końca mimo uszkodzonych plików
+        if (batch.remaining === 0) break;
+        if (batch.processed === 0 && batch.failed.length === 0) break;
       }
       setFinished(true);
     } catch (e) {
@@ -168,7 +174,8 @@ export default function ImageVariantsPanel() {
               <p className="flex items-center gap-2 text-sm text-green-800">
                 <CheckCircle2 size={16} />
                 Gotowe – uzupełniono {done}{" "}
-                {done === 1 ? "zdjęcie" : done < 5 ? "zdjęcia" : "zdjęć"}.
+                {done === 1 ? "zdjęcie" : done < 5 ? "zdjęcia" : "zdjęć"}
+                {failed.length > 0 && `, pominięto ${failed.length}`}.
               </p>
             )}
 
@@ -197,7 +204,8 @@ export default function ImageVariantsPanel() {
                   </ul>
                 )}
                 <p className="text-[11px] text-charcoal/80 pl-6">
-                  Spróbuj jeszcze raz – przetwarzane są wyłącznie zdjęcia, którym czegoś brakuje.
+                  Pominięte zdjęcia nie wstrzymały reszty. Jeśli któreś jest nadal używane
+                  w sklepie, wgraj je ponownie w miejscu, w którym stoi.
                 </p>
               </div>
             )}

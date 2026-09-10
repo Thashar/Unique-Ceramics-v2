@@ -20,6 +20,8 @@ export const maxDuration = 60;
 /** Ile zdjęć na jedno wywołanie. Jedno zdjęcie to ok. 1–3 s (pobranie + 3 × sharp). */
 const BATCH_LIMIT = 4;
 const MAX_BATCH_LIMIT = 10;
+/** Ile nazw do pominięcia przyjmujemy – tyle, ile może być zdjęć w magazynie. */
+const MAX_SKIP = 5000;
 
 function storage() {
   const url = process.env.SUPABASE_URL?.trim();
@@ -81,8 +83,16 @@ export async function POST(req: Request) {
     ? Math.min(Math.max(1, Math.trunc(requested)), MAX_BATCH_LIMIT)
     : BATCH_LIMIT;
 
+  // Nazwy zdjęć, które padły we wcześniejszych partiach. Bez nich migracja stoi
+  // w miejscu: nieudane zdjęcie nadal nie ma wariantów, więc wraca na początek listy
+  // i każda kolejna partia próbuje tego samego (tak zatrzymały ją cztery uszkodzone
+  // pliki sprzed poprawki uploadu – 10.09.2026)
+  const skip = Array.isArray(body?.skip)
+    ? body.skip.filter((n: unknown): n is string => typeof n === "string").slice(0, MAX_SKIP)
+    : [];
+
   try {
-    return NextResponse.json(await processBatch(supabase, limit));
+    return NextResponse.json(await processBatch(supabase, limit, skip));
   } catch (err) {
     console.error("[admin/image-variants] partia:", err);
     return NextResponse.json(

@@ -68,6 +68,32 @@ export type BatchResult = {
 };
 
 /**
+ * Plik w Storage, którego `sharp` nie umie odczytać. W praktyce oznacza to zdjęcie
+ * wgrane **starym uploadem**, zanim trasa zaczęła wysyłać `Blob` zamiast `Buffer`a:
+ * supabase-js przepuszczał wtedy bajty przez konwersję na tekst i każdy bajt spoza
+ * ASCII stawał się `EF BF BD` (U+FFFD). Nagłówek RIFF takiego pliku wygląda tak:
+ * `52 49 46 46 | 12 EF BF BD …`. Danych nie da się odzyskać – zamiana jest
+ * nieodwracalna – więc migracja takie zdjęcie **pomija i idzie dalej**, zamiast
+ * zatrzymywać się na nim w kółko. Zwykle są to stare, nieużywane już pliki.
+ */
+const UNREADABLE_MARKERS = [
+  "unsupported image format",
+  "Input buffer contains",
+  "Input file contains",
+];
+
+export function isUnreadableImage(reason: string): boolean {
+  return UNREADABLE_MARKERS.some((m) => reason.includes(m));
+}
+
+/** Komunikat dla panelu – po polsku i z podpowiedzią, co z tym zrobić. */
+export function describeFailure(reason: string): string {
+  return isUnreadableImage(reason)
+    ? "plik w magazynie jest uszkodzony i nie da się go odczytać – wgraj to zdjęcie ponownie (stare pliki, których sklep już nie używa, można zignorować)"
+    : reason;
+}
+
+/**
  * Przetwarza kolejną partię zdjęć bez kompletu wariantów.
  *
  * Warianty składa `uploadImageWithVariants` – ta sama funkcja, której używa upload,
@@ -81,11 +107,16 @@ export type BatchResult = {
  */
 export async function processBatch(
   supabase: SupabaseClient,
-  limit: number
+  limit: number,
+  skip: readonly string[] = []
 ): Promise<BatchResult> {
   const files = await listStorageImages(supabase);
   const existing = new Set(files);
-  const pending = pendingOriginals(files);
+  // Zdjęcia, które padły we wcześniejszych partiach, pomijamy. Bez tego migracja
+  // stoi w miejscu: nieudane zdjęcie nadal nie ma wariantów, więc wraca na początek
+  // listy (sortowanej po nazwie) i każda kolejna partia próbuje tego samego
+  const skipped = new Set(skip);
+  const pending = pendingOriginals(files).filter((name) => !skipped.has(name));
   const batch = pending.slice(0, limit);
   const failed: FailedImage[] = [];
   let processed = 0;
@@ -108,9 +139,15 @@ export async function processBatch(
       processed++;
     } catch (err) {
       console.error(`[image-migration] ${name}:`, err);
-      failed.push({ name, reason: message(err) });
+      failed.push({ name, reason: describeFailure(message(err)) });
     }
   }
 
-  return { processed, remaining: Math.max(0, pending.length - processed), failed };
+  return {
+    processed,
+    // To, co zostaje po tej partii – bez zdjęć pominiętych i bez tych, które
+    // właśnie padły (klient dopisze je do `skip` przy następnym żądaniu)
+    remaining: Math.max(0, pending.length - processed - failed.length),
+    failed,
+  };
 }

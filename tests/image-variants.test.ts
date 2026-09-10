@@ -12,6 +12,7 @@ import {
 } from "@/lib/image-variants";
 import { isAiGeneratedImage } from "@/lib/ai";
 import imageLoader from "@/lib/image-loader";
+import { describeFailure, isUnreadableImage } from "@/lib/image-migration";
 
 const STORAGE = "https://xyz.supabase.co/storage/v1/object/public/products";
 const photo = `${STORAGE}/1787993631053-qlsd4fc207.webp`;
@@ -152,5 +153,30 @@ describe("migracja zdjęć bez wariantów", () => {
 
   it("pomija pliki, które nie są WebP", () => {
     expect(pendingOriginals(["c.jpg", "d.png"])).toEqual([]);
+  });
+});
+
+// Migracja natrafiła na produkcji na pliki wgrane **starym uploadem**, zanim trasa
+// zaczęła wysyłać `Blob` zamiast `Buffer`a: supabase-js przepuszczał wtedy bajty przez
+// konwersję na tekst i każdy spoza ASCII stawał się `EF BF BD`. `sharp` odmawia takiego
+// pliku, a migracja stała na nim w kółko, bo bez wariantów wracał na początek listy.
+describe("uszkodzone pliki w magazynie", () => {
+  it("rozpoznaje plik, którego sharp nie umie odczytać", () => {
+    expect(isUnreadableImage("Input buffer contains unsupported image format")).toBe(true);
+    expect(isUnreadableImage("Input file contains unsupported image format")).toBe(true);
+  });
+
+  it("nie bierze za uszkodzony zwykłego błędu magazynu", () => {
+    expect(isUnreadableImage("nie udało się zapisać rozmiaru 400 px: timeout")).toBe(false);
+  });
+
+  it("tłumaczy powód na wskazówkę po polsku", () => {
+    const opis = describeFailure("Input buffer contains unsupported image format");
+    expect(opis).toContain("uszkodzony");
+    expect(opis).toContain("wgraj to zdjęcie ponownie");
+  });
+
+  it("inne powody zostawia bez zmian", () => {
+    expect(describeFailure("brak pliku")).toBe("brak pliku");
   });
 });
