@@ -13,6 +13,7 @@ import WorkshopsOffersEditor from "@/components/admin/WorkshopsOffersEditor";
 import AiPromptPresets from "@/components/admin/AiPromptPresets";
 import AboutValuesEditor from "@/components/admin/AboutValuesEditor";
 import ImageVariantsPanel from "@/components/admin/ImageVariantsPanel";
+import StorageCleanupPanel from "@/components/admin/StorageCleanupPanel";
 import { parseGallery, galleryHead } from "@/lib/gallery";
 import { ABOUT_VALUES_TITLE_DEFAULT } from "@/lib/about-values";
 import {
@@ -1166,7 +1167,12 @@ export default function SettingsForm({ section, initial, aiUsage }: Props) {
         </div>
       )}
 
-      {section === "zdjecia" && <ImageVariantsPanel />}
+      {section === "zdjecia" && (
+        <div className="space-y-8">
+          <ImageVariantsPanel />
+          <StorageCleanupPanel />
+        </div>
+      )}
 
       {section === "ai" && (
         <div className="max-w-2xl space-y-6">

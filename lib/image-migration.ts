@@ -28,9 +28,18 @@ import { message, writeMissingVariants } from "@/lib/storage-variants";
 /** Rozmiary, które generuje migracja – panel pokazuje je w opisie. */
 export const MIGRATION_WIDTHS = IMAGE_VARIANT_WIDTHS;
 
-/** Cała zawartość bucketa – Storage oddaje ją stronami po 100. */
-export async function listStorageImages(supabase: SupabaseClient): Promise<string[]> {
-  const files: string[] = [];
+/** Jeden obiekt z magazynu – nazwa plus metadane potrzebne przy sprzątaniu. */
+export type StorageObject = { name: string; size: number; createdAt: string | null };
+
+/**
+ * Cała zawartość bucketa – Storage oddaje ją stronami po 100.
+ *
+ * Zwracamy rozmiar i datę utworzenia, bo korzysta z tego wyszukiwanie nieużywanych
+ * plików (`lib/storage-usage.ts`): rozmiar mówi, ile miejsca zwolni sprzątanie,
+ * a data chroni świeże uploady przed skasowaniem.
+ */
+export async function listStorageObjects(supabase: SupabaseClient): Promise<StorageObject[]> {
+  const files: StorageObject[] = [];
   const pageSize = 100;
   for (let offset = 0; ; offset += pageSize) {
     const { data, error } = await supabase.storage
@@ -38,10 +47,21 @@ export async function listStorageImages(supabase: SupabaseClient): Promise<strin
       .list("", { limit: pageSize, offset, sortBy: { column: "name", order: "asc" } });
     if (error) throw new Error(error.message);
     if (!data?.length) break;
-    files.push(...data.map((f) => f.name));
+    for (const f of data) {
+      files.push({
+        name: f.name,
+        size: typeof f.metadata?.size === "number" ? f.metadata.size : 0,
+        createdAt: f.created_at ?? null,
+      });
+    }
     if (data.length < pageSize) break;
   }
   return files;
+}
+
+/** Same nazwy – tyle wystarczy migracji wariantów. */
+export async function listStorageImages(supabase: SupabaseClient): Promise<string[]> {
+  return (await listStorageObjects(supabase)).map((f) => f.name);
 }
 
 export type MigrationStatus = { total: number; pending: number };
