@@ -1,6 +1,6 @@
-import sharp from "sharp";
 import { createClient } from "@supabase/supabase-js";
 import { requireAdmin } from "@/lib/admin-auth";
+import { uploadImageWithVariants } from "@/lib/storage-variants";
 import { NextResponse } from "next/server";
 
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -73,69 +73,15 @@ async function handleUpload(req: Request) {
     );
   }
 
-  // Konwersja do WebP w maksymalnej jakości (maks. szerokość 1920 px).
-  // Plik w Storage ma być wierną kopią oryginału – o tym, co zobaczy odwiedzający,
-  // decyduje dopiero `quality` przy renderze (patrz `images.qualities` w next.config.ts).
-  let webpBuffer: Buffer;
-  try {
-    webpBuffer = await sharp(buffer)
-      .resize({ width: 1920, withoutEnlargement: true })
-      .webp({ quality: 100 })
-      .toBuffer();
-  } catch (err) {
-    console.error("[admin/upload] sharp:", err);
-    return NextResponse.json(
-      { error: "Nie udało się przetworzyć obrazu." },
-      { status: 400 }
-    );
-  }
-
   const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.webp`;
 
-  // WAŻNE: nie przekazuj Buffera bezpośrednio do `upload()` – supabase-js wysyła go
-  // wtedy jako surowe ciało żądania i w środowisku serverless bajty potrafią przejść
-  // przez konwersję na tekst UTF-8 (każdy bajt spoza ASCII → U+FFFD), przez co plik
-  // w Storage jest uszkodzony. Blob wymusza multipart/form-data – binarnie bezpieczny.
-  const blob = new Blob([new Uint8Array(webpBuffer)], { type: "image/webp" });
-
-  const { error } = await supabase.storage
-    .from("products")
-    .upload(filename, blob, { contentType: "image/webp", upsert: false });
-
-  if (error) {
-    console.error("[admin/upload] supabase upload error:", error);
-    return NextResponse.json(
-      { error: "Nie udało się zapisać pliku w magazynie zdjęć." },
-      { status: 500 }
-    );
+  // Oryginał w maksymalnej jakości (maks. 1920 px) plus komplet wariantów
+  // rozmiarowych. Warianty zastępują optymalizator Vercela – powstają raz, tutaj,
+  // zamiast być przeliczane przy każdym wyświetleniu (patrz `next.config.ts`).
+  const result = await uploadImageWithVariants(supabase, filename, buffer);
+  if ("error" in result) {
+    return NextResponse.json({ error: result.error }, { status: 500 });
   }
 
-  // Kontrola spójności – gdyby transport znów uszkodził bajty, rozmiar się nie zgodzi.
-  // Lepiej odrzucić upload niż zapisać w ustawieniach link do zepsutego zdjęcia.
-  // Sam odczyt metadanych jest jednak tylko kontrolą: gdy `info()` zawiedzie
-  // (błąd sieci, wyjątek klienta), plik jest już poprawnie zapisany – logujemy
-  // i pomijamy sprawdzenie, zamiast wywracać udany upload.
-  try {
-    const { data: info, error: infoError } = await supabase.storage
-      .from("products")
-      .info(filename);
-    if (infoError) {
-      console.warn("[admin/upload] nie udało się odczytać metadanych pliku:", infoError);
-    } else if (info && typeof info.size === "number" && info.size !== webpBuffer.byteLength) {
-      console.error(
-        `[admin/upload] uszkodzony zapis: oczekiwano ${webpBuffer.byteLength} B, zapisano ${info.size} B`
-      );
-      await supabase.storage.from("products").remove([filename]);
-      return NextResponse.json(
-        { error: "Plik zapisał się uszkodzony – spróbuj ponownie." },
-        { status: 500 }
-      );
-    }
-  } catch (err) {
-    console.warn("[admin/upload] wyjątek przy odczycie metadanych pliku:", err);
-  }
-
-  const { data } = supabase.storage.from("products").getPublicUrl(filename);
-
-  return NextResponse.json({ url: data.publicUrl });
+  return NextResponse.json({ url: result.url });
 }

@@ -31,27 +31,15 @@ const securityHeaders = [
  * Obrazy, które mają zniknąć z Grafiki Google. Googlebot musi je **pobrać**,
  * żeby zobaczyć `X-Robots-Tag: noindex` – dlatego NIE blokujemy ich w robots.txt
  * (disallow uniemożliwiłby odczytanie nagłówka i obraz zostałby w indeksie).
- * Wzorzec pokrywa dwa adresy tego samego pliku: bezpośredni z `public/`
- * i wariant z optymalizatora (`/_next/image?url=...`).
+ *
+ * Wzorzec obejmuje plik **razem z wariantami rozmiarowymi** (`-w400`, `-w800`…),
+ * bo `next/image` serwuje w `srcSet` właśnie je – wpis na samą nazwę zostawiłby
+ * warianty indeksowalne. Adres z optymalizatora (`/_next/image?url=…`) już nie
+ * istnieje: sklep używa własnego loadera i wskazuje pliki wprost (patrz `images`).
  */
-const NOINDEX_IMAGE_PATTERN = "thashar-wordmark";
-
 const noIndexImageHeaders = [
   {
-    source: "/images/thashar-wordmark.webp",
-    headers: [{ key: "X-Robots-Tag", value: "noindex" }],
-  },
-  {
-    // `has` na parametrze `url` – sam `source: "/_next/image"` objąłby
-    // wszystkie zdjęcia produktów, które mają być indeksowane
-    source: "/_next/image",
-    has: [
-      {
-        type: "query" as const,
-        key: "url",
-        value: `.*${NOINDEX_IMAGE_PATTERN}.*`,
-      },
-    ],
+    source: "/images/:file(thashar-wordmark[^/]*)",
     headers: [{ key: "X-Robots-Tag", value: "noindex" }],
   },
 ];
@@ -74,6 +62,7 @@ const nextConfig: NextConfig = {
     "/api/admin/ai-image": ["node_modules/sharp/**/*", "node_modules/@img/**/*"],
     "/api/admin/ai-text": ["node_modules/sharp/**/*", "node_modules/@img/**/*"],
     "/api/og/[slug]": ["node_modules/sharp/**/*", "node_modules/@img/**/*"],
+    "/api/admin/image-variants": ["node_modules/sharp/**/*", "node_modules/@img/**/*"],
   },
   experimental: {
     optimizePackageImports: ["framer-motion", "lucide-react"],
@@ -82,13 +71,34 @@ const nextConfig: NextConfig = {
     removeConsole: { exclude: ["error", "warn"] },
   },
   images: {
-    // Next 16 domyślnie dopuszcza tylko `qualities: [75]`. Zdjęcia z panelu są już raz
-    // skompresowane (WebP q82 przy uploadzie), więc drugie przejście przy q75 widać na
-    // gładkich powierzchniach ceramiki. To **jakość optymalizatora decyduje o wyniku** –
-    // podnoszenie jakości pliku w Storage nic nie zmienia (zmierzone). Zdjęcia treściowe
-    // renderujemy więc z `quality={90}`; wartość musi być na tej liście, inaczej Next
-    // cicho sprowadzi ją do najbliższej dozwolonej.
-    qualities: [75, 90],
+    // ⚠️ **Optymalizator obrazów Vercela jest wyłączony – celowo.**
+    // Vercel nalicza jedną transformację za każde wyliczenie wariantu (plik ×
+    // szerokość × jakość), także przy odświeżeniu wpisu w cache. Supabase Storage
+    // odpowiada nagłówkiem `cache-control: no-cache`, a czas życia wariantu to
+    // `max(minimumCacheTTL, cache-control źródła)` – przy domyślnych 4 godzinach
+    // te same zdjęcia były przeliczane po kilka razy dziennie. Limit planu Hobby
+    // (5 000/miesiąc) pękał w kilka dni, `/_next/image` odpowiadało wtedy `402`
+    // (`x-vercel-error: OPTIMIZED_IMAGE_REQUEST_PAYMENT_REQUIRED`), a zamiast
+    // zdjęcia przeglądarka pokazywała tekst `alt`. Tak zniknęły miniatury na
+    // karcie produktu (09.09.2026): duże zdjęcie miało już swój wariant w cache,
+    // miniatury prosiły o nowy i dostawały błąd.
+    //
+    // W zamian **generujemy rozmiary sami, raz, przy wgrywaniu zdjęcia** (`sharp`
+    // na trasach admina – patrz `lib/image-variants.ts`), a `next/image` wskazuje
+    // je własnym loaderem. `srcSet` działa jak dotąd, więc przeglądarka nadal
+    // pobiera plik dopasowany do ekranu – znika tylko koszt platformy.
+    // **Nie wracaj do wbudowanego optymalizatora** bez rozwiązania sprawy cache;
+    // samo podniesienie planu tylko przesuwa próg.
+    loader: "custom",
+    loaderFile: "./lib/image-loader.ts",
+
+    // Muszą się zgadzać z `IMAGE_VARIANT_WIDTHS` – Next buduje `srcSet` z tych
+    // list i dla każdej wartości woła loader. Szerokość bez odpowiadającego pliku
+    // dostałaby najbliższy większy wariant, czyli zbyt duże zdjęcie.
+    // `imageSizes` muszą być mniejsze od najmniejszego `deviceSizes`.
+    imageSizes: [400],
+    deviceSizes: [800, 1600],
+
     remotePatterns: [
       {
         protocol: "https",

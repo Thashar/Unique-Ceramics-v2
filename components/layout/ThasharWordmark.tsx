@@ -29,6 +29,10 @@ export default function ThasharWordmark({
         alt="Created by THASHAR.DEV"
         width={1024}
         height={290}
+        // Największy rozmiar, w jakim wordmark stoi na ekranie (`FooterContent`
+        // podaje `clamp(56px,16vw,90px)`). Bez `sizes` Next zbudowałby `srcSet`
+        // wokół szerokości pliku i pobrał wariant 1600 px zamiast 400 px
+        sizes="90px"
         className={styles.img}
       />
     </a>
