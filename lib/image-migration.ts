@@ -6,7 +6,7 @@ import {
   pendingOriginals,
   variantName,
 } from "@/lib/image-variants";
-import { writeMissingVariants } from "@/lib/storage-variants";
+import { message, writeMissingVariants } from "@/lib/storage-variants";
 
 /**
  * Dogenerowanie **wariantów rozmiarowych** dla zdjęć wgranych do Storage, zanim
@@ -53,10 +53,18 @@ export async function migrationStatus(supabase: SupabaseClient): Promise<Migrati
   return { total: originals.length, pending: pendingOriginals(files).length };
 }
 
+/**
+ * Zdjęcie, którego nie udało się przetworzyć – **razem z powodem**. Sama nazwa pliku
+ * nie mówiła nic: właściciel widział w panelu listę nazw i nie miał jak zgadnąć, czy
+ * zawiódł `sharp`, magazyn, czy pobranie pliku (09.09.2026). Powód idzie do panelu
+ * i to on decyduje, co robić dalej.
+ */
+export type FailedImage = { name: string; reason: string };
+
 export type BatchResult = {
   processed: number;
   remaining: number;
-  failed: string[];
+  failed: FailedImage[];
 };
 
 /**
@@ -79,13 +87,15 @@ export async function processBatch(
   const existing = new Set(files);
   const pending = pendingOriginals(files);
   const batch = pending.slice(0, limit);
-  const failed: string[] = [];
+  const failed: FailedImage[] = [];
   let processed = 0;
 
   for (const name of batch) {
     try {
       const { data, error } = await supabase.storage.from(STORAGE_BUCKET).download(name);
-      if (error || !data) throw new Error(error?.message ?? "brak pliku");
+      if (error || !data) {
+        throw new Error(`nie udało się pobrać zdjęcia z magazynu: ${error?.message ?? "brak pliku"}`);
+      }
       const source = Buffer.from(await data.arrayBuffer());
 
       // Dopisujemy wyłącznie brakujące rozmiary. Oryginału **nie ruszamy** – to jedyna
@@ -98,7 +108,7 @@ export async function processBatch(
       processed++;
     } catch (err) {
       console.error(`[image-migration] ${name}:`, err);
-      failed.push(name);
+      failed.push({ name, reason: message(err) });
     }
   }
 

@@ -57,8 +57,10 @@ export async function POST(req: Request) {
   }
 
   // Każde wywołanie to praca `sharp` i ruch do Storage – limit chroni przed
-  // zapętlonym panelem otwartym w kilku kartach naraz
-  if (await isRateLimited(`image-variants:${getClientIp(req)}`, 60, 10 * 60_000)) {
+  // zapętlonym panelem otwartym w kilku kartach naraz. Musi być hojny: przy kilkuset
+  // zdjęciach panel woła tę trasę raz na `BATCH_LIMIT` zdjęć, więc jedna migracja
+  // katalogu to grubo ponad sto żądań pod rząd
+  if (await isRateLimited(`image-variants:${getClientIp(req)}`, 400, 10 * 60_000)) {
     return NextResponse.json(
       { error: "Za dużo żądań – odczekaj chwilę i spróbuj ponownie." },
       { status: 429 }
