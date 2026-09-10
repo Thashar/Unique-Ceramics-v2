@@ -7,6 +7,7 @@ import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 import { resolveOwnImageSource, fetchOwnImage } from "@/lib/image-source";
 import { generateProductImage, hasGoogleAiKey } from "@/lib/google-ai";
 import { recordAiUsage } from "@/lib/ai-usage";
+import { uploadImageWithVariants } from "@/lib/storage-variants";
 import {
   AI_IMAGE_SUFFIX,
   AI_MODEL_PRICING,
@@ -100,11 +101,9 @@ export async function POST(req: Request) {
     // Zużycie zapisujemy od razu po udanym wywołaniu – od tego momentu jest płatne,
     // niezależnie od tego, czy dalsza obróbka i zapis do Storage się powiodą
     await recordAiUsage({ kind: "image", variant, model, ...result.usage });
-    // Ten sam format co upload i obrót – WebP, maks. 1920 px, maksymalna jakość
-    generated = await sharp(result.image.data)
-      .resize({ width: 1920, withoutEnlargement: true })
-      .webp({ quality: 100 })
-      .toBuffer();
+    // Rozmiar i format nadaje `uploadImageWithVariants` (WebP, maks. 1920 px,
+    // maksymalna jakość) razem z wariantami rozmiarowymi – tu zostaje surowy wynik
+    generated = Buffer.from(result.image.data);
   } catch (e) {
     console.error("[admin/ai-image] generowanie:", e);
     return NextResponse.json(
@@ -122,33 +121,12 @@ export async function POST(req: Request) {
   // pozwala puścić ich przez model drugi raz (patrz `isAiGeneratedImage`)
   const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}${AI_IMAGE_SUFFIX}`;
 
-  // Blob, nie Buffer – patrz komentarz w /api/admin/upload
-  const blob = new Blob([new Uint8Array(generated)], { type: "image/webp" });
-
-  const { error } = await supabase.storage
-    .from("products")
-    .upload(filename, blob, { contentType: "image/webp", upsert: false });
-
-  if (error) {
-    console.error("[admin/ai-image] supabase upload error:", error);
-    return NextResponse.json(
-      { error: "Nie udało się zapisać wygenerowanego zdjęcia." },
-      { status: 500 }
-    );
+  // Zdjęcie z modelu dostaje komplet wariantów rozmiarowych tak samo jak wgrane
+  // ręcznie – bez nich `srcSet` w sklepie wskazywałby nieistniejące pliki
+  const saved = await uploadImageWithVariants(supabase, filename, generated);
+  if ("error" in saved) {
+    return NextResponse.json({ error: saved.error }, { status: 500 });
   }
 
-  const { data: info } = await supabase.storage.from("products").info(filename);
-  if (info && typeof info.size === "number" && info.size !== generated.byteLength) {
-    console.error(
-      `[admin/ai-image] uszkodzony zapis: oczekiwano ${generated.byteLength} B, zapisano ${info.size} B`
-    );
-    await supabase.storage.from("products").remove([filename]);
-    return NextResponse.json(
-      { error: "Plik zapisał się uszkodzony – spróbuj ponownie." },
-      { status: 500 }
-    );
-  }
-
-  const { data } = supabase.storage.from("products").getPublicUrl(filename);
-  return NextResponse.json({ url: data.publicUrl, model });
+  return NextResponse.json({ url: saved.url, model });
 }

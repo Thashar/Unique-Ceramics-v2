@@ -18,10 +18,6 @@ interface Props {
   onIndexChange?: (index: number) => void;
 }
 
-// Zdjęcia z panelu są już raz skompresowane (WebP q82), więc domyślne q75 optymalizatora
-// dokładało im artefaktów. Wartość musi być w `images.qualities` w next.config.ts.
-const IMAGE_QUALITY = 90;
-
 const SWIPE_MIN_PX = 40;
 const SWIPE_RATIO = 0.15; // ułamek szerokości, po którym swipe zmienia zdjęcie
 const TRANSITION_MS = 600;
@@ -230,7 +226,6 @@ export default function ImageGallery({
           alt={alt}
           fill
           priority={priority}
-          quality={IMAGE_QUALITY}
           className="object-cover"
           style={{ objectPosition: images[0].position }}
           sizes={sizes}
@@ -275,8 +270,7 @@ export default function ImageGallery({
               alt=""
               fill
               priority={priority && i === 1}
-              quality={IMAGE_QUALITY}
-              className="object-cover"
+                  className="object-cover"
               style={{ objectPosition: img.position }}
               sizes={sizes}
               draggable={false}
