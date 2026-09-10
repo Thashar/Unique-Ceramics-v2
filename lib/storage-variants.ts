@@ -77,6 +77,49 @@ async function putObject(
 }
 
 /**
+ * Wariant o zadanej szerokości.
+ *
+ * Przekodowanie nie zawsze zmniejsza plik: zdjęcie węższe niż wariant przechodzi przez
+ * kompresję bez zmiany wymiarów i potrafi urosnąć (`hero.webp` 221 kB → 266 kB). Wtedy
+ * zwracamy kopię źródła – wariant musi istnieć, bo loader liczy jego nazwę i nie sprawdza,
+ * czy plik jest, ale nigdy nie może kosztować odwiedzającego więcej niż oryginał.
+ */
+export async function buildVariant(source: Buffer, width: number): Promise<Buffer> {
+  const variant = await sharp(source)
+    .resize({ width, withoutEnlargement: true })
+    .webp({ quality: VARIANT_QUALITY })
+    .toBuffer();
+  return variant.byteLength < source.byteLength ? variant : source;
+}
+
+/**
+ * Dopisuje brakujące warianty do zdjęcia, które **już leży** w Storage.
+ *
+ * W odróżnieniu od `uploadImageWithVariants` nie rusza oryginału – używa tego migracja
+ * zdjęć wgranych, zanim warianty istniały. Kasowanie i ponowny zapis oryginału byłoby
+ * tam ryzykiem utraty jedynej kopii zdjęcia, gdyby zapis zawiódł w połowie.
+ *
+ * Zwraca nazwy wariantów, które powstały; pierwszy błąd przerywa i leci wyżej –
+ * wywołujący ponowi zdjęcie, bo wariantów nadal mu brakuje.
+ */
+export async function writeMissingVariants(
+  supabase: SupabaseClient,
+  filename: string,
+  source: Buffer,
+  widths: readonly number[]
+): Promise<string[]> {
+  const written: string[] = [];
+  for (const width of widths) {
+    const payload = await buildVariant(source, width);
+    const name = variantName(filename, width);
+    const error = await putObject(supabase, name, payload);
+    if (error) throw new Error(`zapis wariantu ${width}: ${error}`);
+    written.push(name);
+  }
+  return written;
+}
+
+/**
  * Przycina zdjęcie do `ORIGINAL_MAX_WIDTH`, zapisuje jako oryginał, a obok
  * komplet wariantów z `IMAGE_VARIANT_WIDTHS`.
  *
@@ -123,23 +166,14 @@ export async function uploadImageWithVariants(
   written.push(filename);
 
   for (const width of IMAGE_VARIANT_WIDTHS) {
-    let variant: Buffer;
+    let payload: Buffer;
     try {
-      variant = await sharp(original)
-        .resize({ width, withoutEnlargement: true })
-        .webp({ quality: VARIANT_QUALITY })
-        .toBuffer();
+      payload = await buildVariant(original, width);
     } catch (err) {
       console.error(`[storage-variants] sharp (wariant ${width}):`, err);
       await cleanup();
       return { error: "Nie udało się przygotować rozmiarów zdjęcia." };
     }
-
-    // Przekodowanie nie zawsze zmniejsza plik: zdjęcie węższe niż wariant przechodzi
-    // przez kompresję bez zmiany wymiarów i potrafi urosnąć. Wtedy zapisujemy pod
-    // nazwą wariantu kopię oryginału – wariant musi istnieć (loader liczy jego nazwę
-    // i nie sprawdza, czy plik jest), ale nigdy nie może być cięższy od źródła.
-    const payload = variant.byteLength < original.byteLength ? variant : original;
 
     const name = variantName(filename, width);
     const error = await putObject(supabase, name, payload);

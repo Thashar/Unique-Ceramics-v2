@@ -93,7 +93,7 @@ export function bestVariantUrl(url: string, width: number): string {
   if (!hasVariants(url)) return url;
   // Zdjęcie, które samo jest wariantem, zostawiamy w spokoju – inaczej loader
   // dokleiłby drugi sufiks (`-w400-w800.webp`) i trafił w nieistniejący plik
-  if (/-w\d+\.webp$/.test(url)) return url;
+  if (isVariantName(url)) return url;
   const match = IMAGE_VARIANT_WIDTHS.find((w) => w >= width);
   return match ? variantUrl(url, match) : url;
 }
@@ -101,4 +101,20 @@ export function bestVariantUrl(url: string, width: number): string {
 /** Wszystkie warianty danego pliku – do wygenerowania albo do usunięcia. */
 export function variantNames(name: string): string[] {
   return IMAGE_VARIANT_WIDTHS.map((w) => variantName(name, w));
+}
+
+/** Czy nazwa (albo adres) wskazuje na gotowy wariant, np. `abc-w400.webp`. */
+export function isVariantName(name: string): boolean {
+  return /-w\d+\.webp$/.test(name);
+}
+
+/**
+ * Oryginały, którym brakuje choć jednego wariantu – z płaskiej listy nazw plików
+ * w buckecie. Czysta funkcja, żeby migracja dała się przetestować bez Storage.
+ */
+export function pendingOriginals(files: string[]): string[] {
+  const existing = new Set(files);
+  return files
+    .filter((name) => name.endsWith(".webp") && !isVariantName(name))
+    .filter((name) => variantNames(name).some((v) => !existing.has(v)));
 }

@@ -8,7 +8,7 @@ import { SIMILAR_MIN_SCORE_KEY } from "@/lib/similar-products";
 
 const VALID_SECTIONS = new Set([
   "strona_glowna", "omnie", "warsztaty", "regulamin", "polityka",
-  "kontakt", "wysylka", "urlop", "zam_indywidualne", "ai", "proponowane",
+  "kontakt", "wysylka", "urlop", "zam_indywidualne", "ai", "proponowane", "zdjecia",
   "platnosci_przelew", "platnosci_stripe",
 ]);
 

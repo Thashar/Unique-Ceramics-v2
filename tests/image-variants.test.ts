@@ -2,6 +2,8 @@ import { readFileSync } from "node:fs";
 import { describe, it, expect } from "vitest";
 import {
   IMAGE_VARIANT_WIDTHS,
+  isVariantName,
+  pendingOriginals,
   bestVariantUrl,
   hasVariants,
   isStorageImage,
@@ -114,5 +116,41 @@ describe("zgodność z konfiguracją Next", () => {
     const script = readFileSync("scripts/generate-image-variants.mjs", "utf-8");
     expect(script).toContain("IMAGE_VARIANT_WIDTHS");
     expect(script).toContain("lib/image-variants.ts");
+  });
+});
+
+// Migracja zdjęć wgranych, zanim warianty istniały (przycisk w Ustawieniach → Zdjęcia).
+// Lista bierze się z bucketa, więc funkcja musi rozróżniać oryginały od wariantów
+// i widzieć braki – pominięte zdjęcie zostaje w sklepie pustym kadrem.
+describe("migracja zdjęć bez wariantów", () => {
+  const complete = ["a.webp", ...IMAGE_VARIANT_WIDTHS.map((w) => `a-w${w}.webp`)];
+
+  it("rozpoznaje warianty po sufiksie", () => {
+    expect(isVariantName("a-w400.webp")).toBe(true);
+    expect(isVariantName("a.webp")).toBe(false);
+    // Nazwa z „-w" bez cyfr to zwykły plik (np. thashar-wordmark.webp)
+    expect(isVariantName("thashar-wordmark.webp")).toBe(false);
+  });
+
+  it("pomija zdjęcia z kompletem rozmiarów", () => {
+    expect(pendingOriginals(complete)).toEqual([]);
+  });
+
+  it("zwraca zdjęcie, któremu brakuje choć jednego rozmiaru", () => {
+    const incomplete = complete.slice(0, complete.length - 1);
+    expect(pendingOriginals(incomplete)).toEqual(["a.webp"]);
+  });
+
+  it("zwraca zdjęcie bez żadnego wariantu", () => {
+    expect(pendingOriginals(["b.webp"])).toEqual(["b.webp"]);
+  });
+
+  it("nie traktuje wariantu jak oryginału do przetworzenia", () => {
+    // Bez tego migracja doklejałaby warianty do wariantów (`a-w400-w400.webp`)
+    expect(pendingOriginals(["a-w400.webp"])).toEqual([]);
+  });
+
+  it("pomija pliki, które nie są WebP", () => {
+    expect(pendingOriginals(["c.jpg", "d.png"])).toEqual([]);
   });
 });

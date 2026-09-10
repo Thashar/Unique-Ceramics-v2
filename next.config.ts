@@ -62,6 +62,7 @@ const nextConfig: NextConfig = {
     "/api/admin/ai-image": ["node_modules/sharp/**/*", "node_modules/@img/**/*"],
     "/api/admin/ai-text": ["node_modules/sharp/**/*", "node_modules/@img/**/*"],
     "/api/og/[slug]": ["node_modules/sharp/**/*", "node_modules/@img/**/*"],
+    "/api/admin/image-variants": ["node_modules/sharp/**/*", "node_modules/@img/**/*"],
   },
   experimental: {
     optimizePackageImports: ["framer-motion", "lucide-react"],
