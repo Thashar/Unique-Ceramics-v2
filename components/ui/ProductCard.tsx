@@ -26,6 +26,7 @@ export default function ProductCard({
   quantityTeaser = null,
   freeShippingNote = false,
   priority = false,
+  instant = false,
 }: {
   product: ProductCardProduct;
   compact?: boolean;
@@ -42,14 +43,21 @@ export default function ProductCard({
    * (strona główna, „Mogą Ci się spodobać”) zostają leniwe.
    */
   priority?: boolean;
+  /**
+   * Kafelek widoczny od razu po wejściu na stronę – renderujemy go **bez
+   * wejścia w JS**, czyli zwykłym `<div>` zamiast `motion.div`.
+   *
+   * Powód: `initial={{ opacity: 0 }}` trafia do HTML-a z serwera jako
+   * `style="opacity:0"`, więc kafelek jest niewidoczny do czasu, aż
+   * framer-motion się zhydratyzuje i zadziała obserwator `whileInView`.
+   * Przy elemencie LCP oznacza to czekanie na cały JavaScript – na `/sklep`
+   * PageSpeed pokazał z tego **1530 ms „opóźnienia renderowania elementu”**
+   * przy zdjęciu pobranym w 150 ms (14.09.2026). **Włącza go wyłącznie
+   * `ProductGrid`** dla pierwszych kafelków siatki.
+   */
+  instant?: boolean;
 }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.1 }}
-      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-    >
+  const content = (
       <Link href={`/sklep/${product.slug}`} className="group block">
         {/* Zdjęcie */}
         <div className={`relative aspect-[4/5] overflow-hidden bg-mist ${compact ? "mb-2" : "mb-4"}`}>
@@ -135,6 +143,19 @@ export default function ProductCard({
           </p>
         </div>
       </Link>
+  );
+
+  // Kafelki nad zgięciem idą bez animacji wejścia – patrz `instant` wyżej.
+  if (instant) return <div>{content}</div>;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.1 }}
+      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+    >
+      {content}
     </motion.div>
   );
 }
