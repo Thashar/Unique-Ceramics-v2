@@ -120,3 +120,60 @@ h1, h2, h3, h4 {
   background-color: var(--color-warm-white);
   padding: 1.5rem;
 }
+
+/* --- Wejścia sekcji bez JavaScriptu ---------------------------------------
+   Animacje wejścia robił framer-motion, przez co treść wychodziła z serwera
+   z `style="opacity:0"` i stawała się widoczna dopiero po pobraniu i wykonaniu
+   ~310 KiB JS. Na telefonie dawało to LCP 5,7 s przy FCP 1,2 s (PageSpeed,
+   14.09.2026) – strona „stała" pusta przez kilka sekund mimo gotowego HTML-a.
+
+   Animacja CSS startuje przy pierwszym malowaniu, niezależnie od hydratacji,
+   więc choreografia wygląda tak samo, a treść pojawia się od razu.
+   `--uc-reveal-y` to dystans najazdu, czas i opóźnienie podaje element
+   (`animationDuration` / `animationDelay`), bo każdy wchodzi w innym momencie.
+
+   ⚠️ Nie zastępuj tego z powrotem animacjami w JS dla treści nad zgięciem. */
+@keyframes uc-reveal {
+  from { opacity: 0; transform: translateY(var(--uc-reveal-y, 0px)); }
+  to   { opacity: 1; transform: none; }
+}
+
+.uc-reveal {
+  /* `both` trzyma stan początkowy przez czas opóźnienia – tak samo jak
+     `initial` we framer-motion */
+  animation: uc-reveal 0.8s ease-out both;
+}
+
+/* Samo przygaszenie, bez najazdu – dla elementów, które mają już własne
+   przesunięcie w klasach Tailwinda (np. wyśrodkowanie przez `-translate-x-1/2`).
+   Rozdzielone celowo: `uc-reveal` kończy się na `transform: none`, więc
+   na takim elemencie skasowałoby jego ustawienie. */
+@keyframes uc-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.uc-fade {
+  animation: uc-fade 1s ease-out both;
+}
+
+/* Strzałka „przewiń" na dole hero – odpowiednik `animate={{ y: [0, 8, 0] }}` */
+@keyframes uc-float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(8px); }
+}
+
+.uc-float {
+  animation: uc-float 1.8s ease-in-out infinite;
+}
+
+/* Ruch wyłączony systemowo – treść od razu na swoim miejscu */
+@media (prefers-reduced-motion: reduce) {
+  .uc-reveal,
+  .uc-fade,
+  .uc-float {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}

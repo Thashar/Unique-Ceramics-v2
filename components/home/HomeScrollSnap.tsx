@@ -26,6 +26,15 @@ export default function HomeScrollSnap() {
     let touchStartY = 0;
     let touchStartScrollY = 0;
     let touchIsVertical: boolean | null = null;
+    // Sekcja, na której zaczął się gest – wyliczana **raz, przy dotknięciu**.
+    // `handleTouchMove` leci kilkadziesiąt razy na sekundę, a wyznaczenie jej
+    // czyta układ (`getBoundingClientRect` każdej sekcji + `offsetHeight`),
+    // czyli wymusza przeliczenie layoutu w każdym zdarzeniu. Argumentem jest
+    // i tak `touchStartScrollY`, który przez cały gest się nie zmienia,
+    // więc wynik był za każdym razem ten sam.
+    // ⚠️ Nie przenoś tego z powrotem do `handleTouchMove`.
+    let touchStartIdx = 0;
+    let touchStartFree = false;
 
     // Sekcje są statyczne po zamontowaniu – materializujemy raz, bez DOM query na każdy event.
     let sections: HTMLElement[] = Array.from(document.querySelectorAll<HTMLElement>("[data-snap]"));
@@ -122,6 +131,10 @@ export default function HomeScrollSnap() {
       touchStartY = e.touches[0].clientY;
       touchStartScrollY = window.scrollY;
       touchIsVertical = null;
+      touchStartIdx = getIndexByScrollY(touchStartScrollY);
+      // Brak sekcji (układ jeszcze nieułożony) = nie przejmujemy przewijania
+      const startSection = sections[touchStartIdx];
+      touchStartFree = !startSection || isFree(startSection);
     }
 
     function handleTouchMove(e: TouchEvent) {
@@ -134,12 +147,11 @@ export default function HomeScrollSnap() {
         }
       }
 
-      // Blokuj natywne pionowe przewijanie tylko na sekcjach pełnoekranowych
-      if (touchIsVertical === true) {
-        const idx = getIndexByScrollY(touchStartScrollY);
-        if (!isFree(sections[idx])) {
-          e.preventDefault();
-        }
+      // Blokuj natywne pionowe przewijanie tylko na sekcjach pełnoekranowych.
+      // Korzystamy z wartości zapamiętanej przy `touchstart` – bez czytania
+      // układu, żeby przewijanie palcem nie szarpało.
+      if (touchIsVertical === true && !touchStartFree) {
+        e.preventDefault();
       }
     }
 
@@ -151,11 +163,12 @@ export default function HomeScrollSnap() {
       if (diffX > Math.abs(diffY) * 1.5) return;
       if (Math.abs(diffY) < 40) return;
 
-      const startIdx = getIndexByScrollY(touchStartScrollY);
+      const startIdx = touchStartIdx;
       const section = sections[startIdx];
+      if (!section) return;
       const sectionTop = getSectionTop(section);
 
-      if (isFree(section)) {
+      if (touchStartFree) {
         const sectionBottom = sectionTop + section.offsetHeight;
         const viewportBottom = window.scrollY + window.innerHeight;
         const atBottom = diffY > 0 && viewportBottom >= sectionBottom - 60;
