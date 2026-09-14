@@ -672,7 +672,10 @@ Zamiast liczyć te same rozmiary w kółko, **generujemy je raz, przy wgrywaniu 
 
 Szerokości: **400 / 800 / 1600 px** (`IMAGE_VARIANT_WIDTHS`), oryginał przycięty do 1920 px
 zostaje dla podglądu w `ImageLightbox`. Warianty kodujemy w **q90**, oryginał w **q100**
-(decyzja właściciela: plik źródłowy ma być wierną kopią).
+(decyzja właściciela: plik źródłowy ma być wierną kopią). Wyjątkiem są **zdjęcia tła sekcji
+pełnoekranowych** (`BACKGROUND_IMAGES` w skrypcie: `hero`, `about-photo`, `warsztaty-photo`) –
+te idą w **q72**, bo leżą pod ciemną maską i gradientem. Powód i liczby: „Wydajność na telefonie"
+niżej. **Zdjęcia produktów zostają w q90.**
 
 ⚠️ **`IMAGE_VARIANT_WIDTHS` musi zgadzać się z `imageSizes`/`deviceSizes` w `next.config.ts`.**
 Next buduje `srcSet` z tamtych list i dla każdej wartości woła loader; szerokość bez
@@ -762,13 +765,23 @@ bezpieczeństwa dla starych linków z zewnątrz, nie sposobem na trzymanie nieak
 Objaw uboczny: dopóki hero się ładuje, sekcja pokazuje zapasowe tło `bg-espresso`, co wygląda
 jak ciemny header na stronie głównej.
 
-### Wydajność na telefonie – treść nad zgięciem nie może czekać na JS
+### Wydajność na telefonie – LCP to zdjęcie hero, a liczy się konkurencja o pasmo
 
 Pomiar z 14.09.2026 (PageSpeed, Moto G Power, 4G): **FCP 1,2 s, LCP 5,7 s, TBT 30 ms, CLS 0**,
-wynik 76. Procesor i układ były w porządku – problemem było to, **kiedy** treść w ogóle się
-pokazuje. Strona główna wysyłała **25 elementów z `style="opacity:0"`**, bo wejścia sekcji robił
-framer-motion: gotowy HTML czekał na pobranie i wykonanie ~310 KiB JS (długie zadania startowały
-w 4,9 s i 5,6 s), a dopiero potem ruszała animacja z opóźnieniem 0,55 s.
+wynik 76. Elementem LCP jest **zdjęcie hero** – pełnoekranowe tło strony głównej, największy
+element w viewporcie. Jego czas to nie procesor (TBT 30 ms) ani układ (CLS 0), tylko moment,
+w którym plik schodzi z sieci.
+
+⚠️ **Dwie rundy poprawek, bo pierwsza trafiła obok.** Naprawienie animacji wejścia (framer-motion
+→ CSS, `fetchPriority`, logo bez `lazy`) poprawiło TBT (30 → 20 ms) i Speed Index (4,7 → 4,5 s),
+ale **LCP nie drgnęło** – bo tekst nigdy nie był elementem LCP. Wiążącym ograniczeniem okazała się
+**konkurencja o pasmo**: przy dławieniu do 4G (~200 kB/s) przed zdjęciem hero stało
+**189 kB czcionek w `<link rel="preload">`** plus ~218 kB JS i 16 kB blokującego CSS. Zdjęcie
+dostawało ułamek pasma i schodziło jako jedno z ostatnich.
+
+**Zanim zaczniesz optymalizować LCP, ustal, który element nim jest** (sekcja „Zestawienie LCP"
+w raporcie). Dla obrazu liczy się waga pliku i to, co jeszcze walczy z nim o pasmo – a nie to,
+kiedy hydratacja odsłoni tekst.
 
 Zasady, które z tego wynikają:
 
@@ -789,6 +802,16 @@ Zasady, które z tego wynikają:
 - Handlery `touchmove` / `wheel` z `passive: false` **nie mogą czytać układu**
   (`getBoundingClientRect`, `offsetHeight`, `scrollHeight`). Wartości stałe w obrębie gestu
   licz raz, przy `touchstart` – wzorzec w `HomeScrollSnap`.
+- **Czcionki mają `preload: false`** (`app/layout.tsx`) – i tak ma zostać. Oba kroje są
+  **zmienne** (jeden plik na krój i podzbiór, niezależnie od wagi), więc podanie `weight`
+  nie zmniejsza ich ani o bajt – sprawdzone pomiarem. Cztery pliki to 189 kB, a jako preload
+  szły z najwyższym priorytetem **przed** zdjęciem LCP. `display: "swap"` rysuje tekst krojem
+  zastępczym od razu, a `size-adjust`/`ascent-override` od `next/font` sprawiają, że podmiana
+  kroju **nie przesuwa układu** (CLS zostaje 0). Nie włączaj preloadu z powrotem „dla pewności".
+- **Zdjęcia tła sekcji pełnoekranowych kodujemy w q72**, nie q90 (`BACKGROUND_IMAGES`
+  w `scripts/generate-image-variants.mjs`): leżą pod maską `bg-espresso/55`–`/60` i gradientem,
+  więc detalu nie widać, a `hero-w800.webp` schodzi ze 124 kB do 46 kB. **Zdjęć produktów tam
+  nie dopisuj** – one są towarem i zostają w q90.
 
 ### Cache i rewalidacja
 - Strony sesyjne (`/konto`, `/zamowienie`, `/admin`) = `force-dynamic`; strony treściowe = ISR (`revalidate`); dane katalogu = `unstable_cache` z tagiem `products`

@@ -4,16 +4,32 @@ import Providers from "@/components/layout/Providers";
 import LocalBusinessSchema from "@/components/seo/LocalBusinessSchema";
 import "./globals.css";
 
+// ⚠️ **`preload: false` jest celowe – nie włączaj go z powrotem.**
+// Oba kroje są **zmienne** (jeden plik na krój i podzbiór, niezależnie od wagi),
+// więc `weight` nie zmniejsza ich ani o bajt – sprawdzone. Cztery pliki
+// (Inter latin 85 kB + latin-ext 48 kB, Playfair latin 38 kB + latin-ext 21 kB)
+// to **189 kB**, a `next/font` wstawiał je jako `<link rel="preload" as="font">`
+// w `<head>`, czyli z najwyższym priorytetem – przed zdjęciem hero, które jest
+// elementem LCP. Zdjęcie dostawało przez to ułamek pasma i schodziło z sieci
+// jako jedno z ostatnich (LCP 5,7 s przy FCP 1,2 s – PageSpeed, 14.09.2026).
+//
+// Bez preloadu nic nie tracimy na pierwszym malowaniu: `display: "swap"` i tak
+// rysuje tekst krojem zastępczym od razu, a Next dokłada do niego `size-adjust`
+// i `ascent-override` (`Playfair Display Fallback`), więc podmiana kroju
+// **nie przesuwa układu** – CLS zostaje 0. Kroje dociągają się zaraz po pierwszym
+// malowaniu, już bez konkurowania z LCP.
 const playfair = Playfair_Display({
   variable: "--font-playfair",
   subsets: ["latin", "latin-ext"],
   display: "swap",
+  preload: false,
 });
 
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin", "latin-ext"],
   display: "swap",
+  preload: false,
 });
 
 export const viewport = {
