@@ -35,6 +35,18 @@ const DEFAULT_PER_PAGE = 30;
  */
 const PRIORITY_TILES = 3;
 
+/**
+ * Ile pierwszych kafelków renderujemy **bez animacji wejścia** (`instant`).
+ *
+ * To osobna sprawa niż `PRIORITY_TILES`: tam chodzi o priorytet sieciowy
+ * (preloady konkurują o pasmo, więc jest ich mało), tutaj wyłącznie o to, żeby
+ * kafelek nie wychodził z serwera z `style="opacity:0"` i nie czekał na
+ * hydratację framer-motion. Kosztu sieciowego nie ma żadnego – tracimy samo
+ * wejście, więc bierzemy z zapasem pierwsze dwa wiersze widoku kompaktowego
+ * (3 kolumny) i pierwsze trzy wiersze standardowego (2 kolumny na telefonie).
+ */
+const INSTANT_TILES = 6;
+
 interface Props {
   products: Product[];
   kategoria?: string;
@@ -223,6 +235,7 @@ export default function ProductGrid({ products, kategoria, dbError, categories, 
             product={product}
             compact={compact}
             priority={index < PRIORITY_TILES}
+            instant={index < INSTANT_TILES}
             categoryLabel={categoryLabel(product.category, categories)}
             quantityTeaser={quantityTeaser}
             freeShippingNote={freeShippingNote}
