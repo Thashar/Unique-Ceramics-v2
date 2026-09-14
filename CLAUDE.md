@@ -405,6 +405,8 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` – zwracają wartość z DB l
 - **FooterAddressClient.tsx** – `"use client"`, adres pracowni i godziny otwarcia w kolumnie **„Gdzie mnie znajdziesz"** (nad mapą), bez osobnych nagłówków; puste dane = brak bloku
 - **FooterMap.tsx** – `"use client"`, mapa Google w iframe – ładowana dopiero po zgodzie cookies
 - **CookieBanner.tsx** – `"use client"`, baner zgody na cookies; na mobile: skrócony tekst, mniejsze pady i czcionka, układ poziomy (wiersz)
+  - ⚠️ **Renderuje się już w HTML z serwera – nie dodawaj tu z powrotem bramki `!hydrated`.** Miał ją i pojawiał się dopiero po hydratacji, przez co PageSpeed wskazał go jako **element LCP całej strony** z rozbiciem „czas do pierwszego bajtu 0 ms, opóźnienie renderowania elementu **2290 ms**" (14.09.2026) – LCP czekało na pobranie i wykonanie ~175 KiB JS. Komu zgoda już siedzi w localStorage, temu baner zdejmuje **CSS przed pierwszym malowaniem**: skrypt w `<head>` (`app/layout.tsx`) czyta `COOKIE_CONSENT_KEY` i ustawia `data-cc` na `<html>`, a regułę `html[data-cc] .uc-cookie-banner` niesie `app/globals.css`. Bramkę `consent !== null` zostawiamy – po kliknięciu React usuwa baner z DOM normalną ścieżką. Baner jest `fixed`, więc nie wchodzi w układ i CLS zostaje 0
+  - `hydrated` z `useCookieConsent()` **nadal jest potrzebne w `FooterMap`** (mapa ma czekać na klienta) – usunięto je tylko z banera
 - **ThasharWordmark.tsx** + **ThasharWordmark.module.css** – wordmark „Created by THASHAR.DEV" w belce praw autorskich obu stopek (link do https://thashar.dev). Serwerowy (animacja czysto CSS-owa, bez JS): błysk na hoverze to diagonalna smuga przycięta CSS-ową maską do kształtu liter (`mask: url(/images/thashar-wordmark.webp)`) + `drop-shadow`. Kolory dopasowane do palety: filtr `saturate(.58) hue-rotate(218.5deg) brightness(1.21)` zamienia tealowy `.DEV` (#4F9EA5 w pliku) na terracottę #C4A883, białe litery zostają białe; wartości filtra są dostrojone pod konkretny odcień teala w pliku – po podmianie grafiki trzeba je przeliczyć, żeby kolor `.DEV` w stopce się nie ruszył; smuga = rdzeń cream + otoczka terracotta. Szerokość przez prop `width` (zmienna `--thb-width`, default 77 px); `FooterContent` podaje `clamp(56px,16vw,90px)`, więc na desktopie wordmark ma pełne 90 px, a na wąskich ekranach schodzi do 56 px. **Układ belki:** na mobile wordmark idzie do własnego wiersza (`basis-full`), na desktopie jest przyklejony do prawej krawędzi stopki (`lg:absolute lg:right-0`), żeby nie zbijać wyśrodkowania praw autorskich. Belka jest `flex-wrap` z mniejszym tekstem na mobile – bez tego treść nie mieściła się na ekranach ≤390 px i rozpychała stronę w poziomie. Respektuje `prefers-reduced-motion`. Obrazek ma `sizes="90px"` (największy rozmiar z `clamp`) – bez tego `srcSet` budowałby się wokół szerokości pliku i przeglądarka pobierałaby wariant 1600 px zamiast 400 px. Źródło grafiki: `public/images/thashar-wordmark.webp` (1024×290) razem z wariantami `-w400/-w800/-w1600`
 - **Providers.tsx** – `SessionProvider` + `CookieBanner` + **`CartToasts`** (dymki koszyka muszą być widoczne z każdej strony) + `CartAccountSync` (wywołuje `useCartAccountSync`; osobny komponent, bo `useSession` musi być **wewnątrz** `SessionProvider`). Koszyk i zgoda na cookies to store'y modułowe – same w sobie providerów nie potrzebują
 
@@ -799,6 +801,16 @@ Zasady, które z tego wynikają:
   drugie nie dokłada atrybutu `fetchpriority` ani do `<img>`, ani do `<link rel="preload">`,
   więc obrazek stoi w kolejce za skryptami.
 - **Nad zgięciem nie ma `loading="lazy"`** – każde takie zdjęcie potrzebuje `priority`.
+- **Element LCP bywa nieoczywisty – sprawdź go, zanim cokolwiek zmienisz.** Na tej stronie
+  nie było nim ani zdjęcie hero, ani nagłówek, tylko **tekst banera cookies**, bo jako jedyny
+  pojawiał się dopiero po hydratacji. Rozbicie „Zestawienie LCP" w raporcie nazywa element
+  i dzieli czas na fazy; **zerowy czas do pierwszego bajtu przy dużym opóźnieniu renderowania
+  znaczy, że element czeka na JavaScript, a nie na plik**.
+- **Element, który może zostać LCP, nie może czekać na hydratację.** Komponent kliencki
+  ukrywany bramką w rodzaju `if (!hydrated) return null` nie istnieje w HTML z serwera
+  i pojawia się dopiero po wykonaniu całego JS. Gdy jego stan zależy od `localStorage`,
+  rozwiązaniem jest **renderowanie go serwerowo i ukrycie CSS-em** na podstawie atrybutu
+  ustawionego skryptem w `<head>` – wzorzec w `CookieBanner` i `app/layout.tsx`.
 - Handlery `touchmove` / `wheel` z `passive: false` **nie mogą czytać układu**
   (`getBoundingClientRect`, `offsetHeight`, `scrollHeight`). Wartości stałe w obrębie gestu
   licz raz, przy `touchstart` – wzorzec w `HomeScrollSnap`.

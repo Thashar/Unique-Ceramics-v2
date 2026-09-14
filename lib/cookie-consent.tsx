@@ -4,7 +4,11 @@ import { useSyncExternalStore } from "react";
 
 type ConsentLevel = "all" | "necessary" | null;
 
-const KEY = "uc-cookie-consent";
+/** Klucz w localStorage. Eksportowany, bo czyta go też skrypt w `<head>`
+ *  (`app/layout.tsx`), który ukrywa baner przed pierwszym malowaniem – obie
+ *  strony muszą używać dokładnie tej samej nazwy. */
+export const COOKIE_CONSENT_KEY = "uc-cookie-consent";
+const KEY = COOKIE_CONSENT_KEY;
 
 // Moduł działa jako zewnętrzny store (localStorage) – czytany przez
 // useSyncExternalStore, dzięki czemu nie potrzebujemy setState w efektach

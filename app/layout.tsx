@@ -1,6 +1,7 @@
 ﻿import type { Metadata } from "next";
 import { Playfair_Display, Inter } from "next/font/google";
 import Providers from "@/components/layout/Providers";
+import { COOKIE_CONSENT_KEY } from "@/lib/cookie-consent";
 import LocalBusinessSchema from "@/components/seo/LocalBusinessSchema";
 import "./globals.css";
 
@@ -133,10 +134,22 @@ export default function RootLayout({
   return (
     <html lang="pl" className={`${playfair.variable} ${inter.variable} h-full`}>
       <head>
-        {/* Blokuj przywracanie pozycji scrolla przez przeglądarkę na stronie głównej.
-            Musi działać przed DOMContentLoaded, zanim Chrome zdąży przywrócić scroll –
-            ustawienie tego w useEffect jest za późno i powoduje biały header przy odświeżeniu. */}
-        <script dangerouslySetInnerHTML={{ __html: `if(location.pathname==='/')history.scrollRestoration='manual';` }} />
+        {/* Dwie rzeczy, które muszą wykonać się PRZED pierwszym malowaniem.
+            1. Blokada przywracania pozycji scrolla na stronie głównej – w useEffect
+               jest za późno, Chrome zdąży przywrócić scroll (biały header przy odświeżeniu).
+            2. Ukrycie banera cookies u kogoś, kto już wybrał. Baner jest w HTML
+               z serwera (patrz `CookieBanner` – był elementem LCP z 2290 ms
+               opóźnienia renderowania, bo czekał na hydratację), więc bez tego
+               mignąłby każdemu, kto zgodę już zapisał. Reguła CSS siedzi
+               w `app/globals.css` (`html[data-cc] .uc-cookie-banner`). */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              `if(location.pathname==='/')history.scrollRestoration='manual';` +
+              `try{var c=localStorage.getItem('${COOKIE_CONSENT_KEY}');` +
+              `if(c==='all'||c==='necessary')document.documentElement.setAttribute('data-cc','1')}catch(e){}`,
+          }}
+        />
       </head>
       <body className="min-h-[100svh] flex flex-col">
         <Providers>{children}</Providers>

@@ -177,3 +177,12 @@ h1, h2, h3, h4 {
     transform: none;
   }
 }
+
+/* Baner cookies jest w HTML z serwera (bez tego był elementem LCP z 2290 ms
+   opóźnienia renderowania – czekał na hydratację). Komu zgoda już siedzi
+   w localStorage, temu baner zdejmujemy **przed pierwszym malowaniem**:
+   skrypt w `<head>` ustawia `data-cc` na `<html>`, a ta reguła go chowa.
+   Bez tego mignąłby przy każdym wejściu. */
+html[data-cc] .uc-cookie-banner {
+  display: none;
+}
