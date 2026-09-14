@@ -385,6 +385,10 @@ export default function Header({ topOffset = false, showProjects = true }: { top
             width={LOGO_WIDTH}
             height={LOGO_HEIGHT}
             sizes="36px"
+            // Logo stoi nad zgięciem na **każdej** stronie, a bez `priority`
+            // next/image dawał mu `loading="lazy"` – przeglądarka odkładała
+            // 13 kB, od których zależy pierwsze malowanie headera
+            priority
             className="h-9 w-auto shrink-0 transition-all duration-500 brightness-0 invert"
           />
           {/* Napis ma być **dokładnie w kolorze logo** – czysta biel, w obu

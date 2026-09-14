@@ -388,7 +388,7 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` – zwracają wartość z DB l
 ## Komponenty (`components/`)
 
 ### `components/layout/`
-- **Header.tsx** – responsywna nawigacja, ikona koszyka, menu mobilne. Napis „Unique Ceramics / Ręcznie tworzone z sercem” obok logo jest **czystą bielą (`text-white`) w obu stanach headera, bez przezroczystości i bez zmiany koloru na hoverze** – ma się zgadzać z logo (`brightness-0 invert`). Wcześniej nad jasnymi sekcjami szedł `text-cream`, co obok białego logo czytało się jako kawowy odcień, a `/70` na podtytule dawało wrażenie szarej obwódki; **nie przywracaj tam `text-cream`**; gdy `menuOpen` header zawsze przyjmuje `bg-espresso` (niezależnie od sekcji hero).
+- **Header.tsx** – responsywna nawigacja, ikona koszyka, menu mobilne. Logo ma **`priority`** – stoi nad zgięciem na każdej stronie, a bez tego `next/image` dawał mu `loading="lazy"` i przeglądarka odkładała 13 kB, od których zależy pierwsze malowanie headera. Napis „Unique Ceramics / Ręcznie tworzone z sercem” obok logo jest **czystą bielą (`text-white`) w obu stanach headera, bez przezroczystości i bez zmiany koloru na hoverze** – ma się zgadzać z logo (`brightness-0 invert`). Wcześniej nad jasnymi sekcjami szedł `text-cream`, co obok białego logo czytało się jako kawowy odcień, a `/70` na podtytule dawało wrażenie szarej obwódki; **nie przywracaj tam `text-cream`**; gdy `menuOpen` header zawsze przyjmuje `bg-espresso` (niezależnie od sekcji hero).
   - **Przezroczystość na stronie głównej:** header jest przezroczysty, gdy w viewporcie widać (≥30% wysokości) sekcję oznaczoną `data-header-theme="transparent"`. Oznaczone są wszystkie ciemne sekcje `/` – Hero, „O mnie", Warsztaty i sekcja stopki; jedyną jasną sekcją jest „Wybrane prace" i tylko nad nią header jest `bg-espresso`.
   - **Auto-chowanie na mobile (podstrony):** poniżej `lg` przewijanie w dół chowa header (`translateY(-100%)`), w górę wyłania; próg 8 px wygasza drgania, chowanie dopiero poniżej 120 px scrolla, otwarte menu mobilne blokuje chowanie. Strona główna jest wyłączona (ma scroll-snap i zanikanie w stopce).
   - **Wordmark skaluje się płynnie (`clamp`), nie skokowo.** Tytuł „Unique Ceramics” i podtytuł „Ręcznie tworzone z sercem” mają rozmiary z `clamp`, których **górne ograniczenia są równe dawnym wartościom** (18 px i 6,5 px) – na desktopie nic się nie zmieniło, schodzą tylko na wąskim widoku. Wcześniej `text-base sm:text-lg` łamał napis na **dwa wiersze przy 320 px** (na napis zostaje tam ok. 100 px) **i przy 768 px**, gdzie dochodzi nawigacja. Oba napisy mają `whitespace-nowrap` – to wordmark, ma stać w jednej linii. Podtytuł ma własny `clamp` dobrany tak, żeby zostawał mniej więcej **tak szeroki jak tytuł**; zmieniając jeden rozmiar, przelicz drugi.
@@ -410,8 +410,12 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` – zwracają wartość z DB l
 
 ### `components/home/`
 - **Hero.tsx**, **AboutTeaser.tsx**, **WorkshopsTeaser.tsx** – trzy pełnoekranowe sekcje o tym samym układzie (napis nad nagłówkiem, nagłówek, opis, przycisk). **Cały tekst przychodzi propsami z ustawień** (`home_hero_*` / `home_about_*` / `home_workshops_*` – patrz `lib/home-sections.ts`); pusty props **ukrywa** element, a nowe wiersze w nagłówku i opisie łamią tekst przez `whitespace-pre-line`. Hero ma dodatkowo drugi przycisk i napis przy strzałce na dole. Domyślne wartości propsów są tylko awaryjne – treść ustawia panel
+  - ⚠️ **`Hero.tsx` jest komponentem serwerowym i ma nim zostać.** Wejścia robił framer-motion, przez co nagłówek, opis i przyciski wychodziły z serwera z `style="opacity:0"` i stawały się widoczne dopiero po pobraniu i wykonaniu ~310 KiB JS. Na telefonie dawało to **LCP 5,7 s przy FCP 1,2 s** (PageSpeed, 14.09.2026) – gotowy HTML czekał kilka sekund na hydratację. Choreografia (opóźnienia 0,2 / 0,4 / 0,55 / 0,75 / 0,9 / 1,5 s) jest ta sama, ale idzie z CSS – klasy `uc-reveal` / `uc-fade` / `uc-float` w `app/globals.css`. **Nie przywracaj tu animacji w JS** ani nie dodawaj `"use client"`
+  - Zdjęcie hero ma `priority` **i `fetchPriority="high"`** – samo `priority` nie dokładało atrybutu `fetchpriority`, więc obrazek (kandydat na LCP) przegrywał o pasmo z kilkunastoma paczkami JS. Next przepuszcza ten prop zarówno na `<img>`, jak i na `<link rel="preload">`
+  - `AboutTeaser` i `WorkshopsTeaser` nadal używają framer-motion (`whileInView`), bo są **pod zgięciem** i ich wejście musi odpalać się dopiero przy wejściu w viewport – na LCP nie wpływają
 - **FeaturedProducts.tsx**
 - **HomeScrollSnap.tsx** – `"use client"`, scroll-snap sekcji strony głównej; sekcje materializowane raz przy mount (brak DOM query w handlerach zdarzeń). Sekcja z `data-snap-free` (stopka) jest **poniżej breakpointu lg przewijana swobodnie** niezależnie od wysokości – przyciąganie działa tylko na jej krawędziach, więc zjazd w głąb stopki nie odbija do jej początku; `resize` nie wyrywa użytkownika ze swobodnej sekcji
+  - ⚠️ **Sekcję, na której zaczął się gest, wyliczamy raz – przy `touchstart`** (`touchStartIdx` / `touchStartFree`). `touchmove` leci kilkadziesiąt razy na sekundę i jest `passive: false`, a wyznaczenie sekcji czyta układ (`getBoundingClientRect` **każdej** sekcji + `offsetHeight`), czyli wymuszało przeliczenie layoutu w każdym zdarzeniu przewijania palcem. Argumentem i tak jest `touchStartScrollY`, stały przez cały gest, więc wynik był za każdym razem ten sam. **Nie przenoś tego z powrotem do `handleTouchMove`**
 - **ProductCarousel.tsx** – `"use client"`, mobilna karuzela wybranych prac; przewijanie **stronami po 2 karty** (nie po jednej) – swipe i kropki zmieniają stronę, kropek jest `ceil(liczba/2)`. Przy nieparzystej liczbie produktów ostatnia strona równa się do prawej krawędzi (pokazuje pełne 2 karty). Wyrównuje przesunięcie po `resize`/`orientationchange`
 - **InstagramCta.tsx** – przyjmuje prop `instagram` (nieużywany na stronie głównej od scalenia ze stopką)
 
@@ -757,6 +761,34 @@ bezpieczeństwa dla starych linków z zewnątrz, nie sposobem na trzymanie nieak
 
 Objaw uboczny: dopóki hero się ładuje, sekcja pokazuje zapasowe tło `bg-espresso`, co wygląda
 jak ciemny header na stronie głównej.
+
+### Wydajność na telefonie – treść nad zgięciem nie może czekać na JS
+
+Pomiar z 14.09.2026 (PageSpeed, Moto G Power, 4G): **FCP 1,2 s, LCP 5,7 s, TBT 30 ms, CLS 0**,
+wynik 76. Procesor i układ były w porządku – problemem było to, **kiedy** treść w ogóle się
+pokazuje. Strona główna wysyłała **25 elementów z `style="opacity:0"`**, bo wejścia sekcji robił
+framer-motion: gotowy HTML czekał na pobranie i wykonanie ~310 KiB JS (długie zadania startowały
+w 4,9 s i 5,6 s), a dopiero potem ruszała animacja z opóźnieniem 0,55 s.
+
+Zasady, które z tego wynikają:
+
+- **Animacji wejścia w JS nie dajemy treści nad zgięciem.** Do tego są klasy `uc-reveal`
+  (przygaszenie + najazd, dystans przez `--uc-reveal-y`), `uc-fade` (samo przygaszenie – dla
+  elementów, które mają już własne przesunięcie w klasach Tailwinda, bo `uc-reveal` kończy się na
+  `transform: none`) i `uc-float` (powtarzalne unoszenie) z `app/globals.css`. Czas i opóźnienie
+  podaje element przez `animationDuration` / `animationDelay`. Animacja CSS startuje przy
+  **pierwszym malowaniu**, niezależnie od hydratacji. Wszystkie trzy klasy respektują
+  `prefers-reduced-motion`.
+- **framer-motion zostaje tylko pod zgięciem** (`whileInView` w `AboutTeaser`, `WorkshopsTeaser`,
+  `ProductCard`, `ProjectCard`, `FooterInstagramPanel`) i w menu mobilnym (`AnimatePresence`
+  w `Header`). Tam animacja z definicji ma czekać na interakcję albo na wejście w viewport.
+- **Obraz będący kandydatem na LCP dostaje `fetchPriority="high"`**, nie samo `priority` – to
+  drugie nie dokłada atrybutu `fetchpriority` ani do `<img>`, ani do `<link rel="preload">`,
+  więc obrazek stoi w kolejce za skryptami.
+- **Nad zgięciem nie ma `loading="lazy"`** – każde takie zdjęcie potrzebuje `priority`.
+- Handlery `touchmove` / `wheel` z `passive: false` **nie mogą czytać układu**
+  (`getBoundingClientRect`, `offsetHeight`, `scrollHeight`). Wartości stałe w obrębie gestu
+  licz raz, przy `touchstart` – wzorzec w `HomeScrollSnap`.
 
 ### Cache i rewalidacja
 - Strony sesyjne (`/konto`, `/zamowienie`, `/admin`) = `force-dynamic`; strony treściowe = ISR (`revalidate`); dane katalogu = `unstable_cache` z tagiem `products`
