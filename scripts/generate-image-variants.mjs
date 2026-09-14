@@ -68,6 +68,21 @@ const WIDTHS = readVariantWidths();
 const BUCKET = "products";
 const CACHE_CONTROL = "31536000";
 const VARIANT_QUALITY = 90;
+
+/**
+ * Zdjęcia tła pełnoekranowych sekcji – hero strony głównej, „O mnie" i warsztaty.
+ * Każde leży pod maską `bg-espresso/55`–`/60` i gradientem, więc detalu i tak nie
+ * widać, a `hero-w800.webp` w q90 ważył **120 kB** i jako element LCP przegrywał
+ * o pasmo z resztą strony (LCP 5,7 s – PageSpeed, 14.09.2026). Przy q72 różnicy
+ * pod maską nie widać, a plik schodzi mniej więcej o połowę.
+ *
+ * ⚠️ Zdjęć produktów tu **nie dopisuj** – one są towarem i zostają w q90.
+ */
+const BACKGROUND_QUALITY = 72;
+const BACKGROUND_IMAGES = new Set(["hero.webp", "about-photo.webp", "warsztaty-photo.webp"]);
+
+const qualityFor = (name) =>
+  BACKGROUND_IMAGES.has(name) ? BACKGROUND_QUALITY : VARIANT_QUALITY;
 const ORIGINAL_MAX_WIDTH = 1920;
 /** Nazewnictwo musi zgadzać się z `variantName()` w `lib/image-variants.ts`. */
 const variantName = (name, width) => name.replace(/\.webp$/, `-w${width}.webp`);
@@ -109,10 +124,10 @@ async function listAll() {
  * Wariant musi istnieć, bo loader liczy jego nazwę i nie sprawdza, czy plik jest –
  * ale nigdy nie może kosztować odwiedzającego więcej niż oryginał.
  */
-async function smallerOf(source, width) {
+async function smallerOf(source, width, quality = VARIANT_QUALITY) {
   const variant = await sharp(source)
     .resize({ width: Math.min(width, ORIGINAL_MAX_WIDTH), withoutEnlargement: true })
-    .webp({ quality: VARIANT_QUALITY })
+    .webp({ quality })
     .toBuffer();
   return variant.byteLength < source.byteLength ? variant : source;
 }
@@ -192,7 +207,7 @@ async function main() {
         // `withoutEnlargement` zostawia mniejsze zdjęcie w jego rozmiarze, ale plik
         // i tak musi powstać: loader liczy nazwy wariantów z nazwy oryginału i nie
         // sprawdza, czy istnieją – brak pliku to zepsute zdjęcie w sklepie.
-        const variant = await smallerOf(source, width);
+        const variant = await smallerOf(source, width, qualityFor(name));
         await put(variantName(name, width), variant);
         created++;
       }
@@ -232,7 +247,7 @@ async function main() {
       try {
         const source = readFileSync(join(localDir, name));
         for (const width of missing) {
-          const variant = await smallerOf(source, width);
+          const variant = await smallerOf(source, width, qualityFor(name));
           writeFileSync(join(localDir, variantName(name, width)), variant);
           localCreated++;
         }
