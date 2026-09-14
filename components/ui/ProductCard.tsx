@@ -25,6 +25,7 @@ export default function ProductCard({
   categoryLabel,
   quantityTeaser = null,
   freeShippingNote = false,
+  priority = false,
 }: {
   product: ProductCardProduct;
   compact?: boolean;
@@ -34,6 +35,13 @@ export default function ProductCard({
   quantityTeaser?: string | null;
   /** Czy trwa promocja „Darmowa wysyłka”. */
   freeShippingNote?: boolean;
+  /**
+   * Kafelek w pierwszym wierszu siatki – zdjęcie dostaje `priority`
+   * i `fetchPriority="high"` zamiast `loading="lazy"`.
+   * **Włącza go wyłącznie `ProductGrid`** dla pierwszych kafelków; karuzele
+   * (strona główna, „Mogą Ci się spodobać”) zostają leniwe.
+   */
+  priority?: boolean;
 }) {
   return (
     <motion.div
@@ -50,6 +58,12 @@ export default function ProductCard({
               src={product.images[0]}
               alt={product.name}
               fill
+              // Kafelki nad zgięciem w katalogu są kandydatami na LCP – bez tego
+              // szły z `loading="lazy"`, czyli ruszały dopiero po ułożeniu strony.
+              // `fetchPriority` podajemy jawnie, bo samo `priority` nie dokłada
+              // tego atrybutu ani do `<img>`, ani do `<link rel="preload">`.
+              priority={priority}
+              fetchPriority={priority ? "high" : undefined}
               className={`object-cover transition-transform duration-700 ease-out group-hover:scale-105 ${product.stock === 0 ? "opacity-60" : ""}`}
               sizes={
                 compact

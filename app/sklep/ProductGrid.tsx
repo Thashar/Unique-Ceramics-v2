@@ -18,6 +18,23 @@ const PER_PAGE_KEY = "sklep-na-stronie";
 const PER_PAGE_OPTIONS = [30, 50, 100] as const;
 const DEFAULT_PER_PAGE = 30;
 
+/**
+ * Ile pierwszych kafelków dostaje `priority` (czyli `fetchPriority="high"`
+ * i preload zamiast `loading="lazy"`).
+ *
+ * **Element LCP katalogu to zdjęcie produktu z pierwszego wiersza** – PageSpeed
+ * wskazał je wprost („Wykrywanie żądań LCP”: zasób LCP nie powinien używać
+ * `loading=lazy`, należy zastosować `fetchpriority=high`; 14.09.2026). Wszystkie
+ * 21 zdjęć w HTML-u szło leniwie, więc to w pierwszym wierszu ruszało dopiero
+ * po ułożeniu strony.
+ *
+ * Trzy, bo tyle mieści się w wierszu na telefonie w widoku kompaktowym (domyślnym
+ * na tej szerokości). **Nie podnoś tego bez potrzeby** – każdy taki kafelek to
+ * kolejny preload o najwyższym priorytecie, a te konkurują ze sobą o pasmo
+ * (patrz „Wydajność na telefonie” w CLAUDE.md).
+ */
+const PRIORITY_TILES = 3;
+
 interface Props {
   products: Product[];
   kategoria?: string;
@@ -200,11 +217,12 @@ export default function ProductGrid({ products, kategoria, dbError, categories, 
             : "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8"
         }
       >
-        {visible.map((product) => (
+        {visible.map((product, index) => (
           <ProductCard
             key={product.id}
             product={product}
             compact={compact}
+            priority={index < PRIORITY_TILES}
             categoryLabel={categoryLabel(product.category, categories)}
             quantityTeaser={quantityTeaser}
             freeShippingNote={freeShippingNote}
