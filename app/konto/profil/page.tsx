@@ -123,7 +123,7 @@ export default function ProfilePage() {
       <h2 className="font-serif text-2xl text-espresso">Dane i hasło</h2>
 
       {/* Dane osobowe */}
-      <div className="bg-cream p-8 rounded-xl">
+      <div className="rounded-xl bg-cream border border-sand p-6 md:p-8">
         <h3 className="text-xs tracking-widest uppercase text-clay mb-6 flex items-center gap-2">
           <User size={14} strokeWidth={1.5} />
           Dane osobowe
@@ -166,7 +166,7 @@ export default function ProfilePage() {
           E-mail jest loginem, więc zmiana wymaga hasła **i** potwierdzenia
           z nowej skrzynki; sam formularz nic jeszcze nie zmienia. */}
       {canChangeEmail && (
-        <div className="bg-cream p-8 rounded-xl">
+        <div className="rounded-xl bg-cream border border-sand p-6 md:p-8">
           <h3 className="text-xs tracking-widest uppercase text-clay mb-6 flex items-center gap-2">
             <Mail size={14} strokeWidth={1.5} />
             Zmiana adresu e-mail
@@ -226,7 +226,7 @@ export default function ProfilePage() {
       )}
 
       {/* Zmiana hasła */}
-      <div className="bg-cream p-8 rounded-xl">
+      <div className="rounded-xl bg-cream border border-sand p-6 md:p-8">
         <h3 className="text-xs tracking-widest uppercase text-clay mb-6 flex items-center gap-2">
           <Lock size={14} strokeWidth={1.5} />
           Zmiana hasła
@@ -276,7 +276,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Twoje dane – eksport (RODO) */}
-      <div className="bg-cream p-8 rounded-xl">
+      <div className="rounded-xl bg-cream border border-sand p-6 md:p-8">
         <h3 className="text-xs tracking-widest uppercase text-clay mb-4 flex items-center gap-2">
           <Download size={14} strokeWidth={1.5} />
           Twoje dane

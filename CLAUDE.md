@@ -233,7 +233,7 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` – zwracają wartość z DB l
 ### Strony chronione – konto klienta (`/konto`) – wymaga sesji (middleware + layout)
 | Route | Opis |
 |-------|------|
-| `/konto` | Dashboard klienta |
+| `/konto` | Dashboard klienta. **Cała sekcja konta siedzi w karcie-kafelku** jak koszyk i zamówienie (layout: pas szkliwa, `ClayRule`, „Witaj, {imię}” i e-mail w nagłówku karty, `AccountNav` po lewej – na telefonie przewijany rząd, od `lg` kolumna; `overflow-clip`). Statystyki mówią o kliencie: liczba zamówień, kwota wydana (opłacone, nieanulowane), data ostatniego zamówienia – wypełniacze „Status: Aktywne / Typ: Klient” usunięte 16.09.2026. Ostatnie zamówienia i skróty jako kafelki `rounded-xl bg-cream border border-sand` z ikoną w kółku; pusty stan w tej samej konwencji co koszyk. Panele podstron konta (`rounded-xl bg-cream border border-sand`) |
 | `/konto/profil` | Edycja imienia i hasła; eksport danych (RODO) i usunięcie konta (strefa niebezpieczna) |
 | `/konto/adres` | Adres dostawy (auto-uzupełnia checkout) |
 | `/konto/zamowienia` | Historia zamówień |

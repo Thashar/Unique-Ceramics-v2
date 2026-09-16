@@ -98,7 +98,7 @@ export default function AddressPage() {
     <div className="space-y-6 max-w-xl">
       <h2 className="font-serif text-2xl text-espresso">Adres dostawy</h2>
 
-      <div className="bg-cream p-8 rounded-xl">
+      <div className="rounded-xl bg-cream border border-sand p-6 md:p-8">
         <h3 className="text-xs tracking-widest uppercase text-clay mb-2 flex items-center gap-2">
           <MapPin size={14} strokeWidth={1.5} />
           Domyślny adres dostawy
