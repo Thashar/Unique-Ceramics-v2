@@ -253,11 +253,29 @@ export default function CheckoutForm({
   }
 
   if (items.length === 0) {
+    // Ta sama karta co pusty koszyk w `CartView` – klient trafia tu np. po
+    // wygaśnięciu koszyka, więc ma dostać ten sam widok, nie gołe zdanie
     return (
-      <div className="bg-warm-white flex items-center justify-center py-24">
-        <div className="text-center">
-          <p className="font-serif text-2xl text-espresso mb-4">Koszyk jest pusty</p>
-          <Link href="/sklep" className="text-clay hover:text-espresso underline">Przejdź do sklepu</Link>
+      <div className="bg-warm-white">
+        <div className="relative overflow-clip px-6 py-20 md:py-28">
+          <div aria-hidden="true" className="pointer-events-none absolute -top-24 -left-20 w-[26rem] h-[26rem] rounded-full bg-terracotta/15 blur-3xl" />
+          <div aria-hidden="true" className="pointer-events-none absolute -bottom-32 -right-20 w-[28rem] h-[28rem] rounded-full bg-clay/10 blur-3xl" />
+          <div className="relative mx-auto max-w-md overflow-clip rounded-2xl border border-sand bg-warm-white shadow-[0_22px_48px_-18px_rgba(44,40,37,0.35),0_4px_14px_-6px_rgba(44,40,37,0.18)]">
+            <div aria-hidden="true" className="h-1 bg-gradient-to-r from-terracotta via-clay to-sand" />
+            <div className="px-8 py-10 text-center">
+              <ClayRule align="center" className="max-w-[200px] mx-auto mb-5" />
+              <h1 className="font-serif text-2xl md:text-3xl text-espresso mb-3">Koszyk jest pusty</h1>
+              <p className="text-sm text-charcoal/80 leading-relaxed mb-8">
+                Żeby złożyć zamówienie, dodaj najpierw coś do koszyka.
+              </p>
+              <Link
+                href="/sklep"
+                className="inline-flex w-full items-center justify-center gap-3 rounded-md bg-clay hover:bg-terracotta hover:text-espresso text-warm-white text-xs tracking-widest uppercase px-8 py-4 transition-colors"
+              >
+                Przejdź do sklepu
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -347,16 +365,29 @@ export default function CheckoutForm({
 
   return (
     <div className="bg-warm-white">
-      <div className="bg-cream px-6 lg:px-10 py-10">
-        <div className="max-w-5xl mx-auto">
-          <p className="text-xs tracking-[0.3em] uppercase text-clay mb-3">Sklep</p>
-          <h1 className="font-serif text-4xl md:text-5xl text-espresso">Zamówienie</h1>
-          <ClayRule className="mt-6" />
-        </div>
-      </div>
+      {/* Ta sama karta-kafelek co koszyk (`CartView`): pas szkliwa, tytuł
+          z `ClayRule` w nagłówku karty, formularz po lewej, podsumowanie na
+          kremowym panelu po prawej. `overflow-clip`, nie `hidden` – hidden
+          zepsułoby `sticky` podsumowania */}
+      <div className="relative overflow-clip px-6 lg:px-10 py-12 md:py-16">
+        <div aria-hidden="true" className="pointer-events-none absolute -top-24 -left-20 w-[26rem] h-[26rem] rounded-full bg-terracotta/15 blur-3xl" />
+        <div aria-hidden="true" className="pointer-events-none absolute -bottom-32 -right-20 w-[28rem] h-[28rem] rounded-full bg-clay/10 blur-3xl" />
 
-      <div className="max-w-5xl mx-auto px-6 lg:px-10 py-16">
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+        <div className="relative mx-auto max-w-5xl overflow-clip rounded-2xl border border-sand bg-warm-white shadow-[0_22px_48px_-18px_rgba(44,40,37,0.35),0_4px_14px_-6px_rgba(44,40,37,0.18)]">
+          <div aria-hidden="true" className="h-1 bg-gradient-to-r from-terracotta via-clay to-sand" />
+
+          <div className="px-6 md:px-10 pt-8 md:pt-10 pb-6 border-b border-sand flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <ClayRule className="mb-4" />
+              <h1 className="font-serif text-3xl md:text-4xl text-espresso">Zamówienie</h1>
+            </div>
+            <p className="text-xs tracking-widest uppercase text-charcoal/80 pb-1">
+              {items.length} {items.length === 1 ? "produkt" : items.length < 5 ? "produkty" : "produktów"}
+            </p>
+          </div>
+
+      <div className="px-6 md:px-10 py-8 md:py-10">
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-10">
           <div className="lg:col-span-2 space-y-8">
             {priceChanged && !error && (
               <div className="bg-mist border border-sand text-charcoal/80 text-sm px-4 py-3 rounded-md">
@@ -535,7 +566,7 @@ export default function CheckoutForm({
 
           {/* Podsumowanie */}
           <div className="lg:col-span-1">
-            <div className="bg-cream p-8 sticky top-28 rounded-xl">
+            <div className="rounded-xl bg-cream border border-sand p-6 md:p-8 lg:sticky lg:top-28">
               <h2 className="font-serif text-xl text-espresso mb-6">Twoje zamówienie</h2>
               <div className="space-y-3 mb-6 text-sm">
                 {summary.lines.map(({ item, lineTotal }) => (
@@ -725,6 +756,8 @@ export default function CheckoutForm({
             </div>
           </div>
         </form>
+      </div>
+        </div>
       </div>
     </div>
   );
