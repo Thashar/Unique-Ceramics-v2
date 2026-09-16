@@ -298,22 +298,6 @@ function LoginForm({ onDone }: { onDone: () => void }) {
     <form onSubmit={submit}>
       <PopoverHeading title="Zaloguj się" />
       <div className="p-4 space-y-3">
-      {/* Ta sama kolejność co na /logowanie: Google, separator, e-mail */}
-      <button
-        type="button"
-        onClick={() => { setLoading(true); signIn("google", { callbackUrl: window.location.pathname }); }}
-        disabled={loading}
-        className="w-full flex items-center justify-center gap-2.5 rounded-md border border-sand hover:border-clay bg-warm-white hover:bg-cream text-espresso text-sm py-2.5 transition-colors disabled:opacity-60"
-      >
-        <GoogleIcon className="w-4 h-4" />
-        Kontynuuj z Google
-      </button>
-      <div className="relative py-1">
-        <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-sand" /></div>
-        <div className="relative flex justify-center text-[10px] uppercase tracking-widest text-charcoal/80">
-          <span className="bg-warm-white px-2">lub e-mailem</span>
-        </div>
-      </div>
       {error && <p className="text-xs text-red-700">{error}</p>}
       <input
         type="email"
@@ -352,6 +336,23 @@ function LoginForm({ onDone }: { onDone: () => void }) {
       >
         {loading && <Loader2 size={14} className="animate-spin" />}
         Zaloguj
+      </button>
+      {/* Google pod przyciskiem logowania (decyzja właściciela 16.09.2026) –
+          inaczej niż na /logowanie, gdzie stoi na górze */}
+      <div className="relative py-1">
+        <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-sand" /></div>
+        <div className="relative flex justify-center text-[10px] uppercase tracking-widest text-charcoal/80">
+          <span className="bg-warm-white px-2">lub</span>
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={() => { setLoading(true); signIn("google", { callbackUrl: window.location.pathname }); }}
+        disabled={loading}
+        className="w-full flex items-center justify-center gap-2.5 rounded-md border border-sand hover:border-clay bg-warm-white hover:bg-cream text-espresso text-sm py-2.5 transition-colors disabled:opacity-60"
+      >
+        <GoogleIcon className="w-4 h-4" />
+        Kontynuuj z Google
       </button>
       <p className="text-[11px] text-charcoal/80 text-center pt-1">
         Nie masz konta?{" "}
