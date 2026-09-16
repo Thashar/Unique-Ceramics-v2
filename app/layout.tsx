@@ -44,12 +44,14 @@ const BASE = "https://uniqueceramics.pl";
 export const metadata: Metadata = {
   metadataBase: new URL(BASE),
   title: {
-    default: "Unique Ceramics – Ceramika Gliwice | ręcznie robiona",
+    default: "Unique Ceramics – Alicja Ulbrich",
     template: "%s | Unique Ceramics",
   },
   description:
-    "Ceramika użytkowa ręcznie robiona w Gliwicach – kubki, miski, naczynia i ozdoby. Każdy egzemplarz jest niepowtarzalny. Zamów online, wysyłka w całej Polsce.",
+    "Ręcznie robiona ceramika Alicji Ulbrich z okolic Gliwic – kubki, miski, naczynia i ozdoby. Każdy egzemplarz jest niepowtarzalny. Zamów online, wysyłka w całej Polsce.",
   keywords: [
+    "Alicja Ulbrich",
+    "Alicja Ulbrich ceramika",
     "ceramika Gliwice",
     "ceramika ręcznie robiona Gliwice",
     "pracownia ceramiczna Gliwice",
@@ -89,9 +91,9 @@ export const metadata: Metadata = {
     locale: "pl_PL",
     type: "website",
     url: BASE,
-    title: "Unique Ceramics – Ceramika Gliwice | ręcznie robiona",
+    title: "Unique Ceramics – Alicja Ulbrich",
     description:
-      "Ceramika użytkowa ręcznie robiona w Gliwicach – kubki, miski, naczynia i ozdoby. Każdy egzemplarz jest niepowtarzalny. Zamów z dostawą w całej Polsce.",
+      "Ręcznie robiona ceramika Alicji Ulbrich z okolic Gliwic – kubki, miski, naczynia i ozdoby. Każdy egzemplarz jest niepowtarzalny. Zamów z dostawą w całej Polsce.",
     images: [
       {
         url: "/images/OpenGraph.jpg",
@@ -104,9 +106,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Unique Ceramics – Ceramika Gliwice | ręcznie robiona",
+    title: "Unique Ceramics – Alicja Ulbrich",
     description:
-      "Ceramika użytkowa ręcznie robiona w Gliwicach. Kubki, miski, naczynia i ozdoby – każdy egzemplarz niepowtarzalny.",
+      "Ręcznie robiona ceramika Alicji Ulbrich z okolic Gliwic. Kubki, miski, naczynia i ozdoby – każdy egzemplarz niepowtarzalny.",
     images: ["/images/OpenGraph.jpg"],
   },
   robots: {

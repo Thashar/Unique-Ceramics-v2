@@ -591,6 +591,16 @@ W treściach interfejsu, komentarzach i dokumentacji używaj **półpauzy `–`*
   wpisany wprost obok `robots`. **Nowa strona = własny canonical.**
 - **Tytułu nie kończ marką** – dokłada ją szablon z layoutu (`%s | Unique Ceramics`). Wpisany
   drugi raz w `generateMetadata` dawał „… – Unique Ceramics | Unique Ceramics”.
+- **Strona główna ma tytuł „Unique Ceramics – Alicja Ulbrich”** (decyzja właściciela 16.09.2026):
+  w `app/page.tsx` przez `title: { absolute }`, bo szablon dołożyłby markę drugi raz. Ten sam
+  tekst jest domyślnym tytułem layoutu, tytułem OG/Twitter, nazwą `WebPage` strony głównej
+  i `alternateName` w `WebSite` oraz `LocalBusiness` (Google czyta `alternateName` przy
+  ustalaniu nazwy witryny). **Nazwisko ma pozycjonować stronę**, więc występuje też w treści:
+  opisy meta, `founder` (z `jobTitle`, `url`, `worksFor`), sekcja `sr-only` „Obszar obsługi”
+  na stronie głównej, `Person` na `/o-mnie` i **widoczny** wiersz praw autorskich w stopce
+  („© rok Unique Ceramics – Alicja Ulbrich”) na każdej stronie. Zmieniając nazwisko albo
+  nazwę, popraw wszystkie te miejsca naraz – rozjazd między nimi osłabia powiązanie
+  nazwiska z marką.
 - `googleBot` w layoucie ma **`max-image-preview: large`** (plus `max-snippet`/`max-video-preview`
   bez limitu). To jedyne ustawienie, którym wpływamy na to, czy Google **może** pokazać duże
   zdjęcie przy wyniku; **którego** zdjęcia użyje, i tak decyduje sam.

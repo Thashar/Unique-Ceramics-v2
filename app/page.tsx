@@ -2,15 +2,21 @@
 
 export const revalidate = 3600;
 
+// Tytuł strony głównej to marka + imię i nazwisko właścicielki (decyzja
+// właściciela 16.09.2026): tak ma wyglądać wynik w Google, a nazwisko ma
+// pozycjonować stronę. `absolute` omija szablon `%s | Unique Ceramics`
+// z layoutu – inaczej marka stałaby w tytule dwa razy.
+const HOME_TITLE = "Unique Ceramics – Alicja Ulbrich";
+
 export const metadata: Metadata = {
-  title: "Unique Ceramics – Ceramika Gliwice",
+  title: { absolute: HOME_TITLE },
   description:
-    "Pracownia ceramiczna z okolic Gliwic. Ręcznie robiona ceramika użytkowa i dekoracyjna – kubki, miski, naczynia, ozdoby. Każdy egzemplarz jest niepowtarzalny.",
+    "Alicja Ulbrich – ceramiczka z Kleszczowa k. Gliwic. Unique Ceramics to ręcznie robiona ceramika użytkowa i dekoracyjna: kubki, miski, naczynia, ozdoby. Każdy egzemplarz jest niepowtarzalny.",
   alternates: { canonical: "https://uniqueceramics.pl" },
   openGraph: {
-    title: "Unique Ceramics – Ceramika Gliwice",
+    title: HOME_TITLE,
     description:
-      "Pracownia ceramiczna z okolic Gliwic. Ręcznie robiona ceramika użytkowa i dekoracyjna – każdy egzemplarz jest niepowtarzalny.",
+      "Pracownia ceramiczna Alicji Ulbrich z okolic Gliwic. Ręcznie robiona ceramika użytkowa i dekoracyjna – każdy egzemplarz jest niepowtarzalny.",
     url: "https://uniqueceramics.pl",
     images: [
       {
@@ -54,7 +60,7 @@ export default async function Home() {
         "@type": "WebPage",
         "@id": `${SITE_URL}/#webpage`,
         url: SITE_URL,
-        name: "Unique Ceramics – Ceramika Gliwice",
+        name: HOME_TITLE,
         isPartOf: { "@id": `${SITE_URL}/#website` },
         about: { "@id": `${SITE_URL}/#business` },
         inLanguage: "pl-PL",
@@ -112,7 +118,8 @@ export default async function Home() {
         <section aria-label="Obszar obsługi" className="sr-only">
           <h2>Obszar obsługi</h2>
           <p>
-            Pracownia mieści się przy ul. Familijna 23, 44-164 Kleszczów (k. Gliwic,
+            Pracownię Unique Ceramics prowadzi Alicja Ulbrich – ceramiczka tworząca
+            ręcznie każdą sztukę. Pracownia mieści się przy ul. Familijna 23, 44-164 Kleszczów (k. Gliwic,
             woj. śląskie). Wysyłka w całej
             Polsce – odbiór osobisty dostępny lokalnie. Obsługujemy zamówienia z całego
             Śląska: Gliwice, Zabrze, Knurów, Pyskowice, Tarnowskie Góry, Bytom, Piekary

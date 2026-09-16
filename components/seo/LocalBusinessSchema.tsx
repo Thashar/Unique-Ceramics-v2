@@ -33,8 +33,12 @@ const websiteSchema = {
   "@type": "WebSite",
   "@id": `${BASE}/#website`,
   name: "Unique Ceramics",
+  // Nazwisko właścicielki jako nazwa alternatywna witryny – Google czyta
+  // `alternateName` przy ustalaniu nazwy strony w wynikach, a szukający
+  // „Alicja Ulbrich” ma trafić tutaj
+  alternateName: ["Unique Ceramics – Alicja Ulbrich", "Alicja Ulbrich"],
   url: BASE,
-  description: "Sklep z ręcznie robioną ceramiką artystyczną",
+  description: "Sklep z ręcznie robioną ceramiką artystyczną Alicji Ulbrich",
   inLanguage: "pl-PL",
   publisher: { "@id": `${BASE}/#business` },
   // Bez `potentialAction`/SearchAction: sklep nie ma wyszukiwarki, a deklaracja
@@ -69,8 +73,9 @@ export default async function LocalBusinessSchema() {
     "@type": ["LocalBusiness", "Store"],
     "@id": `${BASE}/#business`,
     name: "Unique Ceramics",
+    alternateName: "Unique Ceramics – Alicja Ulbrich",
     description:
-      "Pracownia ceramiki artystycznej tworząca ręcznie robione naczynia użytkowe i dekoracyjne. Kubki, miski, talerze, świeczniki i ozdoby wykonywane z pasją – każdy egzemplarz jest niepowtarzalny.",
+      "Pracownia ceramiki artystycznej Alicji Ulbrich tworząca ręcznie robione naczynia użytkowe i dekoracyjne. Kubki, miski, talerze, świeczniki i ozdoby wykonywane z pasją – każdy egzemplarz jest niepowtarzalny.",
     url: BASE,
     logo: `${BASE}/images/logo.webp`,
     image: mainImage,
@@ -94,6 +99,9 @@ export default async function LocalBusinessSchema() {
       "@type": "Person",
       "@id": `${BASE}/o-mnie#person`,
       name: "Alicja Ulbrich",
+      jobTitle: "Ceramiczka",
+      url: `${BASE}/o-mnie`,
+      worksFor: { "@id": `${BASE}/#business` },
     },
     priceRange: "$$",
     currenciesAccepted: "PLN",
