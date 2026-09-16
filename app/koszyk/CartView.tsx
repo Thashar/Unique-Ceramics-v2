@@ -156,10 +156,10 @@ export default function CartView({
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <Link href={`/sklep/${item.slug}`} className="font-serif text-base sm:text-lg leading-snug text-espresso hover:text-clay transition-colors block line-clamp-2">
+                <Link href={`/sklep/${item.slug}`} className="font-serif text-sm sm:text-lg leading-tight sm:leading-snug text-espresso hover:text-clay transition-colors block line-clamp-2">
                   {item.name}
                 </Link>
-                <p className="text-sm text-charcoal/80 mt-1">
+                <p className="text-xs sm:text-sm text-charcoal/80 mt-0.5 sm:mt-1">
                   {(() => {
                     const line = lineFor.get(item.id);
                     const zl = (v: number) => `${v.toFixed(2).replace(".", ",")} zł`;
@@ -178,19 +178,19 @@ export default function CartView({
                     return <>{zl(line?.unitPrice ?? item.price)} / szt.</>;
                   })()}
                 </p>
-                <div className="flex items-center gap-3 sm:gap-4 mt-3">
+                <div className="flex items-center gap-3 sm:gap-4 mt-1.5 sm:mt-3">
                   <div className="flex items-center rounded-md border border-sand">
                     <button
                       onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                      className="w-8 h-8 flex items-center justify-center text-charcoal hover:text-clay transition-colors"
+                      className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center text-charcoal hover:text-clay transition-colors"
                     >
                       <Minus size={14} />
                     </button>
-                    <span className="w-8 text-center text-sm">{item.quantity}</span>
+                    <span className="w-7 sm:w-8 text-center text-xs sm:text-sm">{item.quantity}</span>
                     <button
                       onClick={() => updateQuantity(item.id, item.quantity + 1)}
                       disabled={item.quantity >= item.stock}
-                      className="w-8 h-8 flex items-center justify-center text-charcoal hover:text-clay disabled:text-sand disabled:cursor-not-allowed transition-colors"
+                      className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center text-charcoal hover:text-clay disabled:text-sand disabled:cursor-not-allowed transition-colors"
                     >
                       <Plus size={14} />
                     </button>
@@ -205,7 +205,7 @@ export default function CartView({
                     <span className="hidden sm:inline text-xs text-clay">maks. dostępna ilość</span>
                   )}
                   {/* Cena pozycji – na telefonie tutaj, na szerszym ekranie w kolumnie obok */}
-                  <p className="sm:hidden ml-auto font-serif text-base text-espresso tabular-nums whitespace-nowrap">
+                  <p className="sm:hidden ml-auto font-serif text-sm text-espresso tabular-nums whitespace-nowrap">
                     {(lineFor.get(item.id)?.lineTotal ?? item.price * item.quantity)
                       .toFixed(2)
                       .replace(".", ",")} zł
