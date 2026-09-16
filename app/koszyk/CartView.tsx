@@ -141,9 +141,12 @@ export default function CartView({
               podsumowanie jest już zaktualizowane.
             </p>
           )}
+          {/* Na telefonie nazwa ma dwie linie zamiast wielokropka, a cena pozycji
+              schodzi do wiersza z licznikiem – osobna kolumna po prawej zostawiała
+              nazwie za mało miejsca i ucinała ją po kilku znakach */}
           {items.map((item) => (
-            <div key={item.id} className="flex gap-5 pb-6 border-b border-sand last:border-b-0 last:pb-0">
-              <div className="relative w-24 h-24 bg-cream flex-shrink-0 overflow-hidden rounded-lg">
+            <div key={item.id} className="flex gap-4 sm:gap-5 pb-6 border-b border-sand last:border-b-0 last:pb-0">
+              <div className="relative w-20 h-20 sm:w-24 sm:h-24 bg-cream flex-shrink-0 overflow-hidden rounded-lg">
                 {item.image ? (
                   <Image src={item.image} alt={item.name} fill className="object-cover" sizes="96px" />
                 ) : (
@@ -153,7 +156,7 @@ export default function CartView({
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <Link href={`/sklep/${item.slug}`} className="font-serif text-lg text-espresso hover:text-clay transition-colors block truncate">
+                <Link href={`/sklep/${item.slug}`} className="font-serif text-base sm:text-lg leading-snug text-espresso hover:text-clay transition-colors block line-clamp-2">
                   {item.name}
                 </Link>
                 <p className="text-sm text-charcoal/80 mt-1">
@@ -175,7 +178,7 @@ export default function CartView({
                     return <>{zl(line?.unitPrice ?? item.price)} / szt.</>;
                   })()}
                 </p>
-                <div className="flex items-center gap-4 mt-3">
+                <div className="flex items-center gap-3 sm:gap-4 mt-3">
                   <div className="flex items-center rounded-md border border-sand">
                     <button
                       onClick={() => updateQuantity(item.id, item.quantity - 1)}
@@ -199,12 +202,21 @@ export default function CartView({
                     <Trash2 size={16} />
                   </button>
                   {item.quantity >= item.stock && (
-                    <span className="text-xs text-clay">maks. dostępna ilość</span>
+                    <span className="hidden sm:inline text-xs text-clay">maks. dostępna ilość</span>
                   )}
+                  {/* Cena pozycji – na telefonie tutaj, na szerszym ekranie w kolumnie obok */}
+                  <p className="sm:hidden ml-auto font-serif text-base text-espresso tabular-nums whitespace-nowrap">
+                    {(lineFor.get(item.id)?.lineTotal ?? item.price * item.quantity)
+                      .toFixed(2)
+                      .replace(".", ",")} zł
+                  </p>
                 </div>
+                {item.quantity >= item.stock && (
+                  <p className="sm:hidden text-xs text-clay mt-1.5">maks. dostępna ilość</p>
+                )}
               </div>
-              <div className="text-right flex-shrink-0">
-                <p className="font-serif text-lg text-espresso">
+              <div className="hidden sm:block text-right flex-shrink-0">
+                <p className="font-serif text-lg text-espresso tabular-nums whitespace-nowrap">
                   {(lineFor.get(item.id)?.lineTotal ?? item.price * item.quantity)
                     .toFixed(2)
                     .replace(".", ",")} zł
