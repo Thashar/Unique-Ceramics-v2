@@ -10,7 +10,7 @@ import BreadcrumbSchema from "@/components/seo/BreadcrumbSchema";
 import { getProjects } from "@/lib/portfolio";
 import { findProjectBySlug, projectPath, projectSlugs } from "@/lib/portfolio-slug";
 import { sanitizeRichHtml } from "@/lib/sanitize-html";
-import { metaDescription, pageMetadata } from "@/lib/seo";
+import { metaDescription, ogImage, pageMetadata } from "@/lib/seo";
 
 export const revalidate = 300;
 
@@ -45,13 +45,13 @@ export async function generateMetadata({
       `${project.title} – ręcznie wykonana praca z pracowni ceramicznej Unique Ceramics.`,
   );
 
-  // Podgląd linku zostaje domyślny (`/images/OpenGraph.jpg`): zdjęcia projektów
-  // są w WebP, którego WhatsApp nie renderuje w podglądach – tak samo jak przy
-  // produktach, gdzie JPEG-a dorabia `/api/og/[slug]`
+  // Podgląd linku = pierwsze zdjęcie projektu jako JPEG (zdjęcia są w WebP,
+  // którego WhatsApp nie renderuje) – dorabia je `/api/og/projekt/[slug]`
   return pageMetadata({
     title: project.title,
     description,
     path: projectPath(slug),
+    ...(project.images[0] ? { image: ogImage(`/api/og/projekt/`, project.title) } : {}),
   });
 }
 

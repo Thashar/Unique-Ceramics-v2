@@ -11,14 +11,31 @@ import type { Metadata } from "next";
 export const SITE_URL = "https://uniqueceramics.pl";
 export const SITE_NAME = "Unique Ceramics";
 
-/** Domyślny obrazek podglądu. JPEG, nie WebP – patrz komentarz wyżej. */
-export const OG_IMAGE = {
-  url: "/images/OpenGraph.jpg",
-  width: 1200,
-  height: 630,
-  type: "image/jpeg",
-  alt: "Unique Ceramics – ręcznie robiona ceramika",
-};
+/**
+ * Obrazek podglądu linku pod adresem jednej z tras `/api/og/*` – każda oddaje
+ * JPEG 1200×630 z prawdziwego zdjęcia (patrz `lib/og-image.ts`). `width`/
+ * `height`/`type` są podane wprost, bo bez nich część komunikatorów pokazuje
+ * mały kafelek zamiast dużego obrazka.
+ */
+export function ogImage(url: string, alt = "Unique Ceramics – ręcznie robiona ceramika") {
+  return { url, width: 1200, height: 630, type: "image/jpeg", alt };
+}
+
+/**
+ * Domyślny obrazek podglądu = **zdjęcie hero ze strony głównej** (ustawiane
+ * w panelu; trasa `/api/og/strona/glowna` oddaje je jako JPEG z kadrem
+ * z panelu, a bez wgranego hero – statyczną `/images/OpenGraph.jpg`).
+ * Strony z własnym nagłówkiem (O mnie, Warsztaty), produkty, kategorie
+ * i projekty podają własny obrazek przez `ogImage`.
+ */
+export const OG_IMAGE = ogImage("/api/og/strona/glowna");
+
+/** Adresy obrazków podglądu dla stron z własnym nagłówkiem. */
+export const OG_PAGE_IMAGE = {
+  home: "/api/og/strona/glowna",
+  about: "/api/og/strona/o-mnie",
+  workshops: "/api/og/strona/warsztaty",
+} as const;
 
 type PageMetaInput = {
   /** Tytuł strony (bez sufiksu marki – dodaje go szablon z layoutu). */

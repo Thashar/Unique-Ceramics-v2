@@ -18,14 +18,14 @@ export const metadata: Metadata = {
     description:
       "Pracownia ceramiczna Alicji Ulbrich z okolic Gliwic. Ręcznie robiona ceramika użytkowa i dekoracyjna – każdy egzemplarz jest niepowtarzalny.",
     url: "https://uniqueceramics.pl",
-    images: [
-      {
-        url: "/images/logo.webp",
-        width: 1200,
-        height: 630,
-        alt: "Unique Ceramics – ręcznie robiona ceramika",
-      },
-    ],
+    // Zdjęcie hero (z panelu) jako JPEG 1200×630 z kadrem z panelu – nie logo
+    // i nie WebP, którego WhatsApp nie renderuje
+    images: [ogImage(OG_PAGE_IMAGE.home, "Unique Ceramics – Alicja Ulbrich")],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: HOME_TITLE,
+    images: [OG_PAGE_IMAGE.home],
   },
 };
 
@@ -38,7 +38,7 @@ import Header from "@/components/layout/HeaderWrapper";
 import FooterWithInstagram from "@/components/layout/FooterWithInstagram";
 import { getSettings } from "@/lib/settings";
 import { HOME_TEXT_SETTING_KEYS } from "@/lib/home-sections";
-import { SITE_URL, absoluteUrl } from "@/lib/seo";
+import { OG_PAGE_IMAGE, SITE_URL, absoluteUrl, ogImage } from "@/lib/seo";
 import { jsonLdHtml } from "@/lib/escape-html";
 
 export default async function Home() {

@@ -14,7 +14,7 @@ import { sanitizeRichHtml } from "@/lib/sanitize-html";
 import { hexToRgba } from "@/lib/overlay";
 import { parseGallery } from "@/lib/gallery";
 import { parseAboutValues } from "@/lib/about-values";
-import { pageMetadata, SITE_URL } from "@/lib/seo";
+import { OG_PAGE_IMAGE, ogImage, pageMetadata, SITE_URL } from "@/lib/seo";
 import BreadcrumbSchema from "@/components/seo/BreadcrumbSchema";
 import { jsonLdHtml } from "@/lib/escape-html";
 
@@ -26,6 +26,8 @@ export const metadata: Metadata = pageMetadata({
   description:
     `${OWNER_NAME} i pracownia Unique Ceramics z okolic Gliwic. Poznaj historię ręcznie robionej ceramiki tworzonej z pasji do gliny na Śląsku.`,
   path: "/o-mnie",
+  // Podgląd linku = zdjęcie hero tej strony (z panelu), nie domyślna grafika
+  image: ogImage(OG_PAGE_IMAGE.about, ` – Unique Ceramics`),
 });
 
 // Dane strukturalne osoby – wiążą nazwisko z marką (wyszukiwarka pokazuje

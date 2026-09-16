@@ -4,6 +4,7 @@ import SiteAnalytics from "@/components/layout/SiteAnalytics";
 import Providers from "@/components/layout/Providers";
 import { COOKIE_CONSENT_KEY } from "@/lib/cookie-consent";
 import LocalBusinessSchema from "@/components/seo/LocalBusinessSchema";
+import { OG_IMAGE } from "@/lib/seo";
 import "./globals.css";
 
 // ⚠️ **`preload: false` jest celowe – nie włączaj go z powrotem.**
@@ -94,22 +95,16 @@ export const metadata: Metadata = {
     title: "Unique Ceramics – Alicja Ulbrich",
     description:
       "Ręcznie robiona ceramika Alicji Ulbrich z okolic Gliwic – kubki, miski, naczynia i ozdoby. Każdy egzemplarz jest niepowtarzalny. Zamów z dostawą w całej Polsce.",
-    images: [
-      {
-        url: "/images/OpenGraph.jpg",
-        width: 1200,
-        height: 630,
-        type: "image/jpeg",
-        alt: "Unique Ceramics – ręcznie robiona ceramika",
-      },
-    ],
+    // Hero ze strony głównej jako JPEG (trasa `/api/og/strona/glowna`; bez
+    // wgranego hero oddaje statyczną `OpenGraph.jpg`)
+    images: [OG_IMAGE],
   },
   twitter: {
     card: "summary_large_image",
     title: "Unique Ceramics – Alicja Ulbrich",
     description:
       "Ręcznie robiona ceramika Alicji Ulbrich z okolic Gliwic. Kubki, miski, naczynia i ozdoby – każdy egzemplarz niepowtarzalny.",
-    images: ["/images/OpenGraph.jpg"],
+    images: [OG_IMAGE.url],
   },
   robots: {
     index: true,

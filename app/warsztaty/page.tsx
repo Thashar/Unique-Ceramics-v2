@@ -14,7 +14,7 @@ import { getSettings } from "@/lib/settings";
 import { sanitizeRichHtml } from "@/lib/sanitize-html";
 import { hexToRgba } from "@/lib/overlay";
 import { parseGallery } from "@/lib/gallery";
-import { pageMetadata } from "@/lib/seo";
+import { OG_PAGE_IMAGE, ogImage, pageMetadata } from "@/lib/seo";
 import BreadcrumbSchema from "@/components/seo/BreadcrumbSchema";
 import { jsonLdHtml } from "@/lib/escape-html";
 
@@ -23,6 +23,8 @@ export const metadata: Metadata = pageMetadata({
   description:
     "Warsztaty ceramiczne w małych grupach w okolicach Gliwic – dla początkujących i zaawansowanych. Lepienie z gliny, toczenie, szkliwienie.",
   path: "/warsztaty",
+  // Podgląd linku = zdjęcie hero warsztatów (z panelu)
+  image: ogImage(OG_PAGE_IMAGE.workshops, "Warsztaty ceramiczne – Unique Ceramics"),
 });
 
 type WorkshopOffer = {

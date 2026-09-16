@@ -12,7 +12,7 @@ import { getSetting } from "@/lib/settings";
 import { findActiveFreeShipping, findActiveQuantityPromo, toQuantityConfig } from "@/lib/promos";
 import { quantityPromoTeaser } from "@/lib/quantity-promo";
 import { DISCOUNT_HOLD_CATALOG_MS } from "@/lib/product-price";
-import { SITE_URL, absoluteUrl, metaDescription, pageMetadata } from "@/lib/seo";
+import { SITE_URL, absoluteUrl, metaDescription, ogImage, pageMetadata } from "@/lib/seo";
 import {
   categoryDescription,
   categoryPath,
@@ -52,7 +52,9 @@ export async function generateMetadata({
     title: categoryTitle(category.label),
     description: metaDescription(categoryDescription(category.label)),
     path: categoryPath(slug),
-    ogTitle: `${category.label} – Unique Ceramics`,
+    ogTitle: ` – Unique Ceramics`,
+    // Podgląd linku = zdjęcie pierwszego produktu z kategorii (JPEG z `/api/og/kategoria`)
+    image: ogImage(`/api/og/kategoria/`, ` – Unique Ceramics`),
   });
 }
 
