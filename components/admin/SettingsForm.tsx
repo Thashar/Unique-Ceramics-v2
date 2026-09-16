@@ -981,23 +981,11 @@ export default function SettingsForm({ section, initial, aiUsage }: Props) {
             . Odbiór osobisty jest bezpłatny zawsze.
           </p>
 
-          <div className="border-t border-sand pt-6">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <span className="block text-xs tracking-widest uppercase text-charcoal/80">Plakietka „Ostatnie sztuki”</span>
-                <p className="text-[11px] text-charcoal/80 mt-1">
-                  Na kafelkach produktów, których zostały 1–2 sztuki (katalog, strona główna, „Mogą Ci się spodobać”).
-                </p>
-              </div>
-              <Toggle checked={lowStockBadge} onChange={setLowStockBadge} />
-            </div>
-          </div>
           <SaveButton
             onClick={() => save([
               { key: "shipping_cost", value: shippingCost },
               { key: "shipping_cost_parcel_locker", value: shippingCostParcel },
               { key: "shipping_time", value: shippingTime },
-              { key: "low_stock_badge_enabled", value: lowStockBadge ? "true" : "false" },
             ])}
             label="Zapisz wysyłkę"
           />
@@ -1200,9 +1188,23 @@ export default function SettingsForm({ section, initial, aiUsage }: Props) {
             </p>
           </div>
 
+          {/* Plakietki na kafelkach – to samo miejsce, co reszta ustawień „jak pokazujemy produkty” */}
+          <div className="border-t border-sand pt-6">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <span className="block text-xs tracking-widest uppercase text-charcoal/80">Plakietka „Ostatnie sztuki”</span>
+                <p className="text-[11px] text-charcoal/80 mt-1">
+                  Na kafelkach produktów, których zostały 1–2 sztuki – w katalogu, na stronie głównej i w karuzeli „Mogą Ci się spodobać”.
+                </p>
+              </div>
+              <Toggle checked={lowStockBadge} onChange={setLowStockBadge} />
+            </div>
+          </div>
+
           <SaveButton
             onClick={() => save([
               { key: SIMILAR_MIN_SCORE_KEY, value: String(normalizeMinScore(similarMinScore)) },
+              { key: "low_stock_badge_enabled", value: lowStockBadge ? "true" : "false" },
             ])}
             label="Zapisz ustawienia proponowanych"
           />

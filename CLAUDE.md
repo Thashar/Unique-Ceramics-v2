@@ -180,7 +180,7 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` – zwracają wartość z DB l
 | `shipping_cost` | Koszt wysyłki kurierem w zł (default: 18) |
 | `shipping_cost_parcel_locker` | Koszt wysyłki paczkomatem InPost w zł (default: 18) |
 | `shipping_time` | Czas realizacji wyświetlany na karcie produktu (default: „2–4 dni robocze") |
-| `low_stock_badge_enabled` | "true"/"false" (default true) – plakietka **„Ostatnie sztuki”** na kafelkach produktów ze stanem 1–2 szt. Przełącznik w zakładce **Wysyłka**. Flaga idzie propsem `lowStockBadge` do `ProductCard` przez wszystkie miejsca, gdzie kafelek występuje: `ProductGrid` (`/sklep`, kategorie), `FeaturedProducts` → `ProductCarousel`/`DesktopCarousel` (strona główna, czyta ustawienie sam) i `SimilarProducts` (karta produktu). Dodając nowe miejsce z `ProductCard`, przekaż ją też tam |
+| `low_stock_badge_enabled` | "true"/"false" (default true) – plakietka **„Ostatnie sztuki”** na kafelkach produktów ze stanem 1–2 szt. Przełącznik w zakładce **Proponowane** (obok progu punktowego karuzeli – to zakładka o tym, „jak pokazujemy produkty”; z Wysyłki przeniesiony 16.09.2026). Flaga idzie propsem `lowStockBadge` do `ProductCard` przez wszystkie miejsca, gdzie kafelek występuje: `ProductGrid` (`/sklep`, kategorie), `FeaturedProducts` → `ProductCarousel`/`DesktopCarousel` (strona główna, czyta ustawienie sam) i `SimilarProducts` (karta produktu). Dodając nowe miejsce z `ProductCard`, przekaż ją też tam |
 | `payment_bank_account_name` | Nazwa odbiorcy przelewu |
 | `payment_bank_account_number` | Numer konta bankowego |
 | `payment_bank_name` | Nazwa banku |
