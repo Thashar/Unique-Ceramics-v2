@@ -13,7 +13,7 @@
  * linia w opisie robi odstęp między akapitami.
  */
 export const HOME_HERO_DEFAULT = {
-  eyebrow: "Ceramika ręcznie robiona · Gliwice",
+  eyebrow: "Unique Ceramics – Alicja Ulbrich",
   title: "Ręcznie tworzone\nz sercem",
   text: "Unikalna ceramika użytkowa z pracowni w okolicach Gliwic – każdy egzemplarz jest niepowtarzalny. Tworzę z pasją i dbałością o każdy detal.",
   ctaPrimary: "Sprawdź ofertę",
