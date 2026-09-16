@@ -119,7 +119,12 @@ function HoverPopover({
       onMouseLeave={hide}
       onFocus={show}
       onBlur={(e) => {
-        if (!ref.current?.contains(e.relatedTarget as Node)) hide();
+        // Tylko gdy fokus realnie przeszedł na coś poza dymkiem. `relatedTarget`
+        // bywa `null` także wtedy, gdy przycisk w dymku stał się `disabled`
+        // (np. `+` po dojściu do stanu magazynowego) – wtedy dymek ma zostać;
+        // klik poza dymkiem i Escape obsługuje osobny nasłuch
+        const next = e.relatedTarget as Node | null;
+        if (next && !ref.current?.contains(next)) hide();
       }}
     >
       {trigger}
@@ -257,7 +262,8 @@ export function CartPopover({ iconClass }: { iconClass: string }) {
                       <button
                         type="button"
                         onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                        className="w-6 h-6 flex items-center justify-center text-charcoal hover:text-clay transition-colors"
+                        disabled={item.quantity <= 1}
+                        className="w-6 h-6 flex items-center justify-center text-charcoal hover:text-clay disabled:text-sand disabled:cursor-not-allowed transition-colors"
                         aria-label={`Zmniejsz ilość: ${item.name}`}
                       >
                         <Minus size={12} />

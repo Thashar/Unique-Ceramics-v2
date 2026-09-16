@@ -182,7 +182,8 @@ export default function CartView({
                   <div className="flex items-center rounded-md border border-sand">
                     <button
                       onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                      className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center text-charcoal hover:text-clay transition-colors"
+                      disabled={item.quantity <= 1}
+                      className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center text-charcoal hover:text-clay disabled:text-sand disabled:cursor-not-allowed transition-colors"
                     >
                       <Minus size={14} />
                     </button>
