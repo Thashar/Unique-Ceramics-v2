@@ -134,7 +134,7 @@ export default async function ConfirmationPage({
 
         {/* Zamówienie anulowane – np. wygasła sesja płatności */}
         {cancelled && (
-          <div className="bg-cream border-l-4 border-red-700 p-6 mb-8">
+          <div className="bg-cream border-l-4 border-red-700 p-6 mb-8 rounded-xl">
             <p className="text-sm text-charcoal/80 leading-relaxed">
               To zamówienie zostało anulowane, a zarezerwowane produkty wróciły do sprzedaży.
               Jeśli nadal chcesz je kupić, złóż zamówienie ponownie w sklepie.
@@ -144,7 +144,7 @@ export default async function ConfirmationPage({
 
         {/* Bank transfer + BLIK details */}
         {order?.paymentMethod === "transfer" && !cancelled && (
-          <div className="bg-cream border-l-4 border-terracotta p-6 mb-8">
+          <div className="bg-cream border-l-4 border-terracotta p-6 mb-8 rounded-xl">
             <p className="text-xs tracking-widest uppercase text-clay mb-4">
               Dane do płatności
             </p>
@@ -202,7 +202,7 @@ export default async function ConfirmationPage({
 
         {/* Stripe – płatność zrealizowana */}
         {order?.paymentMethod === "stripe" && !awaitingStripe && !cancelled && (
-          <div className="bg-cream border-l-4 border-terracotta p-6 mb-8">
+          <div className="bg-cream border-l-4 border-terracotta p-6 mb-8 rounded-xl">
             <p className="text-xs tracking-widest uppercase text-clay mb-3">
               Płatność kartą
             </p>
@@ -214,7 +214,7 @@ export default async function ConfirmationPage({
 
         {/* Stripe – płatność porzucona lub jeszcze niezaksięgowana */}
         {awaitingStripe && order && (
-          <div className="bg-cream border-l-4 border-terracotta p-6 mb-8">
+          <div className="bg-cream border-l-4 border-terracotta p-6 mb-8 rounded-xl">
             <p className="text-xs tracking-widest uppercase text-clay mb-3">
               Płatność kartą
             </p>
@@ -229,7 +229,7 @@ export default async function ConfirmationPage({
 
         {/* Order summary */}
         {order && (
-          <div className="bg-cream p-6 mb-8">
+          <div className="bg-cream p-6 mb-8 rounded-xl">
             <p className="text-xs tracking-widest uppercase text-charcoal/80 mb-4">
               Podsumowanie
             </p>
@@ -305,7 +305,7 @@ export default async function ConfirmationPage({
 
         {/* Zamówienie bez konta – link do tej strony jest jedynym dostępem */}
         {order && isGuestOrder && !cancelled && (
-          <div className="bg-mist border border-sand p-6 mb-8 text-sm text-charcoal/80 leading-relaxed">
+          <div className="bg-mist border border-sand p-6 mb-8 text-sm text-charcoal/80 leading-relaxed rounded-xl">
             <p className="text-espresso font-medium mb-2">Zamówienie bez konta</p>
             <p>
               Szczegóły wysłaliśmy na adres <strong className="text-espresso">{order.email}</strong>.
@@ -322,21 +322,21 @@ export default async function ConfirmationPage({
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Link
             href="/sklep"
-            className="px-8 py-4 bg-clay hover:bg-terracotta hover:text-espresso text-warm-white text-xs tracking-widest uppercase transition-colors text-center"
+            className="px-8 py-4 bg-clay hover:bg-terracotta hover:text-espresso text-warm-white text-xs tracking-widest uppercase transition-colors text-center rounded-md"
           >
             Wróć do sklepu
           </Link>
           {isGuestOrder ? (
             <Link
               href="/rejestracja"
-              className="px-8 py-4 border border-sand hover:border-clay text-espresso text-xs tracking-widest uppercase transition-colors text-center"
+              className="px-8 py-4 border border-sand hover:border-clay text-espresso text-xs tracking-widest uppercase transition-colors text-center rounded-md"
             >
               Załóż konto
             </Link>
           ) : (
             <Link
               href="/konto/zamowienia"
-              className="px-8 py-4 border border-sand hover:border-clay text-espresso text-xs tracking-widest uppercase transition-colors text-center"
+              className="px-8 py-4 border border-sand hover:border-clay text-espresso text-xs tracking-widest uppercase transition-colors text-center rounded-md"
             >
               Moje zamówienia
             </Link>

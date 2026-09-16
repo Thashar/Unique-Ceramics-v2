@@ -39,7 +39,7 @@ export default function CategoryBar({
               activeSlug === cat.slug
                 ? "bg-espresso text-warm-white"
                 : "bg-clay text-cream hover:bg-espresso"
-            }`}
+            } rounded-md`}
           >
             {cat.label}
           </Link>

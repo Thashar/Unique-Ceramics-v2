@@ -36,7 +36,7 @@ import CustomOrderPoints from "@/components/ui/CustomOrderPoints";
  */
 export default function CustomOrderTile() {
   return (
-    <div className="col-span-full flex flex-col md:flex-row md:items-center gap-5 md:gap-7 bg-espresso p-5 sm:p-7 md:p-8">
+    <div className="col-span-full flex flex-col md:flex-row md:items-center gap-5 md:gap-7 bg-espresso p-5 sm:p-7 md:p-8 rounded-2xl">
       <span
         className="inline-flex items-center justify-center w-11 h-11 md:w-14 md:h-14 rounded-full border border-terracotta/40 bg-terracotta/10 text-terracotta shrink-0"
         aria-hidden="true"
@@ -58,7 +58,7 @@ export default function CustomOrderTile() {
 
       <Link
         href="/zamowienie-indywidualne"
-        className="group w-full md:w-auto shrink-0 inline-flex items-center justify-center gap-3 border border-terracotta/50 hover:border-terracotta hover:bg-terracotta hover:text-espresso text-cream text-[11px] sm:text-xs tracking-widest uppercase px-5 sm:px-6 py-3 sm:py-3.5 transition-all duration-300"
+        className="group w-full md:w-auto shrink-0 inline-flex items-center justify-center gap-3 border border-terracotta/50 hover:border-terracotta hover:bg-terracotta hover:text-espresso text-cream text-[11px] sm:text-xs tracking-widest uppercase px-5 sm:px-6 py-3 sm:py-3.5 transition-all duration-300 rounded-md"
       >
         Napisz do mnie
         <ArrowRight

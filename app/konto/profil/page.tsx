@@ -123,7 +123,7 @@ export default function ProfilePage() {
       <h2 className="font-serif text-2xl text-espresso">Dane i hasło</h2>
 
       {/* Dane osobowe */}
-      <div className="bg-cream p-8">
+      <div className="bg-cream p-8 rounded-xl">
         <h3 className="text-xs tracking-widest uppercase text-clay mb-6 flex items-center gap-2">
           <User size={14} strokeWidth={1.5} />
           Dane osobowe
@@ -135,7 +135,7 @@ export default function ProfilePage() {
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full bg-warm-white border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors"
+              className="w-full bg-warm-white border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors rounded-md"
             />
           </div>
           <div>
@@ -144,7 +144,7 @@ export default function ProfilePage() {
               type="email"
               value={session?.user?.email ?? ""}
               disabled
-              className="w-full bg-sand/50 border border-sand px-4 py-3 text-charcoal/80 text-sm cursor-not-allowed"
+              className="w-full bg-sand/50 border border-sand px-4 py-3 text-charcoal/80 text-sm cursor-not-allowed rounded-md"
             />
             <p className="text-xs text-charcoal/80 mt-1.5">
               {canChangeEmail
@@ -155,7 +155,7 @@ export default function ProfilePage() {
           <button
             type="submit"
             disabled={savingName}
-            className="inline-flex items-center gap-2 bg-clay hover:bg-terracotta hover:text-espresso disabled:bg-sand text-warm-white text-xs tracking-widest uppercase px-6 py-3 transition-colors"
+            className="inline-flex items-center gap-2 bg-clay hover:bg-terracotta hover:text-espresso disabled:bg-sand text-warm-white text-xs tracking-widest uppercase px-6 py-3 transition-colors rounded-md"
           >
             {nameSaved ? <><CheckCircle size={14} /> Zapisano</> : savingName ? "Zapisywanie..." : "Zapisz zmiany"}
           </button>
@@ -166,7 +166,7 @@ export default function ProfilePage() {
           E-mail jest loginem, więc zmiana wymaga hasła **i** potwierdzenia
           z nowej skrzynki; sam formularz nic jeszcze nie zmienia. */}
       {canChangeEmail && (
-        <div className="bg-cream p-8">
+        <div className="bg-cream p-8 rounded-xl">
           <h3 className="text-xs tracking-widest uppercase text-clay mb-6 flex items-center gap-2">
             <Mail size={14} strokeWidth={1.5} />
             Zmiana adresu e-mail
@@ -182,7 +182,7 @@ export default function ProfilePage() {
                 autoComplete="email"
                 value={newEmail}
                 onChange={(e) => setNewEmail(e.target.value)}
-                className="w-full bg-warm-white border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors"
+                className="w-full bg-warm-white border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors rounded-md"
               />
             </div>
             <div>
@@ -195,7 +195,7 @@ export default function ProfilePage() {
                 autoComplete="current-password"
                 value={emailPassword}
                 onChange={(e) => setEmailPassword(e.target.value)}
-                className="w-full bg-warm-white border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors"
+                className="w-full bg-warm-white border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors rounded-md"
               />
             </div>
             <p className="text-xs text-charcoal/80 leading-relaxed">
@@ -209,7 +209,7 @@ export default function ProfilePage() {
                   emailSent
                     ? "bg-green-50 border border-green-200 text-green-800"
                     : "bg-red-50 border border-red-200 text-red-700"
-                }`}
+                } rounded-md`}
               >
                 {emailMsg}
               </p>
@@ -217,7 +217,7 @@ export default function ProfilePage() {
             <button
               type="submit"
               disabled={savingEmail}
-              className="inline-flex items-center gap-2 bg-clay hover:bg-terracotta hover:text-espresso disabled:bg-sand text-warm-white text-xs tracking-widest uppercase px-6 py-3 transition-colors"
+              className="inline-flex items-center gap-2 bg-clay hover:bg-terracotta hover:text-espresso disabled:bg-sand text-warm-white text-xs tracking-widest uppercase px-6 py-3 transition-colors rounded-md"
             >
               {savingEmail ? "Wysyłanie..." : "Wyślij link potwierdzający"}
             </button>
@@ -226,7 +226,7 @@ export default function ProfilePage() {
       )}
 
       {/* Zmiana hasła */}
-      <div className="bg-cream p-8">
+      <div className="bg-cream p-8 rounded-xl">
         <h3 className="text-xs tracking-widest uppercase text-clay mb-6 flex items-center gap-2">
           <Lock size={14} strokeWidth={1.5} />
           Zmiana hasła
@@ -241,7 +241,7 @@ export default function ProfilePage() {
                 required
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
-                className="w-full bg-warm-white border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors"
+                className="w-full bg-warm-white border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors rounded-md"
               />
             </div>
             <div>
@@ -252,7 +252,7 @@ export default function ProfilePage() {
                 minLength={8}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                className="w-full bg-warm-white border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors"
+                className="w-full bg-warm-white border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors rounded-md"
               />
             </div>
             {passwordMsg && (
@@ -276,7 +276,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Twoje dane – eksport (RODO) */}
-      <div className="bg-cream p-8">
+      <div className="bg-cream p-8 rounded-xl">
         <h3 className="text-xs tracking-widest uppercase text-clay mb-4 flex items-center gap-2">
           <Download size={14} strokeWidth={1.5} />
           Twoje dane
@@ -286,7 +286,7 @@ export default function ProfilePage() {
         </p>
         <a
           href="/api/account/export"
-          className="inline-flex items-center gap-2 border border-sand hover:border-clay text-espresso text-xs tracking-widest uppercase px-6 py-3 transition-colors"
+          className="inline-flex items-center gap-2 border border-sand hover:border-clay text-espresso text-xs tracking-widest uppercase px-6 py-3 transition-colors rounded-md"
         >
           <Download size={14} strokeWidth={1.5} />
           Pobierz moje dane
@@ -294,7 +294,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Strefa niebezpieczna – usunięcie konta (RODO art. 17) */}
-      <div className="border border-red-200 bg-red-50/50 p-8">
+      <div className="border border-red-200 bg-red-50/50 p-8 rounded-xl">
         <h3 className="text-xs tracking-widest uppercase text-red-700 mb-4 flex items-center gap-2">
           <ShieldAlert size={14} strokeWidth={1.5} />
           Strefa niebezpieczna
@@ -313,7 +313,7 @@ export default function ProfilePage() {
                 required
                 value={deletePassword}
                 onChange={(e) => setDeletePassword(e.target.value)}
-                className="w-full bg-warm-white border border-sand focus:border-red-400 outline-none px-4 py-3 text-espresso text-sm transition-colors"
+                className="w-full bg-warm-white border border-sand focus:border-red-400 outline-none px-4 py-3 text-espresso text-sm transition-colors rounded-md"
               />
             </div>
           )}

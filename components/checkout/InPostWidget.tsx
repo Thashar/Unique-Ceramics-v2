@@ -71,7 +71,7 @@ function InPostMapWidget({ token, value, onChange }: Props & { token: string }) 
   return (
     <div className="space-y-3">
       {value && (
-        <div className="flex items-center gap-2 bg-green-50 border border-green-200 px-3 py-2 text-sm">
+        <div className="flex items-center gap-2 bg-green-50 border border-green-200 px-3 py-2 text-sm rounded-md">
           <MapPin size={14} className="text-green-700 shrink-0" />
           <span className="text-green-800">Wybrany paczkomat: <strong className="font-mono">{value}</strong></span>
         </div>
@@ -86,7 +86,7 @@ function InPostMapWidget({ token, value, onChange }: Props & { token: string }) 
           style={{ width: "100%", display: "block" }}
         />
       ) : (
-        <div className="h-64 bg-cream border border-sand flex items-center justify-center text-sm text-charcoal/80">
+        <div className="h-64 bg-cream border border-sand flex items-center justify-center text-sm text-charcoal/80 rounded-xl">
           Ładowanie mapy paczkomatów…
         </div>
       )}
@@ -268,7 +268,7 @@ function InPostSearch({ value, onChange }: { value: string; onChange: (code: str
   // Wybrany paczkomat – pokaż szczegóły i opcję zmiany
   if (value) {
     return (
-      <div className="bg-green-50 border border-green-200 p-4">
+      <div className="bg-green-50 border border-green-200 p-4 rounded-md">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-start gap-2.5">
             <Check size={16} className="text-green-700 shrink-0 mt-0.5" />
@@ -313,7 +313,7 @@ function InPostSearch({ value, onChange }: { value: string; onChange: (code: str
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           autoComplete="off"
-          className="w-full bg-cream border border-sand focus:border-clay outline-none pl-9 pr-10 py-3 text-espresso text-sm"
+          className="w-full bg-cream border border-sand focus:border-clay outline-none pl-9 pr-10 py-3 text-espresso text-sm rounded-md"
         />
         {loading && (
           <Loader2 size={15} className="absolute right-3 top-1/2 -translate-y-1/2 text-clay animate-spin" />
@@ -332,7 +332,7 @@ function InPostSearch({ value, onChange }: { value: string; onChange: (code: str
       {fetchError && <p className="text-xs text-amber-700">{fetchError}</p>}
 
       {results.length > 0 && (
-        <div className="border border-sand max-h-64 overflow-y-auto divide-y divide-sand">
+        <div className="border border-sand max-h-64 overflow-y-auto divide-y divide-sand rounded-md">
           {results.map((point) => (
             <button
               key={point.name}

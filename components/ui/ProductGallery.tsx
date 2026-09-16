@@ -127,7 +127,7 @@ export default function ProductGallery({
 
   if (images.length === 0) {
     return (
-      <div className="relative aspect-[4/3] overflow-hidden bg-cream">
+      <div className="relative aspect-[4/3] overflow-hidden bg-cream rounded-xl">
         <div className="w-full h-full flex items-center justify-center">
           <ShoppingBag size={64} strokeWidth={1} className="text-sand" />
         </div>
@@ -139,7 +139,7 @@ export default function ProductGallery({
     <div className="flex flex-col gap-4">
       <div
         ref={frameRef}
-        className="relative aspect-[4/3] overflow-hidden bg-cream group select-none"
+        className="relative aspect-[4/3] overflow-hidden bg-cream group select-none rounded-xl"
         // pan-y: gest w pionie przewija stronę, w poziomie obsługujemy sami
         style={{ touchAction: "pan-y", WebkitTouchCallout: "none" }}
         onTouchStart={handleTouchStart}
@@ -249,7 +249,7 @@ export default function ProductGallery({
                 } as React.CSSProperties}
                 className={`relative aspect-[4/3] w-[var(--thumb-w)] md:w-28 overflow-hidden bg-cream flex-shrink-0 border-2 transition-colors ${
                   activeImage === i ? "border-clay" : "border-transparent"
-                }`}
+                } rounded-lg`}
               >
                 <Image
                   src={img}

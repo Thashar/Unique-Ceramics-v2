@@ -359,18 +359,18 @@ export default function CheckoutForm({
         <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-12">
           <div className="lg:col-span-2 space-y-8">
             {priceChanged && !error && (
-              <div className="bg-mist border border-sand text-charcoal/80 text-sm px-4 py-3">
+              <div className="bg-mist border border-sand text-charcoal/80 text-sm px-4 py-3 rounded-md">
                 Ceny części produktów zmieniły się od czasu dodania ich do koszyka –
                 podsumowanie obok jest już zaktualizowane.
               </div>
             )}
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3">{error}</div>
+              <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-md">{error}</div>
             )}
 
             {/* Zamówienie bez konta – logowanie jest opcjonalne */}
             {!isLoggedIn && (
-              <div className="bg-cream border border-sand px-5 py-4 text-sm text-charcoal/80">
+              <div className="bg-cream border border-sand px-5 py-4 text-sm text-charcoal/80 rounded-md">
                 <p className="text-espresso font-medium mb-1">Zamawiasz jako gość</p>
                 <p className="leading-relaxed">
                   Nie musisz zakładać konta – wystarczy, że podasz dane do wysyłki.
@@ -477,7 +477,7 @@ export default function CheckoutForm({
               <div>
                 <h2 className="font-serif text-2xl text-espresso mb-6">Adres dostawy</h2>
                 {addressBlocked && (
-                  <div className="bg-amber-50 border border-amber-300 px-4 py-3 mb-6 text-sm text-amber-800">
+                  <div className="bg-amber-50 border border-amber-300 px-4 py-3 mb-6 text-sm text-amber-800 rounded-md">
                     Aby złożyć zamówienie, uzupełnij najpierw adres dostawy w{" "}
                     <Link href="/konto/adres" className="font-semibold underline hover:text-amber-900">
                       ustawieniach konta
@@ -529,13 +529,13 @@ export default function CheckoutForm({
             {/* Uwagi */}
             <div>
               <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">Uwagi do zamówienia</label>
-              <textarea value={form.note} onChange={(e) => set("note", e.target.value)} rows={3} className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm resize-none" />
+              <textarea value={form.note} onChange={(e) => set("note", e.target.value)} rows={3} className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm resize-none rounded-md" />
             </div>
           </div>
 
           {/* Podsumowanie */}
           <div className="lg:col-span-1">
-            <div className="bg-cream p-8 sticky top-28">
+            <div className="bg-cream p-8 sticky top-28 rounded-xl">
               <h2 className="font-serif text-xl text-espresso mb-6">Twoje zamówienie</h2>
               <div className="space-y-3 mb-6 text-sm">
                 {summary.lines.map(({ item, lineTotal }) => (
@@ -628,13 +628,13 @@ export default function CheckoutForm({
                         onKeyDown={(e) => { if (e.key === "Enter") applyCode(e); }}
                         placeholder="Kod rabatowy"
                         aria-label="Kod rabatowy"
-                        className="w-full bg-warm-white border border-sand focus:border-clay outline-none px-3 py-2.5 text-espresso text-sm uppercase tracking-wider"
+                        className="w-full bg-warm-white border border-sand focus:border-clay outline-none px-3 py-2.5 text-espresso text-sm uppercase tracking-wider rounded-md"
                       />
                       <button
                         type="button"
                         onClick={applyCode}
                         disabled={codeChecking || !codeInput.trim()}
-                        className="w-full inline-flex items-center justify-center gap-2 border border-sand bg-warm-white hover:bg-sand disabled:opacity-40 disabled:cursor-not-allowed text-espresso text-xs tracking-widest uppercase px-4 py-2.5 transition-colors"
+                        className="w-full inline-flex items-center justify-center gap-2 border border-sand bg-warm-white hover:bg-sand disabled:opacity-40 disabled:cursor-not-allowed text-espresso text-xs tracking-widest uppercase px-4 py-2.5 transition-colors rounded-md"
                       >
                         {codeChecking && <Loader2 size={13} className="animate-spin" aria-hidden="true" />}
                         Zastosuj
@@ -701,7 +701,7 @@ export default function CheckoutForm({
               <button
                 type="submit"
                 disabled={loading || addressBlocked}
-                className="w-full mt-6 bg-clay hover:bg-terracotta hover:text-espresso disabled:bg-sand disabled:text-charcoal/40 disabled:cursor-not-allowed text-warm-white text-xs tracking-widest uppercase py-4 transition-colors"
+                className="w-full mt-6 bg-clay hover:bg-terracotta hover:text-espresso disabled:bg-sand disabled:text-charcoal/40 disabled:cursor-not-allowed text-warm-white text-xs tracking-widest uppercase py-4 transition-colors rounded-md"
               >
                 {loading ? "Proszę czekać..." : form.paymentMethod === "stripe" ? "Przejdź do płatności" : "Złóż zamówienie"}
               </button>

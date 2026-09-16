@@ -30,7 +30,7 @@ export default async function OrdersPage() {
           <p className="text-charcoal/80 mb-6">Nie złożyłeś jeszcze żadnego zamówienia.</p>
           <Link
             href="/sklep"
-            className="inline-flex items-center gap-2 bg-clay hover:bg-terracotta hover:text-espresso text-warm-white text-xs tracking-widest uppercase px-6 py-3 transition-colors"
+            className="inline-flex items-center gap-2 bg-clay hover:bg-terracotta hover:text-espresso text-warm-white text-xs tracking-widest uppercase px-6 py-3 transition-colors rounded-md"
           >
             Przejdź do sklepu
           </Link>
@@ -41,7 +41,7 @@ export default async function OrdersPage() {
             <Link
               key={order.id}
               href={`/konto/zamowienia/${order.id}`}
-              className="flex flex-col sm:flex-row sm:items-center justify-between bg-cream hover:bg-sand/40 transition-colors p-5 gap-4 group"
+              className="flex flex-col sm:flex-row sm:items-center justify-between bg-cream hover:bg-sand/40 transition-colors p-5 gap-4 group rounded-xl"
             >
               <div className="flex items-start gap-4">
                 <Package size={20} strokeWidth={1.5} className="text-clay flex-shrink-0 mt-0.5" />

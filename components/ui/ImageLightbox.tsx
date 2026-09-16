@@ -298,7 +298,7 @@ export default function ImageLightbox({
             onClick={() => zoomTo(view.s - ZOOM_STEP)}
             disabled={view.s <= MIN_SCALE}
             aria-label="Pomniejsz"
-            className="w-10 h-10 flex items-center justify-center border border-sand/25 hover:bg-sand/10 transition-colors disabled:opacity-30"
+            className="w-10 h-10 flex items-center justify-center border border-sand/25 hover:bg-sand/10 transition-colors disabled:opacity-30 rounded-full"
           >
             <Minus size={18} />
           </button>
@@ -310,7 +310,7 @@ export default function ImageLightbox({
             onClick={() => zoomTo(view.s + ZOOM_STEP)}
             disabled={view.s >= MAX_SCALE}
             aria-label="Powiększ"
-            className="w-10 h-10 flex items-center justify-center border border-sand/25 hover:bg-sand/10 transition-colors disabled:opacity-30"
+            className="w-10 h-10 flex items-center justify-center border border-sand/25 hover:bg-sand/10 transition-colors disabled:opacity-30 rounded-full"
           >
             <Plus size={18} />
           </button>
@@ -318,7 +318,7 @@ export default function ImageLightbox({
             type="button"
             onClick={onClose}
             aria-label="Zamknij podgląd"
-            className="w-10 h-10 flex items-center justify-center border border-sand/25 hover:bg-sand/10 transition-colors ml-1"
+            className="w-10 h-10 flex items-center justify-center border border-sand/25 hover:bg-sand/10 transition-colors ml-1 rounded-full"
           >
             <X size={20} />
           </button>
@@ -364,7 +364,7 @@ export default function ImageLightbox({
               type="button"
               onClick={() => go(-1)}
               aria-label="Poprzednie zdjęcie"
-              className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center bg-espresso/70 text-cream border border-sand/25 hover:bg-espresso transition-colors"
+              className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center bg-espresso/70 text-cream border border-sand/25 hover:bg-espresso transition-colors rounded-full"
             >
               <ChevronLeft size={22} />
             </button>
@@ -372,7 +372,7 @@ export default function ImageLightbox({
               type="button"
               onClick={() => go(1)}
               aria-label="Następne zdjęcie"
-              className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center bg-espresso/70 text-cream border border-sand/25 hover:bg-espresso transition-colors"
+              className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center bg-espresso/70 text-cream border border-sand/25 hover:bg-espresso transition-colors rounded-full"
             >
               <ChevronRight size={22} />
             </button>

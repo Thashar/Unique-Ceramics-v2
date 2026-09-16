@@ -363,7 +363,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
             {/* Komunikat o unikalności ceramiki */}
             {product.variesFromPhoto && (
-              <div className="mb-6 flex gap-3 bg-amber-50 border border-amber-200/70 px-4 py-3.5">
+              <div className="mb-6 flex gap-3 bg-amber-50 border border-amber-200/70 px-4 py-3.5 rounded-md">
                 <AlertTriangle
                   size={16}
                   strokeWidth={1.5}

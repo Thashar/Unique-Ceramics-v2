@@ -46,7 +46,7 @@ export default function FooterInstagramPanel({ instagram }: { instagram?: string
         href={href}
         target="_blank"
         rel="noopener noreferrer"
-        className="group inline-flex items-center gap-3 border border-terracotta/50 hover:border-terracotta hover:bg-terracotta hover:text-espresso text-cream text-sm tracking-widest uppercase px-6 py-3.5 transition-all duration-300 self-start"
+        className="group inline-flex items-center gap-3 border border-terracotta/50 hover:border-terracotta hover:bg-terracotta hover:text-espresso text-cream text-sm tracking-widest uppercase px-6 py-3.5 transition-all duration-300 self-start rounded-md"
       >
         <InstagramIcon size={14} />
         {displayHandle}
@@ -64,7 +64,7 @@ export default function FooterInstagramPanel({ instagram }: { instagram?: string
           href={contacts.facebook}
           target="_blank"
           rel="noopener noreferrer"
-          className="group mt-3 inline-flex items-center gap-3 border border-terracotta/50 hover:border-terracotta hover:bg-terracotta hover:text-espresso text-cream text-sm tracking-widest uppercase px-6 py-3.5 transition-all duration-300 self-start"
+          className="group mt-3 inline-flex items-center gap-3 border border-terracotta/50 hover:border-terracotta hover:bg-terracotta hover:text-espresso text-cream text-sm tracking-widest uppercase px-6 py-3.5 transition-all duration-300 self-start rounded-md"
         >
           <FacebookIcon size={14} />
           Facebook
@@ -75,7 +75,7 @@ export default function FooterInstagramPanel({ instagram }: { instagram?: string
           />
         </a>
       ) : (
-        <span className="mt-3 inline-flex items-center gap-3 border border-sand/20 text-sand/60 text-sm tracking-widest uppercase px-6 py-3.5 self-start">
+        <span className="mt-3 inline-flex items-center gap-3 border border-sand/20 text-sand/60 text-sm tracking-widest uppercase px-6 py-3.5 self-start rounded-md">
           <FacebookIcon size={14} />
           Facebook
           <span className="text-[10px] tracking-[0.2em] text-sand/60">wkrótce</span>

@@ -60,7 +60,7 @@ export default function AddToCartSection({ product }: { product: Product }) {
             kontaktowy sam wstawia z niego link do produktu w treści wiadomości */}
         <Link
           href={`/kontakt?produkt=${product.slug}`}
-          className="mt-3 w-full flex items-center justify-center gap-3 text-sm tracking-widest uppercase py-5 bg-clay hover:bg-terracotta hover:text-espresso text-warm-white transition-colors"
+          className="mt-3 w-full flex items-center justify-center gap-3 text-sm tracking-widest uppercase py-5 bg-clay hover:bg-terracotta hover:text-espresso text-warm-white transition-colors rounded-md"
         >
           <MessageCircle size={18} strokeWidth={1.5} />
           Zapytaj o produkt
@@ -74,7 +74,7 @@ export default function AddToCartSection({ product }: { product: Product }) {
       {!atStockLimit && (
         <div className="flex items-center gap-4 mb-4">
           <span className="text-xs tracking-widest uppercase text-charcoal/80">Ilość</span>
-          <div className="flex items-center border border-sand">
+          <div className="flex items-center border border-sand rounded-md">
             <button
               onClick={() => setQty((q) => Math.max(1, q - 1))}
               disabled={qty <= 1}
@@ -104,7 +104,7 @@ export default function AddToCartSection({ product }: { product: Product }) {
           added
             ? "bg-green-600 text-white"
             : "bg-clay hover:bg-terracotta hover:text-espresso disabled:bg-sand disabled:text-charcoal/40 text-warm-white"
-        }`}
+        } rounded-md`}
       >
         {added ? (
           <>

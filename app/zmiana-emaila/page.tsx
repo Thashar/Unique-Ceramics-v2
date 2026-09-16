@@ -38,7 +38,7 @@ export default function EmailChangePage() {
         <div className="max-w-5xl mx-auto px-6 lg:px-10 py-16">
           <div className="max-w-xl">
             {/* useSearchParams wymaga granicy Suspense */}
-            <Suspense fallback={<div className="bg-cream p-8 h-40 animate-pulse" />}>
+            <Suspense fallback={<div className="bg-cream p-8 h-40 animate-pulse rounded-xl" />}>
               <EmailChangeConfirm />
             </Suspense>
           </div>

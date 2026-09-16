@@ -53,13 +53,13 @@ export default function CookieBanner() {
         <div className="flex gap-2 sm:gap-3 shrink-0">
           <button
             onClick={acceptNecessary}
-            className="text-[10px] sm:text-xs tracking-widest uppercase px-2.5 py-1.5 sm:px-4 sm:py-2.5 border border-sand/30 text-sand/60 hover:text-cream hover:border-sand/60 transition-colors whitespace-nowrap"
+            className="text-[10px] sm:text-xs tracking-widest uppercase px-2.5 py-1.5 sm:px-4 sm:py-2.5 border border-sand/30 text-sand/60 hover:text-cream hover:border-sand/60 transition-colors whitespace-nowrap rounded-md"
           >
             Tylko niezbędne
           </button>
           <button
             onClick={acceptAll}
-            className="text-[10px] sm:text-xs tracking-widest uppercase px-3 py-1.5 sm:px-5 sm:py-2.5 bg-clay hover:bg-terracotta hover:text-espresso text-warm-white transition-colors whitespace-nowrap"
+            className="text-[10px] sm:text-xs tracking-widest uppercase px-3 py-1.5 sm:px-5 sm:py-2.5 bg-clay hover:bg-terracotta hover:text-espresso text-warm-white transition-colors whitespace-nowrap rounded-md"
           >
             Akceptuję wszystkie
           </button>

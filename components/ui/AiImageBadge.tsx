@@ -138,7 +138,7 @@ export default function AiImageBadge({
           <p
             role="tooltip"
             // z-[60] – wyżej niż przyklejony pasek kategorii (z-30) i header (z-50)
-            className="fixed z-[60] bg-espresso text-cream text-[11px] leading-relaxed px-3 py-2.5 shadow-lg"
+            className="fixed z-[60] bg-espresso text-cream text-[11px] leading-relaxed px-3 py-2.5 shadow-lg rounded-md"
             style={{
               top: pos.top,
               left: pos.left,

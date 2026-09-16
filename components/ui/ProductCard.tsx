@@ -60,7 +60,7 @@ export default function ProductCard({
   const content = (
       <Link href={`/sklep/${product.slug}`} className="group block">
         {/* Zdjęcie */}
-        <div className={`relative aspect-[4/5] overflow-hidden bg-mist ${compact ? "mb-2" : "mb-4"}`}>
+        <div className={`relative aspect-[4/5] overflow-hidden bg-mist ${compact ? "mb-2" : "mb-4"} rounded-lg`}>
           {product.images[0] ? (
             <Image
               src={product.images[0]}

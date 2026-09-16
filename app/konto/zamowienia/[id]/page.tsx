@@ -129,7 +129,7 @@ export default async function OrderDetailPage({
 
       {/* Pasek postępu (tylko dla aktywnych, nie dla anulowanych) */}
       {order.status !== "CANCELLED" && (
-        <div className="bg-cream p-6 mb-6">
+        <div className="bg-cream p-6 mb-6 rounded-xl">
           <div className="flex items-center justify-between relative">
             <div className="absolute left-0 right-0 top-4 h-px bg-sand" />
             {statusSteps.map((step, i) => {
@@ -157,7 +157,7 @@ export default async function OrderDetailPage({
 
       {/* Śledzenie przesyłki */}
       {order.trackingNumber && order.trackingCarrier && (
-        <div className="bg-cream border border-clay/20 p-5 mb-6">
+        <div className="bg-cream border border-clay/20 p-5 mb-6 rounded-xl">
           <h3 className="text-xs tracking-widest uppercase text-clay mb-3 flex items-center gap-2">
             <Truck size={14} strokeWidth={1.5} />
             Śledzenie przesyłki
@@ -271,7 +271,7 @@ export default async function OrderDetailPage({
         {/* Sidebar */}
         <div className="space-y-4">
           {/* Adres / metoda wysyłki */}
-          <div className="bg-cream p-5">
+          <div className="bg-cream p-5 rounded-xl">
             <h3 className="text-xs tracking-widest uppercase text-clay mb-3 flex items-center gap-2">
               <MapPin size={14} strokeWidth={1.5} />
               {order.shippingMethod === "parcel_locker" ? "Paczkomat" : "Dostawa"}
@@ -296,7 +296,7 @@ export default async function OrderDetailPage({
           </div>
 
           {/* Płatność */}
-          <div className="bg-cream p-5">
+          <div className="bg-cream p-5 rounded-xl">
             <h3 className="text-xs tracking-widest uppercase text-clay mb-3 flex items-center gap-2">
               <CreditCard size={14} strokeWidth={1.5} />
               Płatność
@@ -323,7 +323,7 @@ export default async function OrderDetailPage({
 
           {/* Uwagi */}
           {order.note && (
-            <div className="bg-cream p-5">
+            <div className="bg-cream p-5 rounded-xl">
               <h3 className="text-xs tracking-widest uppercase text-clay mb-3 flex items-center gap-2">
                 <Clock size={14} strokeWidth={1.5} />
                 Uwagi

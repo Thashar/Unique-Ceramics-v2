@@ -24,15 +24,15 @@ export default async function AccountDashboard() {
     <div className="space-y-8">
       {/* Statystyki */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-cream p-6">
+        <div className="bg-cream p-6 rounded-xl">
           <p className="text-xs tracking-widest uppercase text-clay mb-2">Zamówienia</p>
           <p className="font-serif text-4xl text-espresso">{totalOrders}</p>
         </div>
-        <div className="bg-cream p-6">
+        <div className="bg-cream p-6 rounded-xl">
           <p className="text-xs tracking-widest uppercase text-clay mb-2">Status konta</p>
           <p className="font-serif text-lg text-espresso mt-2">Aktywne</p>
         </div>
-        <div className="bg-cream p-6">
+        <div className="bg-cream p-6 rounded-xl">
           <p className="text-xs tracking-widest uppercase text-clay mb-2">Typ konta</p>
           <p className="font-serif text-lg text-espresso mt-2">{isAdmin ? "Admin" : "Klient"}</p>
         </div>
@@ -58,7 +58,7 @@ export default async function AccountDashboard() {
             <p className="text-charcoal/80 mb-6">Nie masz jeszcze żadnych zamówień.</p>
             <Link
               href="/sklep"
-              className="inline-flex items-center gap-2 bg-clay hover:bg-terracotta hover:text-espresso text-warm-white text-xs tracking-widest uppercase px-6 py-3 transition-colors"
+              className="inline-flex items-center gap-2 bg-clay hover:bg-terracotta hover:text-espresso text-warm-white text-xs tracking-widest uppercase px-6 py-3 transition-colors rounded-md"
             >
               Przejdź do sklepu
             </Link>
@@ -69,7 +69,7 @@ export default async function AccountDashboard() {
               <Link
                 key={order.id}
                 href={`/konto/zamowienia/${order.id}`}
-                className="flex items-center justify-between bg-cream hover:bg-sand/50 transition-colors p-5 group"
+                className="flex items-center justify-between bg-cream hover:bg-sand/50 transition-colors p-5 group rounded-xl"
               >
                 <div className="flex items-center gap-4">
                   <Package size={20} strokeWidth={1.5} className="text-clay flex-shrink-0" />
@@ -116,7 +116,7 @@ export default async function AccountDashboard() {
         </Link>
         <Link
           href="/konto/profil"
-          className="flex items-center gap-4 bg-cream hover:bg-sand/70 text-espresso p-6 transition-colors group"
+          className="flex items-center gap-4 bg-cream hover:bg-sand/70 text-espresso p-6 transition-colors group rounded-xl"
         >
           <User size={24} strokeWidth={1.5} />
           <div>

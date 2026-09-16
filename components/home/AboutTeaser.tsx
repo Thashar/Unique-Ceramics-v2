@@ -101,7 +101,7 @@ export default function AboutTeaser({
             >
               <Link
                 href="/o-mnie"
-                className="inline-flex items-center gap-3 border border-cream/60 hover:border-cream text-cream text-sm tracking-widest uppercase px-8 py-4 transition-colors duration-300 group"
+                className="inline-flex items-center gap-3 border border-cream/60 hover:border-cream text-cream text-sm tracking-widest uppercase px-8 py-4 transition-colors duration-300 group rounded-md"
               >
                 {cta}
                 <ArrowRight

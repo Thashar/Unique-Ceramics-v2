@@ -48,7 +48,7 @@ export default function EmailChangeConfirm() {
 
   if (!token) {
     return (
-      <div className="bg-cream p-8 space-y-3">
+      <div className="bg-cream p-8 space-y-3 rounded-xl">
         <p className="flex items-center gap-2 text-espresso">
           <ShieldAlert size={16} strokeWidth={1.5} className="text-clay shrink-0" />
           Brak tokenu w adresie
@@ -63,7 +63,7 @@ export default function EmailChangeConfirm() {
 
   if (state === "done") {
     return (
-      <div className="bg-cream p-8 space-y-4">
+      <div className="bg-cream p-8 space-y-4 rounded-xl">
         <p className="flex items-center gap-2 text-espresso">
           <CheckCircle size={16} strokeWidth={1.5} className="text-green-700 shrink-0" />
           Adres został zmieniony
@@ -74,7 +74,7 @@ export default function EmailChangeConfirm() {
         </p>
         <Link
           href="/logowanie"
-          className="inline-flex items-center gap-2 bg-clay hover:bg-terracotta hover:text-espresso text-warm-white text-xs tracking-widest uppercase px-6 py-3 transition-colors"
+          className="inline-flex items-center gap-2 bg-clay hover:bg-terracotta hover:text-espresso text-warm-white text-xs tracking-widest uppercase px-6 py-3 transition-colors rounded-md"
         >
           Zaloguj się nowym adresem
         </Link>
@@ -83,7 +83,7 @@ export default function EmailChangeConfirm() {
   }
 
   return (
-    <div className="bg-cream p-8 space-y-4">
+    <div className="bg-cream p-8 space-y-4 rounded-xl">
       <p className="flex items-center gap-2 text-espresso">
         <Mail size={16} strokeWidth={1.5} className="text-clay shrink-0" />
         Potwierdź nowy adres
@@ -93,13 +93,13 @@ export default function EmailChangeConfirm() {
         Będziesz nim logować się do sklepu, a wszystkie urządzenia zostaną wylogowane.
       </p>
       {error && (
-        <p className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3">{error}</p>
+        <p className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-md">{error}</p>
       )}
       <button
         type="button"
         onClick={confirm}
         disabled={state === "working"}
-        className="inline-flex items-center gap-2 bg-clay hover:bg-terracotta hover:text-espresso disabled:bg-sand disabled:text-charcoal/40 text-warm-white text-xs tracking-widest uppercase px-6 py-3 transition-colors"
+        className="inline-flex items-center gap-2 bg-clay hover:bg-terracotta hover:text-espresso disabled:bg-sand disabled:text-charcoal/40 text-warm-white text-xs tracking-widest uppercase px-6 py-3 transition-colors rounded-md"
       >
         {state === "working" ? "Potwierdzanie..." : "Potwierdź zmianę"}
       </button>

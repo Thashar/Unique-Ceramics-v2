@@ -249,7 +249,7 @@ export default async function ContactPage() {
                 Ten sam materiał co `app/sklep/CustomOrderTile.tsx`
                 i zamknięcie FAQ na /warsztaty: tło espresso, ikona prezentu w kółku,
                 te same trzy hasła i przycisk w ramce */}
-            <div className="lg:col-span-2 flex flex-col md:flex-row md:items-center gap-5 md:gap-7 bg-espresso p-6 sm:p-7 md:p-8">
+            <div className="lg:col-span-2 flex flex-col md:flex-row md:items-center gap-5 md:gap-7 bg-espresso p-6 sm:p-7 md:p-8 rounded-2xl">
               <span
                 className="inline-flex items-center justify-center w-11 h-11 md:w-14 md:h-14 rounded-full border border-terracotta/40 bg-terracotta/10 text-terracotta shrink-0"
                 aria-hidden="true"
@@ -270,7 +270,7 @@ export default async function ContactPage() {
 
               <Link
                 href="/zamowienie-indywidualne"
-                className="group w-full md:w-auto shrink-0 inline-flex items-center justify-center gap-3 border border-terracotta/50 hover:border-terracotta hover:bg-terracotta hover:text-espresso text-cream text-[11px] sm:text-xs tracking-widest uppercase px-5 sm:px-6 py-3 sm:py-3.5 transition-all duration-300"
+                className="group w-full md:w-auto shrink-0 inline-flex items-center justify-center gap-3 border border-terracotta/50 hover:border-terracotta hover:bg-terracotta hover:text-espresso text-cream text-[11px] sm:text-xs tracking-widest uppercase px-5 sm:px-6 py-3 sm:py-3.5 transition-all duration-300 rounded-md"
               >
                 Wypełnij formularz
                 <ArrowRight

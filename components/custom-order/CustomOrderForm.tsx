@@ -77,7 +77,7 @@ export default function CustomOrderForm({ topOffset: _topOffset = false }: { top
       <div className="bg-warm-white py-20 px-6 lg:px-10">
         <div className="max-w-2xl mx-auto">
           {success ? (
-            <div className="bg-green-50 border border-green-200 p-8 text-center">
+            <div className="bg-green-50 border border-green-200 p-8 text-center rounded-xl">
               <p className="text-green-800 font-medium text-lg mb-2">Zapytanie zostało wysłane!</p>
               <p className="text-green-700 text-sm">Odpiszę w ciągu 2 dni roboczych.</p>
               <button
@@ -90,7 +90,7 @@ export default function CustomOrderForm({ topOffset: _topOffset = false }: { top
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
               {error && (
-                <div className="bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+                <div className="bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 rounded-md">
                   {error}
                 </div>
               )}
@@ -105,7 +105,7 @@ export default function CustomOrderForm({ topOffset: _topOffset = false }: { top
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm"
+                    className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm rounded-md"
                   />
                 </div>
                 <div>
@@ -117,7 +117,7 @@ export default function CustomOrderForm({ topOffset: _topOffset = false }: { top
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm"
+                    className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm rounded-md"
                   />
                 </div>
               </div>
@@ -130,7 +130,7 @@ export default function CustomOrderForm({ topOffset: _topOffset = false }: { top
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm"
+                  className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm rounded-md"
                 />
               </div>
 
@@ -141,7 +141,7 @@ export default function CustomOrderForm({ topOffset: _topOffset = false }: { top
                 <select
                   value={orderType}
                   onChange={(e) => setOrderType(e.target.value)}
-                  className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm"
+                  className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm rounded-md"
                 >
                   {ORDER_TYPES.map((t) => (
                     <option key={t}>{t}</option>
@@ -159,7 +159,7 @@ export default function CustomOrderForm({ topOffset: _topOffset = false }: { top
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Opisz co chcesz zamówić – rodzaj przedmiotów, ilość, preferowane kolory, rozmiary, styl..."
-                  className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm resize-none"
+                  className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm resize-none rounded-md"
                 />
               </div>
 
@@ -171,21 +171,21 @@ export default function CustomOrderForm({ topOffset: _topOffset = false }: { top
                   type="date"
                   value={deadline}
                   onChange={(e) => setDeadline(e.target.value)}
-                  className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm"
+                  className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm rounded-md"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-clay hover:bg-terracotta hover:text-espresso text-warm-white text-xs tracking-widest uppercase py-5 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                className="w-full bg-clay hover:bg-terracotta hover:text-espresso text-warm-white text-xs tracking-widest uppercase py-5 transition-colors disabled:opacity-60 disabled:cursor-not-allowed rounded-md"
               >
                 {loading ? "Wysyłanie..." : "Wyślij zapytanie"}
               </button>
             </form>
           )}
 
-          <div className="mt-12 p-8 bg-cream text-sm text-charcoal/80 leading-relaxed space-y-2">
+          <div className="mt-12 p-8 bg-cream text-sm text-charcoal/80 leading-relaxed space-y-2 rounded-xl">
             <p className="font-medium text-espresso text-base mb-4">Co dalej?</p>
             <p>1. Przesłę odpowiedź w ciągu 2 dni roboczych.</p>
             <p>2. Omówimy szczegóły projektu i ustalimy wycenę.</p>

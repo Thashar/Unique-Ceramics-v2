@@ -109,7 +109,7 @@ export default function Hero({
             {ctaPrimary && (
               <Link
                 href="/sklep"
-                className="inline-flex items-center gap-3 bg-clay hover:bg-terracotta hover:text-espresso text-warm-white text-sm tracking-widest uppercase px-8 py-4 transition-colors duration-300"
+                className="inline-flex items-center gap-3 bg-clay hover:bg-terracotta hover:text-espresso text-warm-white text-sm tracking-widest uppercase px-8 py-4 transition-colors duration-300 rounded-md"
               >
                 {ctaPrimary}
                 <ArrowRight size={16} strokeWidth={1.5} />
@@ -118,7 +118,7 @@ export default function Hero({
             {ctaSecondary && (
               <Link
                 href="/o-mnie"
-                className="inline-flex items-center gap-3 border border-cream/50 hover:border-cream text-cream text-sm tracking-widest uppercase px-8 py-4 transition-colors duration-300"
+                className="inline-flex items-center gap-3 border border-cream/50 hover:border-cream text-cream text-sm tracking-widest uppercase px-8 py-4 transition-colors duration-300 rounded-md"
               >
                 {ctaSecondary}
               </Link>

@@ -77,7 +77,7 @@ export default function ContactForm({ workshopOptions = [], productSlug = "" }: 
           <input
             name="name"
             type="text"
-            className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors"
+            className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors rounded-md"
             placeholder="Twoje imię"
           />
         </div>
@@ -88,7 +88,7 @@ export default function ContactForm({ workshopOptions = [], productSlug = "" }: 
           <input
             name="phone"
             type="tel"
-            className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors"
+            className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors rounded-md"
             placeholder="+48"
           />
         </div>
@@ -102,7 +102,7 @@ export default function ContactForm({ workshopOptions = [], productSlug = "" }: 
           name="email"
           type="email"
           required
-          className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors"
+          className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors rounded-md"
           placeholder="twoj@email.pl"
         />
       </div>
@@ -117,7 +117,7 @@ export default function ContactForm({ workshopOptions = [], productSlug = "" }: 
             setSubject(e.target.value);
             setWorkshopType("");
           }}
-          className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors"
+          className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors rounded-md"
         >
           <option value="">Wybierz temat</option>
           <option>{PRODUCT_SUBJECT}</option>
@@ -135,7 +135,7 @@ export default function ContactForm({ workshopOptions = [], productSlug = "" }: 
           <select
             value={workshopType}
             onChange={(e) => setWorkshopType(e.target.value)}
-            className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors"
+            className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors rounded-md"
           >
             <option value="">Wybierz rodzaj warsztatu</option>
             {workshopOptions.map((name) => (
@@ -154,7 +154,7 @@ export default function ContactForm({ workshopOptions = [], productSlug = "" }: 
           required
           defaultValue={productMessage}
           rows={5}
-          className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors resize-none"
+          className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors resize-none rounded-md"
           placeholder="Jak mogę pomóc?"
         />
       </div>
@@ -162,7 +162,7 @@ export default function ContactForm({ workshopOptions = [], productSlug = "" }: 
       <button
         type="submit"
         disabled={status === "sending"}
-        className="w-full bg-clay hover:bg-terracotta hover:text-espresso text-warm-white text-xs tracking-widest uppercase py-4 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+        className="w-full bg-clay hover:bg-terracotta hover:text-espresso text-warm-white text-xs tracking-widest uppercase py-4 transition-colors disabled:opacity-60 disabled:cursor-not-allowed rounded-md"
       >
         {status === "sending" ? "Wysyłanie…" : "Wyślij wiadomość"}
       </button>

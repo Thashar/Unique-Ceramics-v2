@@ -217,7 +217,7 @@ export default async function WorkshopsPage() {
               <ImageGallery
                 images={gallery}
                 alt="Zdjęcia z warsztatów ceramicznych"
-                className="aspect-[4/3] rounded-sm w-full max-w-xl mx-auto"
+                className="aspect-[4/3] rounded-xl w-full max-w-xl mx-auto"
                 sizes="(max-width: 640px) 100vw, 576px"
               />
             </div>
@@ -254,7 +254,7 @@ export default async function WorkshopsPage() {
                       <h2 className="font-serif text-3xl text-espresso mb-4">{w.title}</h2>
                       <p className="text-charcoal/80 leading-relaxed mb-6">{w.description}</p>
                     </div>
-                    <div className="bg-cream p-8 self-start">
+                    <div className="bg-cream p-8 self-start rounded-xl">
                       <div className="space-y-3 mb-8">
                         {w.duration && (
                           <div className="flex justify-between text-sm">
@@ -275,7 +275,7 @@ export default async function WorkshopsPage() {
                           </div>
                         )}
                       </div>
-                      <Link href="/kontakt" className="block text-center bg-clay hover:bg-terracotta hover:text-espresso text-warm-white text-xs tracking-widest uppercase py-4 transition-colors">
+                      <Link href="/kontakt" className="block text-center bg-clay hover:bg-terracotta hover:text-espresso text-warm-white text-xs tracking-widest uppercase py-4 transition-colors rounded-md">
                         Zarezerwuj
                       </Link>
                     </div>
@@ -342,14 +342,14 @@ export default async function WorkshopsPage() {
                   Ciemne tło i przycisk w ramce jak pas zamówień indywidualnych
                   w sklepie (`app/sklep/CustomOrderTile.tsx`) – oba domykają listę,
                   więc mają wyglądać tak samo */}
-              <div className="mt-12 bg-espresso p-7 flex flex-wrap items-center justify-between gap-5">
+              <div className="mt-12 bg-espresso p-7 flex flex-wrap items-center justify-between gap-5 rounded-2xl">
                 <div>
                   <p className="font-serif text-xl text-cream mb-1">Nie ma tu Twojego pytania?</p>
                   <p className="text-sm text-sand/90">Napisz albo zadzwoń – chętnie wszystko wyjaśnię.</p>
                 </div>
                 <Link
                   href="/kontakt"
-                  className="border border-terracotta/50 hover:border-terracotta hover:bg-terracotta hover:text-espresso text-cream text-xs tracking-widest uppercase px-8 py-4 transition-all duration-300 whitespace-nowrap"
+                  className="border border-terracotta/50 hover:border-terracotta hover:bg-terracotta hover:text-espresso text-cream text-xs tracking-widest uppercase px-8 py-4 transition-all duration-300 whitespace-nowrap rounded-md"
                 >
                   Napisz do mnie
                 </Link>

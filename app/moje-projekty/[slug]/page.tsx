@@ -116,7 +116,7 @@ export default async function ProjectPage({
             <div className="mt-auto pt-2">
               <Link
                 href="/zamowienie-indywidualne"
-                className="inline-flex items-center justify-center gap-2 w-full sm:w-auto bg-clay hover:bg-terracotta hover:text-espresso text-warm-white text-sm tracking-widest uppercase px-8 py-4 transition-colors group"
+                className="inline-flex items-center justify-center gap-2 w-full sm:w-auto bg-clay hover:bg-terracotta hover:text-espresso text-warm-white text-sm tracking-widest uppercase px-8 py-4 transition-colors group rounded-md"
               >
                 Zamów indywidualnie
                 <ArrowRight

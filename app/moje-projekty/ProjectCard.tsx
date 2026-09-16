@@ -29,7 +29,7 @@ export default function ProjectCard({
       transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
     >
       <Link href={projectPath(slug)} className="group block">
-        <div className="relative aspect-[4/5] overflow-hidden bg-mist mb-4">
+        <div className="relative aspect-[4/5] overflow-hidden bg-mist mb-4 rounded-lg">
           {image ? (
             <Image
               src={image}

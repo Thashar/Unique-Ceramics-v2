@@ -65,7 +65,7 @@ export default function WorkshopIncludes({ includes, images, title }: Props) {
         <ImageGallery
           images={images}
           alt="Zdjęcia z warsztatów ceramicznych"
-          className="aspect-[4/3] rounded-sm w-full"
+          className="aspect-[4/3] rounded-xl w-full"
           sizes="(max-width: 640px) 100vw, 576px"
           onIndexChange={setActive}
         />

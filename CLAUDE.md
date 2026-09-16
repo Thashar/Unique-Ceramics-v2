@@ -577,6 +577,24 @@ Cała strona i panel admina zostały pod tym kątem przejrzane 27.07.2026 – ni
 Kolory maili HTML (`app/api/checkout`, `app/api/admin/orders/[id]`) też podlegają tej regule –
 przygaszony brąz to `#6b5748` (6,0:1 na cream), nie `#9a7a6a` / `#9a8a80` / `#8b7355`.
 
+### Zaokrąglenia – jeden schemat dla całej publicznej części (od 16.09.2026)
+
+Decyzja właściciela: kanciaste przyciski i pola odstawały od dymków w nagłówku i strony
+logowania, więc **cała publiczna część sklepu** ma spójne zaokrąglenia. Panel admina
+zostaje kanciasty (celowo – to narzędzie, nie witryna).
+
+| Klasa | Gdzie |
+|---|---|
+| `rounded-md` | przyciski i linki-CTA (`bg-clay`, `border border-…` z `tracking-widest uppercase`), pola formularzy (`outline-none` + `border border-sand`), licznik ilości, komunikaty błąd/sukces/info (`bg-red-50`, `bg-green-50`, `bg-amber-50`, `bg-mist` z `px-4 py-3`), pigułki kategorii w `CategoryBar`, dymek `AiImageBadge` |
+| `rounded-lg` | zdjęcia na kartach produktów i projektów (`aspect-[4/5]`), miniatury w galerii i koszyku |
+| `rounded-xl` | panele treści (`bg-cream p-5…p-8` w koncie, podsumowanie zamówienia, karty na `/warsztaty`, wyróżnione notatki `border-l-4`), duży kadr `ProductGallery`, galerie `ImageGallery` na `/o-mnie` i `/warsztaty` (klasa podawana ze strony) |
+| `rounded-2xl` | karty-kafelki (`AuthShell`, koszyk, dymki) i ciemne pasy `bg-espresso` (zaproszenie do zamówień indywidualnych w katalogu i na `/kontakt`, kafelek FAQ) |
+| `rounded-full` | okrągłe przyciski strzałek w galeriach i lightboxie, ikony w kółkach |
+
+Bez zaokrągleń celowo: baner urlopowy, baner cookies, menu mobilne, nagłówek, stopka, sekcje
+pełnoekranowe. **Nowy element publiczny dostaje klasę z tej tabeli** – element bez
+zaokrąglenia obok zaokrąglonych wygląda jak błąd.
+
 ### Typografia – myślniki
 
 W treściach interfejsu, komentarzach i dokumentacji używaj **półpauzy `–`** (krótki myślnik).

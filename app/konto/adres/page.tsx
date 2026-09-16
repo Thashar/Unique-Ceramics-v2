@@ -98,7 +98,7 @@ export default function AddressPage() {
     <div className="space-y-6 max-w-xl">
       <h2 className="font-serif text-2xl text-espresso">Adres dostawy</h2>
 
-      <div className="bg-cream p-8">
+      <div className="bg-cream p-8 rounded-xl">
         <h3 className="text-xs tracking-widest uppercase text-clay mb-2 flex items-center gap-2">
           <MapPin size={14} strokeWidth={1.5} />
           Domyślny adres dostawy
@@ -108,7 +108,7 @@ export default function AddressPage() {
         </p>
 
         {serverError && (
-          <div className="mb-4 bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3">
+          <div className="mb-4 bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-md">
             {serverError}
           </div>
         )}
@@ -206,7 +206,7 @@ export default function AddressPage() {
           <button
             type="submit"
             disabled={saving}
-            className="inline-flex items-center gap-2 bg-clay hover:bg-terracotta hover:text-espresso disabled:bg-sand text-warm-white text-xs tracking-widest uppercase px-6 py-3 transition-colors"
+            className="inline-flex items-center gap-2 bg-clay hover:bg-terracotta hover:text-espresso disabled:bg-sand text-warm-white text-xs tracking-widest uppercase px-6 py-3 transition-colors rounded-md"
           >
             {saved ? (
               <>
