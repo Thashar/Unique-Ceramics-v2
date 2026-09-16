@@ -109,29 +109,41 @@ export default function CartView({
 
   return (
     <div className="bg-warm-white">
-      <div className="bg-cream px-6 lg:px-10 py-10">
-        <div className="max-w-5xl mx-auto">
-          <p className="text-xs tracking-[0.3em] uppercase text-clay mb-3">Sklep</p>
-          <h1 className="font-serif text-4xl md:text-5xl text-espresso">Koszyk</h1>
-          <p className="text-charcoal/80 mt-2 text-sm">
-            {items.length} {items.length === 1 ? "produkt" : "produkty"}
-          </p>
-          <ClayRule className="mt-6" />
-        </div>
-      </div>
+      {/* Koszyk z produktami w tej samej karcie-kafelku co pusty (decyzja
+          właściciela 16.09.2026): pas szkliwa, tytuł z `ClayRule` w karcie,
+          lista po lewej i podsumowanie na kremowym panelu po prawej. Bez
+          osobnego pasa z nagłówkiem strony */}
+      {/* `overflow-clip`, nie `hidden`: hidden robi z sekcji kontener przewijania
+          i psuje `sticky` podsumowania */}
+      <div className="relative overflow-clip px-6 lg:px-10 py-12 md:py-16">
+        <div aria-hidden="true" className="pointer-events-none absolute -top-24 -left-20 w-[26rem] h-[26rem] rounded-full bg-terracotta/15 blur-3xl" />
+        <div aria-hidden="true" className="pointer-events-none absolute -bottom-32 -right-20 w-[28rem] h-[28rem] rounded-full bg-clay/10 blur-3xl" />
 
-      <div className="max-w-5xl mx-auto px-6 lg:px-10 py-16 grid grid-cols-1 lg:grid-cols-3 gap-12">
+        <div className="relative mx-auto max-w-5xl overflow-clip rounded-2xl border border-sand bg-warm-white shadow-[0_22px_48px_-18px_rgba(44,40,37,0.35),0_4px_14px_-6px_rgba(44,40,37,0.18)]">
+          <div aria-hidden="true" className="h-1 bg-gradient-to-r from-terracotta via-clay to-sand" />
+
+          <div className="px-6 md:px-10 pt-8 md:pt-10 pb-6 border-b border-sand flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <ClayRule className="mb-4" />
+              <h1 className="font-serif text-3xl md:text-4xl text-espresso">Koszyk</h1>
+            </div>
+            <p className="text-xs tracking-widest uppercase text-charcoal/80 pb-1">
+              {items.length} {items.length === 1 ? "produkt" : items.length < 5 ? "produkty" : "produktów"}
+            </p>
+          </div>
+
+      <div className="px-6 md:px-10 py-8 md:py-10 grid grid-cols-1 lg:grid-cols-3 gap-10">
         {/* Lista */}
         <div className="lg:col-span-2 space-y-6">
           {priceChanged && (
-            <p className="bg-mist border border-sand text-charcoal/80 text-sm px-4 py-3">
+            <p className="rounded-md bg-mist border border-sand text-charcoal/80 text-sm px-4 py-3">
               Ceny części produktów zmieniły się od czasu dodania ich do koszyka –
               podsumowanie jest już zaktualizowane.
             </p>
           )}
           {items.map((item) => (
-            <div key={item.id} className="flex gap-5 pb-6 border-b border-sand">
-              <div className="relative w-24 h-24 bg-cream flex-shrink-0 overflow-hidden">
+            <div key={item.id} className="flex gap-5 pb-6 border-b border-sand last:border-b-0 last:pb-0">
+              <div className="relative w-24 h-24 bg-cream flex-shrink-0 overflow-hidden rounded-lg">
                 {item.image ? (
                   <Image src={item.image} alt={item.name} fill className="object-cover" sizes="96px" />
                 ) : (
@@ -164,7 +176,7 @@ export default function CartView({
                   })()}
                 </p>
                 <div className="flex items-center gap-4 mt-3">
-                  <div className="flex items-center border border-sand">
+                  <div className="flex items-center rounded-md border border-sand">
                     <button
                       onClick={() => updateQuantity(item.id, item.quantity - 1)}
                       className="w-8 h-8 flex items-center justify-center text-charcoal hover:text-clay transition-colors"
@@ -204,7 +216,7 @@ export default function CartView({
 
         {/* Podsumowanie */}
         <div className="lg:col-span-1">
-          <div className="bg-cream p-8 sticky top-28">
+          <div className="rounded-xl bg-cream border border-sand p-6 md:p-8 lg:sticky lg:top-28">
             <h2 className="font-serif text-2xl text-espresso mb-6">Podsumowanie</h2>
             <div className="space-y-3 mb-6">
               <div className="flex justify-between text-sm text-charcoal/80">
@@ -254,7 +266,7 @@ export default function CartView({
             </div>
             <Link
               href="/zamowienie"
-              className="w-full flex items-center justify-center gap-3 bg-clay hover:bg-terracotta hover:text-espresso text-warm-white text-sm tracking-widest uppercase py-4 transition-colors"
+              className="w-full flex items-center justify-center gap-3 rounded-md bg-clay hover:bg-terracotta hover:text-espresso text-warm-white text-sm tracking-widest uppercase py-4 transition-colors"
             >
               Zamów
               <ArrowRight size={15} strokeWidth={1.5} />
@@ -269,6 +281,8 @@ export default function CartView({
                 IP – wariant dwujęzyczny pokazuje dopiero formularz zamówienia */}
             <ForeignShippingNote className="mt-4" />
           </div>
+        </div>
+      </div>
         </div>
       </div>
     </div>
