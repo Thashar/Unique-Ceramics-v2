@@ -16,6 +16,7 @@
     "@supabase/supabase-js": "^2.106.1",
     "@types/bcryptjs": "^2.4.6",
     "@types/sanitize-html": "^2.16.1",
+    "@vercel/analytics": "^2.0.1",
     "bcryptjs": "^3.0.3",
     "framer-motion": "^12.39.0",
     "jodit": "^3.24.9",

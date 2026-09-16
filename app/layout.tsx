@@ -1,5 +1,6 @@
 ﻿import type { Metadata } from "next";
 import { Playfair_Display, Inter } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import Providers from "@/components/layout/Providers";
 import { COOKIE_CONSENT_KEY } from "@/lib/cookie-consent";
 import LocalBusinessSchema from "@/components/seo/LocalBusinessSchema";
@@ -156,6 +157,10 @@ export default function RootLayout({
         {/* Dane strukturalne (LocalBusiness + WebSite) – adres, telefon i godziny
             otwarcia czytane z ustawień panelu admina */}
         <LocalBusinessSchema />
+        {/* Vercel Web Analytics – odwiedziny i widoki stron bez cookies.
+            Na produkcji skrypt idzie z własnej domeny (`/_vercel/insights/*`),
+            w trybie deweloperskim z `va.vercel-scripts.com` (jest w CSP). */}
+        <Analytics />
       </body>
     </html>
   );

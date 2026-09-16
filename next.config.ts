@@ -13,7 +13,9 @@ const securityHeaders = [
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' https://geowidget.inpost.pl",
+      // va.vercel-scripts.com – skrypt Vercel Web Analytics w trybie deweloperskim
+      // (na produkcji ładuje się z własnej domeny `/_vercel/insights/script.js`)
+      "script-src 'self' 'unsafe-inline' https://geowidget.inpost.pl https://va.vercel-scripts.com",
       "style-src 'self' 'unsafe-inline' https://geowidget.inpost.pl",
       "img-src 'self' blob: data: https://*.supabase.co https://geowidget.inpost.pl https://*.inpost.pl",
       "font-src 'self' data: https://geowidget.inpost.pl",

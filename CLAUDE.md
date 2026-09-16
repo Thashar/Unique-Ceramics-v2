@@ -51,6 +51,7 @@ Dodając plik potrzebny w runtime na produkcji, sprawdź, czy nie wpada pod któ
 | Email | Resend (`RESEND_API_KEY`) |
 | Płatności online | Stripe (Checkout + webhook) |
 | Hasła | bcryptjs (koszt 12) |
+| Statystyki odwiedzin | Vercel Web Analytics (`@vercel/analytics`) – `<Analytics />` z `@vercel/analytics/next` w `app/layout.tsx`; bez cookies, bez konfiguracji w kodzie. Dane włącza się w panelu Vercel (projekt → Analytics). Na produkcji skrypt i beacony idą z własnej domeny (`/_vercel/insights/*`, objęte `'self'` w CSP); w trybie deweloperskim skrypt ładuje się z `va.vercel-scripts.com` – ten host jest w `script-src` tylko po to, żeby lokalnie nie sypało błędami CSP |
 
 ---
 
@@ -624,7 +625,7 @@ W treściach interfejsu, komentarzach i dokumentacji używaj **półpauzy `–`*
   **Nie dokładaj do tego `Disallow` w `app/robots.ts`** – zablokowany plik nigdy nie zostanie pobrany,
   więc Googlebot nie zobaczy `noindex` i obraz zostanie w indeksie. `logo.webp` celowo **nie** ma
   tej blokady: jest znakiem marki i idzie jako `logo` firmy w `LocalBusinessSchema`. Nowe zewnętrzne źródła (skrypty, iframy, obrazy) wymagają aktualizacji CSP. `optimizePackageImports` dla framer-motion i lucide-react; `compiler.removeConsole` usuwa `console.log` z bundle klienta (zachowane `error`/`warn`).
-- **Nie ładuj skryptów z CDN** – zależności tylko przez npm (CSP je zablokuje).
+- **Nie ładuj skryptów z CDN** – zależności tylko przez npm (CSP je zablokuje). Jedyne obce hosty w `script-src` to `geowidget.inpost.pl` (mapa paczkomatów) i `va.vercel-scripts.com` (skrypt Vercel Analytics **w trybie deweloperskim** – na produkcji idzie z własnej domeny).
 - **Kwoty i stany magazynowe** liczone wyłącznie po stronie serwera; checkout dekrementuje stock w transakcji z utworzeniem zamówienia.
 - **Nigdy nie pokazuj `e.message` użytkownikowi** – szczegóły błędów tylko do `console.error`, na stronie komunikat ogólny.
 - **HTML z ustawień** sanityzowany przy zapisie i renderze (`sanitizeRichHtml`).
