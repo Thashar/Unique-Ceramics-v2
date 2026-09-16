@@ -258,8 +258,8 @@ export default function CheckoutForm({
     return (
       <div className="bg-warm-white">
         <div className="relative overflow-clip px-6 py-20 md:py-28">
-          <div aria-hidden="true" className="pointer-events-none absolute -top-24 -left-20 w-[26rem] h-[26rem] rounded-full bg-terracotta/15 blur-3xl" />
-          <div aria-hidden="true" className="pointer-events-none absolute -bottom-32 -right-20 w-[28rem] h-[28rem] rounded-full bg-clay/10 blur-3xl" />
+          <div aria-hidden="true" className="hidden md:block pointer-events-none absolute -top-24 -left-20 w-[26rem] h-[26rem] rounded-full bg-terracotta/15 blur-3xl" />
+          <div aria-hidden="true" className="hidden md:block pointer-events-none absolute -bottom-32 -right-20 w-[28rem] h-[28rem] rounded-full bg-clay/10 blur-3xl" />
           <div className="relative mx-auto max-w-md overflow-clip rounded-2xl border border-sand bg-warm-white shadow-[0_22px_48px_-18px_rgba(44,40,37,0.35),0_4px_14px_-6px_rgba(44,40,37,0.18)]">
             <div aria-hidden="true" className="h-1 bg-gradient-to-r from-terracotta via-clay to-sand" />
             <div className="px-8 py-10 text-center">
@@ -369,14 +369,14 @@ export default function CheckoutForm({
           z `ClayRule` w nagłówku karty, formularz po lewej, podsumowanie na
           kremowym panelu po prawej. `overflow-clip`, nie `hidden` – hidden
           zepsułoby `sticky` podsumowania */}
-      <div className="relative overflow-clip px-6 lg:px-10 py-12 md:py-16">
-        <div aria-hidden="true" className="pointer-events-none absolute -top-24 -left-20 w-[26rem] h-[26rem] rounded-full bg-terracotta/15 blur-3xl" />
-        <div aria-hidden="true" className="pointer-events-none absolute -bottom-32 -right-20 w-[28rem] h-[28rem] rounded-full bg-clay/10 blur-3xl" />
+      <div className="relative md:overflow-clip px-6 lg:px-10 py-10 md:py-16">
+        <div aria-hidden="true" className="hidden md:block pointer-events-none absolute -top-24 -left-20 w-[26rem] h-[26rem] rounded-full bg-terracotta/15 blur-3xl" />
+        <div aria-hidden="true" className="hidden md:block pointer-events-none absolute -bottom-32 -right-20 w-[28rem] h-[28rem] rounded-full bg-clay/10 blur-3xl" />
 
-        <div className="relative mx-auto max-w-5xl overflow-clip rounded-2xl border border-sand bg-warm-white shadow-[0_22px_48px_-18px_rgba(44,40,37,0.35),0_4px_14px_-6px_rgba(44,40,37,0.18)]">
-          <div aria-hidden="true" className="h-1 bg-gradient-to-r from-terracotta via-clay to-sand" />
+        <div className="relative mx-auto max-w-5xl md:overflow-clip md:rounded-2xl md:border md:border-sand md:bg-warm-white md:shadow-[0_22px_48px_-18px_rgba(44,40,37,0.35),0_4px_14px_-6px_rgba(44,40,37,0.18)]">
+          <div aria-hidden="true" className="hidden md:block h-1 bg-gradient-to-r from-terracotta via-clay to-sand" />
 
-          <div className="px-6 md:px-10 pt-8 md:pt-10 pb-6 border-b border-sand flex flex-wrap items-end justify-between gap-4">
+          <div className="md:px-10 md:pt-10 pb-6 border-b border-sand flex flex-wrap items-end justify-between gap-4">
             <div>
               <ClayRule className="mb-4" />
               <h1 className="font-serif text-3xl md:text-4xl text-espresso">Zamówienie</h1>
@@ -386,7 +386,7 @@ export default function CheckoutForm({
             </p>
           </div>
 
-      <div className="px-6 md:px-10 py-8 md:py-10">
+      <div className="md:px-10 py-8 md:py-10">
         <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-10">
           <div className="lg:col-span-2 space-y-8">
             {priceChanged && !error && (

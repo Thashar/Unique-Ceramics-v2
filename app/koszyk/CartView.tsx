@@ -72,8 +72,8 @@ export default function CartView({
             strony (decyzja właściciela 16.09.2026) – karta ma własny tytuł,
             a `h1` zostaje w niej dla struktury dokumentu */}
         <div className="relative overflow-hidden px-6 py-20 md:py-28">
-          <div aria-hidden="true" className="pointer-events-none absolute -top-24 -left-20 w-[26rem] h-[26rem] rounded-full bg-terracotta/15 blur-3xl" />
-          <div aria-hidden="true" className="pointer-events-none absolute -bottom-32 -right-20 w-[28rem] h-[28rem] rounded-full bg-clay/10 blur-3xl" />
+          <div aria-hidden="true" className="hidden md:block pointer-events-none absolute -top-24 -left-20 w-[26rem] h-[26rem] rounded-full bg-terracotta/15 blur-3xl" />
+          <div aria-hidden="true" className="hidden md:block pointer-events-none absolute -bottom-32 -right-20 w-[28rem] h-[28rem] rounded-full bg-clay/10 blur-3xl" />
 
           <div className="relative mx-auto max-w-md overflow-hidden rounded-2xl border border-sand bg-warm-white shadow-[0_22px_48px_-18px_rgba(44,40,37,0.35),0_4px_14px_-6px_rgba(44,40,37,0.18)]">
             <div aria-hidden="true" className="h-1 bg-gradient-to-r from-terracotta via-clay to-sand" />
@@ -115,14 +115,14 @@ export default function CartView({
           osobnego pasa z nagłówkiem strony */}
       {/* `overflow-clip`, nie `hidden`: hidden robi z sekcji kontener przewijania
           i psuje `sticky` podsumowania */}
-      <div className="relative overflow-clip px-6 lg:px-10 py-12 md:py-16">
-        <div aria-hidden="true" className="pointer-events-none absolute -top-24 -left-20 w-[26rem] h-[26rem] rounded-full bg-terracotta/15 blur-3xl" />
-        <div aria-hidden="true" className="pointer-events-none absolute -bottom-32 -right-20 w-[28rem] h-[28rem] rounded-full bg-clay/10 blur-3xl" />
+      <div className="relative md:overflow-clip px-6 lg:px-10 py-10 md:py-16">
+        <div aria-hidden="true" className="hidden md:block pointer-events-none absolute -top-24 -left-20 w-[26rem] h-[26rem] rounded-full bg-terracotta/15 blur-3xl" />
+        <div aria-hidden="true" className="hidden md:block pointer-events-none absolute -bottom-32 -right-20 w-[28rem] h-[28rem] rounded-full bg-clay/10 blur-3xl" />
 
-        <div className="relative mx-auto max-w-5xl overflow-clip rounded-2xl border border-sand bg-warm-white shadow-[0_22px_48px_-18px_rgba(44,40,37,0.35),0_4px_14px_-6px_rgba(44,40,37,0.18)]">
-          <div aria-hidden="true" className="h-1 bg-gradient-to-r from-terracotta via-clay to-sand" />
+        <div className="relative mx-auto max-w-5xl md:overflow-clip md:rounded-2xl md:border md:border-sand md:bg-warm-white md:shadow-[0_22px_48px_-18px_rgba(44,40,37,0.35),0_4px_14px_-6px_rgba(44,40,37,0.18)]">
+          <div aria-hidden="true" className="hidden md:block h-1 bg-gradient-to-r from-terracotta via-clay to-sand" />
 
-          <div className="px-6 md:px-10 pt-8 md:pt-10 pb-6 border-b border-sand flex flex-wrap items-end justify-between gap-4">
+          <div className="md:px-10 md:pt-10 pb-6 border-b border-sand flex flex-wrap items-end justify-between gap-4">
             <div>
               <ClayRule className="mb-4" />
               <h1 className="font-serif text-3xl md:text-4xl text-espresso">Koszyk</h1>
@@ -132,7 +132,7 @@ export default function CartView({
             </p>
           </div>
 
-      <div className="px-6 md:px-10 py-8 md:py-10 grid grid-cols-1 lg:grid-cols-3 gap-10">
+      <div className="md:px-10 py-8 md:py-10 grid grid-cols-1 lg:grid-cols-3 gap-10">
         {/* Lista */}
         <div className="lg:col-span-2 space-y-6">
           {priceChanged && (

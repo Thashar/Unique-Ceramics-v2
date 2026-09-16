@@ -66,7 +66,13 @@ export default function ClayRule({
           <span key={i} className={`w-2.5 h-2.5 rounded-[1px] ${tile}`} />
         ))}
       </span>
-      {children && <span className="shrink-0 min-w-0">{children}</span>}
+      {children && (
+        <>
+          {/* Kawałek kreski między mozaiką a treścią – tekst nie ma się kleić do kafelków */}
+          <span className="h-px w-7 shrink-0 bg-sand" {...decorative} />
+          <span className="shrink-0 min-w-0">{children}</span>
+        </>
+      )}
       <span className="h-px flex-1 bg-sand" {...decorative} />
     </div>
   );
