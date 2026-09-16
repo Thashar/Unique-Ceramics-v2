@@ -37,6 +37,7 @@ import {
   share,
   sumByValue,
   weekdayBuckets,
+  withoutAdmin,
   type Bucket,
   type DimTotal,
   type PathLabelSources,
@@ -237,7 +238,8 @@ export default async function RuchPage({
     { pageviews: 0, visitors: 0 }
   );
   const histHours = hourBucketsFromStats(history.rows.filter((r) => r.dimension === TRAFFIC_HOUR));
-  const histPaths = sumByValue(history.rows.filter((r) => r.dimension === "requestPath"), 200);
+  // Wiersze panelu admina zebrane, zanim wszedł filtr w `SiteAnalytics`
+  const histPaths = withoutAdmin(sumByValue(history.rows.filter((r) => r.dimension === "requestPath"), 200));
   const histProducts = histPaths.filter((r) => productSlugFromPath(r.value)).slice(0, 10);
   const histReferrers = sumByValue(history.rows.filter((r) => r.dimension === "referrerHostname"), 10);
   const histCountries = sumByValue(history.rows.filter((r) => r.dimension === "country"), 10);

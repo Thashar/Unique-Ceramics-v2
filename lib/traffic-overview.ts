@@ -17,6 +17,7 @@ import {
   type DimTotal,
   type TimeRow,
   type TrafficDimension,
+  withoutAdmin,
   type TrafficRange,
 } from "@/lib/traffic";
 
@@ -107,9 +108,12 @@ async function buildOverview(days: TrafficRange, now: Date): Promise<TrafficOver
       dimErrors[dimension] = res.error;
       return;
     }
-    dims[dimension] = res.data
+    const rows = res.data
       .map((r) => ({ value: rowValue(r, dimension), pageviews: r.pageviews, visitors: r.visitors }))
       .sort((a, b) => b.pageviews - a.pageviews);
+    // Panel admina nie jest ruchem klientów – nowe odsłony już nie są wysyłane
+    // (`SiteAnalytics`), a te zebrane wcześniej odfiltrowujemy tutaj
+    dims[dimension] = dimension === "requestPath" || dimension === "route" ? withoutAdmin(rows) : rows;
   });
 
   return {

@@ -22,6 +22,7 @@ import {
   dayStart,
   missingSyncDays,
   plannedSyncDays,
+  withoutAdmin,
   type StatRow,
 } from "@/lib/traffic";
 
@@ -133,7 +134,9 @@ export async function syncTrafficDay(day: string, now = new Date()): Promise<Day
         cur.visitors += r.visitors;
         merged.set(value, cur);
       }
-      await replaceRows(date, dimension, [...merged.values()], now);
+      // Odsłon panelu admina nie zapisujemy – to nie jest ruch klientów
+      const rows = [...merged.values()];
+      await replaceRows(date, dimension, dimension === "requestPath" || dimension === "route" ? withoutAdmin(rows) : rows, now);
     }
 
     await replaceRows(date, TRAFFIC_TOTAL, [{ dimension: TRAFFIC_TOTAL, value: "", ...total }], now);

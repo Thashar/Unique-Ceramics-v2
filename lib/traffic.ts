@@ -267,6 +267,19 @@ export type PathLabelSources = {
 
 export type PathKind = "product" | "category" | "project" | "admin" | "page";
 
+/**
+ * Ścieżki panelu admina – nie wysyłamy ich do Vercela (`SiteAnalytics`) i nie
+ * pokazujemy w statystykach (odsłony zebrane, zanim filtr wszedł).
+ */
+export function isAdminPath(path: string): boolean {
+  return path === "/admin" || path.startsWith("/admin/");
+}
+
+/** Wiersze wymiarów ścieżkowych (`requestPath`, `route`) bez panelu admina. */
+export function withoutAdmin<T extends { value: string }>(rows: T[]): T[] {
+  return rows.filter((r) => !isAdminPath(r.value));
+}
+
 /** Slug produktu ze ścieżki `/sklep/{slug}` (bez stron kategorii); inaczej `null`. */
 export function productSlugFromPath(path: string): string | null {
   const m = /^\/sklep\/([a-z0-9-]+)\/?$/.exec(path);
@@ -281,7 +294,7 @@ export function productSlugFromPath(path: string): string | null {
  */
 export function pathLabel(path: string, sources: PathLabelSources = {}): { label: string; kind: PathKind } {
   const clean = path.length > 1 && path.endsWith("/") ? path.slice(0, -1) : path;
-  if (clean.startsWith("/admin")) return { label: `Panel: ${clean.slice(6) || "/"}`, kind: "admin" };
+  if (isAdminPath(clean)) return { label: `Panel: ${clean.slice(6) || "/"}`, kind: "admin" };
 
   const productSlug = productSlugFromPath(clean);
   if (productSlug) {

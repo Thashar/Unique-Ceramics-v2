@@ -10,6 +10,7 @@ import {
   dimensionValueLabel,
   hourBuckets,
   hourBucketsFromStats,
+  isAdminPath,
   missingSyncDays,
   monthBuckets,
   pathLabel,
@@ -21,6 +22,7 @@ import {
   warsawHour,
   warsawWeekday,
   weekdayBuckets,
+  withoutAdmin,
 } from "@/lib/traffic";
 
 const NOW = new Date("2026-09-16T10:00:00.000Z");
@@ -169,6 +171,25 @@ describe("etykiety ścieżek", () => {
     expect(dimensionValueLabel("utmSource", "Others")).toBe("Pozostałe");
     expect(dimensionValueLabel("utmSource", "")).toBe("(brak)");
     expect(dimensionValueLabel("requestPath", "/sklep/kubek-morski", sources)).toBe("Kubek morski");
+  });
+});
+
+describe("panel admina", () => {
+  it("isAdminPath rozpoznaje panel, ale nie ścieżki o podobnym początku", () => {
+    expect(isAdminPath("/admin")).toBe(true);
+    expect(isAdminPath("/admin/produkty/abc")).toBe(true);
+    expect(isAdminPath("/administracja")).toBe(false);
+    expect(isAdminPath("/sklep/admin")).toBe(false);
+    expect(isAdminPath("/")).toBe(false);
+  });
+
+  it("withoutAdmin wycina ścieżki i wzorce tras panelu", () => {
+    const rows = [
+      { value: "/sklep", pageviews: 5, visitors: 4 },
+      { value: "/admin/zamowienia", pageviews: 50, visitors: 1 },
+      { value: "/admin/produkty/[id]", pageviews: 9, visitors: 1 },
+    ];
+    expect(withoutAdmin(rows).map((r) => r.value)).toEqual(["/sklep"]);
   });
 });
 
