@@ -222,7 +222,10 @@ export default async function RuchPage({
   }));
   const liveHours = hourBuckets(overview.hourly);
   const liveWeekdays = weekdayBuckets(overview.daily);
+  // Karty produktów mają własną tabelę – w liście stron zostają strona główna,
+  // katalog, kategorie itd. (decyzja właściciela 16.09.2026)
   const topProducts = overview.dims.requestPath.filter((r) => productSlugFromPath(r.value)).slice(0, 10);
+  const topPages = overview.dims.requestPath.filter((r) => !productSlugFromPath(r.value)).slice(0, 15);
   const utmDims = (["utmSource", "utmMedium", "utmCampaign", "utmContent", "utmTerm"] as const)
     .map((d) => ({ dimension: d, rows: overview.dims[d].filter((r) => r.value !== "") }))
     .filter((d) => d.rows.length > 0);
@@ -241,6 +244,7 @@ export default async function RuchPage({
   // Wiersze panelu admina zebrane, zanim wszedł filtr w `SiteAnalytics`
   const histPaths = withoutAdmin(sumByValue(history.rows.filter((r) => r.dimension === "requestPath"), 200));
   const histProducts = histPaths.filter((r) => productSlugFromPath(r.value)).slice(0, 10);
+  const histPages = histPaths.filter((r) => !productSlugFromPath(r.value)).slice(0, 10);
   const histReferrers = sumByValue(history.rows.filter((r) => r.dimension === "referrerHostname"), 10);
   const histCountries = sumByValue(history.rows.filter((r) => r.dimension === "country"), 10);
   const histDevices = sumByValue(history.rows.filter((r) => r.dimension === "deviceType"), 5);
@@ -351,7 +355,7 @@ export default async function RuchPage({
       {/* ── Strony + produkty ────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <Card title="Najczęściej oglądane strony" icon={Link2}>
-          <DimList rows={overview.dims.requestPath.slice(0, 15)} total={totals.pageviews} label={label("requestPath")} href={productHref} />
+          <DimList rows={topPages} total={totals.pageviews} label={label("requestPath")} />
         </Card>
         <Card title="Najczęściej oglądane produkty" icon={Package}>
           <DimList rows={topProducts} total={totals.pageviews} label={label("requestPath")} href={productHref} empty="Nikt nie oglądał jeszcze kart produktów w tym okresie" />
@@ -478,7 +482,7 @@ export default async function RuchPage({
               </div>
               <div>
                 <p className="text-xs tracking-widest uppercase text-charcoal/80 mb-3">Najczęściej oglądane strony – cała historia</p>
-                <DimList rows={histPaths.slice(0, 10)} total={histAll.pageviews} label={label("requestPath")} href={productHref} />
+                <DimList rows={histPages} total={histAll.pageviews} label={label("requestPath")} />
               </div>
               <div>
                 <p className="text-xs tracking-widest uppercase text-charcoal/80 mb-3">Źródła wejść – cała historia</p>
