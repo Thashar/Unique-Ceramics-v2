@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { revalidateProductPages } from "@/lib/products";
 import { requireAdmin } from "@/lib/admin-auth";
 import { OrderStatus } from "@prisma/client";
 import { NextResponse } from "next/server";
@@ -463,6 +464,11 @@ export async function PATCH(
         },
       });
     });
+
+    // Zwrócony stan ma być widoczny w sklepie od razu – katalog czyta go z cache
+    if (existing && existing.status !== OrderStatus.CANCELLED) {
+      revalidateProductPages();
+    }
 
     if (existing) {
       cancelledOrderForEmail = { id, email: existing.email, firstName: existing.firstName };

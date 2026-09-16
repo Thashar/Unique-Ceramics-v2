@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { revalidateProductPages } from "@/lib/products";
 import { auth } from "@/auth";
 import { getSettings, settingNumber } from "@/lib/settings";
 import { activeDiscountPercent, discountedPrice } from "@/lib/product-price";
@@ -44,21 +45,24 @@ async function releaseOrder(
   items: { productId: string; quantity: number }[]
 ): Promise<void> {
   try {
-    await db.$transaction(async (tx) => {
+    const released = await db.$transaction(async (tx) => {
       // Anuluj tylko zamówienie nadal oczekujące – gdyby webhook zdążył je
       // wcześniej opłacić, nie chcemy cofać sprzedaży
       const cancelled = await tx.order.updateMany({
         where: { id: orderId, status: "PENDING", paymentStatus: { not: "PAID" } },
         data: { status: "CANCELLED", paymentStatus: "expired" },
       });
-      if (cancelled.count === 0) return;
+      if (cancelled.count === 0) return false;
       for (const item of items) {
         await tx.product.update({
           where: { id: item.productId },
           data: { stock: { increment: item.quantity } },
         });
       }
+      return true;
     });
+    // Stan wrócił do sklepu, a katalog trzyma go w cache
+    if (released) revalidateProductPages();
   } catch (e) {
     console.error("[checkout] zwolnienie zamówienia nieudane:", e);
   }
@@ -710,6 +714,11 @@ export async function POST(req: Request) {
     console.error("[checkout] order create error:", e);
     return NextResponse.json({ error: "Błąd tworzenia zamówienia" }, { status: 500 });
   }
+
+  // Stan magazynowy właśnie spadł, a katalog, karta produktu i strona główna
+  // czytają go z cache (60 s / 3600 s) – bez rewalidacji sprzedana sztuka
+  // wisiała w sklepie jako dostępna nawet godzinę po zakupie
+  revalidateProductPages();
 
   // Powiadomienie dla właściciela sklepu – używamy zweryfikowanych danych z serwera
   const orderNumber = order.id.slice(-8).toUpperCase();
