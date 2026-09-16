@@ -251,6 +251,8 @@ const DEFAULTS: Record<string, string> = {
   // Darmowa wysyłka nie jest już ustawieniem – to promocja z oknem czasu
   // (tabela `FreeShippingPromo`, zakładka Promocje w panelu)
   shipping_time: "2–4 dni robocze",
+  // Plakietka „Ostatnie sztuki” na kafelkach produktów (stan 1–2 szt.); "false" ukrywa
+  low_stock_badge_enabled: "true",
   // Płatności – przelew tradycyjny
   payment_bank_account_name: "",
   payment_bank_account_number: "",

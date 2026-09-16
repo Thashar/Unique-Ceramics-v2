@@ -18,7 +18,7 @@ type Product = {
   price: number; images: string[]; stock: number;
 };
 
-export default function DesktopCarousel({ products, categories }: { products: Product[]; categories: Category[] }) {
+export default function DesktopCarousel({ products, categories, lowStockBadge = true }: { products: Product[]; categories: Category[]; lowStockBadge?: boolean }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const innerRef = useRef<HTMLDivElement>(null);
   const leftArrowRef = useRef<HTMLButtonElement>(null);
@@ -125,7 +125,7 @@ export default function DesktopCarousel({ products, categories }: { products: Pr
         >
           {products.map((product) => (
             <div key={product.id} style={{ flexShrink: 0, width: cardW }}>
-              <ProductCard product={product} categoryLabel={categoryLabel(product.category, categories)} />
+              <ProductCard product={product} lowStockBadge={lowStockBadge} categoryLabel={categoryLabel(product.category, categories)} />
             </div>
           ))}
         </div>

@@ -70,6 +70,7 @@ export default async function CategoryPage({
   // Zapytania sekwencyjne – każde zwalnia połączenie przed kolejnym, co chroni
   // przed wyczerpaniem puli (Supabase: 15 połączeń w trybie sesji)
   const vacationEnabled = (await getSetting("vacation_enabled")) === "true";
+  const lowStockBadge = (await getSetting("low_stock_badge_enabled")) !== "false";
   const categories = await getCategories();
   // Opis kategorii **nie jest drukowany na stronie** – trafia do metadanych
   // (patrz `generateMetadata`) i do danych strukturalnych niżej
@@ -148,6 +149,7 @@ export default async function CategoryPage({
             categories={categories}
             quantityTeaser={quantityTeaser}
             freeShippingNote={freeShippingNote}
+            lowStockBadge={lowStockBadge}
           />
         </div>
       </div>

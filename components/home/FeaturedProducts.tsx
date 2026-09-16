@@ -7,12 +7,15 @@ import AiImageBadge from "@/components/ui/AiImageBadge";
 import { isAiGeneratedImage } from "@/lib/ai";
 import ProductCarousel from "@/components/home/ProductCarousel";
 import DesktopCarousel from "@/components/home/DesktopCarousel";
+import { getSetting } from "@/lib/settings";
 
 export default async function FeaturedProducts() {
   let products: Awaited<ReturnType<typeof getFeaturedProducts>> = [];
   let categories: Category[] = [];
+  let lowStockBadge = true;
   try {
     [products, categories] = await Promise.all([getFeaturedProducts(), getCategories()]);
+    lowStockBadge = (await getSetting("low_stock_badge_enabled")) !== "false";
   } catch {
     // Baza niedostępna – sekcja nie wyświetla produktów
   }
@@ -67,12 +70,12 @@ export default async function FeaturedProducts() {
 
         {/* Mobile: karuzel z sinusoidalną animacją, wyśrodkowane karty */}
         <div className="lg:hidden">
-          <ProductCarousel products={shown} categories={categories} />
+          <ProductCarousel products={shown} categories={categories} lowStockBadge={lowStockBadge} />
         </div>
 
         {/* Desktop: 4 kolumny, gdy >4 produktów – carousel z nawigacją */}
         <div className="hidden lg:block max-w-7xl mx-auto w-full px-16">
-          <DesktopCarousel products={shown} categories={categories} />
+          <DesktopCarousel products={shown} categories={categories} lowStockBadge={lowStockBadge} />
         </div>
       </div>
     </section>

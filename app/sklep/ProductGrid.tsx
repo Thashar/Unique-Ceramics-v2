@@ -58,6 +58,8 @@ interface Props {
   quantityTeaser?: string | null;
   /** Czy trwa promocja „Darmowa wysyłka”. */
   freeShippingNote?: boolean;
+  /** Plakietka „Ostatnie sztuki” (ustawienie `low_stock_badge_enabled`). */
+  lowStockBadge?: boolean;
 }
 
 /**
@@ -101,7 +103,7 @@ function usePerPagePreference(): number {
   );
 }
 
-export default function ProductGrid({ products, kategoria, dbError, categories, quantityTeaser = null, freeShippingNote = false }: Props) {
+export default function ProductGrid({ products, kategoria, dbError, categories, quantityTeaser = null, freeShippingNote = false, lowStockBadge = true }: Props) {
   const storedLayout = useLayoutPreference();
   const storedPerPage = usePerPagePreference();
   // Nadpisania z bieżącej sesji – zapis do localStorage nie powiadamia własnej karty
@@ -239,6 +241,7 @@ export default function ProductGrid({ products, kategoria, dbError, categories, 
             categoryLabel={categoryLabel(product.category, categories)}
             quantityTeaser={quantityTeaser}
             freeShippingNote={freeShippingNote}
+            lowStockBadge={lowStockBadge}
           />
         ))}
         {/* Domknięcie każdej strony – pas przez cały wiersz siatki

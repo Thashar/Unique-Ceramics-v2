@@ -139,7 +139,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const hold = { holdMs: DISCOUNT_HOLD_CATALOG_MS };
   const [product, settings, categories, quantityPromoRow, freeShippingRow, catalog] = await Promise.all([
     getProduct(slug),
-    getSettings(["shipping_time", "shipping_cost", "shipping_cost_parcel_locker", SIMILAR_MIN_SCORE_KEY]),
+    getSettings(["shipping_time", "shipping_cost", "shipping_cost_parcel_locker", SIMILAR_MIN_SCORE_KEY, "low_stock_badge_enabled"]),
     getCategories(),
     findActiveQuantityPromo(hold),
     findActiveFreeShipping(hold),
@@ -447,6 +447,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             discountPercent: activeDiscountPercent(p, hold),
           }))}
           categories={categories}
+          lowStockBadge={settings.low_stock_badge_enabled !== "false"}
         />
       </main>
       <Footer />

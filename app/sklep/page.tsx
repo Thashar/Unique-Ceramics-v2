@@ -34,6 +34,7 @@ export default async function ShopPage() {
   const dbCategories = await getCategories();
 
   const vacationEnabled = (await getSetting("vacation_enabled")) === "true";
+  const lowStockBadge = (await getSetting("low_stock_badge_enabled")) !== "false";
   // Trwające promocje – w katalogu pokazujemy je jako zachęty pod ceną.
   // `holdMs` = okno ISR tej strony: promocji kończącej się w czasie życia
   // zapisanego HTML-a nie reklamujemy, bo checkout już by jej nie policzył
@@ -67,7 +68,7 @@ export default async function ShopPage() {
 
         {/* Siatka produktów */}
         <div className="max-w-7xl mx-auto px-6 lg:px-10 pt-6 pb-16 md:pt-8 md:pb-16">
-          <ProductGrid products={products} dbError={dbError} categories={dbCategories} quantityTeaser={quantityTeaser} freeShippingNote={freeShippingNote} />
+          <ProductGrid products={products} dbError={dbError} categories={dbCategories} quantityTeaser={quantityTeaser} freeShippingNote={freeShippingNote} lowStockBadge={lowStockBadge} />
         </div>
       </div>
 

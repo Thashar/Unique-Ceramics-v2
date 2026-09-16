@@ -82,6 +82,7 @@ export default async function AdminSettingsPage({
     "shipping_cost",
     "shipping_cost_parcel_locker",
     "shipping_time",
+    "low_stock_badge_enabled",
     "payment_bank_account_name",
     "payment_bank_account_number",
     "payment_bank_name",

@@ -114,6 +114,7 @@ interface Props {
     shipping_cost: string;
     shipping_cost_parcel_locker: string;
     shipping_time: string;
+    low_stock_badge_enabled: string;
     payment_bank_account_name: string;
     payment_bank_account_number: string;
     payment_bank_name: string;
@@ -484,6 +485,8 @@ export default function SettingsForm({ section, initial, aiUsage }: Props) {
   const [shippingCost, setShippingCost] = useState(initial.shipping_cost);
   const [shippingCostParcel, setShippingCostParcel] = useState(initial.shipping_cost_parcel_locker);
   const [shippingTime, setShippingTime] = useState(initial.shipping_time);
+  // Plakietka „Ostatnie sztuki” na kafelkach (stan ≤ 2) – właściciel może ją wyłączyć
+  const [lowStockBadge, setLowStockBadge] = useState(initial.low_stock_badge_enabled !== "false");
 
   // Przelew
   const [bankName, setBankName] = useState(initial.payment_bank_account_name);
@@ -977,11 +980,24 @@ export default function SettingsForm({ section, initial, aiUsage }: Props) {
             </Link>
             . Odbiór osobisty jest bezpłatny zawsze.
           </p>
+
+          <div className="border-t border-sand pt-6">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <span className="block text-xs tracking-widest uppercase text-charcoal/80">Plakietka „Ostatnie sztuki”</span>
+                <p className="text-[11px] text-charcoal/80 mt-1">
+                  Na kafelkach produktów, których zostały 1–2 sztuki (katalog, strona główna, „Mogą Ci się spodobać”).
+                </p>
+              </div>
+              <Toggle checked={lowStockBadge} onChange={setLowStockBadge} />
+            </div>
+          </div>
           <SaveButton
             onClick={() => save([
               { key: "shipping_cost", value: shippingCost },
               { key: "shipping_cost_parcel_locker", value: shippingCostParcel },
               { key: "shipping_time", value: shippingTime },
+              { key: "low_stock_badge_enabled", value: lowStockBadge ? "true" : "false" },
             ])}
             label="Zapisz wysyłkę"
           />

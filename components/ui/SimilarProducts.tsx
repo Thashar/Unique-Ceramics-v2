@@ -29,10 +29,13 @@ export default function SimilarProducts({
   products,
   categories,
   title = "Mogą Ci się spodobać",
+  lowStockBadge = true,
 }: {
   products: CarouselProduct[];
   categories: Category[];
   title?: string;
+  /** Plakietka „Ostatnie sztuki” (ustawienie `low_stock_badge_enabled`). */
+  lowStockBadge?: boolean;
 }) {
   const { attach, onScroll, hint } = useDragScroll();
 
@@ -59,6 +62,7 @@ export default function SimilarProducts({
               <ProductCard
                 product={product}
                 compact
+                lowStockBadge={lowStockBadge}
                 categoryLabel={categoryLabel(product.category, categories)}
               />
             </div>

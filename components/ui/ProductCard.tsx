@@ -25,6 +25,7 @@ export default function ProductCard({
   categoryLabel,
   quantityTeaser = null,
   freeShippingNote = false,
+  lowStockBadge = true,
   priority = false,
   instant = false,
 }: {
@@ -36,6 +37,8 @@ export default function ProductCard({
   quantityTeaser?: string | null;
   /** Czy trwa promocja „Darmowa wysyłka”. */
   freeShippingNote?: boolean;
+  /** Plakietka „Ostatnie sztuki” przy stanie 1–2 szt. – wyłączana w panelu (`low_stock_badge_enabled`). */
+  lowStockBadge?: boolean;
   /**
    * Kafelek w pierwszym wierszu siatki – zdjęcie dostaje `priority`
    * i `fetchPriority="high"` zamiast `loading="lazy"`.
@@ -84,7 +87,7 @@ export default function ProductCard({
               <ShoppingBag size={compact ? 24 : 40} strokeWidth={1} className="text-sand" />
             </div>
           )}
-          {product.stock <= 2 && product.stock > 0 && (
+          {lowStockBadge && product.stock <= 2 && product.stock > 0 && (
             <span
               className={`absolute bg-clay text-warm-white tracking-wider uppercase ${
                 compact

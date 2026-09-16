@@ -20,7 +20,7 @@ function getCardWidth(): number {
   return (window.innerWidth - 2 * PAD - GAP) / 2;
 }
 
-export default function ProductCarousel({ products, categories }: { products: Product[]; categories: Category[] }) {
+export default function ProductCarousel({ products, categories, lowStockBadge = true }: { products: Product[]; categories: Category[]; lowStockBadge?: boolean }) {
   // Przewijanie stronami po 2 karty (a nie po jednej)
   const perPage = 2;
   const maxPage = Math.max(0, Math.ceil(products.length / perPage) - 1);
@@ -117,7 +117,7 @@ export default function ProductCarousel({ products, categories }: { products: Pr
       >
         {products.map((product) => (
           <div key={product.id} style={{ flexShrink: 0, width: cardW }}>
-            <ProductCard product={product} categoryLabel={categoryLabel(product.category, categories)} />
+            <ProductCard product={product} lowStockBadge={lowStockBadge} categoryLabel={categoryLabel(product.category, categories)} />
           </div>
         ))}
       </div>
