@@ -47,10 +47,17 @@ export default function ClayRule({
   className = "",
   align = "left",
   children,
+  childAlign = "after",
 }: {
   className?: string;
   align?: "left" | "center";
   children?: React.ReactNode;
+  /**
+   * `after` – treść zaraz za mozaiką (za kawałkiem kreski), np. „Sklep”.
+   * `center` – treść na środku pozostałej linii (kreski po obu stronach
+   * `flex-1`), np. powitanie w koncie klienta.
+   */
+  childAlign?: "after" | "center";
 }) {
   const centered = align === "center";
   const decorative = children ? { "aria-hidden": true as const } : {};
@@ -68,8 +75,9 @@ export default function ClayRule({
       </span>
       {children && (
         <>
-          {/* Kawałek kreski między mozaiką a treścią – tekst nie ma się kleić do kafelków */}
-          <span className="h-px w-7 shrink-0 bg-sand" {...decorative} />
+          {/* Kawałek kreski między mozaiką a treścią – tekst nie ma się kleić do kafelków;
+              przy `childAlign="center"` kreska rośnie, a treść ląduje na środku */}
+          <span className={`h-px shrink-0 bg-sand ${childAlign === "center" ? "flex-1" : "w-7"}`} {...decorative} />
           <span className="shrink-0 min-w-0">{children}</span>
         </>
       )}

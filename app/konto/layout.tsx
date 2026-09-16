@@ -40,16 +40,30 @@ export default async function AccountLayout({
           <div className="relative mx-auto max-w-6xl md:overflow-clip md:rounded-2xl md:border md:border-sand md:bg-warm-white md:shadow-[0_22px_48px_-18px_rgba(44,40,37,0.35),0_4px_14px_-6px_rgba(44,40,37,0.18)]">
             <div aria-hidden="true" className="hidden md:block h-1 bg-gradient-to-r from-terracotta via-clay to-sand" />
 
-            {/* Mozaika po lewej, powitanie i e-mail w kolumnie po prawej */}
-            <div className="md:px-10 md:pt-10 pb-6 border-b border-sand flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-              <ClayRule className="sm:flex-1 sm:mb-2" />
-              <div className="sm:text-right shrink-0">
+            {/* Powitanie na środku linii ozdobnej: mozaika po lewej, kreska, blok
+                „Panel klienta / Witaj / e-mail”, kreska do prawej krawędzi. Linia
+                przechodzi przez środek bloku, czyli na wysokości nagłówka
+                (decyzja właściciela 16.09.2026). Na telefonie mozaika nad blokiem */}
+            <div className="md:px-10 md:pt-10 pb-6 border-b border-sand">
+              <ClayRule className="hidden sm:flex" childAlign="center">
+                <div className="text-center px-2">
+                  <p className="text-xs tracking-[0.3em] uppercase text-clay mb-1">Panel klienta</p>
+                  <h1 className="font-serif text-3xl md:text-4xl text-espresso leading-tight">
+                    {firstName ? `Witaj, ${firstName}` : "Moje konto"}
+                  </h1>
+                  {session.user?.email && (
+                    <p className="text-xs text-charcoal/80 mt-1.5 truncate max-w-xs mx-auto">{session.user.email}</p>
+                  )}
+                </div>
+              </ClayRule>
+              <div className="sm:hidden">
+                <ClayRule className="mb-4" />
                 <p className="text-xs tracking-[0.3em] uppercase text-clay mb-1">Panel klienta</p>
-                <h1 className="font-serif text-3xl md:text-4xl text-espresso leading-tight">
+                <h1 className="font-serif text-3xl text-espresso leading-tight">
                   {firstName ? `Witaj, ${firstName}` : "Moje konto"}
                 </h1>
                 {session.user?.email && (
-                  <p className="text-xs text-charcoal/80 mt-1.5 truncate max-w-full">{session.user.email}</p>
+                  <p className="text-xs text-charcoal/80 mt-1.5 truncate">{session.user.email}</p>
                 )}
               </div>
             </div>
