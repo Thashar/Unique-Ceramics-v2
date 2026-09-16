@@ -46,6 +46,11 @@ import {
   resolveAiTextModel,
 } from "@/lib/ai";
 import type { AiUsagePeriod, AiUsageStats } from "@/lib/ai-usage";
+import {
+  LUMP_RATE_HINTS, TAX_AVG_WAGE_KEY, TAX_FORM_KEY, TAX_FORM_LABELS, TAX_LUMP_RATE_KEY, TAX_MIN_WAGE_KEY,
+  TAX_MODE_KEY, TAX_VAT_ENABLED_KEY, TAX_VAT_RATE_KEY, TAX_ZUS_SOCIAL_KEY, parseTaxConfig,
+  type TaxForm, type TaxMode,
+} from "@/lib/tax";
 
 interface Props {
   section: string;
@@ -128,6 +133,15 @@ interface Props {
     ai_prompt_preset_ai: string;
     ai_prompt_preset_ai_plus: string;
     similar_min_score: string;
+    // Podatki (`lib/tax.ts`)
+    tax_mode: string;
+    tax_form: string;
+    tax_lump_rate: string;
+    tax_vat_enabled: string;
+    tax_vat_rate: string;
+    tax_zus_social: string;
+    tax_avg_wage: string;
+    dzn_min_wage: string;
   };
   /** Statystyki zużycia AI – liczone tylko dla zakładki „AI (zdjęcia)” */
   aiUsage?: AiUsageStats | null;
@@ -483,6 +497,18 @@ export default function SettingsForm({ section, initial, aiUsage }: Props) {
 
   // Stripe
   const [stripeEnabled, setStripeEnabled] = useState(initial.payment_stripe_enabled === "true");
+
+  // Podatki – wartości przechodzą przez `parseTaxConfig`, żeby stare/puste
+  // ustawienia wracały do defaultów tak samo jak w analityce i raporcie PDF
+  const taxInitial = parseTaxConfig(initial);
+  const [taxMode, setTaxMode] = useState<TaxMode>(taxInitial.mode);
+  const [taxForm, setTaxForm] = useState<TaxForm>(taxInitial.form);
+  const [taxLumpRate, setTaxLumpRate] = useState(String(taxInitial.lumpRate).replace(".", ","));
+  const [taxVatEnabled, setTaxVatEnabled] = useState(taxInitial.vatEnabled);
+  const [taxVatRate, setTaxVatRate] = useState(String(taxInitial.vatRate).replace(".", ","));
+  const [taxZusSocial, setTaxZusSocial] = useState(String(taxInitial.zusSocialMonthly).replace(".", ","));
+  const [taxMinWage, setTaxMinWage] = useState(String(taxInitial.minWage).replace(".", ","));
+  const [taxAvgWage, setTaxAvgWage] = useState(String(taxInitial.avgWage).replace(".", ","));
 
   // Urlop
   const [vacationEnabled, setVacationEnabled] = useState(initial.vacation_enabled === "true");
@@ -1163,6 +1189,158 @@ export default function SettingsForm({ section, initial, aiUsage }: Props) {
               { key: SIMILAR_MIN_SCORE_KEY, value: String(normalizeMinScore(similarMinScore)) },
             ])}
             label="Zapisz ustawienia proponowanych"
+          />
+        </div>
+      )}
+
+      {section === "podatki" && (
+        <div className="max-w-2xl space-y-6">
+          <h2 className="font-serif text-2xl text-espresso">Podatki</h2>
+          <p className="text-xs text-charcoal/80 leading-relaxed">
+            Ustawienia decydują, jak <Link href="/admin/analityki" className="text-clay hover:text-espresso">Analityka</Link> i raporty PDF
+            liczą PIT, składki i VAT. Nie zmieniają cen w sklepie ani treści regulaminu – to trzeba poprawić osobno.
+            Kwoty są orientacyjne; progi i stawki zmieniają się co rok.
+          </p>
+
+          {/* Tryb działalności */}
+          <div className="space-y-2">
+            <span className="block text-xs tracking-widest uppercase text-charcoal/80">Forma działalności</span>
+            {([
+              ["unregistered", "Działalność nierejestrowana", "PIT wg skali od przychodu z produktów (12% albo 32% zaznaczane ręcznie), bez ZUS, limit przychodu 225% płacy minimalnej na kwartał."],
+              ["registered", "Działalność gospodarcza (JDG)", "Forma opodatkowania do wyboru, koszty wpisywane co miesiąc w Analityce, ZUS społeczne i składka zdrowotna liczone automatycznie."],
+            ] as const).map(([value, label, hint]) => (
+              <label key={value} className={`flex items-start gap-3 border p-3 cursor-pointer transition-colors ${taxMode === value ? "border-clay bg-cream" : "border-sand bg-warm-white hover:border-clay/60"}`}>
+                <input type="radio" name="tax_mode" value={value} checked={taxMode === value} onChange={() => setTaxMode(value)} className="mt-1 accent-clay" />
+                <span>
+                  <span className="block text-sm text-espresso">{label}</span>
+                  <span className="block text-[11px] text-charcoal/80 mt-0.5 leading-relaxed">{hint}</span>
+                </span>
+              </label>
+            ))}
+          </div>
+
+          {taxMode === "registered" && (
+            <div className="space-y-5 border-t border-sand pt-5">
+              <div>
+                <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">Forma opodatkowania</label>
+                <select
+                  value={taxForm}
+                  onChange={(e) => setTaxForm(e.target.value as TaxForm)}
+                  className="w-full bg-warm-white border border-sand text-espresso text-sm px-3 py-2 outline-none focus:border-clay"
+                >
+                  {(Object.keys(TAX_FORM_LABELS) as TaxForm[]).map((f) => (
+                    <option key={f} value={f}>{TAX_FORM_LABELS[f]}</option>
+                  ))}
+                </select>
+                <p className="text-[11px] text-charcoal/80 mt-1 leading-relaxed">
+                  {taxForm === "scale" && "Zaliczki liczone narastająco: kwota wolna 30 000 zł, 12% do 120 000 zł dochodu, 32% powyżej. Składka zdrowotna 9% dochodu."}
+                  {taxForm === "linear" && "19% od dochodu. Składka zdrowotna 4,9% dochodu, odliczana od dochodu do rocznego limitu."}
+                  {taxForm === "lump" && "Podatek od przychodu (bez kosztów), pomniejszonego o ZUS społeczne i połowę składki zdrowotnej. Zdrowotna wg progów przychodu: 60 000 / 300 000 zł."}
+                </p>
+              </div>
+
+              {taxForm === "lump" && (
+                <div>
+                  <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">Stawka ryczałtu (%)</label>
+                  <input
+                    type="text" inputMode="decimal" value={taxLumpRate} onChange={(e) => setTaxLumpRate(e.target.value)}
+                    className="w-32 bg-warm-white border border-sand text-espresso text-sm px-3 py-2 outline-none focus:border-clay tabular-nums"
+                  />
+                  <ul className="text-[11px] text-charcoal/80 mt-2 space-y-0.5">
+                    {LUMP_RATE_HINTS.map((h) => (
+                      <li key={h.rate}>
+                        <button type="button" onClick={() => setTaxLumpRate(String(h.rate).replace(".", ","))} className="text-clay hover:text-espresso">
+                          {h.label}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">ZUS społeczne miesięcznie (zł)</label>
+                <input
+                  type="text" inputMode="decimal" value={taxZusSocial} onChange={(e) => setTaxZusSocial(e.target.value)}
+                  className="w-32 bg-warm-white border border-sand text-espresso text-sm px-3 py-2 outline-none focus:border-clay tabular-nums"
+                />
+                <p className="text-[11px] text-charcoal/80 mt-1">
+                  0 przy uldze na start (pierwsze 6 miesięcy). Potem „mały ZUS” albo pełna składka – kwota z ZUS. Odliczana od dochodu.
+                </p>
+              </div>
+
+              {taxForm === "lump" && (
+                <div>
+                  <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">Przeciętne wynagrodzenie (zł)</label>
+                  <input
+                    type="text" inputMode="decimal" value={taxAvgWage} onChange={(e) => setTaxAvgWage(e.target.value)}
+                    className="w-32 bg-warm-white border border-sand text-espresso text-sm px-3 py-2 outline-none focus:border-clay tabular-nums"
+                  />
+                  <p className="text-[11px] text-charcoal/80 mt-1">
+                    Przeciętne miesięczne wynagrodzenie w sektorze przedsiębiorstw w IV kwartale poprzedniego roku (GUS) – podstawa składki zdrowotnej przy ryczałcie.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="border-t border-sand pt-5">
+            <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">Minimalne wynagrodzenie (zł)</label>
+            <input
+              type="text" inputMode="decimal" value={taxMinWage} onChange={(e) => setTaxMinWage(e.target.value)}
+              className="w-32 bg-warm-white border border-sand text-espresso text-sm px-3 py-2 outline-none focus:border-clay tabular-nums"
+            />
+            <p className="text-[11px] text-charcoal/80 mt-1">
+              {taxMode === "registered"
+                ? "Podstawa minimalnej składki zdrowotnej (9% z 75% tej kwoty)."
+                : "Podstawa limitu działalności nierejestrowanej (225% na kwartał). Edytowalne także w Analityce."}
+            </p>
+          </div>
+
+          {/* VAT */}
+          <div className="border-t border-sand pt-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-xs tracking-widest uppercase text-charcoal/80">Podatnik VAT</span>
+              <Toggle checked={taxVatEnabled} onChange={setTaxVatEnabled} />
+            </div>
+            {taxVatEnabled ? (
+              <>
+                <div>
+                  <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">Stawka VAT (%)</label>
+                  <input
+                    type="text" inputMode="decimal" value={taxVatRate} onChange={(e) => setTaxVatRate(e.target.value)}
+                    className="w-32 bg-warm-white border border-sand text-espresso text-sm px-3 py-2 outline-none focus:border-clay tabular-nums"
+                  />
+                </div>
+                <p className="text-[11px] text-charcoal/80 leading-relaxed">
+                  Ceny w sklepie traktowane są jako <strong className="font-medium">brutto</strong> – analityka wylicza z nich netto i VAT należny,
+                  a PIT liczy od netto. VAT naliczony z zakupów odejmie księgowość.
+                </p>
+                <div className="bg-amber-50 border border-amber-200 text-amber-900 text-[12px] p-3 leading-relaxed">
+                  <strong className="font-medium">Pamiętaj o regulaminie.</strong> Obecna treść (punkty o cenach i rachunkach) mówi, że sprzedawca
+                  nie jest podatnikiem VAT i nie wystawia faktur. Po włączeniu VAT popraw ją w zakładce „Regulamin”, a w e-mailach
+                  i na rachunkach podawaj kwoty z VAT.
+                </div>
+              </>
+            ) : (
+              <p className="text-[11px] text-charcoal/80">
+                Zwolnienie podmiotowe obowiązuje do 200 000 zł sprzedaży rocznie (art. 113 ustawy o VAT). Po przekroczeniu – włącz VAT.
+              </p>
+            )}
+          </div>
+
+          <SaveButton
+            onClick={() => save([
+              { key: TAX_MODE_KEY, value: taxMode },
+              { key: TAX_FORM_KEY, value: taxForm },
+              { key: TAX_LUMP_RATE_KEY, value: taxLumpRate.replace(",", ".") },
+              { key: TAX_VAT_ENABLED_KEY, value: taxVatEnabled ? "true" : "false" },
+              { key: TAX_VAT_RATE_KEY, value: taxVatRate.replace(",", ".") },
+              { key: TAX_ZUS_SOCIAL_KEY, value: taxZusSocial.replace(",", ".") },
+              { key: TAX_AVG_WAGE_KEY, value: taxAvgWage.replace(",", ".") },
+              { key: TAX_MIN_WAGE_KEY, value: taxMinWage.replace(",", ".") },
+            ])}
+            label="Zapisz ustawienia podatków"
           />
         </div>
       )}

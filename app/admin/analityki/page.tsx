@@ -7,17 +7,14 @@ import DznSection from "@/components/admin/DznSection";
 import MonthlyReportsTable from "@/components/admin/MonthlyReportsTable";
 import ExternalSalesSection from "@/components/admin/ExternalSalesSection";
 import { listExternalSales } from "@/lib/external-sales";
-import { getSetting, getSettings } from "@/lib/settings";
+import { getSettings } from "@/lib/settings";
+import { fillMonths, getMonthlyTotals } from "@/lib/revenue";
+import {
+  TAX_FORM_LABELS, TAX_SETTING_KEYS, computeYear, costsKey, highKey, parseTaxConfig, summarizeYear,
+  type MonthInput,
+} from "@/lib/tax";
 
 // ── Typy dla raw queries ───────────────────────────────────────────────────────
-
-type RawMonthRow = {
-  yr:   number;
-  mo:   number;
-  cnt:  number;
-  rev:  number;
-  ship: number;
-};
 
 type RawProductRow = {
   name:    string;
@@ -90,44 +87,16 @@ export default async function AnalitykiPage() {
   const now = new Date();
   const yearStart       = new Date(now.getFullYear(), 0, 1);
   const monthStart      = new Date(now.getFullYear(), now.getMonth(), 1);
-  const twelveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 11, 1);
 
-  // ── Zamówienia sklepowe – dane miesięczne (ostatnie 12 miesięcy) ──────────
-  // Tylko opłacone (PAID). Przychód rozpoznawany wg daty wpłaty
-  // (paidAt → createdAt jako fallback dla starych zamówień bez paidAt).
-  const monthlyRaw = await db.$queryRaw<RawMonthRow[]>`
-    SELECT
-      EXTRACT(YEAR  FROM rec)::int          AS yr,
-      EXTRACT(MONTH FROM rec)::int          AS mo,
-      COUNT(*)::int                         AS cnt,
-      COALESCE(SUM(total), 0)::float        AS rev,
-      COALESCE(SUM(ship), 0)::float         AS ship
-    FROM (
-      SELECT total, "shippingCost" AS ship,
-             COALESCE("paidAt", "createdAt") AS rec
-      FROM "Order"
-      WHERE status != 'CANCELLED' AND "paymentStatus" = 'PAID'
-    ) t
-    WHERE rec >= ${twelveMonthsAgo}
-    GROUP BY yr, mo
-    ORDER BY yr, mo
-  `.catch(() => [] as RawMonthRow[]);
-
-  // ── Zamówienia indywidualne – dane miesięczne (ostatnie 12 miesięcy) ──────
-  const customMonthlyRaw = await db.$queryRaw<RawMonthRow[]>`
-    SELECT
-      EXTRACT(YEAR  FROM "createdAt")::int          AS yr,
-      EXTRACT(MONTH FROM "createdAt")::int          AS mo,
-      COUNT(*)::int                                 AS cnt,
-      COALESCE(SUM(price), 0)::float                AS rev,
-      COALESCE(SUM("shippingCost"), 0)::float       AS ship
-    FROM "CustomOrder"
-    WHERE status IN ('PAID', 'DONE')
-      AND price IS NOT NULL
-      AND "createdAt" >= ${twelveMonthsAgo}
-    GROUP BY yr, mo
-    ORDER BY yr, mo
-  `.catch(() => [] as RawMonthRow[]);
+  // ── Przychody miesięczne (sklep + indywidualne + poza sklepem) ────────────
+  // Od stycznia POPRZEDNIEGO roku, choć wykres pokazuje 12 miesięcy: skala
+  // w działalności gospodarczej liczy zaliczki narastająco od stycznia, więc
+  // luty zeszłego roku trzeba policzyć po jego styczniu. Te same liczby czyta
+  // raport PDF (`lib/revenue.ts`).
+  const monthlyTotals = await getMonthlyTotals(
+    new Date(now.getFullYear() - 1, 0, 1),
+    new Date(now.getFullYear(), now.getMonth() + 1, 1)
+  );
 
   // Bestsellery
   const topProductsRaw = await db.$queryRaw<RawProductRow[]>`
@@ -270,9 +239,7 @@ export default async function AnalitykiPage() {
   // dziesiątki, a i tak potrzebujemy ich w całości do listy pod formularzem.
   const { available: externalAvailable, sales: externalSales } = await listExternalSales();
 
-  const extKey = (d: Date) => `${d.getFullYear()}-${d.getMonth() + 1}`;
-
-  const externalMonthly = new Map<string, { rev: number; cnt: number }>();
+  // Miesięczny rozkład wpisów jest już w `monthlyTotals` – tu tylko rok, miesiąc i kwartały
   const externalQuarterly: Record<number, { rev: number; cnt: number }> = {};
   let extYearRevenue  = 0, extYearCount  = 0;
   let extMonthRevenue = 0, extMonthCount = 0;
@@ -283,10 +250,6 @@ export default async function AnalitykiPage() {
     const amount = Number(sale.amount);
 
     extAllRevenue += amount;
-
-    const mKey = extKey(when);
-    const m = externalMonthly.get(mKey) ?? { rev: 0, cnt: 0 };
-    externalMonthly.set(mKey, { rev: m.rev + amount, cnt: m.cnt + 1 });
 
     if (when >= yearStart) {
       extYearRevenue += amount;
@@ -304,63 +267,36 @@ export default async function AnalitykiPage() {
 
   const hasExternalSales = externalSales.length > 0;
 
-  // ── Budujemy oś czasu 12 miesięcy ─────────────────────────────────────────
-  const monthMap = new Map<string, RawMonthRow>();
-  for (const r of monthlyRaw) {
-    monthMap.set(`${r.yr}-${r.mo}`, r);
-  }
-  // Dodajemy zamówienia indywidualne do tej samej mapy
-  for (const r of customMonthlyRaw) {
-    const key = `${Number(r.yr)}-${Number(r.mo)}`;
-    const existing = monthMap.get(key);
-    if (existing) {
-      monthMap.set(key, {
-        ...existing,
-        cnt: existing.cnt + Number(r.cnt),
-        rev: existing.rev + Number(r.rev),
-      });
-    } else {
-      monthMap.set(key, { yr: Number(r.yr), mo: Number(r.mo), cnt: Number(r.cnt), rev: Number(r.rev), ship: 0 });
-    }
-  }
-
-  // Sprzedaż poza sklepem trafia do tej samej mapy – na wykresie nie rozdzielamy
-  // źródeł, bo to jeden przychód właścicielki.
-  for (const [key, val] of externalMonthly) {
-    const existing = monthMap.get(key);
-    if (existing) {
-      monthMap.set(key, { ...existing, cnt: existing.cnt + val.cnt, rev: existing.rev + val.rev });
-    } else {
-      const [yr, mo] = key.split("-").map(Number);
-      monthMap.set(key, { yr, mo, cnt: val.cnt, rev: val.rev, ship: 0 });
-    }
-  }
-
-  const timeline: { label: string; yr: number; mo: number; cnt: number; rev: number; ship: number }[] = [];
-  for (let i = 11; i >= 0; i--) {
-    const d  = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const yr = d.getFullYear();
-    const mo = d.getMonth() + 1;
-    const found = monthMap.get(`${yr}-${mo}`);
-    timeline.push({
-      label: `${MONTH_LABELS[mo - 1]} ${yr !== now.getFullYear() ? yr : ""}`.trim(),
-      yr, mo,
-      cnt:  Number(found?.cnt  ?? 0),
-      rev:  Number(found?.rev  ?? 0),
-      ship: Number(found?.ship ?? 0),
-    });
-  }
+  // ── Oś czasu: wszystkie miesiące od stycznia poprzedniego roku ────────────
+  // Sprzedaż poza sklepem jest już w `monthlyTotals` – na wykresie nie
+  // rozdzielamy źródeł, bo to jeden przychód właścicielki.
+  const allMonths = fillMonths(
+    monthlyTotals,
+    { yr: now.getFullYear() - 1, mo: 1 },
+    { yr: now.getFullYear(), mo: now.getMonth() + 1 }
+  );
+  const timeline = allMonths.slice(-12).map((m) => ({
+    ...m,
+    label: `${MONTH_LABELS[m.mo - 1]} ${m.yr !== now.getFullYear() ? m.yr : ""}`.trim(),
+  }));
 
   const maxRev = Math.max(...timeline.map((t) => t.rev), 1);
   const maxCnt = Math.max(...timeline.map((t) => t.cnt), 1);
 
-  // ── Flagi podwyższonej stawki podatku (32%) dla każdego miesiąca osi czasu ──
-  const taxKeys     = timeline.map((m) => `tax_high_${m.yr}_${m.mo}`);
-  const taxSettings = await getSettings(taxKeys).catch(() => ({} as Record<string, string>));
-  const taxFlags: Record<string, boolean> = {};
-  for (const m of timeline) {
-    taxFlags[`${m.yr}-${m.mo}`] = taxSettings[`tax_high_${m.yr}_${m.mo}`] === "true";
-  }
+  // ── Konfiguracja podatkowa + wpisy miesięczne (koszty, stawka 32%) ────────
+  const taxSettings = await getSettings([
+    ...TAX_SETTING_KEYS,
+    ...allMonths.flatMap((m) => [costsKey(m.yr, m.mo), highKey(m.yr, m.mo)]),
+  ]).catch(() => ({} as Record<string, string>));
+  const taxConfig = parseTaxConfig(taxSettings);
+  const taxMonths: MonthInput[] = allMonths.map((m) => ({
+    yr: m.yr, mo: m.mo, cnt: m.cnt, rev: m.rev, ship: m.ship,
+    costs: Math.max(0, Number(taxSettings[costsKey(m.yr, m.mo)]) || 0),
+    high: taxSettings[highKey(m.yr, m.mo)] === "true",
+  }));
+  const taxYear = summarizeYear(
+    computeYear(taxMonths.filter((m) => m.yr === now.getFullYear()), taxConfig)
+  );
 
   // ── Sumaryczne wartości (sklep + indywidualne) ─────────────────────────────
   const yearRevenue  = Number(yearAgg._sum.total       ?? 0) + customYearRevenue  + extYearRevenue;
@@ -376,8 +312,7 @@ export default async function AnalitykiPage() {
   const totalOrders   = statusRaw.reduce((s, r) => s + Number(r.cnt), 0);
 
   // ── Działalność nierejestrowana – kwartały (sklep + indywidualne) ─────────
-  const dznMinWageStr = await getSetting("dzn_min_wage").catch(() => "4806");
-  const dznMinWage    = Math.max(1000, parseInt(dznMinWageStr || "4806", 10) || 4806);
+  const dznMinWage    = taxConfig.minWage;
   const currentQuarter = Math.ceil((now.getMonth() + 1) / 3);
 
   const quarterData: Record<number, { rev: number; cnt: number }> = {};
@@ -543,10 +478,11 @@ export default async function AnalitykiPage() {
           </div>
         </div>
 
-        {/* Tabela miesięczna + podatek (klient: checkbox 32% + PDF) */}
+        {/* Tabela miesięczna + podatki (klient liczy przez lib/tax.ts – koszty, checkbox 32%, PDF) */}
         <MonthlyReportsTable
-          rows={[...timeline].reverse()}
-          highFlags={taxFlags}
+          months={taxMonths}
+          showCount={12}
+          config={taxConfig}
           currentYear={now.getFullYear()}
         />
       </div>
@@ -714,13 +650,33 @@ export default async function AnalitykiPage() {
 
       {/* ── Roczne podsumowanie finansowe ─────────────────────────────────── */}
       <div className="bg-cream border border-sand/60 p-6">
-        <h2 className="font-serif text-lg text-espresso mb-5">Podsumowanie finansowe – {now.getFullYear()}</h2>
+        <h2 className="font-serif text-lg text-espresso mb-1">Podsumowanie finansowe – {now.getFullYear()}</h2>
+        <p className="text-xs text-charcoal/80 mb-5">
+          {taxConfig.mode === "registered"
+            ? `Działalność gospodarcza · ${TAX_FORM_LABELS[taxConfig.form]}`
+            : "Działalność nierejestrowana"}
+          {taxConfig.vatEnabled ? ` · VAT ${String(taxConfig.vatRate).replace(".", ",")}%` : " · bez VAT"}
+          {" "}– zmiana w Ustawieniach → Podatki
+        </p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-5">
           {[
-            { label: "Przychód brutto",         value: `${fmt(yearRevenue)} zł` },
+            { label: taxConfig.vatEnabled ? "Przychód brutto (z VAT)" : "Przychód brutto", value: `${fmt(yearRevenue)} zł` },
+            ...(taxConfig.vatEnabled
+              ? [
+                  { label: "VAT należny", value: `${fmt(taxYear.vatDue)} zł` },
+                  { label: "Przychód netto", value: `${fmt(taxYear.revNet)} zł` },
+                ]
+              : []),
             { label: "w tym koszty wysyłki",    value: `${fmt(yearShipping)} zł` },
             { label: "Przychód z produktów",    value: `${fmt(yearRevenue - yearShipping)} zł` },
             { label: "Śr. wartość zamówienia",  value: `${avgOrder.toFixed(0)} zł` },
+            ...(taxConfig.mode === "registered"
+              ? [
+                  { label: taxConfig.form === "lump" ? "Podstawa ryczałtu" : "Dochód (po kosztach)", value: `${fmt(taxYear.base)} zł` },
+                  { label: "PIT (opłacone)", value: `${fmt(taxYear.pit)} zł` },
+                  { label: "Składka zdrowotna", value: `${fmt(taxYear.health)} zł` },
+                ]
+              : [{ label: "PIT (opłacone)", value: `${fmt(taxYear.pit)} zł` }]),
           ].map(({ label, value }) => (
             <div key={label}>
               <p className="font-serif text-xl text-espresso tabular-nums">{value}</p>
@@ -756,13 +712,15 @@ export default async function AnalitykiPage() {
         allTimeTotal={extAllRevenue}
       />
 
-      {/* ── Działalność nierejestrowana ───────────────────────────────────── */}
-      <DznSection
-        initialMinWage={dznMinWage}
-        quarterMap={quarterData}
-        currentQuarter={currentQuarter}
-        currentYear={now.getFullYear()}
-      />
+      {/* ── Działalność nierejestrowana – limit kwartalny tylko w tym trybie ── */}
+      {taxConfig.mode === "unregistered" && (
+        <DznSection
+          initialMinWage={dznMinWage}
+          quarterMap={quarterData}
+          currentQuarter={currentQuarter}
+          currentYear={now.getFullYear()}
+        />
+      )}
     </div>
   );
 }

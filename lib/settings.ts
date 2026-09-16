@@ -281,6 +281,15 @@ const DEFAULTS: Record<string, string> = {
   // Działalność nierejestrowana – minimalne wynagrodzenie (aktualizuj co rok!)
   // 2026: 4806 zł (ustawa z 25.07.2025 r. o ograniczeniu biurokracji i wsparciu przedsiębiorczości)
   dzn_min_wage: "4806",
+  // Podatki (Ustawienia → Podatki; liczy `lib/tax.ts`). Domyślnie działalność
+  // nierejestrowana bez VAT – tak sklep działał od początku
+  tax_mode: "unregistered",
+  tax_form: "scale",
+  tax_lump_rate: "5.5",
+  tax_vat_enabled: "false",
+  tax_vat_rate: "23",
+  tax_zus_social: "0",
+  tax_avg_wage: "8549.18",
 };
 
 async function querySettings(keys: string[]): Promise<Record<string, string>> {

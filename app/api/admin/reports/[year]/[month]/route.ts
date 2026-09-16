@@ -2,8 +2,10 @@ export const dynamic = "force-dynamic";
 
 import { requireAdmin } from "@/lib/admin-auth";
 import { db } from "@/lib/db";
-import { getSetting } from "@/lib/settings";
+import { getSettings } from "@/lib/settings";
 import { getExternalSalesBetween } from "@/lib/external-sales";
+import { fillMonths, getMonthlyTotals } from "@/lib/revenue";
+import { TAX_FORM_LABELS, TAX_SETTING_KEYS, computeYear, costsKey, highKey, parseTaxConfig } from "@/lib/tax";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const PDFDocument = require("pdfkit") as typeof import("pdfkit");
 
@@ -160,15 +162,35 @@ export async function GET(
   const totalShipping = shopShipping + customShipping;
   const totalProducts = shopProducts + customRevenue + externalRevenue;
 
-  // ── Podatek dochodowy (PIT) ─────────────────────────────────────────────────
-  // Podstawa opodatkowania = przychód z produktów. Wysyłka jest kosztem uzyskania
-  // przychodu (przychód z wysyłki ≈ koszt nadania), więc nie podlega opodatkowaniu.
-  // Stawka 12% (domyślnie) lub 32% – gdy w panelu analityki zaznaczono podwyższoną
-  // stawkę dla danego miesiąca (klucz Setting: tax_high_{rok}_{miesiac}).
-  const taxHigh = (await getSetting(`tax_high_${yr}_${mo}`).catch(() => "false")) === "true";
-  const taxRate = taxHigh ? 0.32 : 0.12;
-  const taxBase = Math.round(totalProducts * 100) / 100;
-  const taxDue  = Math.round(taxBase * taxRate * 100) / 100;
+  // ── Podatki (PIT, VAT, składki) – ten sam moduł co tabela w panelu ─────────
+  // Skala w działalności gospodarczej liczy zaliczkę narastająco, więc bierzemy
+  // miesiące od stycznia tego roku z `lib/revenue.ts` (te same liczby co panel)
+  // i liczymy cały rok, żeby odczytać wynik tego miesiąca. Koszty i checkbox
+  // 32% siedzą w ustawieniach (`tax_costs_*`, `tax_high_*`).
+  const yearMonths = fillMonths(
+    await getMonthlyTotals(new Date(yr, 0, 1), periodEnd),
+    { yr, mo: 1 },
+    { yr, mo }
+  );
+  const taxSettings = await getSettings([
+    ...TAX_SETTING_KEYS,
+    ...yearMonths.flatMap((m) => [costsKey(m.yr, m.mo), highKey(m.yr, m.mo)]),
+  ]).catch(() => ({} as Record<string, string>));
+  const taxConfig = parseTaxConfig(taxSettings);
+  const taxResults = computeYear(
+    yearMonths.map((m) => ({
+      yr: m.yr, mo: m.mo, cnt: m.cnt, rev: m.rev, ship: m.ship,
+      costs: Math.max(0, Number(taxSettings[costsKey(m.yr, m.mo)]) || 0),
+      high: taxSettings[highKey(m.yr, m.mo)] === "true",
+    })),
+    taxConfig
+  );
+  const tax = taxResults[taxResults.length - 1];
+  const registered = taxConfig.mode === "registered";
+  const taxDue = tax.pit;
+  const taxLabel = registered
+    ? `${TAX_FORM_LABELS[taxConfig.form]} (${tax.rateLabel})`
+    : `skala, stawka ${tax.rateLabel}`;
 
   // ── PDF ───────────────────────────────────────────────────────────────────────
 
@@ -365,9 +387,15 @@ export async function GET(
   const summary: [string, string][] = [
     ["ZAMOWIEN LACZNIE",        String(totalCount)],
     ["PRZYCHOD BRUTTO",         fmtMoney(totalRevenue)],
-    ["KOSZTY WYSYLKI",          fmtMoney(totalShipping)],
-    ["PRZYCHOD Z PRODUKTOW",    fmtMoney(totalProducts)],
-    [`PODATEK PIT (${taxHigh ? "32" : "12"}%)`, fmtMoney(taxDue)],
+    ...(taxConfig.vatEnabled
+      ? [["VAT NALEZNY", fmtMoney(tax.vatDue)] as [string, string], ["PRZYCHOD NETTO", fmtMoney(tax.revNet)] as [string, string]]
+      : []),
+    ["KOSZTY WYSYLKI",          fmtMoney(taxConfig.vatEnabled ? tax.shipNet : totalShipping)],
+    ["PRZYCHOD Z PRODUKTOW",    fmtMoney(taxConfig.vatEnabled ? tax.productsNet : totalProducts)],
+    ...(registered && taxConfig.form !== "lump" ? [["KOSZTY", fmtMoney(tax.costs)] as [string, string]] : []),
+    ...(registered ? [[taxConfig.form === "lump" ? "PODSTAWA RYCZALTU" : "DOCHOD", fmtMoney(tax.base)] as [string, string]] : []),
+    [`PIT (${tax.rateLabel})`, fmtMoney(taxDue)],
+    ...(registered ? [["SKLADKA ZDROWOTNA", fmtMoney(tax.health)] as [string, string]] : []),
   ];
 
   const SW  = TW / summary.length;
@@ -392,11 +420,19 @@ export async function GET(
 
   posY += SBH + 6;
 
-  // Nota o podstawie opodatkowania
+  // Nota o podstawie opodatkowania – zależna od trybu z Ustawień → Podatki
+  const taxNote = registered
+    ? (taxConfig.form === "lump"
+        ? `Dzialalnosc gospodarcza, ${taxLabel}: podstawa = przychod${taxConfig.vatEnabled ? " netto" : ""} (z wysylka) − ZUS spoleczne (${fmtMoney(tax.zusSocial)}) − 50% skladki zdrowotnej`
+        : `Dzialalnosc gospodarcza, ${taxLabel}: dochod = przychod z produktow${taxConfig.vatEnabled ? " netto" : ""} − koszty − ZUS spoleczne (${fmtMoney(tax.zusSocial)})` +
+          (taxConfig.form === "linear" ? " − skladka zdrowotna (do limitu)" : "; zaliczka liczona narastajaco od stycznia"))
+    : `Dzialalnosc nierejestrowana: podstawa PIT = przychod z produktow${taxConfig.vatEnabled ? " netto" : ""} (wysylka jest kosztem uzyskania przychodu), ${taxLabel}`;
   doc.font(R).fontSize(6.5).fillColor("#9A7A6A")
      .text(
-       `Podstawa opodatkowania PIT = przychod z produktow (wysylka jest kosztem uzyskania przychodu i nie podlega opodatkowaniu)  ·  ` +
-       `Stawka ${taxHigh ? "32" : "12"}%  ·  Podatek do odprowadzenia: ${fmtMoney(taxDue)}`,
+       `${taxNote}  ·  PIT do odprowadzenia: ${fmtMoney(taxDue)}` +
+       (registered ? `  ·  Skladka zdrowotna: ${fmtMoney(tax.health)}` : "") +
+       (taxConfig.vatEnabled ? `  ·  VAT nalezny ${String(taxConfig.vatRate).replace(".", ",")}%: ${fmtMoney(tax.vatDue)} (bez VAT naliczonego)` : "") +
+       "  ·  Kwoty orientacyjne",
        ML, posY, { width: TW, align: "left", lineBreak: false }
      );
 

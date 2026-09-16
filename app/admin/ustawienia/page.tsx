@@ -5,10 +5,11 @@ import { getSettings } from "@/lib/settings";
 import { getAiUsageStats } from "@/lib/ai-usage";
 import SettingsForm from "@/components/admin/SettingsForm";
 import { SIMILAR_MIN_SCORE_KEY } from "@/lib/similar-products";
+import { TAX_SETTING_KEYS } from "@/lib/tax";
 
 const VALID_SECTIONS = new Set([
   "strona_glowna", "omnie", "warsztaty", "regulamin", "polityka",
-  "kontakt", "wysylka", "urlop", "zam_indywidualne", "ai", "proponowane", "zdjecia",
+  "kontakt", "wysylka", "urlop", "zam_indywidualne", "ai", "proponowane", "podatki", "zdjecia",
   "platnosci_przelew", "platnosci_stripe",
 ]);
 
@@ -100,6 +101,7 @@ export default async function AdminSettingsPage({
     "ai_prompt_preset_ai",
     "ai_prompt_preset_ai_plus",
     SIMILAR_MIN_SCORE_KEY,
+    ...TAX_SETTING_KEYS,
   ]);
 
   // Statystyki zużycia AI potrzebne tylko na jednej zakładce – nie odpytuj bazy poza nią
