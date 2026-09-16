@@ -187,19 +187,25 @@ export function CartPopover({ iconClass }: { iconClass: string }) {
   return (
     <HoverPopover trigger={trigger} label="Zawartość koszyka" width="w-[22rem]" forceClose={forceClose}>
       {items.length === 0 ? (
-        <div className="p-6 text-center">
-          <span className="mx-auto mb-3 w-12 h-12 rounded-full bg-cream border border-sand flex items-center justify-center">
-            <ShoppingBag size={20} strokeWidth={1.4} className="text-clay" />
-          </span>
-          <p className="text-sm text-espresso">Koszyk jest pusty</p>
-          <Link
-            href="/sklep"
-            onClick={close}
-            className="inline-flex items-center gap-1.5 mt-3 text-xs tracking-widest uppercase text-clay hover:text-espresso transition-colors"
-          >
-            Przejdź do sklepu <ArrowRight size={13} />
-          </Link>
-        </div>
+        <>
+          <PopoverHeading title="Twój koszyk" />
+          <div className="px-5 pt-5 pb-5 text-center">
+            <span className="mx-auto mb-3 w-12 h-12 rounded-full bg-cream border border-sand flex items-center justify-center">
+              <ShoppingBag size={20} strokeWidth={1.4} className="text-clay" />
+            </span>
+            <p className="font-serif text-lg text-espresso">Koszyk jest pusty</p>
+            <p className="text-xs text-charcoal/80 mt-1.5 mb-4 leading-relaxed">
+              Każda rzecz powstaje ręcznie – zobacz, co teraz czeka w pracowni.
+            </p>
+            <Link
+              href="/sklep"
+              onClick={close}
+              className="flex items-center justify-center gap-2 rounded-md bg-clay text-warm-white text-xs tracking-widest uppercase py-2.5 hover:bg-terracotta hover:text-espresso transition-colors"
+            >
+              Przejdź do sklepu <ArrowRight size={13} />
+            </Link>
+          </div>
+        </>
       ) : (
         <>
           <PopoverHeading title="Twój koszyk" aside={`${count} szt.`} />

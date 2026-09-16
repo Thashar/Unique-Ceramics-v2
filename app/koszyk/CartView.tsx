@@ -75,17 +75,40 @@ export default function CartView({
             <ClayRule className="mt-6" />
           </div>
         </div>
-        <div className="text-center py-24">
-          <ShoppingBag size={56} strokeWidth={1} className="mx-auto text-sand mb-6" />
-          <h2 className="font-serif text-2xl text-espresso mb-3">Koszyk jest pusty</h2>
-          <p className="text-charcoal/80 mb-10">Nie masz jeszcze nic w koszyku.</p>
-          <Link
-            href="/sklep"
-            className="inline-flex items-center gap-3 bg-clay hover:bg-terracotta hover:text-espresso text-warm-white text-sm tracking-widest uppercase px-8 py-4 transition-colors"
-          >
-            Przejdź do sklepu
-            <ArrowRight size={15} strokeWidth={1.5} />
-          </Link>
+        {/* Pusty koszyk jako karta-kafelek – ta sama konwencja co `AuthShell`
+            i dymki w nagłówku: zaokrąglone rogi, pas szkliwa u góry, ikona
+            w kółku, miękkie plamy terakoty i gliny w tle */}
+        <div className="relative overflow-hidden px-6 py-20 md:py-28">
+          <div aria-hidden="true" className="pointer-events-none absolute -top-24 -left-20 w-[26rem] h-[26rem] rounded-full bg-terracotta/15 blur-3xl" />
+          <div aria-hidden="true" className="pointer-events-none absolute -bottom-32 -right-20 w-[28rem] h-[28rem] rounded-full bg-clay/10 blur-3xl" />
+
+          <div className="relative mx-auto max-w-md overflow-hidden rounded-2xl border border-sand bg-warm-white shadow-[0_22px_48px_-18px_rgba(44,40,37,0.35),0_4px_14px_-6px_rgba(44,40,37,0.18)]">
+            <div aria-hidden="true" className="h-1 bg-gradient-to-r from-terracotta via-clay to-sand" />
+            <div className="px-8 py-10 text-center">
+              <span className="mx-auto mb-6 w-16 h-16 rounded-full bg-cream border border-sand flex items-center justify-center">
+                <ShoppingBag size={26} strokeWidth={1.3} className="text-clay" />
+              </span>
+              <ClayRule align="center" className="max-w-[200px] mx-auto mb-5" />
+              <h2 className="font-serif text-2xl md:text-3xl text-espresso mb-3">Koszyk jest pusty</h2>
+              <p className="text-sm text-charcoal/80 leading-relaxed mb-8">
+                Każda rzecz w sklepie powstaje ręcznie i jest jedyna w swoim rodzaju –
+                zobacz, co teraz czeka w pracowni.
+              </p>
+              <Link
+                href="/sklep"
+                className="inline-flex w-full items-center justify-center gap-3 rounded-md bg-clay hover:bg-terracotta hover:text-espresso text-warm-white text-xs tracking-widest uppercase px-8 py-4 transition-colors"
+              >
+                Przejdź do sklepu
+                <ArrowRight size={15} strokeWidth={1.5} />
+              </Link>
+              <p className="text-xs text-charcoal/80 mt-5">
+                Masz własny pomysł?{" "}
+                <Link href="/zamowienie-indywidualne" className="text-clay hover:text-espresso underline underline-offset-2 transition-colors">
+                  Zamów indywidualnie
+                </Link>
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     );
