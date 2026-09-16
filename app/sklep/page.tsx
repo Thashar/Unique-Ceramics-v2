@@ -1,4 +1,10 @@
-﻿import { permanentRedirect } from "next/navigation";
+﻿// ISR jak strony kategorii – siatka pochodzi z `getShopProducts` (cache 60 s).
+// ⚠️ **Nie czytaj tu `searchParams`** – samo ich odczytanie robi ze strony
+// w pełni dynamiczną i każde wejście do sklepu renderuje się od zera (zimny
+// start + trzy zapytania do bazy: 2,2 s TTFB zamiast 0,15 s z cache, zmierzone
+// 16.09.2026). Stare przekierowanie `?kategoria=` siedzi w `next.config.ts`.
+export const revalidate = 60;
+
 import Header from "@/components/layout/HeaderWrapper";
 import Footer from "@/components/layout/Footer";
 import ClayRule from "@/components/ui/ClayRule";
@@ -7,7 +13,6 @@ import { findActiveFreeShipping, findActiveQuantityPromo, toQuantityConfig } fro
 import { quantityPromoTeaser } from "@/lib/quantity-promo";
 import { getSetting } from "@/lib/settings";
 import { DISCOUNT_HOLD_CATALOG_MS } from "@/lib/product-price";
-import { categoryPath } from "@/lib/category-seo";
 import ProductGrid from "./ProductGrid";
 import CategoryBar from "./CategoryBar";
 import { loadCatalog } from "./catalog";
@@ -23,27 +28,10 @@ export const metadata: Metadata = pageMetadata({
   ogTitle: "Sklep ceramiczny – Unique Ceramics",
 });
 
-export default async function ShopPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ kategoria?: string }>;
-}) {
-  const { kategoria } = await searchParams;
-
+export default async function ShopPage() {
   // Zapytania sekwencyjne – każde zwalnia połączenie przed kolejnym,
   // co chroni przed wyczerpaniem puli (Supabase: 15 połączeń w trybie sesji).
   const dbCategories = await getCategories();
-
-  // Stare adresy filtra (`/sklep?kategoria=kubki`) prowadzą teraz na własną
-  // stronę kategorii – ten wariant nie mógł trafić do wyników wyszukiwania,
-  // bo canonicalizował się do `/sklep`. Nieznana kategoria po prostu pokazuje
-  // pełny katalog, zamiast zostawiać klienta z pustą listą
-  if (kategoria && kategoria !== "wszystkie") {
-    const known = dbCategories.some((c) => c.slug === kategoria);
-    // 308, nie 307 – ten schemat adresów jest wycofany na stałe, więc stary
-    // link ma przekazać swoje sygnały nowej stronie
-    permanentRedirect(known ? categoryPath(kategoria) : "/sklep");
-  }
 
   const vacationEnabled = (await getSetting("vacation_enabled")) === "true";
   // Trwające promocje – w katalogu pokazujemy je jako zachęty pod ceną.

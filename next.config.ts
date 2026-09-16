@@ -186,11 +186,31 @@ const nextConfig: NextConfig = {
       "products/ulotka-marketingowa",
       "products/zestaw-kopernik-komplet",
     ];
-    return renamedImages.flatMap((name) => [
+    const imageRedirects = renamedImages.flatMap((name) => [
       { source: `/images/${name}.jpg`,  destination: `/images/${name}.webp`, permanent: true },
       { source: `/images/${name}.jpeg`, destination: `/images/${name}.webp`, permanent: true },
       { source: `/images/${name}.png`,  destination: `/images/${name}.webp`, permanent: true },
     ]);
+
+    // Stary filtr katalogu `/sklep?kategoria=kubki` → strona kategorii (308).
+    // Przekierowanie siedzi TUTAJ, a nie w `app/sklep/page.tsx`: samo czytanie
+    // `searchParams` w stronie wyłącza ISR i każde wejście do sklepu renderowało
+    // się od zera (2,2 s TTFB zamiast 0,15 s z cache – zmierzone 16.09.2026).
+    // Nieznana kategoria dostaje 404 ze strony kategorii, nie pełny katalog –
+    // tu nie ma dostępu do bazy, żeby ją sprawdzić. `wszystkie` jest wyłączone
+    // ze wzorca (i z przekierowania w ogóle): strona `/sklep` parametru nie
+    // czyta, więc taki adres po prostu pokazuje pełny katalog; przekierowanie
+    // `/sklep` → `/sklep` z zachowanym query zapętliłoby się.
+    const catalogRedirects = [
+      {
+        source: "/sklep",
+        has: [{ type: "query" as const, key: "kategoria", value: "(?<slug>(?!wszystkie$)[a-z0-9-]+)" }],
+        destination: "/sklep/kategoria/:slug",
+        permanent: true,
+      },
+    ];
+
+    return [...catalogRedirects, ...imageRedirects];
   },
   async headers() {
     return [
