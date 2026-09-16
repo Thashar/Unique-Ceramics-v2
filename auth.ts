@@ -64,6 +64,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         return token;
       }
 
+      // Middleware działa w runtime **Edge**, gdzie Prisma nie ma jak się
+      // połączyć: zapytanie niżej padało przy każdym żądaniu, `withDbRetry`
+      // odczekiwał 300 + 600 ms ponowień i dopiero wtedy przepuszczał (fail-open).
+      // Każde wejście na /konto, /admin i /api/admin z sesją kosztowało przez to
+      // ~0,9 s czystego czekania (zmierzone w manifeście builda 16.09.2026).
+      // Na Edge sprawdzamy więc tylko podpis i ważność tokenu – rewokację
+      // (`tokenVersion`, usunięte konto, rola) i tak wymusza `auth()` wołane
+      // z layoutów, stron i tras w Node, które renderują chronioną treść.
+      if (process.env.NEXT_RUNTIME === "edge") return token;
+
       // Kolejne żądania – zweryfikuj wersję tokenu względem DB.
       // Pozwala natychmiast unieważnić sesje po zmianie hasła (bump tokenVersion)
       // oraz wylogować z usuniętego konta. Odświeża też rolę.
