@@ -53,12 +53,28 @@ export default async function AccountDashboard() {
     },
   ];
 
-  const tile = "flex items-center gap-4 rounded-xl border p-5 transition-colors group";
+  const tile = "flex items-center gap-4 rounded-xl border p-4 sm:p-5 transition-colors group";
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-8 sm:space-y-10">
       {/* Statystyki */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {/* Na telefonie zwięzłe wiersze (ikona · etykieta · wartość) w jednej
+          karcie – trzy wysokie kafelki wymuszały przewijanie; od `sm` kafelki */}
+      <div className="sm:hidden rounded-xl bg-cream border border-sand divide-y divide-sand">
+        {stats.map(({ label, value, sub, icon: Icon }) => (
+          <div key={label} className="flex items-center gap-3 px-4 py-3">
+            <span className="shrink-0 w-8 h-8 rounded-full bg-warm-white border border-sand flex items-center justify-center">
+              <Icon size={15} strokeWidth={1.5} className="text-clay" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-[11px] tracking-widest uppercase text-charcoal/80">{label}</p>
+              <p className="text-[11px] text-clay">{sub}</p>
+            </div>
+            <p className="ml-auto shrink-0 font-serif text-base text-espresso tabular-nums text-right">{value}</p>
+          </div>
+        ))}
+      </div>
+      <div className="hidden sm:grid grid-cols-3 gap-4">
         {stats.map(({ label, value, sub, icon: Icon }) => (
           <div key={label} className="rounded-xl bg-cream border border-sand p-5">
             <span className="w-10 h-10 rounded-full bg-warm-white border border-sand flex items-center justify-center mb-4">
