@@ -94,10 +94,10 @@ export default function OrderStatusSelect({
 
     const targetLabel = STATUSES.find((s) => s.value === newStatus)?.label ?? newStatus;
     const currentLabel = STATUSES.find((s) => s.value === status)?.label ?? status;
-    // Anulowanie zwraca sztuki na stan magazynowy (serwer robi to w tej samej
-    // transakcji co zmiana statusu) – admin ma to wiedzieć przed potwierdzeniem
+    // Anulowanie NIE zwraca sztuk na stan – o powrocie produktu do sklepu
+    // decyduje właścicielka ręcznie, więc potwierdzenie mówi o tym wprost
     const question = newStatus === "CANCELLED"
-      ? `Anulować zamówienie? Zamówione sztuki wrócą na stan magazynowy i będą znów dostępne w sklepie.`
+      ? `Anulować zamówienie? Stan magazynowy nie zmieni się – jeśli sztuki mają wrócić do sklepu, popraw go w produkcie.`
       : `Zmienić status z „${currentLabel}" na „${targetLabel}"?`;
     if (!window.confirm(question)) return;
 

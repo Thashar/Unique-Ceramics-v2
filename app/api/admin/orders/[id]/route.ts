@@ -1,5 +1,4 @@
 import { db } from "@/lib/db";
-import { revalidateProductPages } from "@/lib/products";
 import { requireAdmin } from "@/lib/admin-auth";
 import { OrderStatus } from "@prisma/client";
 import { NextResponse } from "next/server";
@@ -436,7 +435,7 @@ export async function PATCH(
   if (body.status === OrderStatus.CANCELLED) {
     const existing = await db.order.findUnique({
       where: { id },
-      select: { paymentStatus: true, email: true, firstName: true, status: true, items: { select: { productId: true, quantity: true } } },
+      select: { paymentStatus: true, email: true, firstName: true },
     });
 
     const updateData: { status: OrderStatus; paymentStatus?: string } = { status: body.status };
@@ -444,31 +443,18 @@ export async function PATCH(
       updateData.paymentStatus = "expired";
     }
 
-    order = await db.$transaction(async (tx) => {
-      // Zwróć stany magazynowe
-      if (existing && existing.status !== OrderStatus.CANCELLED) {
-        for (const item of existing.items) {
-          await tx.product.update({
-            where: { id: item.productId },
-            data: { stock: { increment: item.quantity } },
-          });
-        }
-      }
-      return tx.order.update({
-        where: { id },
-        data: updateData,
-        select: {
-          id: true, status: true, paymentStatus: true,
-          email: true, firstName: true,
-          trackingNumber: true, trackingCarrier: true, shippingMethod: true,
-        },
-      });
+    // Anulowanie w panelu NIE zwraca sztuk na stan (decyzja właściciela 16.09.2026):
+    // sztuki bywają już zrobione albo zarezerwowane pod klienta, więc o powrocie
+    // do sklepu decyduje właścicielka ręcznie, w formularzu produktu
+    order = await db.order.update({
+      where: { id },
+      data: updateData,
+      select: {
+        id: true, status: true, paymentStatus: true,
+        email: true, firstName: true,
+        trackingNumber: true, trackingCarrier: true, shippingMethod: true,
+      },
     });
-
-    // Zwrócony stan ma być widoczny w sklepie od razu – katalog czyta go z cache
-    if (existing && existing.status !== OrderStatus.CANCELLED) {
-      revalidateProductPages();
-    }
 
     if (existing) {
       cancelledOrderForEmail = { id, email: existing.email, firstName: existing.firstName };
