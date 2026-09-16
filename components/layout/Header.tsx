@@ -4,10 +4,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
-import { useSession, signOut } from "next-auth/react";
-import { ShoppingBag, Menu, X, User, Package, LogOut, ChevronDown } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
-import { useCart } from "@/lib/cart";
+import { CartPopover, AccountPopover } from "@/components/layout/HeaderPopovers";
 import { LOGO_SRC, LOGO_WIDTH, LOGO_HEIGHT } from "@/lib/logo";
 
 // Dystans (px) zjazdu poniżej górnej krawędzi stopki, na którym header
@@ -41,86 +40,6 @@ const ALL_NAV_LINKS = [
   { href: "/kontakt",       label: "Kontakt",         always: true  },
 ];
 
-function AccountDropdown({ scrolled }: { scrolled: boolean }) {
-  const { data: session } = useSession();
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handler(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
-
-  const iconClass = `transition-colors duration-500 ${
-    scrolled ? "text-cream hover:text-terracotta" : "text-cream hover:text-sand"
-  }`;
-
-  if (!session) {
-    return (
-      <Link href="/logowanie" className={`p-2 ${iconClass}`} aria-label="Zaloguj się">
-        <User size={22} strokeWidth={1.5} />
-      </Link>
-    );
-  }
-
-  return (
-    <div className="relative" ref={ref}>
-      <button
-        onClick={() => setOpen(!open)}
-        className={`flex items-center gap-1.5 p-2 ${iconClass}`}
-        aria-label="Konto"
-      >
-        {session.user?.image ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={session.user.image} alt="" className="w-6 h-6 rounded-full object-cover" />
-        ) : (
-          <User size={22} strokeWidth={1.5} />
-        )}
-        <ChevronDown size={14} strokeWidth={1.5} className={`transition-transform ${open ? "rotate-180" : ""}`} />
-      </button>
-
-      {open && (
-        <div className="absolute right-0 top-full mt-2 w-52 bg-warm-white shadow-lg border border-sand py-2 z-50">
-          <div className="px-4 py-2 border-b border-sand mb-1">
-            <p className="text-xs font-medium text-espresso truncate">
-              {session.user?.name ?? session.user?.email}
-            </p>
-            <p className="text-xs text-charcoal/80 truncate">{session.user?.email}</p>
-          </div>
-          <Link
-            href="/konto"
-            onClick={() => setOpen(false)}
-            className="flex items-center gap-3 px-4 py-2.5 text-sm text-charcoal/80 hover:text-espresso hover:bg-cream transition-colors"
-          >
-            <User size={15} strokeWidth={1.5} />
-            Moje konto
-          </Link>
-          <Link
-            href="/konto/zamowienia"
-            onClick={() => setOpen(false)}
-            className="flex items-center gap-3 px-4 py-2.5 text-sm text-charcoal/80 hover:text-espresso hover:bg-cream transition-colors"
-          >
-            <Package size={15} strokeWidth={1.5} />
-            Zamówienia
-          </Link>
-          <div className="border-t border-sand mt-1 pt-1">
-            <button
-              onClick={() => { setOpen(false); signOut({ callbackUrl: "/" }); }}
-              className="flex items-center gap-3 px-4 py-2.5 text-sm text-charcoal/80 hover:text-red-700 hover:bg-red-50 w-full text-left transition-colors"
-            >
-              <LogOut size={15} strokeWidth={1.5} />
-              Wyloguj się
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
 export default function Header({ topOffset = false, showProjects = true }: { topOffset?: boolean; showProjects?: boolean }) {
   // Na homepage header jest przezroczysty gdy widoczna sekcja z ciemnym tłem
   // (Hero, O mnie, Warsztaty). W pozostałych sekcjach i na innych stronach – solid.
@@ -128,7 +47,6 @@ export default function Header({ topOffset = false, showProjects = true }: { top
   const [menuOpen, setMenuOpen] = useState(false);
   // Auto-chowanie na mobile przy przewijaniu w dół (podstrony)
   const [hidden, setHidden] = useState(false);
-  const { count } = useCart();
   const pathname = usePathname();
   const isHome = pathname === "/";
 
@@ -146,6 +64,10 @@ export default function Header({ topOffset = false, showProjects = true }: { top
 
   const navLinks = ALL_NAV_LINKS.filter((l) => l.always || showProjects);
   const dark = !isHome || !transparentVisible;
+  // Kolor ikon koszyka i konta – ten sam co dotąd, przekazywany do dymków
+  const iconClass = `transition-colors duration-500 ${
+    dark ? "text-cream hover:text-terracotta" : "text-cream hover:text-sand"
+  }`;
   // Schowany tylko gdy menu mobilne jest zamknięte – inaczej nie dałoby się go zamknąć
   const collapsed = hidden && !menuOpen;
 
@@ -454,24 +376,12 @@ export default function Header({ topOffset = false, showProjects = true }: { top
           })}
         </nav>
 
-        {/* Koszyk + konto + hamburger */}
+        {/* Koszyk + konto + hamburger. Na desktopie najechanie na koszyk pokazuje
+            jego zawartość, a na ikonę osoby – menu konta albo formularz logowania
+            (patrz `HeaderPopovers`); kliknięcie nadal prowadzi na stronę. */}
         <div className="flex items-center gap-1">
-          <Link
-            href="/koszyk"
-            className={`relative p-2 transition-colors duration-500 ${
-              dark ? "text-cream hover:text-terracotta" : "text-cream hover:text-sand"
-            }`}
-            aria-label="Koszyk"
-          >
-            <ShoppingBag size={22} strokeWidth={1.5} />
-            {count > 0 && (
-              <span className="absolute top-1 right-1 w-4 h-4 bg-terracotta text-espresso text-[10px] rounded-full flex items-center justify-center font-medium leading-none">
-                {count > 9 ? "9+" : count}
-              </span>
-            )}
-          </Link>
-
-          <AccountDropdown scrolled={dark} />
+          <CartPopover iconClass={iconClass} />
+          <AccountPopover iconClass={iconClass} />
 
           <button
             className={`md:hidden p-2 transition-colors duration-500 ${
