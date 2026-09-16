@@ -58,8 +58,11 @@ export default async function ShopPage() {
             ozdobnik i widoczny h1, bez akapitu wstępu (opis idzie do metadanych).
             Wcześniej h1 był `sr-only` */}
         <div className="max-w-7xl mx-auto px-6 lg:px-10 pt-8 md:pt-12">
-          <ClayRule className="mb-6" />
-          <h1 className="font-serif text-3xl md:text-4xl text-espresso">Sklep</h1>
+          {/* Nagłówek na linii ozdobnej – po prawej od mozaiki, przerywa kreskę
+              (decyzja właściciela 16.09.2026) */}
+          <ClayRule>
+            <h1 className="font-serif text-3xl md:text-4xl text-espresso leading-tight">Sklep</h1>
+          </ClayRule>
         </div>
 
         {/* Siatka produktów */}

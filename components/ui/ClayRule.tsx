@@ -38,27 +38,36 @@ const TILES = [
  * `align="center"` – mozaika pośrodku, z kreskami po obu stronach; do sekcji
  * z wyśrodkowanym nagłówkiem. Szerokość kresek ogranicz przez `className`
  * (np. `max-w-[220px] mx-auto`), inaczej ciągną się przez całą sekcję.
+ *
+ * `children` – treść wstawiona **na linię**, między mozaikę a kreskę (np. `h1`
+ * „Sklep” w katalogu): nagłówek przerywa ozdobną kreskę zamiast stać pod nią.
+ * Wtedy `aria-hidden` dostają tylko elementy dekoracyjne, nie cały wrapper.
  */
 export default function ClayRule({
   className = "",
   align = "left",
+  children,
 }: {
   className?: string;
   align?: "left" | "center";
+  children?: React.ReactNode;
 }) {
   const centered = align === "center";
+  const decorative = children ? { "aria-hidden": true as const } : {};
   return (
-    <div className={`flex items-center gap-3.5 ${className}`} aria-hidden="true">
-      <span className={`h-px bg-sand ${centered ? "flex-1" : "w-7 shrink-0"}`} />
+    <div className={`flex items-center gap-3.5 ${className}`} {...(children ? {} : { "aria-hidden": true })}>
+      <span className={`h-px bg-sand ${centered ? "flex-1" : "w-7 shrink-0"}`} {...decorative} />
       <span
         className="grid grid-rows-2 gap-[3px] shrink-0"
         style={{ gridTemplateColumns: `repeat(${COLUMNS}, 0.625rem)` }}
+        {...decorative}
       >
         {TILES.map((tile, i) => (
           <span key={i} className={`w-2.5 h-2.5 rounded-[1px] ${tile}`} />
         ))}
       </span>
-      <span className="h-px flex-1 bg-sand" />
+      {children && <span className="shrink-0 min-w-0">{children}</span>}
+      <span className="h-px flex-1 bg-sand" {...decorative} />
     </div>
   );
 }

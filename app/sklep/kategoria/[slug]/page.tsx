@@ -134,8 +134,10 @@ export default async function CategoryPage({
             Nie dodawaj go z powrotem jako ukrytego akapitu – tekst niewidoczny
             dla użytkownika, a podany robotowi, to cloaking */}
         <div className="max-w-7xl mx-auto px-6 lg:px-10 pt-8 md:pt-12">
-          <ClayRule className="mb-6" />
-          <h1 className="font-serif text-3xl md:text-4xl text-espresso">{category.label}</h1>
+          {/* Nagłówek na linii ozdobnej jak w /sklep */}
+          <ClayRule>
+            <h1 className="font-serif text-3xl md:text-4xl text-espresso leading-tight">{category.label}</h1>
+          </ClayRule>
         </div>
 
         <div className="max-w-7xl mx-auto px-6 lg:px-10 pt-6 pb-16 md:pt-8 md:pb-16">
