@@ -403,3 +403,22 @@ model ExternalSale {
 
   @@index([soldAt])
 }
+
+// Ruch na stronie – dzienne agregaty z Vercel Web Analytics zapisywane u nas.
+// Plan Hobby trzyma dane tylko przez miesiąc, więc cron (`/api/ping`) codziennie
+// dopisuje wczorajszy dzień i historia rośnie bez limitu. Jeden wiersz = jeden
+// dzień × jeden wymiar × jedna wartość (np. 2026-09-15 × country × PL).
+// `dimension = "total"` (value "") to suma dnia – jego obecność znaczy „dzień
+// zsynchronizowany"; `hour` trzyma godziny UTC ("00"–"23").
+model TrafficStat {
+  id        String   @id @default(cuid())
+  date      DateTime
+  dimension String
+  value     String
+  pageviews Int
+  visitors  Int
+  syncedAt  DateTime @default(now())
+
+  @@unique([date, dimension, value])
+  @@index([dimension, date])
+}

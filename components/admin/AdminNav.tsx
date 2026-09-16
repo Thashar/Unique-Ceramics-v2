@@ -8,7 +8,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import {
   LayoutDashboard, Package, ShoppingBag, ClipboardList,
   Settings, LogOut, Menu, X, ChevronDown, ChevronRight, ExternalLink, Tag,
-  GalleryHorizontal, BarChart2,
+  GalleryHorizontal, BarChart2, Activity,
 } from "lucide-react";
 import { LOGO_SRC, LOGO_WIDTH, LOGO_HEIGHT } from "@/lib/logo";
 
@@ -31,6 +31,7 @@ const topLinks = [
   { href: "/admin/zamowienia",              label: "Zamówienia",        icon: ShoppingBag },
   { href: "/admin/zamowienia-indywidualne", label: "Zam. indywidualne", icon: ClipboardList },
   { href: "/admin/analityki",              label: "Analityka",          icon: BarChart2 },
+  { href: "/admin/ruch",                     label: "Ruch na stronie",   icon: Activity },
 ];
 
 /** Ścieżka pozycji „Kody rabatowe" – osobne strony, nie zakładka `?s=`. */
