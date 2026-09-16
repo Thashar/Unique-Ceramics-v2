@@ -25,6 +25,15 @@ import GoogleIcon from "@/components/ui/GoogleIcon";
 const CLOSE_DELAY_MS = 180;
 const HOVER_QUERY = "(hover: hover) and (min-width: 768px)";
 
+// Naraz może być otwarty tylko jeden dymek. Ikony stoją obok siebie, więc
+// przy przejściu kursorem z koszyka na konto opóźnione zamykanie (180 ms)
+// zostawiało oba otwarte i nachodziły na siebie – otwierany dymek zamyka
+// więc pozostałe od razu, bez czekania na ich zegar
+const closers = new Set<() => void>();
+function closeOthers(mine: () => void) {
+  for (const close of closers) if (close !== mine) close();
+}
+
 function fmt(n: number): string {
   return `${n.toFixed(2).replace(".", ",")} zł`;
 }
@@ -51,11 +60,24 @@ function HoverPopover({
 
   const canHover = () => typeof window !== "undefined" && window.matchMedia(HOVER_QUERY).matches;
 
+  // Natychmiastowe zamknięcie – rejestrowane w `closers`, żeby inny dymek
+  // mógł je wywołać przy swoim otwarciu
+  const closeNow = useCallback(() => {
+    if (timer.current) clearTimeout(timer.current);
+    setOpen(false);
+  }, []);
+
+  useEffect(() => {
+    closers.add(closeNow);
+    return () => { closers.delete(closeNow); };
+  }, [closeNow]);
+
   const show = useCallback(() => {
     if (!canHover()) return;
     if (timer.current) clearTimeout(timer.current);
+    closeOthers(closeNow);
     setOpen(true);
-  }, []);
+  }, [closeNow]);
 
   const hide = useCallback(() => {
     if (timer.current) clearTimeout(timer.current);
