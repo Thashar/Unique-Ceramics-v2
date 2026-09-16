@@ -51,7 +51,7 @@ export async function generateMetadata({
     title: project.title,
     description,
     path: projectPath(slug),
-    ...(project.images[0] ? { image: ogImage(`/api/og/projekt/`, project.title) } : {}),
+    ...(project.images[0] ? { image: ogImage(`/api/og/projekt/${slug}`, project.title) } : {}),
   });
 }
 

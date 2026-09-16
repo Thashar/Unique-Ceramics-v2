@@ -27,7 +27,7 @@ export const metadata: Metadata = pageMetadata({
     `${OWNER_NAME} i pracownia Unique Ceramics z okolic Gliwic. Poznaj historię ręcznie robionej ceramiki tworzonej z pasji do gliny na Śląsku.`,
   path: "/o-mnie",
   // Podgląd linku = zdjęcie hero tej strony (z panelu), nie domyślna grafika
-  image: ogImage(OG_PAGE_IMAGE.about, ` – Unique Ceramics`),
+  image: ogImage(OG_PAGE_IMAGE.about, `${OWNER_NAME} – Unique Ceramics`),
 });
 
 // Dane strukturalne osoby – wiążą nazwisko z marką (wyszukiwarka pokazuje

@@ -52,9 +52,9 @@ export async function generateMetadata({
     title: categoryTitle(category.label),
     description: metaDescription(categoryDescription(category.label)),
     path: categoryPath(slug),
-    ogTitle: ` – Unique Ceramics`,
+    ogTitle: `${category.label} – Unique Ceramics`,
     // Podgląd linku = zdjęcie pierwszego produktu z kategorii (JPEG z `/api/og/kategoria`)
-    image: ogImage(`/api/og/kategoria/`, ` – Unique Ceramics`),
+    image: ogImage(`/api/og/kategoria/${slug}`, `${category.label} – Unique Ceramics`),
   });
 }
 
