@@ -9,7 +9,7 @@
 //
 // Otwieranie: `mouseenter` na wrapperze (ikona + panel), zamykanie z opóźnieniem
 // 180 ms po `mouseleave`, żeby przejście kursorem z ikony na panel przez
-// odstęp nie zamykało dymka (odstęp jest częścią panelu – `pt-2`, nie `mt-2`).
+// odstęp nie zamykało dymka (odstęp jest częścią panelu – `pt-3`, nie `mt-3`).
 // Escape i klik poza dymkiem zamykają go od razu; fokus klawiaturą na ikonie
 // otwiera (dostępność).
 
@@ -109,16 +109,55 @@ function HoverPopover({
             exit={{ opacity: 0, y: -4, transition: { duration: 0.12 } }}
             role="dialog"
             aria-label={label}
-            // `pt-2` zamiast `mt-2`: odstęp od ikony jest częścią panelu, więc
+            // `pt-3` zamiast `mt-3`: odstęp od ikony jest częścią panelu, więc
             // kursor przechodzący przez niego nie wywołuje `mouseleave`
-            className={`absolute right-0 top-full pt-2 ${width} z-50`}
+            className={`absolute right-0 top-full pt-3 ${width} z-50`}
           >
-            <div className="bg-warm-white border border-sand shadow-xl text-charcoal">
-              {children}
+            {/* Dymek jak kafelek: zaokrąglone rogi, dziobek pod ikoną, pas szkliwa
+                u góry (terakota → glina → piasek) i ciepły, miękki cień. Reszta
+                strony jest kanciasta, ale okienko „przyklejone” do ikony ma
+                wyglądać jak coś podanego do ręki, nie jak systemowe menu */}
+            <div className="relative">
+              <span
+                aria-hidden="true"
+                // Piaskowy jak prawy koniec pasa szkliwa pod nim – dziobek wygląda
+                // jak uniesiony fragment tego pasa, nie jak doklejony trójkąt
+                className="absolute -top-[6px] right-[15px] w-3 h-3 rotate-45 bg-sand rounded-[2px] z-10"
+              />
+              <div className="overflow-hidden rounded-2xl border border-sand bg-warm-white text-charcoal shadow-[0_22px_48px_-18px_rgba(44,40,37,0.45),0_4px_14px_-6px_rgba(44,40,37,0.25)]">
+                <div aria-hidden="true" className="h-1 bg-gradient-to-r from-terracotta via-clay to-sand" />
+                {children}
+              </div>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
+    </div>
+  );
+}
+
+// ── Nagłówek dymka ───────────────────────────────────────────────────────────
+
+/** Kafelki szkliwa jak w `ClayRule`, tylko krótsze (5 kolumn) – do wąskiego nagłówka. */
+const HEADING_TILES = [
+  "bg-terracotta", "bg-clay/55", "bg-sand", "bg-terracotta/60", "bg-clay",
+  "bg-sand/80", "bg-terracotta/80", "bg-clay/45", "bg-sand", "bg-terracotta/55",
+];
+
+function PopoverHeading({ title, aside }: { title: string; aside?: ReactNode }) {
+  return (
+    <div className="px-4 pt-3.5 pb-3 border-b border-sand flex items-center gap-3">
+      <span
+        aria-hidden="true"
+        className="grid grid-rows-2 gap-[2px] shrink-0"
+        style={{ gridTemplateColumns: "repeat(5, 0.5rem)" }}
+      >
+        {HEADING_TILES.map((tile, i) => (
+          <span key={i} className={`w-2 h-2 rounded-[1px] ${tile}`} />
+        ))}
+      </span>
+      <span className="font-serif text-base text-espresso leading-none">{title}</span>
+      {aside && <span className="ml-auto text-xs text-charcoal/80">{aside}</span>}
     </div>
   );
 }
@@ -147,8 +186,10 @@ export function CartPopover({ iconClass }: { iconClass: string }) {
   return (
     <HoverPopover trigger={trigger} label="Zawartość koszyka" width="w-[22rem]" forceClose={forceClose}>
       {items.length === 0 ? (
-        <div className="p-5 text-center">
-          <ShoppingBag size={28} strokeWidth={1.2} className="mx-auto text-clay mb-3" />
+        <div className="p-6 text-center">
+          <span className="mx-auto mb-3 w-12 h-12 rounded-full bg-cream border border-sand flex items-center justify-center">
+            <ShoppingBag size={20} strokeWidth={1.4} className="text-clay" />
+          </span>
           <p className="text-sm text-espresso">Koszyk jest pusty</p>
           <Link
             href="/sklep"
@@ -160,17 +201,14 @@ export function CartPopover({ iconClass }: { iconClass: string }) {
         </div>
       ) : (
         <>
-          <div className="px-4 py-2.5 border-b border-sand flex items-baseline justify-between">
-            <span className="text-xs tracking-widest uppercase text-charcoal/80">Koszyk</span>
-            <span className="text-xs text-charcoal/80">{count} szt.</span>
-          </div>
+          <PopoverHeading title="Twój koszyk" aside={`${count} szt.`} />
           <ul
             className="divide-y divide-sand overflow-y-auto"
             style={{ maxHeight: `${CART_VISIBLE_ROWS * 4.5}rem` }}
           >
             {items.map((item) => (
               <li key={item.id} className="flex items-center gap-3 px-4 py-2.5">
-                <Link href={`/sklep/${item.slug}`} onClick={close} className="shrink-0 w-12 h-12 bg-cream overflow-hidden">
+                <Link href={`/sklep/${item.slug}`} onClick={close} className="shrink-0 w-12 h-12 bg-cream overflow-hidden rounded-lg">
                   {item.image ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={item.image} alt="" className="w-full h-full object-cover" loading="lazy" />
@@ -209,14 +247,14 @@ export function CartPopover({ iconClass }: { iconClass: string }) {
               <Link
                 href="/koszyk"
                 onClick={close}
-                className="text-center border border-clay text-clay text-xs tracking-widest uppercase py-2.5 hover:bg-cream transition-colors"
+                className="text-center rounded-md border border-clay text-clay text-xs tracking-widest uppercase py-2.5 hover:bg-cream transition-colors"
               >
                 Koszyk
               </Link>
               <Link
                 href="/zamowienie"
                 onClick={close}
-                className="text-center bg-clay text-warm-white text-xs tracking-widest uppercase py-2.5 hover:bg-terracotta hover:text-espresso transition-colors"
+                className="text-center rounded-md bg-clay text-warm-white text-xs tracking-widest uppercase py-2.5 hover:bg-terracotta hover:text-espresso transition-colors"
               >
                 Do kasy
               </Link>
@@ -253,11 +291,12 @@ function LoginForm({ onDone }: { onDone: () => void }) {
     router.refresh();
   }
 
-  const input = "w-full bg-cream border border-sand focus:border-clay outline-none px-3 py-2.5 text-sm text-espresso transition-colors";
+  const input = "w-full rounded-md bg-cream border border-sand focus:border-clay outline-none px-3 py-2.5 text-sm text-espresso transition-colors";
 
   return (
-    <form onSubmit={submit} className="p-4 space-y-3">
-      <p className="text-xs tracking-widest uppercase text-charcoal/80">Zaloguj się</p>
+    <form onSubmit={submit}>
+      <PopoverHeading title="Zaloguj się" />
+      <div className="p-4 space-y-3">
       {error && <p className="text-xs text-red-700">{error}</p>}
       <input
         type="email"
@@ -292,7 +331,7 @@ function LoginForm({ onDone }: { onDone: () => void }) {
       <button
         type="submit"
         disabled={loading}
-        className="w-full flex items-center justify-center gap-2 bg-clay text-warm-white text-xs tracking-widest uppercase py-2.5 hover:bg-terracotta hover:text-espresso transition-colors disabled:opacity-60"
+        className="w-full flex items-center justify-center gap-2 rounded-md bg-clay text-warm-white text-xs tracking-widest uppercase py-2.5 hover:bg-terracotta hover:text-espresso transition-colors disabled:opacity-60"
       >
         {loading && <Loader2 size={14} className="animate-spin" />}
         Zaloguj
@@ -301,7 +340,7 @@ function LoginForm({ onDone }: { onDone: () => void }) {
         type="button"
         onClick={() => { setLoading(true); signIn("google", { callbackUrl: window.location.pathname }); }}
         disabled={loading}
-        className="w-full border border-sand hover:border-clay bg-warm-white hover:bg-cream text-espresso text-xs py-2.5 transition-colors disabled:opacity-60"
+        className="w-full rounded-md border border-sand hover:border-clay bg-warm-white hover:bg-cream text-espresso text-xs py-2.5 transition-colors disabled:opacity-60"
       >
         Kontynuuj z Google
       </button>
@@ -311,6 +350,7 @@ function LoginForm({ onDone }: { onDone: () => void }) {
           Zarejestruj się
         </Link>
       </p>
+      </div>
     </form>
   );
 }
@@ -348,11 +388,9 @@ export function AccountPopover({ iconClass }: { iconClass: string }) {
 
   return (
     <HoverPopover trigger={trigger} label="Konto" width="w-56" forceClose={forceClose}>
-      <div className="py-2">
-        <div className="px-4 py-2 border-b border-sand mb-1">
-          <p className="text-xs font-medium text-espresso truncate">{session.user?.name ?? session.user?.email}</p>
-          <p className="text-xs text-charcoal/80 truncate">{session.user?.email}</p>
-        </div>
+      <div className="pb-2">
+        <PopoverHeading title={session.user?.name ?? "Moje konto"} />
+        <p className="px-4 pt-2.5 pb-1 text-xs text-charcoal/80 truncate">{session.user?.email}</p>
         <Link href="/konto" onClick={close} className={row}>
           <User size={15} strokeWidth={1.5} />
           Moje konto
