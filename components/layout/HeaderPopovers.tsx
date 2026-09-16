@@ -18,7 +18,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { useRouter } from "next/navigation";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ShoppingBag, User, Package, LogOut, Trash2, Eye, EyeOff, Loader2, ArrowRight } from "lucide-react";
+import { ShoppingBag, User, Package, LogOut, Trash2, Eye, EyeOff, Loader2, ArrowRight, Plus, Minus } from "lucide-react";
 import { useCart } from "@/lib/cart";
 import GoogleIcon from "@/components/ui/GoogleIcon";
 
@@ -191,7 +191,7 @@ function PopoverHeading({ title, aside }: { title: string; aside?: ReactNode }) 
 const CART_VISIBLE_ROWS = 4;
 
 export function CartPopover({ iconClass }: { iconClass: string }) {
-  const { items, count, subtotal, removeItem } = useCart();
+  const { items, count, subtotal, removeItem, updateQuantity } = useCart();
   const [forceClose, setForceClose] = useState(0);
   const close = () => setForceClose((n) => n + 1);
 
@@ -233,7 +233,7 @@ export function CartPopover({ iconClass }: { iconClass: string }) {
           <PopoverHeading title="Twój koszyk" aside={`${count} szt.`} />
           <ul
             className="divide-y divide-sand overflow-y-auto"
-            style={{ maxHeight: `${CART_VISIBLE_ROWS * 4.5}rem` }}
+            style={{ maxHeight: `${CART_VISIBLE_ROWS * 5.25}rem` }}
           >
             {items.map((item) => (
               <li key={item.id} className="flex items-center gap-3 px-4 py-2.5">
@@ -251,9 +251,32 @@ export function CartPopover({ iconClass }: { iconClass: string }) {
                   >
                     {item.name}
                   </Link>
-                  <p className="text-xs text-charcoal/80 tabular-nums">
-                    {item.quantity} × {fmt(item.price)}
-                  </p>
+                  {/* Licznik ilości jak w koszyku, tylko niższy; cena to kwota pozycji */}
+                  <div className="flex items-center gap-2.5 mt-1">
+                    <div className="flex items-center rounded-md border border-sand">
+                      <button
+                        type="button"
+                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                        className="w-6 h-6 flex items-center justify-center text-charcoal hover:text-clay transition-colors"
+                        aria-label={`Zmniejsz ilość: ${item.name}`}
+                      >
+                        <Minus size={12} />
+                      </button>
+                      <span className="w-6 text-center text-xs tabular-nums">{item.quantity}</span>
+                      <button
+                        type="button"
+                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                        disabled={item.quantity >= item.stock}
+                        className="w-6 h-6 flex items-center justify-center text-charcoal hover:text-clay disabled:text-sand disabled:cursor-not-allowed transition-colors"
+                        aria-label={`Zwiększ ilość: ${item.name}`}
+                      >
+                        <Plus size={12} />
+                      </button>
+                    </div>
+                    <p className="text-xs text-charcoal/80 tabular-nums">
+                      {fmt(item.price * item.quantity)}
+                    </p>
+                  </div>
                 </div>
                 <button
                   type="button"
