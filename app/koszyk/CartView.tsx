@@ -66,18 +66,11 @@ export default function CartView({
   if (items.length === 0) {
     return (
       <div className="bg-warm-white">
-        {/* Ten sam układ nagłówka co na /zamowienie – obie strony należą do
-            jednej ścieżki zakupowej, więc nie mogą się różnić wyrównaniem */}
-        <div className="bg-cream px-6 lg:px-10 py-10">
-          <div className="max-w-5xl mx-auto">
-            <p className="text-xs tracking-[0.3em] uppercase text-clay mb-3">Sklep</p>
-            <h1 className="font-serif text-4xl md:text-5xl text-espresso">Koszyk</h1>
-            <ClayRule className="mt-6" />
-          </div>
-        </div>
         {/* Pusty koszyk jako karta-kafelek – ta sama konwencja co `AuthShell`
             i dymki w nagłówku: zaokrąglone rogi, pas szkliwa u góry, ikona
-            w kółku, miękkie plamy terakoty i gliny w tle */}
+            w kółku, miękkie plamy terakoty i gliny w tle. Bez pasa z nagłówkiem
+            strony (decyzja właściciela 16.09.2026) – karta ma własny tytuł,
+            a `h1` zostaje w niej dla struktury dokumentu */}
         <div className="relative overflow-hidden px-6 py-20 md:py-28">
           <div aria-hidden="true" className="pointer-events-none absolute -top-24 -left-20 w-[26rem] h-[26rem] rounded-full bg-terracotta/15 blur-3xl" />
           <div aria-hidden="true" className="pointer-events-none absolute -bottom-32 -right-20 w-[28rem] h-[28rem] rounded-full bg-clay/10 blur-3xl" />
@@ -89,7 +82,7 @@ export default function CartView({
                 <ShoppingBag size={26} strokeWidth={1.3} className="text-clay" />
               </span>
               <ClayRule align="center" className="max-w-[200px] mx-auto mb-5" />
-              <h2 className="font-serif text-2xl md:text-3xl text-espresso mb-3">Koszyk jest pusty</h2>
+              <h1 className="font-serif text-2xl md:text-3xl text-espresso mb-3">Koszyk jest pusty</h1>
               <p className="text-sm text-charcoal/80 leading-relaxed mb-8">
                 Każda rzecz w sklepie powstaje ręcznie i jest jedyna w swoim rodzaju –
                 zobacz, co teraz czeka w pracowni.
