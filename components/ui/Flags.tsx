@@ -24,10 +24,9 @@ export function FlagPL({ className = FLAG_SIZE }: { className?: string }) {
 export function FlagGB({ className = FLAG_SIZE }: { className?: string }) {
   return (
     <svg viewBox="0 0 60 30" preserveAspectRatio="xMidYMid slice" aria-hidden="true" className={`${FRAME} ${className}`}>
-      <clipPath id="uc-flag-gb">
-        <rect width="60" height="30" />
-      </clipPath>
-      <g clipPath="url(#uc-flag-gb)">
+      {/* Bez clipPath z id – flaga bywa na stronie dwa razy (pasek + dymek),
+          a SVG i tak przycina rysunek do viewBox */}
+      <g>
         <rect width="60" height="30" fill="#012169" />
         <path d="M0,0 L60,30 M60,0 L0,30" stroke="#FFFFFF" strokeWidth="6" />
         <path d="M0,0 L60,30 M60,0 L0,30" stroke="#C8102E" strokeWidth="2" />
