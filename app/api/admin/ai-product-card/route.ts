@@ -12,6 +12,7 @@ import {
   AI_TEXT_LIMITS,
   AI_TEXT_MODEL_SETTING_KEY,
   AI_TEXT_VARIANT,
+  agentVariant,
   aiCostUsd,
   buildProductCardPrompt,
   buildProductFillPrompt,
@@ -150,7 +151,7 @@ export async function POST(req: Request) {
   } else {
     try {
       const result = await generateProductText({ model, prompt: buildProductFillPrompt(categories), image });
-      await recordAiUsage({ kind: "text", variant: AI_TEXT_VARIANT, model, ...result.usage });
+      await recordAiUsage({ kind: "text", variant: agentVariant(AI_TEXT_VARIANT), model, ...result.usage });
       costUsd += aiCostUsd(model, result.usage.promptTokens, result.usage.outputTokens);
       const parsed = parseJsonObject(result.text);
       if (!parsed) throw new Error("odpowiedź nie jest JSON-em: " + result.text.slice(0, 200));
@@ -220,7 +221,7 @@ export async function POST(req: Request) {
         prompt: buildProductCardPrompt(category, draft, examples),
         image,
       });
-      await recordAiUsage({ kind: "text", variant: AI_CARD_VARIANT, model, ...result.usage });
+      await recordAiUsage({ kind: "text", variant: agentVariant(AI_CARD_VARIANT), model, ...result.usage });
       costUsd += aiCostUsd(model, result.usage.promptTokens, result.usage.outputTokens);
       const parsed = parseJsonObject(result.text);
       if (parsed) {

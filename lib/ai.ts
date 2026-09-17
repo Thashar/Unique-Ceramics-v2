@@ -411,7 +411,20 @@ Odpowiedz wyłącznie obiektem JSON, bez komentarzy i bez bloków kodu:
 {"name":"...","slug":"...","category":"...","description":"..."}`;
 }
 
-/** Wariant zapisywany w rejestrze zużycia dla szybkiego dodawania produktu (drugi krok – styl z kategorii). */
+/**
+ * Warianty zapisywane w rejestrze zużycia przez **agenta dodawania produktów** –
+ * z prefiksem `agent_`, żeby panel mógł policzyć osobno, ile zjadła praca
+ * agenta (te same trasy woła też formularz produktu, więc sam model czy trasa
+ * tego nie mówią). `agentVariant("ai")` = `agent_ai` itd.
+ */
+export const AI_AGENT_VARIANT_PREFIX = "agent_";
+export function agentVariant(variant: string): string {
+  return `${AI_AGENT_VARIANT_PREFIX}${variant}`;
+}
+export function isAgentVariant(variant: string): boolean {
+  return variant.startsWith(AI_AGENT_VARIANT_PREFIX);
+}
+/** Drugi krok karty w agencie – nazwa i opis w stylu kategorii. */
 export const AI_CARD_VARIANT = "product_card";
 
 /**
@@ -471,19 +484,30 @@ Odpowiedz wyłącznie obiektem JSON, bez komentarzy i bez bloków kodu:
 // ── Koszty ────────────────────────────────────────────────────────────────────
 
 /**
- * Stawki Google AI (paid tier, USD za 1 mln tokenów) – stan na 07.2026.
- * Wejście obejmuje prompt i zdjęcie źródłowe, wyjście to wygenerowany obraz lub tekst.
- * `tokensPerImage` służy do oszacowania kosztu modeli obrazowych, gdy API nie zwróci liczników.
+ * Stawki Google AI (paid tier, USD za 1 mln tokenów) – stan na 09.2026
+ * (https://ai.google.dev/gemini-api/docs/pricing). Wejście obejmuje prompt
+ * i zdjęcie źródłowe, wyjście to wygenerowany obraz lub tekst.
+ * `tokensPerImage` = tokeny jednego obrazu 1K (1120; 2.5 Flash Image 1290) –
+ * służy do oszacowania kosztu, gdy API nie zwróci liczników, **i do rozdzielenia
+ * wyjścia modelu obrazowego** na obraz i resztę (patrz `aiCostUsd`).
+ *
+ * ⚠️ Modele obrazowe mają **dwie stawki wyjścia**: obraz (`outputPer1M`, np. $30/1M)
+ * i tekst z tokenami „myślenia” (`outputTextPer1M`, np. $1.50/1M). Odkąd liczniki
+ * z Interactions API są prawdziwe (17.09.2026), `total_output_tokens` zawiera
+ * także myślenie modelu obrazowego (kilkaset–ponad tysiąc tokenów na zdjęcie).
+ * Liczone po stawce obrazu zawyżało koszt zdjęcia o ~30% (0,17 zł zamiast 0,13 zł
+ * na Flash Lite Image) – właściciel zobaczył 0,87 zł za przebieg, który w Google
+ * kosztował ~0,70 zł.
  */
 export const AI_MODEL_PRICING: Record<
   string,
-  { inputPer1M: number; outputPer1M: number; tokensPerImage: number; kind: AiKind }
+  { inputPer1M: number; outputPer1M: number; outputTextPer1M?: number; tokensPerImage: number; kind: AiKind }
 > = {
   // Modele obrazowe
-  "gemini-3.1-flash-image": { inputPer1M: 0.5, outputPer1M: 60, tokensPerImage: 1120, kind: "image" },
-  "gemini-3.1-flash-lite-image": { inputPer1M: 0.25, outputPer1M: 30, tokensPerImage: 1120, kind: "image" },
-  "gemini-3-pro-image": { inputPer1M: 2, outputPer1M: 120, tokensPerImage: 1120, kind: "image" },
-  "gemini-2.5-flash-image": { inputPer1M: 0.3, outputPer1M: 30, tokensPerImage: 1290, kind: "image" },
+  "gemini-3.1-flash-image": { inputPer1M: 0.5, outputPer1M: 60, outputTextPer1M: 3, tokensPerImage: 1120, kind: "image" },
+  "gemini-3.1-flash-lite-image": { inputPer1M: 0.25, outputPer1M: 30, outputTextPer1M: 1.5, tokensPerImage: 1120, kind: "image" },
+  "gemini-3-pro-image": { inputPer1M: 2, outputPer1M: 120, outputTextPer1M: 12, tokensPerImage: 1120, kind: "image" },
+  "gemini-2.5-flash-image": { inputPer1M: 0.3, outputPer1M: 30, outputTextPer1M: 2.5, tokensPerImage: 1290, kind: "image" },
   // Modele tekstowe
   "gemini-3.6-flash": { inputPer1M: 1.5, outputPer1M: 7.5, tokensPerImage: 0, kind: "text" },
   "gemini-3.5-flash-lite": { inputPer1M: 0.3, outputPer1M: 2.5, tokensPerImage: 0, kind: "text" },
@@ -497,13 +521,26 @@ export function aiModelKind(model: string): AiKind {
   return AI_MODEL_PRICING[model]?.kind ?? "image";
 }
 
-/** Koszt jednego generowania w USD. Nieznany model → 0 (lepiej niż zmyślona kwota). */
+/**
+ * Koszt jednego wywołania w USD. Nieznany model → 0 (lepiej niż zmyślona kwota).
+ *
+ * Model obrazowy: pierwsze `tokensPerImage` tokenów wyjścia to obraz (stawka
+ * obrazu), reszta – tekst i myślenie (stawka tekstowa). Przy wyjściu mniejszym
+ * niż jeden obraz (liczniki niepełne) całość idzie po stawce obrazu, żeby nie
+ * zaniżać. Model tekstowy: całe wyjście po jednej stawce (myślenie wliczone).
+ */
 export function aiCostUsd(model: string, promptTokens: number, outputTokens: number): number {
   const price = AI_MODEL_PRICING[model];
   if (!price) return 0;
-  const usd =
-    (promptTokens / 1_000_000) * price.inputPer1M +
-    (outputTokens / 1_000_000) * price.outputPer1M;
+  let output: number;
+  if (price.kind === "image" && price.outputTextPer1M !== undefined && outputTokens > price.tokensPerImage) {
+    output =
+      (price.tokensPerImage / 1_000_000) * price.outputPer1M +
+      ((outputTokens - price.tokensPerImage) / 1_000_000) * price.outputTextPer1M;
+  } else {
+    output = (outputTokens / 1_000_000) * price.outputPer1M;
+  }
+  const usd = (promptTokens / 1_000_000) * price.inputPer1M + output;
   return Math.round(usd * 1_000_000) / 1_000_000;
 }
 

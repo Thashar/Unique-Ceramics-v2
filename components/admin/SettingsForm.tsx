@@ -178,10 +178,40 @@ const VARIANT_LABEL: Record<string, string> = {
   ai: "AI (zdjęcie)",
   ai_plus: "AI+ (zdjęcie)",
   product_fill: "Uzupełnianie opisu",
-  product_card: "Szybkie dodawanie – styl z kategorii",
+  product_card: "Karta w stylu kategorii",
   translate: "Tłumaczenie na angielski",
   prompt_build: "Układanie promptu",
+  // Warianty z agenta dodawania produktów (prefiks `agent_`)
+  agent_ai: "Agent – zdjęcie AI",
+  agent_ai_plus: "Agent – zdjęcie AI+",
+  agent_product_fill: "Agent – rozpoznanie i kategoria",
+  agent_product_card: "Agent – nazwa i opis",
+  agent_translate: "Agent – tłumaczenie",
 };
+
+/**
+ * Ile zjadł agent dodawania produktów – suma wariantów z prefiksem `agent_`
+ * z podziałem na zdjęcia, treść karty i tłumaczenie. Sama rozmowa (pytania,
+ * przyciski) nie woła modelu, więc nie ma jej w rejestrze.
+ */
+function agentUsage(byVariant: AiUsageStats["byVariant"]) {
+  const pick = (names: string[]) =>
+    byVariant
+      .filter((v) => names.includes(v.variant))
+      .reduce((acc, v) => ({ count: acc.count + v.count, costUsd: acc.costUsd + v.costUsd }), { count: 0, costUsd: 0 });
+  const images = pick(["agent_ai", "agent_ai_plus"]);
+  const content = pick(["agent_product_fill", "agent_product_card"]);
+  const translation = pick(["agent_translate"]);
+  return {
+    images,
+    content,
+    translation,
+    total: {
+      count: images.count + content.count + translation.count,
+      costUsd: images.costUsd + content.costUsd + translation.costUsd,
+    },
+  };
+}
 
 /** Kwoty AI bywają rzędu setnych centa – pokazujemy tyle miejsc, ile ma sens. */
 function usd(value: number): string {
@@ -1629,6 +1659,32 @@ export default function SettingsForm({ section, initial, aiUsage, english = {} }
                     </tbody>
                   </table>
                 </div>
+
+                {/* Koszt agenta dodawania produktów – osobno od ręcznych przycisków AI */}
+                {(() => {
+                  const agent = agentUsage(aiUsage.byVariant);
+                  if (agent.total.count === 0) return null;
+                  const cell = (b: { count: number; costUsd: number }) =>
+                    `${b.count} × · ${usd(b.costUsd)}${aiRateNumber > 0 ? ` (${pln(b.costUsd, aiRateNumber)})` : ""}`;
+                  return (
+                    <div className="border border-sand bg-warm-white p-4 space-y-1.5 text-sm">
+                      <p className="text-xs tracking-widest uppercase text-charcoal/80">Agent dodawania produktów – łącznie</p>
+                      <p className="font-serif text-2xl text-espresso">
+                        {usd(agent.total.costUsd)}
+                        {aiRateNumber > 0 && <span className="text-sm text-charcoal/80 ml-2">{pln(agent.total.costUsd, aiRateNumber)}</span>}
+                      </p>
+                      <dl className="text-[11px] text-charcoal/80 space-y-0.5">
+                        <div className="flex justify-between gap-2"><dt>Zdjęcia AI+ / AI</dt><dd className="tabular-nums">{cell(agent.images)}</dd></div>
+                        <div className="flex justify-between gap-2"><dt>Treść karty (rozpoznanie, kategoria, nazwa, opis)</dt><dd className="tabular-nums">{cell(agent.content)}</dd></div>
+                        <div className="flex justify-between gap-2"><dt>Tłumaczenie</dt><dd className="tabular-nums">{cell(agent.translation)}</dd></div>
+                        <div className="flex justify-between gap-2"><dt>Rozmowa z agentem (pytania, wybory)</dt><dd className="tabular-nums">0 × · $0</dd></div>
+                      </dl>
+                      <p className="text-[11px] text-charcoal/80">
+                        Liczone od 17.09.2026 – wcześniejsze wywołania agenta są w ogólnych statystykach, bez rozróżnienia.
+                      </p>
+                    </div>
+                  );
+                })()}
 
                 <div className="flex flex-wrap gap-x-6 gap-y-1 text-[11px] text-charcoal/80">
                   {aiUsage.byVariant.map((v) => (

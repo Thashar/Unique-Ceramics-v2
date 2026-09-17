@@ -14,6 +14,7 @@ import {
   AI_MODEL_SETTING_KEY,
   AI_PRESET_SETTING_KEY,
   AI_PRESETS_SETTING_KEY,
+  agentVariant,
   aiCostUsd,
   buildImagePrompt,
   isAiVariant,
@@ -54,6 +55,9 @@ export async function POST(req: Request) {
   // Opcjonalny preset promptu (id z listy w ustawieniach) – agent dodawania
   // produktów pozwala wybrać styl zdjęcia; bez niego preset przypisany do przycisku
   const presetId = typeof body?.presetId === "string" ? body.presetId.trim().slice(0, 80) : "";
+  // Wywołanie z agenta dodawania produktów – w rejestrze zużycia dostaje wariant
+  // z prefiksem `agent_`, żeby panel mógł policzyć koszt agenta osobno
+  const fromAgent = body?.agent === true;
   if (!url || !isAiVariant(variant)) {
     return NextResponse.json({ error: "Nieprawidłowe dane żądania." }, { status: 400 });
   }
@@ -106,7 +110,7 @@ export async function POST(req: Request) {
     });
     // Zużycie zapisujemy od razu po udanym wywołaniu – od tego momentu jest płatne,
     // niezależnie od tego, czy dalsza obróbka i zapis do Storage się powiodą
-    await recordAiUsage({ kind: "image", variant, model, ...result.usage });
+    await recordAiUsage({ kind: "image", variant: fromAgent ? agentVariant(variant) : variant, model, ...result.usage });
     costUsd = aiCostUsd(model, result.usage.promptTokens, result.usage.outputTokens);
     // Rozmiar i format nadaje `uploadImageWithVariants` (WebP, maks. 1920 px,
     // maksymalna jakość) razem z wariantami rozmiarowymi – tu zostaje surowy wynik

@@ -8,6 +8,7 @@ import {
   AI_TEXT_MODEL_SETTING_KEY,
   AI_TRANSLATE_LIMITS,
   AI_TRANSLATE_VARIANT,
+  agentVariant,
   aiCostUsd,
   buildTranslatePrompt,
   resolveAiTextModel,
@@ -49,6 +50,8 @@ export async function POST(req: Request) {
 
   const body = await req.json().catch(() => null);
   const texts: unknown = body?.texts;
+  // Z agenta dodawania produktów – osobny wariant w rejestrze (koszt agenta w panelu)
+  const fromAgent = body?.agent === true;
   if (!Array.isArray(texts) || texts.some((t) => typeof t !== "string")) {
     return NextResponse.json({ error: "Nieprawidłowe dane – oczekiwano listy tekstów." }, { status: 400 });
   }
@@ -73,7 +76,7 @@ export async function POST(req: Request) {
     const result = await generateProductText({ model, prompt: buildTranslatePrompt(texts) });
     await recordAiUsage({
       kind: "text",
-      variant: AI_TRANSLATE_VARIANT,
+      variant: fromAgent ? agentVariant(AI_TRANSLATE_VARIANT) : AI_TRANSLATE_VARIANT,
       model,
       ...result.usage,
     });

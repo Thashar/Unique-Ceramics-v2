@@ -3,7 +3,7 @@
 // bo wynik jest już wtedy wygenerowany i zapłacony.
 
 import { db } from "@/lib/db";
-import { aiCostUsd, type AiKind } from "@/lib/ai";
+import { AI_MODEL_PRICING, aiCostUsd, type AiKind } from "@/lib/ai";
 
 export type AiUsageBucket = { count: number; costUsd: number };
 
@@ -137,10 +137,17 @@ export async function getAiUsageStats(): Promise<AiUsageStats> {
     for (const row of rows) {
       // Stare wpisy (sprzed rozdzielenia kosztów) nie mają rodzaju – to zdjęcia
       const kind: AiKind = row.kind === "text" ? "text" : "image";
+      // Koszt liczony **z tokenów przy odczycie**, nie z kolumny `costUsd`:
+      // kolumna niesie kwotę policzoną formułą z chwili zapisu, a ta bywała
+      // zawyżona (myślenie modelu obrazowego po stawce obrazu, 17.09.2026).
+      // Nieznany model (wycofany z cennika) wraca do zapisanej kwoty
+      const costUsd = AI_MODEL_PRICING[row.model]
+        ? aiCostUsd(row.model, row.promptTokens, row.outputTokens)
+        : row.costUsd;
 
-      addTo(total, kind, row.costUsd);
-      if (row.createdAt >= monthStart) addTo(currentMonth, kind, row.costUsd);
-      else if (row.createdAt >= prevStart) addTo(previousMonth, kind, row.costUsd);
+      addTo(total, kind, costUsd);
+      if (row.createdAt >= monthStart) addTo(currentMonth, kind, costUsd);
+      else if (row.createdAt >= prevStart) addTo(previousMonth, kind, costUsd);
       if (row.estimated) estimatedCount += 1;
 
       const model = byModel.get(row.model) ?? {
@@ -154,7 +161,7 @@ export async function getAiUsageStats(): Promise<AiUsageStats> {
       model.count += 1;
       model.promptTokens += row.promptTokens;
       model.outputTokens += row.outputTokens;
-      model.costUsd += row.costUsd;
+      model.costUsd += costUsd;
       byModel.set(row.model, model);
 
       const variant = byVariant.get(row.variant) ?? {
@@ -164,7 +171,7 @@ export async function getAiUsageStats(): Promise<AiUsageStats> {
         costUsd: 0,
       };
       variant.count += 1;
-      variant.costUsd += row.costUsd;
+      variant.costUsd += costUsd;
       byVariant.set(row.variant, variant);
     }
 

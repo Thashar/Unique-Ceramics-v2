@@ -34,7 +34,8 @@ import {
  *    zdjęcie **AI+** i zdjęcie **AI** (`/api/admin/ai-image`, presety
  *    przypisane do przycisków w Ustawieniach → AI),
  * 4. podgląd wszystkich zdjęć i pytanie o **kolejne zdjęcie** tego produktu –
- *    jedno naraz: najpierw wybór trybu (**AI+** albo **AI**), potem plik,
+ *    jedno naraz: najpierw wybór trybu (**bez przetwarzania** – najtańsze,
+ *    **AI** albo **AI+**), potem plik,
  *    generowanie i znowu podgląd. Kolejność w karcie: AI+, AI, wersje AI
  *    dodatkowych, a **oryginały na końcu**,
  * 5. pytania o cenę (z **sugestią** – mediana cen produktów wzorcowych), liczbę
@@ -153,6 +154,14 @@ function MessageText({ text }: { text: string }) {
 /** Sygnał przerwania przebiegu – rzucany, gdy okno zostanie zamknięte w trakcie. */
 class Aborted extends Error {}
 
+/**
+ * Koszt przebiegu w USD z podziałem na to, za co się płaci: zdjęcia AI,
+ * treść karty (rozpoznanie, kategoria, nazwa i opis) i tłumaczenie. Sama
+ * rozmowa z agentem – pytania i przyciski – nie używa modelu i kosztuje 0.
+ */
+type Cost = { images: number; content: number; translation: number };
+const total = (c: Cost) => c.images + c.content + c.translation;
+
 export default function ProductAgent({
   usdPlnRate,
   categories,
@@ -175,7 +184,7 @@ export default function ProductAgent({
   const [question, setQuestion] = useState<Question | null>(null);
   const [draft, setDraft] = useState("");
   const [busyLabel, setBusyLabel] = useState("");
-  const [done, setDone] = useState<{ id: string; costUsd: number } | null>(null);
+  const [done, setDone] = useState<{ id: string; cost: Cost } | null>(null);
   const resolverRef = useRef<((a: Answer) => void) | null>(null);
   const rejectRef = useRef<((e: Error) => void) | null>(null);
   const logRef = useRef<HTMLDivElement>(null);
@@ -261,7 +270,7 @@ export default function ProductAgent({
   // ── Przebieg agenta ───────────────────────────────────────────────────────
   async function run(firstFile: File) {
     setRunning(true);
-    let cost = 0;
+    const cost: Cost = { images: 0, content: 0, translation: 0 };
     const presetName = (id: string) => presets.find((p) => p.id === id)?.name ?? id;
     try {
       if (!confirm(CONFIRM)) throw new Aborted("anulowane");
@@ -284,7 +293,7 @@ export default function ProductAgent({
         };
       };
       const first = await postJson<CardResponse>("/api/admin/ai-product-card", { url: originalUrl });
-      cost += first.costUsd ?? 0;
+      cost.content += first.costUsd ?? 0;
       if (!first.category) throw new Error("W sklepie nie ma żadnej kategorii – dodaj ją najpierw w zakładce Kategorie.");
       say(
         `**Rozpoznałem:** ${first.name}\n\n` +
@@ -309,7 +318,7 @@ export default function ProductAgent({
         category: category.slug,
         draft: first.draft,
       });
-      cost += card.costUsd ?? 0;
+      cost.content += card.costUsd ?? 0;
       const extras = card.extras ?? {
         firingNote: "",
         dimensions: [],
@@ -333,8 +342,9 @@ export default function ProductAgent({
             url: sourceUrl,
             variant,
             presetId: defaultPreset[variant],
+            agent: true,
           });
-          cost += gen.costUsd ?? 0;
+          cost.images += gen.costUsd ?? 0;
           say(`**Zdjęcie ${label}** ${what} gotowe (styl: ${gen.preset ?? presetName(defaultPreset[variant])}).`, [gen.url]);
           return gen.url;
         } catch (e) {
@@ -364,17 +374,20 @@ export default function ProductAgent({
           input: "none",
         });
         if (a.text !== "more") break;
+        // „Bez przetwarzania” jest najtańsze: dodatkowe kadry (z boku, z góry)
+        // niewiele zyskują na AI, a każde generowanie to kilkanaście groszy
         const mode = await ask({
-          text: "W jakim trybie przerobić to zdjęcie?",
+          text: "W jakim trybie dodać to zdjęcie?",
           choices: [
-            { value: "ai_plus", label: "AI+ (scena z rekwizytami)" },
+            { value: "none", label: "Bez przetwarzania – sam oryginał (0 zł)" },
             { value: "ai", label: "AI (jednolite tło)" },
+            { value: "ai_plus", label: "AI+ (scena z rekwizytami)" },
             { value: "skip", label: "Pomiń – wróć do zestawu" },
           ],
           input: "none",
         });
         if (mode.text === "skip") continue;
-        const variant: AiVariant = mode.text === "ai_plus" ? "ai_plus" : "ai";
+        const variant: AiVariant | null = mode.text === "ai_plus" ? "ai_plus" : mode.text === "ai" ? "ai" : null;
         const files = await ask({ text: "Wybierz zdjęcie (jedno).", files: true, input: "none" });
         const f = files.files?.[0];
         if (!f) continue;
@@ -387,6 +400,10 @@ export default function ProductAgent({
           continue;
         }
         extrasOriginal.push(url);
+        if (!variant) {
+          say(`**Dodano oryginał** zdjęcia ${extrasOriginal.length} bez przetwarzania.`, [url]);
+          continue;
+        }
         const ai = await generate(variant, url, `dodatkowego zdjęcia ${extrasOriginal.length}`);
         if (ai) extrasAi.push(ai);
       }
@@ -500,9 +517,10 @@ export default function ProductAgent({
       try {
         const tr = await postJson<{ texts: string[]; costUsd?: number }>("/api/admin/ai-translate", {
           texts: [card.name, description],
+          agent: true,
         });
         english = { name: tr.texts[0] ?? "", description: tr.texts[1] ?? "" };
-        cost += tr.costUsd ?? 0;
+        cost.translation += tr.costUsd ?? 0;
         say(`**Wersja angielska**\n\n**Name:** ${english.name}\n\n**Description:**\n${english.description}`);
       } catch (e) {
         say(`Tłumaczenia nie udało się zrobić (${errorText(e)}) – uzupełnisz je w zakładce EN produktu.`);
@@ -573,7 +591,7 @@ export default function ProductAgent({
           `**Sztuk:** ${stock}`
       );
       setBusyLabel("");
-      setDone({ id: saved.id, costUsd: cost });
+      setDone({ id: saved.id, cost });
       router.refresh();
     } catch (e) {
       setBusyLabel("");
@@ -582,7 +600,7 @@ export default function ProductAgent({
       } else {
         sayRaw(`**Nie udało się dokończyć:** ${errorText(e)}\n\nMożesz zamknąć okno i spróbować ponownie.`);
       }
-      if (cost > 0) setDone({ id: "", costUsd: cost });
+      if (total(cost) > 0) setDone({ id: "", cost });
     } finally {
       setRunning(false);
       setQuestion(null);
@@ -698,12 +716,32 @@ export default function ProductAgent({
               )}
               {done && (
                 <div className="border border-sand bg-warm-white px-4 py-3 text-sm">
-                  <p className="text-xs tracking-widest uppercase text-charcoal/80 mb-1">Koszt tego przebiegu</p>
-                  <p className="font-serif text-2xl text-espresso">
-                    {pln(done.costUsd * usdPlnRate)}
-                    <span className="text-sm text-charcoal/80 ml-2">({usd(done.costUsd)}, kurs {usdPlnRate.toFixed(2).replace(".", ",")} zł)</span>
-                  </p>
-                  <p className="text-[11px] text-charcoal/80 mt-1">Wg stawek Google AI z cennika w kodzie – kwota orientacyjna.</p>
+                  <p className="text-xs tracking-widest uppercase text-charcoal/80 mb-2">Koszt tego przebiegu</p>
+                  {/* Rozbicie: za co zapłacono. Rozmowa (pytania, przyciski) nie woła
+                      modelu, więc stoi z zerem – żeby było widać, że nie kosztuje */}
+                  <dl className="space-y-1 text-sm">
+                    {([
+                      ["Generowanie zdjęć", done.cost.images],
+                      ["Treść karty (rozpoznanie, kategoria, nazwa, opis)", done.cost.content],
+                      ["Tłumaczenie na angielski", done.cost.translation],
+                      ["Rozmowa z agentem (pytania, wybory)", 0],
+                    ] as [string, number][]).map(([label, value]) => (
+                      <div key={label} className="flex justify-between gap-4">
+                        <dt className="text-charcoal/80">{label}</dt>
+                        <dd className="tabular-nums text-espresso">
+                          {pln(value * usdPlnRate)} <span className="text-charcoal/80">({usd(value)})</span>
+                        </dd>
+                      </div>
+                    ))}
+                    <div className="flex justify-between gap-4 border-t border-sand pt-2 mt-1">
+                      <dt className="font-medium text-espresso">Razem</dt>
+                      <dd className="font-serif text-xl text-espresso tabular-nums">
+                        {pln(total(done.cost) * usdPlnRate)}
+                        <span className="text-sm text-charcoal/80 ml-2">({usd(total(done.cost))}, kurs {usdPlnRate.toFixed(2).replace(".", ",")} zł)</span>
+                      </dd>
+                    </div>
+                  </dl>
+                  <p className="text-[11px] text-charcoal/80 mt-2">Wg stawek Google AI z cennika w kodzie – kwota orientacyjna.</p>
                   {done.id && (
                     <button
                       type="button"
