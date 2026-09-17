@@ -357,6 +357,19 @@ export function resolveAiTextModel(fromSettings: string): string {
   return value && AI_TEXT_MODEL_IDS.includes(value) ? value : AI_TEXT_MODEL_DEFAULT;
 }
 
+/**
+ * Model **rozumowania agenta dodawania produktów** (`/api/admin/ai-product-card`:
+ * rozpoznanie zdjęcia, dobór kategorii, karta w stylu sklepu) – osobne
+ * ustawienie, bo tu opłaca się mocniejszy model niż do zwykłego uzupełniania
+ * opisu. Ta sama allowlista co model tekstowy; puste = jak model tekstowy.
+ */
+export const AI_AGENT_MODEL_SETTING_KEY = "ai_agent_model";
+
+export function resolveAiAgentModel(fromSettings: string, textModelSetting: string): string {
+  const value = fromSettings?.trim();
+  return value && AI_TEXT_MODEL_IDS.includes(value) ? value : resolveAiTextModel(textModelSetting);
+}
+
 /** Maksymalne długości pól zwracanych przez model (i tak walidowane serwerowo). */
 export const AI_TEXT_LIMITS = { name: 200, slug: 200, description: 600 };
 

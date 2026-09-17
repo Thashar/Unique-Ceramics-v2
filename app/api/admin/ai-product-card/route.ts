@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-auth";
 import { db, withDbRetry } from "@/lib/db";
-import { getSetting } from "@/lib/settings";
+import { getSettings } from "@/lib/settings";
 import { getCategories } from "@/lib/categories";
 import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 import { generateProductText, hasGoogleAiKey } from "@/lib/google-ai";
 import { recordAiUsage } from "@/lib/ai-usage";
 import {
+  AI_AGENT_MODEL_SETTING_KEY,
   AI_CARD_VARIANT,
   AI_TEXT_LIMITS,
   AI_TEXT_MODEL_SETTING_KEY,
@@ -14,7 +15,7 @@ import {
   aiCostUsd,
   buildProductCardPrompt,
   buildProductFillPrompt,
-  resolveAiTextModel,
+  resolveAiAgentModel,
 } from "@/lib/ai";
 import {
   cleanText,
@@ -42,7 +43,7 @@ const EXAMPLES = 2;
  * Zwraca `{ name, slug, category, categoryLabel, description, examples, model }` –
  * `examples` to nazwy produktów, na których model się wzorował (panel
  * pokazuje je w dzienniku). Zdjęć i zapisu ta trasa nie dotyka: robi to
- * `QuickAddProduct` po kolei istniejącymi trasami.
+ * `ProductAgent` po kolei istniejącymi trasami.
  */
 export async function POST(req: Request) {
   if (!await requireAdmin()) {
@@ -74,11 +75,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Nie udało się pobrać zdjęcia." }, { status: 400 });
   }
 
-  const [modelSetting, categories] = await Promise.all([
-    getSetting(AI_TEXT_MODEL_SETTING_KEY),
+  const [settings, categories] = await Promise.all([
+    getSettings([AI_AGENT_MODEL_SETTING_KEY, AI_TEXT_MODEL_SETTING_KEY]),
     getCategories(),
   ]);
-  const model = resolveAiTextModel(modelSetting);
+  // Model rozumowania agenta z Ustawień → AI; bez niego – model tekstowy
+  const model = resolveAiAgentModel(settings[AI_AGENT_MODEL_SETTING_KEY], settings[AI_TEXT_MODEL_SETTING_KEY]);
   const image = { data: input, mimeType: "image/jpeg" };
   // Koszt obu wywołań (USD) – panel pokazuje sumę na końcu szybkiego dodawania
   let costUsd = 0;

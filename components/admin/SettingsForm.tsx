@@ -40,6 +40,8 @@ import {
   AI_PRESETS_SETTING_KEY,
   AI_TEXT_MODELS,
   AI_TEXT_MODEL_SETTING_KEY,
+  AI_AGENT_MODEL_SETTING_KEY,
+  resolveAiAgentModel,
   aiCostPerImageUsd,
   buildImagePrompt,
   buildProductFillPrompt,
@@ -132,6 +134,7 @@ interface Props {
     ai_image_model: string;
     ai_image_model_plus: string;
     ai_text_model: string;
+    ai_agent_model: string;
     ai_usd_pln_rate: string;
     ai_prompt_presets: string;
     ai_prompt_preset_ai: string;
@@ -492,6 +495,10 @@ export default function SettingsForm({ section, initial, aiUsage, english = {} }
     resolveAiModel("ai_plus", initial.ai_image_model_plus)
   );
   const [aiTextModel, setAiTextModel] = useState(() => resolveAiTextModel(initial.ai_text_model));
+  // Model rozumowania agenta dodawania produktów – domyślnie ten sam co tekstowy
+  const [aiAgentModel, setAiAgentModel] = useState(() =>
+    resolveAiAgentModel(initial.ai_agent_model, initial.ai_text_model)
+  );
   const [aiRate, setAiRate] = useState(initial.ai_usd_pln_rate);
   // Presety promptów: własne trzymamy jako JSON (tak trafiają do ustawień),
   // a osobno identyfikator presetu przypisanego do każdego z przycisków
@@ -1503,6 +1510,29 @@ export default function SettingsForm({ section, initial, aiUsage, english = {} }
             </details>
           </div>
 
+          <div className="space-y-2 border border-sand bg-warm-white p-4">
+            <label className="block text-xs tracking-widest uppercase text-charcoal/80">
+              Agent dodawania produktów – model rozumowania
+            </label>
+            <select
+              value={aiAgentModel}
+              onChange={(e) => setAiAgentModel(e.target.value)}
+              className="w-full bg-warm-white border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors"
+            >
+              {AI_TEXT_MODELS.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.label} – {tokenRate(m.id)}
+                </option>
+              ))}
+            </select>
+            <p className="text-[11px] text-charcoal/80">
+              Model, który w agencie rozpoznaje produkt na zdjęciu, dobiera kategorię i pisze nazwę
+              oraz opis na wzór produktów z tej kategorii (dwa wywołania na produkt). Mocniejszy model
+              trafniej czyta motywy i napisy na ceramice; tłumaczenie i zwykłe uzupełnianie opisu
+              nadal idą modelem tekstowym powyżej.
+            </p>
+          </div>
+
           <div className="max-w-xs">
             <Field
               label="Kurs USD → PLN (do przeliczania kosztów)"
@@ -1519,6 +1549,7 @@ export default function SettingsForm({ section, initial, aiUsage, english = {} }
               { key: AI_MODEL_SETTING_KEY.ai, value: aiModel },
               { key: AI_MODEL_SETTING_KEY.ai_plus, value: aiModelPlus },
               { key: AI_TEXT_MODEL_SETTING_KEY, value: aiTextModel },
+              { key: AI_AGENT_MODEL_SETTING_KEY, value: aiAgentModel },
               { key: "ai_usd_pln_rate", value: aiRate },
               { key: AI_PRESETS_SETTING_KEY, value: aiPresets },
               { key: AI_PRESET_SETTING_KEY.ai, value: aiPresetAi },

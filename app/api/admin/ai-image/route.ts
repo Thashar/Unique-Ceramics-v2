@@ -51,6 +51,9 @@ export async function POST(req: Request) {
   const body = await req.json().catch(() => null);
   const url = typeof body?.url === "string" ? body.url.trim() : "";
   const variant = body?.variant;
+  // Opcjonalny preset promptu (id z listy w ustawieniach) – agent dodawania
+  // produktów pozwala wybrać styl zdjęcia; bez niego preset przypisany do przycisku
+  const presetId = typeof body?.presetId === "string" ? body.presetId.trim().slice(0, 80) : "";
   if (!url || !isAiVariant(variant)) {
     return NextResponse.json({ error: "Nieprawidłowe dane żądania." }, { status: 400 });
   }
@@ -87,7 +90,7 @@ export async function POST(req: Request) {
   // kadr, kolor, komplet, skala) dokłada buildImagePrompt – preset nie może ich pominąć
   const preset = resolveAiPreset(
     variant,
-    settings[AI_PRESET_SETTING_KEY[variant]],
+    presetId || settings[AI_PRESET_SETTING_KEY[variant]],
     parseAiPresets(settings[AI_PRESETS_SETTING_KEY])
   );
 
@@ -132,5 +135,5 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: saved.error }, { status: 500 });
   }
 
-  return NextResponse.json({ url: saved.url, model, costUsd });
+  return NextResponse.json({ url: saved.url, model, costUsd, preset: preset.name });
 }

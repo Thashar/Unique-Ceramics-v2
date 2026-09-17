@@ -7,8 +7,10 @@ import { Suspense } from "react";
 import { Languages, Plus, ShoppingBag, Star } from "lucide-react";
 import ProductsSearch from "@/components/admin/ProductsSearch";
 import ProductRowActions from "@/components/admin/ProductRowActions";
-import QuickAddProduct from "@/components/admin/QuickAddProduct";
-import { getSetting } from "@/lib/settings";
+import ProductAgent from "@/components/admin/ProductAgent";
+import { getSettings } from "@/lib/settings";
+import { getCollections } from "@/lib/collections";
+import { AI_PRESET_SETTING_KEY, AI_PRESETS_SETTING_KEY, allAiPresets, parseAiPresets, resolveAiPreset } from "@/lib/ai";
 import { getCategories } from "@/lib/categories";
 import { productOrderBy, resolveProductSort, sortByName } from "@/lib/product-sort";
 import { discountState, type DiscountState } from "@/lib/product-price";
@@ -93,8 +95,20 @@ export default async function AdminProductsPage({
   }),
   ]);
   const products = sortByName(rows, sort);
-  // Kurs USD→PLN z Ustawień → AI – do podsumowania kosztu szybkiego dodawania
-  const usdPlnRate = Math.max(0, parseFloat((await getSetting("ai_usd_pln_rate")).replace(",", ".")) || 0);
+  // Dane dla agenta dodawania produktów: kurs USD→PLN (podsumowanie kosztu),
+  // kolekcje (pytanie o serię), presety promptów (wybór stylu zdjęć) i preset
+  // przypisany do każdego z przycisków AI (proponowany jako domyślny)
+  const agentSettings = await getSettings([
+    "ai_usd_pln_rate", AI_PRESETS_SETTING_KEY, AI_PRESET_SETTING_KEY.ai, AI_PRESET_SETTING_KEY.ai_plus,
+  ]);
+  const usdPlnRate = Math.max(0, parseFloat(agentSettings.ai_usd_pln_rate.replace(",", ".")) || 0);
+  const customPresets = parseAiPresets(agentSettings[AI_PRESETS_SETTING_KEY]);
+  const presets = allAiPresets(customPresets).map((p) => ({ id: p.id, name: p.name }));
+  const defaultPreset = {
+    ai: resolveAiPreset("ai", agentSettings[AI_PRESET_SETTING_KEY.ai], customPresets).id,
+    ai_plus: resolveAiPreset("ai_plus", agentSettings[AI_PRESET_SETTING_KEY.ai_plus], customPresets).id,
+  };
+  const collections = (await getCollections()).map((c) => ({ slug: c.slug, label: c.label }));
 
   // Angielskie wersje (`en_product_{id}` w `Setting`) – do znaczka przy nazwie.
   // Odczyt w try/catch: brak tłumaczeń nie może wywrócić listy produktów
@@ -117,8 +131,14 @@ export default async function AdminProductsPage({
           <p className="text-sm text-charcoal/80 mt-0.5">{products.length} wyników</p>
         </div>
         <div className="flex items-center gap-2">
-          {/* Szybkie dodawanie: jedno zdjęcie → kompletna karta z AI (patrz `QuickAddProduct`) */}
-          <QuickAddProduct usdPlnRate={usdPlnRate} />
+          {/* Agent dodawania produktów: jedno zdjęcie → rozmowa → kompletny produkt (patrz `ProductAgent`) */}
+          <ProductAgent
+            usdPlnRate={usdPlnRate}
+            categories={categories.map((c) => ({ slug: c.slug, label: c.label }))}
+            collections={collections}
+            presets={presets}
+            defaultPreset={defaultPreset}
+          />
           <Link
             href="/admin/produkty/nowy"
             className="flex items-center gap-2 bg-clay hover:bg-terracotta hover:text-espresso text-warm-white text-xs tracking-widest uppercase px-4 py-2.5 transition-colors"
