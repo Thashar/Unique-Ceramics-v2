@@ -4,13 +4,15 @@
  * Zaokrąglone rogi i cienka jasna obwódka, żeby biała połowa polskiej flagi
  * nie znikała na jasnym tle.
  *
- * Rozmiar domyślny: **22 px wysokości** – tyle co ikony koszyka i konta
- * w nagłówku (`size={22}`), proporcje 3:2 dla obu flag (brytyjska jest 2:1,
- * więc `slice` przycina jej boki zamiast zostawiać pasy).
+ * Rozmiar domyślny: **18 px wysokości** – trochę mniej niż ikony koszyka
+ * i konta (22 px), bo pełny prostokąt koloru waży optycznie więcej niż
+ * kreskowa ikona (decyzja właściciela 17.09.2026: „nie za duża, nie za mała”).
+ * Proporcje 3:2 dla obu flag (brytyjska jest 2:1, więc `slice` przycina jej
+ * boki zamiast zostawiać pasy).
  */
 
 const FRAME = "rounded-[3px] ring-1 ring-white/25 shrink-0";
-export const FLAG_SIZE = "h-[22px] w-[33px]";
+export const FLAG_SIZE = "h-[18px] w-[27px]";
 
 export function FlagPL({ className = FLAG_SIZE }: { className?: string }) {
   return (

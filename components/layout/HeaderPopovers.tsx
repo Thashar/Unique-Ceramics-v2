@@ -40,9 +40,7 @@ function fmt(n: number): string {
 
 // ── Wspólny dymek ────────────────────────────────────────────────────────────
 
-// Eksportowany, bo z tego samego dymka korzysta przełącznik języka
-// (`LanguageSwitch`) – ma wyglądać i otwierać się tak jak koszyk i konto
-export function HoverPopover({
+function HoverPopover({
   trigger,
   label,
   children,
@@ -174,7 +172,7 @@ const HEADING_TILES = [
   "bg-sand/80", "bg-terracotta/80", "bg-clay/45", "bg-sand", "bg-terracotta/55",
 ];
 
-export function PopoverHeading({ title, aside }: { title: string; aside?: ReactNode }) {
+function PopoverHeading({ title, aside }: { title: string; aside?: ReactNode }) {
   return (
     <div className="px-4 pt-3.5 pb-3 border-b border-sand flex items-center gap-3">
       <span

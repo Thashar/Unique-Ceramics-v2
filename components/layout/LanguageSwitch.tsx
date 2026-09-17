@@ -1,28 +1,29 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { FlagGB, FlagPL } from "@/components/ui/Flags";
-import { HoverPopover, PopoverHeading } from "@/components/layout/HeaderPopovers";
 import { LOCALES, switchLocalePath, type Locale } from "@/lib/i18n";
 import { useLocale, useT } from "@/lib/use-locale";
 
 const FLAG: Record<Locale, typeof FlagPL> = { pl: FlagPL, en: FlagGB };
+const CLOSE_DELAY_MS = 180;
 
 /**
- * Przełącznik języka w nagłówku – **ten sam dymek co koszyk i konto**
- * (`HoverPopover`): otwiera się po najechaniu, ma dziobek, pas szkliwa
- * i nagłówek z mozaiką. W środku stoi **sama flaga drugiego języka, bez
- * napisu** (decyzja właściciela 17.09.2026) – nazwa języka zostaje tylko
- * w `aria-label`/`title`. Kliknięcie w samą flagę w pasku (bez czekania na
- * dymek – także na dotyku) od razu przełącza język.
+ * Przełącznik języka w nagłówku: flaga bieżącego języka, a po **najechaniu**
+ * pod nią pojawia się **sama flaga drugiego języka** – bez dymka, bez ramki
+ * i bez napisu (decyzja właściciela 17.09.2026; wersja w konwencji dymków
+ * koszyka i konta wycofana). Nazwa języka zostaje w `aria-label`/`title`.
+ * Kliknięcie flagi w pasku od razu przełącza język, więc działa też na
+ * dotyku, gdzie najechania nie ma.
  *
  * Link prowadzi na **tę samą stronę** w drugim języku (`switchLocalePath`);
  * strona bez odpowiednika – np. koszyk z wersji angielskiej – odsyła na
  * stronę główną danego języka.
  *
- * `variant="menu"` to wersja do menu mobilnego – bez dymka, obie flagi
- * obok siebie (bieżąca przygaszona).
+ * `variant="menu"` to wersja do menu mobilnego – obie flagi obok siebie,
+ * bieżąca przygaszona.
  */
 export default function LanguageSwitch({
   iconClass = "",
@@ -36,11 +37,24 @@ export default function LanguageSwitch({
   const locale = useLocale();
   const pathname = usePathname() ?? "/";
   const dict = useT();
+  const [open, setOpen] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const names: Record<Locale, string> = { pl: dict.common.polish, en: dict.common.english };
   // Pokazujemy tylko drugi język – flaga, którą już widać w pasku, nie jest opcją
-  const others = LOCALES.filter((code) => code !== locale);
-  const other = others[0];
+  const other = LOCALES.find((code) => code !== locale) ?? locale;
+
+  // Krótka zwłoka przy zjeżdżaniu, żeby przejście kursorem z flagi na tę
+  // pod spodem nie zamykało jej w połowie drogi
+  const show = () => {
+    if (timer.current) clearTimeout(timer.current);
+    setOpen(true);
+  };
+  const hide = () => {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => setOpen(false), CLOSE_DELAY_MS);
+  };
+  useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
 
   if (variant === "menu") {
     return (
@@ -68,43 +82,48 @@ export default function LanguageSwitch({
   }
 
   const Current = FLAG[locale];
+  const Other = FLAG[other];
 
   return (
-    <HoverPopover
-      label={dict.common.language}
-      width="w-36"
-      trigger={
+    <div
+      className="relative"
+      onMouseEnter={show}
+      onMouseLeave={hide}
+      onFocus={show}
+      onBlur={hide}
+    >
+      <Link
+        href={switchLocalePath(pathname, other)}
+        hrefLang={other}
+        onClick={onNavigate}
+        aria-label={`${dict.common.language}: ${names[locale]}`}
+        title={dict.common.switchTo}
+        className={`block p-2 ${iconClass}`}
+      >
+        <Current />
+      </Link>
+
+      {/* Druga flaga wysuwa się pod pierwszą, dokładnie w tej samej osi.
+          `pt-1` zamiast odstępu marginesem – szczelina jest częścią elementu,
+          więc kursor przechodzący przez nią nie wywołuje `mouseleave` */}
+      <div
+        className={`absolute left-0 top-full pt-1 z-50 transition-all duration-150 ${
+          open ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-1 pointer-events-none"
+        }`}
+      >
         <Link
           href={switchLocalePath(pathname, other)}
           hrefLang={other}
           onClick={onNavigate}
-          aria-label={`${dict.common.language}: ${names[locale]}`}
-          title={dict.common.switchTo}
-          className={`block p-2 ${iconClass}`}
+          tabIndex={open ? 0 : -1}
+          aria-hidden={!open}
+          aria-label={names[other]}
+          title={names[other]}
+          className="block p-2 opacity-90 hover:opacity-100 transition-opacity"
         >
-          <Current />
+          <Other />
         </Link>
-      }
-    >
-      <PopoverHeading title={dict.common.language} />
-      <div className="flex items-center justify-center gap-4 px-4 py-4">
-        {others.map((code) => {
-          const Flag = FLAG[code];
-          return (
-            <Link
-              key={code}
-              href={switchLocalePath(pathname, code)}
-              hrefLang={code}
-              onClick={onNavigate}
-              aria-label={names[code]}
-              title={names[code]}
-              className="inline-flex rounded-md p-1.5 transition-colors hover:bg-cream"
-            >
-              <Flag className="h-7 w-[42px]" />
-            </Link>
-          );
-        })}
       </div>
-    </HoverPopover>
+    </div>
   );
 }
