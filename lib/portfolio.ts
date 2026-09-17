@@ -1,5 +1,5 @@
 import { unstable_cache } from "next/cache";
-import { revalidateTag } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { db, withDbRetry } from "@/lib/db";
 
 export type Project = {
@@ -44,4 +44,6 @@ export async function getProjects(): Promise<Project[]> {
 export function revalidatePortfolioPages() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   revalidateTag("projects", "max" as any);
+  // Strony projektów są w sitemapie – nowy projekt ma w niej być od razu
+  revalidatePath("/sitemap.xml");
 }

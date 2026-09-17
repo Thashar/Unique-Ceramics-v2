@@ -1,4 +1,4 @@
-import { unstable_cache, revalidateTag } from "next/cache";
+import { unstable_cache, revalidatePath, revalidateTag } from "next/cache";
 import { db, withDbRetry } from "@/lib/db";
 import { DEFAULT_CATEGORIES } from "@/lib/category-defaults";
 
@@ -24,4 +24,6 @@ export const getCategories = unstable_cache(
 
 export function revalidateCategories() {
   revalidateTag("categories", "max");
+  // Strony kategorii są w sitemapie – nowa kategoria ma w niej być od razu
+  revalidatePath("/sitemap.xml");
 }

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Upload, X, Trash2, MoveLeft, MoveRight, Sparkles, Loader2 } from "lucide-react";
+import { Upload, X, Trash2, MoveLeft, MoveRight, RotateCcw, RotateCw, Sparkles, Loader2 } from "lucide-react";
 import { uploadErrorMessage } from "@/lib/upload-error";
 import { PRODUCT_MAX_IMAGES } from "@/lib/product-validation";
 import {
@@ -113,6 +113,8 @@ export default function ProductForm({
   const [uploading, setUploading] = useState(false);
   // Które zdjęcie jest właśnie przerabiane przez AI (indeks + wariant)
   const [generating, setGenerating] = useState<AiGenerating>(null);
+  // Indeks obracanego zdjęcia – obrót idzie przez serwer i trwa chwilę
+  const [rotating, setRotating] = useState<number | null>(null);
   const [filling, setFilling] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -211,6 +213,34 @@ export default function ProductForm({
   function removeImage(idx: number) {
     if (!confirm("Usunąć to zdjęcie z produktu?")) return;
     setImages((prev) => prev.filter((_, i) => i !== idx));
+  }
+
+  /**
+   * Obrót trwały przez `/api/admin/rotate`: serwer zapisuje obrócony plik pod
+   * nową nazwą (razem z wariantami) i zwraca adres, który podmieniamy na liście.
+   * Do bazy trafia dopiero przy zapisaniu produktu – jak każda zmiana zdjęć.
+   */
+  async function rotateImage(idx: number, angle: 90 | 270) {
+    if (rotating !== null || generating || uploading) return;
+    setRotating(idx);
+    setError("");
+    try {
+      const res = await fetch("/api/admin/rotate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: images[idx], angle }),
+      });
+      const data = await res.json().catch(() => null);
+      if (res.ok && data?.url) {
+        setImages((prev) => prev.map((u, i) => (i === idx ? (data.url as string) : u)));
+      } else {
+        setError(data?.error ?? "Nie udało się obrócić zdjęcia.");
+      }
+    } catch {
+      setError("Brak połączenia z serwerem – spróbuj ponownie.");
+    } finally {
+      setRotating(null);
+    }
   }
 
   /** Zamiana zdjęcia z sąsiadem – kolejność decyduje, które jest główne (pierwsze). */
@@ -473,7 +503,30 @@ export default function ProductForm({
                   </span>
                 )}
               </div>
-              <div className="flex items-center justify-between mt-1.5">
+              {/* Obrót w lewo / w prawo – trwały, przez serwer (jak w galeriach ustawień) */}
+              <div className="flex items-center justify-center gap-1 mt-1.5">
+                <button
+                  type="button"
+                  onClick={() => rotateImage(i, 270)}
+                  disabled={rotating !== null || Boolean(generating) || uploading}
+                  title="Obróć w lewo"
+                  aria-label={`Obróć zdjęcie ${i + 1} w lewo`}
+                  className="p-1 text-charcoal hover:text-espresso disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <RotateCcw size={14} className={rotating === i ? "animate-spin" : ""} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => rotateImage(i, 90)}
+                  disabled={rotating !== null || Boolean(generating) || uploading}
+                  title="Obróć w prawo"
+                  aria-label={`Obróć zdjęcie ${i + 1} w prawo`}
+                  className="p-1 text-charcoal hover:text-espresso disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <RotateCw size={14} className={rotating === i ? "animate-spin" : ""} />
+                </button>
+              </div>
+              <div className="flex items-center justify-between mt-0.5">
                 <button
                   type="button"
                   onClick={() => moveImage(i, -1)}

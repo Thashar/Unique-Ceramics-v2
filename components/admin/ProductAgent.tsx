@@ -4,8 +4,9 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Bot, Loader2, Sparkles, Upload, X } from "lucide-react";
+import { Bot, Loader2, Plus, Redo2, Sparkles, Upload, X } from "lucide-react";
 import { uploadErrorMessage } from "@/lib/upload-error";
+import { slugifyTitle } from "@/lib/portfolio-slug";
 import { enProductKey } from "@/lib/i18n-content";
 import type { AiVariant } from "@/lib/ai";
 import {
@@ -30,27 +31,35 @@ import {
  * 2. rozpoznanie i **propozycja kategorii** (`/api/admin/ai-product-card`
  *    bez `category`) → przyciski „Zostaw” / inne kategorie,
  * 3. po potwierdzeniu **automatycznie**: karta w stylu i formatowaniu
- *    produktów z tej kategorii (`ai-product-card` z `category` + `draft`),
- *    zdjęcie **AI+** i zdjęcie **AI** (`/api/admin/ai-image`, presety
- *    przypisane do przycisków w Ustawieniach → AI),
- * 4. podgląd wszystkich zdjęć i pytanie o **kolejne zdjęcie** tego produktu –
- *    jedno naraz: najpierw wybór trybu (**bez przetwarzania** – najtańsze,
- *    **AI** albo **AI+**), potem plik,
- *    generowanie i znowu podgląd. Kolejność w karcie: AI+, AI, wersje AI
- *    dodatkowych, a **oryginały na końcu**,
+ *    produktów z tej kategorii (`ai-product-card` z `category` + `draft`)
+ *    i **jedno** zdjęcie **AI+** (`/api/admin/ai-image`, preset przypisany
+ *    do przycisku w Ustawieniach → AI) – wersja AI ze zdjęcia głównego nie
+ *    powstaje sama (decyzja właściciela 17.09.2026: mniej płatnych wywołań),
+ * 4. podgląd wszystkich zdjęć i pytanie o **kolejne zdjęcie** – przyciski
+ *    „Kolejne AI+” / „Kolejne AI” (z plusem) i pod nimi „Wystarczy, idziemy
+ *    dalej”; po wyborze trybu plik, generowanie i znowu podgląd. Kolejność
+ *    w karcie: AI+, wersje AI kolejnych zdjęć, **oryginały na końcu**,
  * 5. pytania o cenę (z **sugestią** – mediana cen produktów wzorcowych), liczbę
- *    sztuk i kolekcję,
+ *    sztuk i kolekcję – tu można też **założyć nową kolekcję** (przycisk
+ *    z plusem, potem nazwa; `POST /api/admin/collections`, slug z nazwy),
  * 6. **wymiary i pojemność** – etykiety i podpowiedzi wartości pochodzą ze
  *    wzorów (`extras` z trasy), a opis składa `buildProductDescription`
  *    w stałym układzie: opis (2 zdania), zdanie o wypale ze wzorów,
  *    „Wymiary:”, „Pojemność:” – model nie skleja tego sam, bo potrafił wkleić
  *    wymiary dwa razy i zostawić znacznik w tekście (17.09.2026),
  * 7. tłumaczenie nazwy i pełnego opisu (`/api/admin/ai-translate`),
- * 8. przy cenie i stanie > 0 pytanie, czy włączyć produkt; zapis
- *    (`POST /api/admin/products`, zajęty slug → sufiks) i `en_product_{id}`.
+ * 8. pytanie, czy **usunąć wrzucone oryginały** z karty (zostają same
+ *    zdjęcia z AI; pliki w Storage sprząta Ustawienia → Zdjęcia) – tylko gdy
+ *    jest choć jedno zdjęcie z AI, potem przy cenie i stanie > 0 pytanie,
+ *    czy włączyć produkt; zapis (`POST /api/admin/products`, zajęty slug →
+ *    sufiks) i `en_product_{id}`.
  *
  * **Każde pytanie da się pominąć** przyciskiem – wtedy pole zostaje puste
  * (cena 0 = produkt nieaktywny, wymiar bez wartości nie trafia do opisu).
+ * **Układ przycisków** (decyzja właściciela 17.09.2026): „Pomiń” (strzałka)
+ * i „Utwórz…” (plus) stoją zawsze w **pierwszym rzędzie**, pozostałe wybory
+ * w kolejnych – `Choice.kind`. Jedyny wyjątek to liczba sztuk: 1, 2, 3, 4,
+ * a „Pomiń” na końcu (`Question.skipLast`).
  *
  * Na końcu podsumowanie z kosztem przebiegu w PLN i USD (suma `costUsd`
  * z odpowiedzi tras × kurs z Ustawień → AI). Agent nie pisze, na czym się
@@ -61,7 +70,12 @@ type Category = { slug: string; label: string };
 type Collection = { slug: string; label: string };
 type Preset = { id: string; name: string };
 
-type Choice = { value: string; label: string };
+type Choice = {
+  value: string;
+  label: string;
+  /** `skip` – pomiń (strzałka), `create` – utwórz (plus); oba w pierwszym rzędzie przycisków. */
+  kind?: "skip" | "create";
+};
 type Msg = {
   id: number;
   who: "agent" | "user";
@@ -69,6 +83,7 @@ type Msg = {
   images?: string[];
   /** Przyciski wyboru pod wypowiedzią – aktywne tylko przy ostatnim pytaniu. */
   choices?: Choice[];
+  skipLast?: boolean;
 };
 type Question = {
   text: string;
@@ -78,12 +93,17 @@ type Question = {
   placeholder?: string;
   /** Pytanie o pliki – na dole pokazuje wybór zdjęć. */
   files?: boolean;
+  /** „Pomiń” na końcu jednego rzędu zamiast na początku (tylko liczba sztuk). */
+  skipLast?: boolean;
 };
 type Answer = { text: string; files?: File[]; label?: string };
 
 const CONFIRM =
-  "Agent wykona kilka płatnych wywołań AI (rozpoznanie i opis, zdjęcia AI+ i AI, wersje AI dodatkowych zdjęć, tłumaczenie) " +
+  "Agent wykona kilka płatnych wywołań AI (rozpoznanie i opis, zdjęcie AI+, wersje AI kolejnych zdjęć, tłumaczenie) " +
   "i po drodze zada Ci parę pytań. Kontynuować?";
+
+/** Ile razy próbujemy wolnego sluga kolekcji, gdy nazwa się powtarza. */
+const COLLECTION_SLUG_ATTEMPTS = 6;
 
 /** Ile razy próbujemy wolnego sluga, gdy nazwa się powtarza. */
 const SLUG_ATTEMPTS = 6;
@@ -155,6 +175,47 @@ function MessageText({ text }: { text: string }) {
 /** Sygnał przerwania przebiegu – rzucany, gdy okno zostanie zamknięte w trakcie. */
 class Aborted extends Error {}
 
+const CHOICE_CLASS =
+  "inline-flex items-center gap-1.5 border border-clay text-clay hover:bg-clay hover:text-cream text-xs px-3 py-1.5 transition-colors disabled:opacity-50";
+
+/**
+ * Przyciski wyboru: „Pomiń” (strzałka) i „Utwórz…” (plus) w **pierwszym
+ * rzędzie**, pozostałe opcje w kolejnych. `skipLast` (liczba sztuk) układa
+ * wszystko w jednym rzędzie z „Pomiń” na końcu.
+ */
+function ChoiceRows({
+  choices,
+  skipLast,
+  disabled,
+  onPick,
+}: {
+  choices: Choice[];
+  skipLast: boolean;
+  disabled: boolean;
+  onPick: (c: Choice) => void;
+}) {
+  const button = (c: Choice) => (
+    <button key={c.value + c.label} type="button" disabled={disabled} onClick={() => onPick(c)} className={CHOICE_CLASS}>
+      {c.kind === "skip" && <Redo2 size={13} strokeWidth={1.75} aria-hidden="true" />}
+      {c.kind === "create" && <Plus size={13} strokeWidth={2} aria-hidden="true" />}
+      {c.label}
+    </button>
+  );
+  if (skipLast) {
+    const rest = choices.filter((c) => c.kind !== "skip");
+    const skip = choices.filter((c) => c.kind === "skip");
+    return <div className="mt-3 flex flex-wrap gap-2">{[...rest, ...skip].map(button)}</div>;
+  }
+  const first = choices.filter((c) => c.kind === "skip" || c.kind === "create");
+  const rest = choices.filter((c) => !c.kind);
+  return (
+    <div className="mt-3 space-y-2">
+      {first.length > 0 && <div className="flex flex-wrap gap-2">{first.map(button)}</div>}
+      {rest.length > 0 && <div className="flex flex-wrap gap-2">{rest.map(button)}</div>}
+    </div>
+  );
+}
+
 /**
  * Koszt przebiegu w USD z podziałem na to, za co się płaci:
  * - `images` – zdjęcia AI,
@@ -189,6 +250,8 @@ export default function ProductAgent({
   const [draft, setDraft] = useState("");
   const [busyLabel, setBusyLabel] = useState("");
   const [done, setDone] = useState<{ id: string; cost: Cost } | null>(null);
+  // Kolekcje założone w rozmowie dokładamy do listy od razu
+  const [collectionList, setCollectionList] = useState<Collection[]>(collections);
   const resolverRef = useRef<((a: Answer) => void) | null>(null);
   const rejectRef = useRef<((e: Error) => void) | null>(null);
   const logRef = useRef<HTMLDivElement>(null);
@@ -202,8 +265,8 @@ export default function ProductAgent({
     logRef.current?.scrollTo({ top: logRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, question, busyLabel]);
 
-  function sayRaw(text: string, images?: string[], choices?: Choice[]) {
-    setMessages((prev) => [...prev, { id: nextId.current++, who: "agent", text, images, choices }]);
+  function sayRaw(text: string, images?: string[], choices?: Choice[], skipLast?: boolean) {
+    setMessages((prev) => [...prev, { id: nextId.current++, who: "agent", text, images, choices, skipLast }]);
   }
   function say(text: string, images?: string[]) {
     if (abortRef.current) throw new Aborted("przerwane");
@@ -221,7 +284,7 @@ export default function ProductAgent({
   function ask(q: Question): Promise<Answer> {
     if (abortRef.current) return Promise.reject(new Aborted("przerwane"));
     setBusyLabel("");
-    sayRaw(q.text, undefined, q.choices);
+    sayRaw(q.text, undefined, q.choices, q.skipLast);
     setQuestion(q);
     setDraft("");
     return new Promise<Answer>((resolve, reject) => {
@@ -265,8 +328,8 @@ export default function ProductAgent({
     sayRaw(
       "Cześć! Wgraj **jedno zdjęcie produktu**.\n\n" +
         "Rozpoznam, co to jest, i zaproponuję kategorię. Po jej potwierdzeniu napiszę nazwę i opis " +
-        "w stylu Twojego sklepu, wygeneruję zdjęcia AI+ i AI, a potem zapytam o kolejne zdjęcia, cenę, " +
-        "liczbę sztuk i kolekcję. Na koniec przetłumaczę kartę na angielski i zapiszę produkt."
+        "w stylu Twojego sklepu, wygeneruję zdjęcie AI+, a potem zapytam o kolejne zdjęcia, cenę, " +
+        "liczbę sztuk, kolekcję i wymiary. Na koniec przetłumaczę kartę na angielski i zapiszę produkt."
     );
     setQuestion({ text: "", files: true, input: "none" });
   }
@@ -337,7 +400,7 @@ export default function ProductAgent({
           "\n\nO wymiary, pojemność i cenę zapytam po zdjęciach."
       );
 
-      // Zdjęcia AI+ i AI ze zdjęcia głównego – presety przypisane do przycisków
+      // Zdjęcie AI+ ze zdjęcia głównego – preset przypisany do przycisku
       const generate = async (variant: AiVariant, sourceUrl: string, what: string): Promise<string | null> => {
         const label = variant === "ai_plus" ? "AI+" : "AI";
         setBusyLabel(`Generuję zdjęcie ${label} ${what}…`);
@@ -357,42 +420,35 @@ export default function ProductAgent({
         }
       };
       const aiPlus = await generate("ai_plus", originalUrl, "(scena)");
-      const aiPlain = await generate("ai", originalUrl, "(jednolite tło)");
 
-      // 4. Zestaw zdjęć i kolejne zdjęcia produktu – jedno naraz, najpierw tryb
+      // 4. Zestaw zdjęć i kolejne zdjęcia produktu – jedno naraz: tryb, plik, generowanie
       const extrasOriginal: string[] = [];
       const extrasAi: string[] = [];
-      const currentSet = () =>
-        [aiPlus, aiPlain, ...extrasAi, originalUrl, ...extrasOriginal].filter((u): u is string => Boolean(u));
+      const generated = () => [aiPlus, ...extrasAi].filter((u): u is string => Boolean(u));
+      const originals = () => [originalUrl, ...extrasOriginal];
+      const currentSet = () => [...generated(), ...originals()];
       for (;;) {
         say(
-          `**Zestaw zdjęć** (${currentSet().length}) w kolejności, w jakiej trafi do karty: AI+, AI, wersje AI dodatkowych zdjęć, oryginały na końcu.`,
+          `**Zestaw zdjęć** (${currentSet().length}) w kolejności, w jakiej trafi do karty: AI+, wersje AI kolejnych zdjęć, oryginały na końcu.`,
           currentSet()
         );
         const a = await ask({
-          text: "Czy chcesz dodać **kolejne zdjęcie** tego produktu?",
+          text: "Chcesz dodać **kolejne zdjęcie** tego produktu?",
           choices: [
-            { value: "more", label: "Tak, dodaję zdjęcie" },
-            { value: "next", label: "Nie, zdjęcia są kompletne" },
+            { value: "ai_plus", label: "Kolejne AI+", kind: "create" },
+            { value: "ai", label: "Kolejne AI", kind: "create" },
+            { value: "next", label: "Wystarczy, idziemy dalej" },
           ],
           input: "none",
         });
-        if (a.text !== "more") break;
-        // „Bez przetwarzania” jest najtańsze: dodatkowe kadry (z boku, z góry)
-        // niewiele zyskują na AI, a każde generowanie to kilkanaście groszy
-        const mode = await ask({
-          text: "W jakim trybie dodać to zdjęcie?",
-          choices: [
-            { value: "none", label: "Bez przetwarzania – sam oryginał (0 zł)" },
-            { value: "ai", label: "AI (jednolite tło)" },
-            { value: "ai_plus", label: "AI+ (scena z rekwizytami)" },
-            { value: "skip", label: "Pomiń – wróć do zestawu" },
-          ],
+        if (a.text === "next") break;
+        const variant: AiVariant = a.text === "ai_plus" ? "ai_plus" : "ai";
+        const files = await ask({
+          text: `Wybierz zdjęcie (jedno) – zrobię z niego wersję **${variant === "ai_plus" ? "AI+" : "AI"}**.`,
+          files: true,
           input: "none",
+          choices: [{ value: "", label: "Pomiń – wróć do zestawu", kind: "skip" }],
         });
-        if (mode.text === "skip") continue;
-        const variant: AiVariant | null = mode.text === "ai_plus" ? "ai_plus" : mode.text === "ai" ? "ai" : null;
-        const files = await ask({ text: "Wybierz zdjęcie (jedno).", files: true, input: "none" });
         const f = files.files?.[0];
         if (!f) continue;
         setBusyLabel(`Wgrywam ${f.name}…`);
@@ -404,14 +460,10 @@ export default function ProductAgent({
           continue;
         }
         extrasOriginal.push(url);
-        if (!variant) {
-          say(`**Dodano oryginał** zdjęcia ${extrasOriginal.length} bez przetwarzania.`, [url]);
-          continue;
-        }
-        const ai = await generate(variant, url, `dodatkowego zdjęcia ${extrasOriginal.length}`);
+        const ai = await generate(variant, url, `kolejnego zdjęcia ${extrasOriginal.length}`);
         if (ai) extrasAi.push(ai);
       }
-      const images = currentSet();
+      let images = currentSet();
 
       // 5. Cena (z sugestią ze wzorów), liczba sztuk, kolekcja – każde do pominięcia
       let price = 0;
@@ -424,8 +476,8 @@ export default function ProductAgent({
           input: "number",
           placeholder: suggested ? String(suggested) : "np. 85",
           choices: [
+            { value: "0", label: "Pomiń – ustalę później (produkt zostanie nieaktywny)", kind: "skip" },
             ...(suggested ? [{ value: String(suggested), label: `Użyj sugerowanej: ${suggested} zł` }] : []),
-            { value: "0", label: "Pomiń – ustalę później (produkt zostanie nieaktywny)" },
           ],
         });
         const parsed = parseMoney(a.text);
@@ -442,9 +494,10 @@ export default function ProductAgent({
           input: "number",
           placeholder: "np. 3",
           choices: [
-            ...[1, 2, 3, 5].map((n) => ({ value: String(n), label: `${n} szt.` })),
-            { value: "0", label: "Pomiń (0 szt.)" },
+            ...[1, 2, 3, 4].map((n) => ({ value: String(n), label: `${n} szt.` })),
+            { value: "0", label: "Pomiń (0 szt.)", kind: "skip" },
           ],
+          skipLast: true,
         });
         const parsed = parseCount(a.text);
         if (parsed === null) { say("Podaj liczbę sztuk, np. 2."); continue; }
@@ -454,18 +507,55 @@ export default function ProductAgent({
       say(`**Stan magazynowy:** ${stock} szt.`);
 
       let collection: string | null = null;
-      if (collections.length > 0) {
+      let known = collectionList;
+      for (;;) {
         const a = await ask({
           text: "Do której **kolekcji** (serii) należy ten produkt?",
           choices: [
-            ...collections.map((c) => ({ value: c.slug, label: c.label })),
-            { value: "", label: "Pomiń – bez kolekcji" },
+            { value: "", label: "Pomiń – bez kolekcji", kind: "skip" },
+            { value: "__new__", label: "Utwórz nową kolekcję", kind: "create" },
+            ...known.map((c) => ({ value: c.slug, label: c.label })),
           ],
           input: "none",
         });
-        collection = a.text || null;
-        say(collection ? `**Kolekcja:** ${collections.find((c) => c.slug === collection)?.label ?? collection}` : "**Kolekcja:** brak");
+        if (a.text !== "__new__") { collection = a.text || null; break; }
+        // Nowa kolekcja: nazwa z pola, slug z nazwy; zajęty slug dostaje sufiks
+        const named = await ask({
+          text: "Jak ma się nazywać **nowa kolekcja**? Wpisz nazwę w polu na dole.",
+          input: "text",
+          placeholder: "np. Seria leśna",
+          choices: [{ value: "", label: "Pomiń – wróć do wyboru kolekcji", kind: "skip" }],
+        });
+        const label = named.text.trim().slice(0, 60);
+        if (!label) continue;
+        const base = slugifyTitle(label) || "kolekcja";
+        setBusyLabel(`Zakładam kolekcję „${label}”…`);
+        let created: Collection | null = null;
+        let lastError = "";
+        for (let attempt = 0; attempt < COLLECTION_SLUG_ATTEMPTS && !created; attempt++) {
+          const slug = (attempt === 0 ? base : `${base}-${attempt + 1}`).slice(0, 60);
+          const res = await fetch("/api/admin/collections", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ slug, label, order: known.length }),
+          });
+          const data = await res.json().catch(() => null);
+          if (res.ok && data?.slug) { created = { slug: data.slug, label: data.label ?? label }; break; }
+          lastError = data?.error ?? `Błąd ${res.status}`;
+          if (res.status !== 409) break;
+        }
+        setBusyLabel("");
+        if (!created) {
+          say(`Nie udało się założyć kolekcji (${lastError}) – wybierz istniejącą albo pomiń.`);
+          continue;
+        }
+        known = [...known, created];
+        setCollectionList(known);
+        collection = created.slug;
+        say(`**Założyłem kolekcję:** ${created.label}`);
+        break;
       }
+      say(collection ? `**Kolekcja:** ${known.find((c) => c.slug === collection)?.label ?? collection}` : "**Kolekcja:** brak");
 
       // 6. Wymiary i pojemność – etykiety i podpowiedzi ze wzorów; opis składa
       // `buildProductDescription` w stałym układzie
@@ -482,8 +572,8 @@ export default function ProductAgent({
           input: "number",
           placeholder: example || "np. 8",
           choices: [
+            { value: "", label: "Pomiń ten wymiar", kind: "skip" },
             ...(example ? [{ value: example, label: `Użyj: ${example}` }] : []),
-            { value: "", label: "Pomiń ten wymiar" },
           ],
         });
         const value = a.text ? normalizeMeasure(a.text, "cm") : "";
@@ -499,8 +589,8 @@ export default function ProductAgent({
           input: "number",
           placeholder: example || "np. 300",
           choices: [
+            { value: "", label: "Pomiń pojemność", kind: "skip" },
             ...(example ? [{ value: example, label: `Użyj: ${example}` }] : []),
-            { value: "", label: "Pomiń pojemność" },
           ],
         });
         capacity = a.text ? normalizeMeasure(a.text, "ml") : "";
@@ -530,7 +620,27 @@ export default function ProductAgent({
         say(`Tłumaczenia nie udało się zrobić (${errorText(e)}) – uzupełnisz je w zakładce EN produktu.`);
       }
 
-      // 8. Widoczność i zapis
+      // 8. Wrzucone oryginały: zostawić w karcie, czy zostawić same zdjęcia z AI?
+      // Pytamy tylko wtedy, gdy jest czym je zastąpić – bez zdjęcia z AI karta
+      // zostałaby pusta. Pliki w Storage zostają (sprząta je Ustawienia → Zdjęcia)
+      if (generated().length > 0) {
+        const a = await ask({
+          text:
+            `W karcie są **${originals().length}** wrzucone zdjęcia (oryginały) i **${generated().length}** z AI. ` +
+            "Usunąć oryginały z karty i zostawić same zdjęcia z AI?",
+          choices: [
+            { value: "yes", label: "Tak, usuń wrzucone – zostaw wygenerowane" },
+            { value: "no", label: "Nie, zostaw wszystkie" },
+          ],
+          input: "none",
+        });
+        if (a.text === "yes") {
+          images = generated();
+          say(`**Zdjęcia w karcie:** ${images.length} (same wygenerowane). Wrzucone pliki zostają w magazynie – usuniesz je w Ustawieniach → Zdjęcia.`, images);
+        }
+      }
+
+      // 9. Widoczność i zapis
       let active = false;
       if (price > 0 && stock > 0) {
         const a = await ask({
@@ -631,7 +741,8 @@ export default function ProductAgent({
   }
 
   const textInputActive = Boolean(question && !question.files && question.input !== "none");
-  // Przyciski w rozmowie działają tylko przy bieżącym (jeszcze nieodpowiedzianym) pytaniu
+  // Przyciski w rozmowie działają tylko przy bieżącym (jeszcze nieodpowiedzianym)
+  // pytaniu; przy pytaniu o plik „Pomiń” w rozmowie odpowiada bez plików
   const choicesActive = Boolean(question?.choices);
 
   return (
@@ -672,11 +783,13 @@ export default function ProductAgent({
                 return (
                   <div key={m.id} className={`flex ${m.who === "user" ? "justify-end" : "justify-start"}`}>
                     <div
-                      className={`${wide ? "w-full" : "max-w-[85%]"} px-4 py-3 text-sm leading-relaxed ${
+                      className={
                         m.who === "user"
-                          ? "bg-espresso text-cream"
-                          : "bg-warm-white border border-sand text-charcoal"
-                      }`}
+                          // Odpowiedzi właściciela: drobne, na jasnym piaskowym tle –
+                          // ciemny dymek przytłaczał rozmowę (17.09.2026)
+                          ? "max-w-[75%] px-3 py-1.5 text-xs leading-relaxed bg-sand/60 text-espresso"
+                          : `${wide ? "w-full" : "max-w-[85%]"} px-4 py-3 text-sm leading-relaxed bg-warm-white border border-sand text-charcoal`
+                      }
                     >
                       {m.who === "agent" ? <MessageText text={m.text} /> : m.text}
                       {m.images && m.images.length > 0 && (
@@ -693,20 +806,10 @@ export default function ProductAgent({
                       )}
                       {m.choices && m.choices.length > 0 && (
                         // Przyciski wyboru pod wypowiedzią agenta – aktywne przy
-                        // bieżącym pytaniu; po odpowiedzi znikają z wiadomości
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {m.choices.map((c) => (
-                            <button
-                              key={c.value + c.label}
-                              type="button"
-                              disabled={!choicesActive}
-                              onClick={() => answer({ text: c.value, label: c.label })}
-                              className="border border-clay text-clay hover:bg-clay hover:text-cream text-xs px-3 py-1.5 transition-colors disabled:opacity-50"
-                            >
-                              {c.label}
-                            </button>
-                          ))}
-                        </div>
+                        // bieżącym pytaniu; po odpowiedzi znikają z wiadomości.
+                        // „Pomiń” i „Utwórz…” stoją w pierwszym rzędzie, reszta niżej;
+                        // przy liczbie sztuk „Pomiń” idzie na koniec jednego rzędu
+                        <ChoiceRows choices={m.choices} skipLast={Boolean(m.skipLast)} disabled={!choicesActive} onPick={(c) => answer({ text: c.value, label: c.label })} />
                       )}
                     </div>
                   </div>

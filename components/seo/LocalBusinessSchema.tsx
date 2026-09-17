@@ -38,7 +38,7 @@ const websiteSchema = {
   // „Alicja Ulbrich” ma trafić tutaj
   alternateName: ["Unique Ceramics - Alicja Ulbrich", "Alicja Ulbrich"],
   url: BASE,
-  description: "Sklep z ręcznie robioną ceramiką artystyczną Alicji Ulbrich",
+  description: "Ceramika Gliwice – sklep z ręcznie robioną ceramiką artystyczną Alicji Ulbrich",
   inLanguage: "pl-PL",
   publisher: { "@id": `${BASE}/#business` },
   // Bez `potentialAction`/SearchAction: sklep nie ma wyszukiwarki, a deklaracja
@@ -75,7 +75,7 @@ export default async function LocalBusinessSchema() {
     name: "Unique Ceramics",
     alternateName: "Unique Ceramics - Alicja Ulbrich",
     description:
-      "Pracownia ceramiki artystycznej Alicji Ulbrich tworząca ręcznie robione naczynia użytkowe i dekoracyjne. Kubki, miski, talerze, świeczniki i ozdoby wykonywane z pasją – każdy egzemplarz jest niepowtarzalny.",
+      "Ceramika Gliwice – pracownia ceramiki artystycznej Alicji Ulbrich pod Gliwicami, tworząca ręcznie robione naczynia użytkowe i dekoracyjne. Kubki, miski, talerze, świeczniki i ozdoby wykonywane z pasją – każdy egzemplarz jest niepowtarzalny.",
     url: BASE,
     logo: `${BASE}/images/logo.webp`,
     image: mainImage,

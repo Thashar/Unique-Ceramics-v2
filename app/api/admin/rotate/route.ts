@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { requireAdmin } from "@/lib/admin-auth";
 import { resolveOwnImageSource, fetchOwnImage } from "@/lib/image-source";
 import { uploadImageWithVariants } from "@/lib/storage-variants";
+import { AI_IMAGE_SUFFIX, isAiGeneratedImage } from "@/lib/ai";
 import { NextResponse } from "next/server";
 
 const ALLOWED_ANGLES = new Set([90, 180, 270]);
@@ -39,7 +40,10 @@ export async function POST(req: Request) {
 
   // Zapisujemy pod nową nazwą: to samo zdjęcie może być użyte w innym miejscu
   // (produkt, hero), a nadpisanie zmieniłoby je wszędzie i utknęłoby w cache CDN
-  const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.webp`;
+  // Obrócone zdjęcie z AI zachowuje sufiks `-ai.webp` – po nim panel poznaje,
+  // że zdjęcia nie wolno puścić przez model drugi raz (obrót nie zmienia treści)
+  const suffix = isAiGeneratedImage(url) ? AI_IMAGE_SUFFIX : ".webp";
+  const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}${suffix}`;
 
   // Obrót o wielokrotność 90° jest bezstratny geometrycznie – nie zmienia wymiarów
   // poza ich zamianą, więc limit 1920 px z uploadu pozostaje zachowany.

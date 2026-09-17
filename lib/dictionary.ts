@@ -247,10 +247,14 @@ const pl = {
   meta: {
     homeDescription:
       "Unikalna ceramika użytkowa z pracowni w okolicach Gliwic – każdy egzemplarz jest niepowtarzalny. Tworzę z pasją i dbałością o każdy detal.",
-    shopTitle: "Sklep ceramiczny – ceramika ręcznie robiona",
+    // „Ceramika Gliwice” w tytule sklepu: strona główna ma w tytule nazwisko
+    // (decyzja właściciela 16.09.2026) i po tej zmianie wypadła z wyników na to
+    // hasło – katalog jest naturalną stroną docelową dla szukających ceramiki
+    // w okolicy, więc fraza stoi tu w tytule, opisie i tytule OG
+    shopTitle: "Ceramika Gliwice – sklep z ceramiką ręcznie robioną",
     shopDescription:
-      "Sklep z ceramiką ręcznie robioną z okolic Gliwic. Miski, kubki, talerze, wazony – każdy przedmiot tworzony jest ręcznie z lokalnej gliny.",
-    shopOgTitle: "Sklep ceramiczny – Unique Ceramics",
+      "Ceramika Gliwice – sklep Unique Ceramics z ceramiką ręcznie robioną w pracowni pod Gliwicami. Miski, kubki, talerze, wazony – każdy przedmiot tworzony jest ręcznie z lokalnej gliny. Wysyłka w całej Polsce.",
+    shopOgTitle: "Ceramika Gliwice – sklep Unique Ceramics",
     categoryTitle: (label: string) => `${label} – ceramika ręcznie robiona`,
     categoryDescription: (label: string) =>
       `${label} wykonane ręcznie w pracowni pod Gliwicami. Każdą sztukę formuję i szkliwię pojedynczo, więc dwie nigdy nie są identyczne. Wysyłka w całej Polsce.`,
