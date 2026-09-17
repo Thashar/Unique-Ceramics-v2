@@ -431,9 +431,12 @@ Wstępne rozpoznanie zdjęcia (możesz je poprawić, jeśli widzisz coś innego)
 Nazwa: ${draft.name || "(brak)"}
 Opis: ${draft.description || "(brak)"}
 
-Poniżej są produkty, które już są w tej kategorii sklepu. **Wzoruj się na ich stylu**: długości nazwy i opisu,
-tonie, kolejności informacji, sposobie nazywania motywu, kształtu, koloru i szkliwa. Nie kopiuj ich treści
-i nie przypisuj nowemu produktowi cech, których nie widać na zdjęciu.
+Poniżej są produkty, które już są w tej kategorii sklepu. **Wzoruj się na ich stylu i formatowaniu**:
+długości nazwy i opisu, tonie, kolejności informacji, sposobie nazywania motywu, kształtu, koloru i szkliwa,
+a także wielkości liter w nazwie, interpunkcji, liczbie zdań i tym, czy opis ma jeden akapit czy kilka.
+Nowa karta ma wyglądać tak, jakby napisała ją ta sama osoba. Nie kopiuj ich treści, nie dodawaj informacji,
+których w przykładach nie ma (wymiary, pojemność, materiał, sposób użycia), i nie przypisuj nowemu produktowi
+cech, których nie widać na zdjęciu.
 
 ${list}
 
@@ -444,10 +447,23 @@ Zasady:
 - "name": nazwa produktu w konwencji przykładów (zwykle 2-5 słów), bez cudzysłowów i bez ceny.
 - "slug": nazwa małymi literami, bez polskich znaków, wyrazy połączone myślnikami (tylko a-z, 0-9 i myślnik).
 - "description": opis w konwencji przykładów. Nie wymyślaj wymiarów, pojemności ani ceny.
+- Wymiary: jeśli przykładowe opisy podają wymiary (wysokość, średnica, pojemność itp.), w nowym opisie
+  wstaw w tym samym miejscu i w tej samej formie zapisu dokładnie znacznik ${AI_DIMENSIONS_PLACEHOLDER}
+  zamiast liczb – właściciel wpisze prawdziwe wymiary, a Ty nie masz ich skąd znać. Jeśli przykłady wymiarów nie podają,
+  nie dodawaj znacznika ani wymiarów.
+- "dimensionsFormat": jeśli przykłady podają wymiary, przepisz z nich jeden zapis wymiarów dosłownie
+  (np. "Wysokość: 9 cm, średnica: 8 cm") jako wzór formatu; w przeciwnym razie pusty ciąg.
 
 Odpowiedz wyłącznie obiektem JSON, bez komentarzy i bez bloków kodu:
-{"name":"...","slug":"...","description":"..."}`;
+{"name":"...","slug":"...","description":"...","dimensionsFormat":"..."}`;
 }
+
+/**
+ * Znacznik wymiarów w opisie z `buildProductCardPrompt`. Model nie zna wymiarów
+ * ze zdjęcia, więc gdy produkty z kategorii je podają, w opisie zostaje ten
+ * znacznik, a agent pyta właściciela i podstawia prawdziwe liczby.
+ */
+export const AI_DIMENSIONS_PLACEHOLDER = "{WYMIARY}";
 
 // ── Koszty ────────────────────────────────────────────────────────────────────
 

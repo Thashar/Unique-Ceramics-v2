@@ -1,63 +1,76 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Bot, Loader2, Sparkles, Upload, X } from "lucide-react";
 import { uploadErrorMessage } from "@/lib/upload-error";
 import { enProductKey } from "@/lib/i18n-content";
-import type { AiVariant } from "@/lib/ai";
+import { AI_DIMENSIONS_PLACEHOLDER, type AiVariant } from "@/lib/ai";
 
 /**
  * „Agent dodawania produktów” – rozmowa w oknie panelu: jedno zdjęcie na
- * wejściu, kompletny produkt na wyjściu. Agent **na każdym kroku mówi, co
- * zrobił i co wybrał**, a tam, gdzie nie może zgadnąć (cena, liczba sztuk,
- * kolekcja, styl zdjęć, dodatkowe zdjęcia, włączenie w sklepie) **pyta** –
- * odpowiada się przyciskami z gotowymi wyborami albo w polu na dole okna.
+ * wejściu, kompletny produkt na wyjściu. Agent **na każdym kroku pisze, co
+ * zrobił i co wybrał** (istotne rzeczy pogrubione, sekcje od nowej linii),
+ * a tam, gdzie nie może zgadnąć, **pyta** – przyciski z gotowymi wyborami
+ * stoją **pod wypowiedzią agenta w oknie rozmowy**, a pole na dole służy
+ * do odpowiedzi tekstowych (cena, liczba sztuk).
  *
- * Przebieg (każdy krok to osobne żądanie do istniejących tras panelu –
- * generowanie zdjęcia trwa do 60 s i nie zmieściłoby się w jednej funkcji):
- * 1. upload zdjęcia (`/api/admin/upload`),
- * 2. karta: rozpoznanie, kategoria, nazwa i opis w stylu dwóch losowych
- *    produktów z tej kategorii (`/api/admin/ai-product-card`) → agent pokazuje
- *    wynik i pozwala zmienić kategorię,
- * 3. pytania: cena, liczba sztuk, kolekcja,
- * 4. wybór stylu zdjęć (presety promptów z Ustawień → AI) i generowanie
- *    **AI+** oraz **AI** (`/api/admin/ai-image` z `presetId`) → podgląd,
- *    możliwość ponownego wygenerowania w innym stylu i dołożenia kolejnych
- *    zdjęć (własnych); kolejność w karcie: AI+, AI, oryginał, dodatkowe,
- * 5. tłumaczenie nazwy i opisu (`/api/admin/ai-translate`),
- * 6. pytanie, czy włączyć produkt od razu; zapis (`POST /api/admin/products`,
- *    zajęty slug → sufiks) i `en_product_{id}` przez `/api/admin/settings`.
+ * Przebieg (`run()`, zwykła funkcja `async`; pytania przez `ask()` – obietnica
+ * rozwiązywana przez UI; każdy krok to osobne żądanie, bo generowanie
+ * zdjęcia trwa do 60 s i nie zmieściłoby się w jednej funkcji):
+ * 1. upload zdjęcia (`/api/admin/upload`) → podgląd w rozmowie,
+ * 2. rozpoznanie i **propozycja kategorii** (`/api/admin/ai-product-card`
+ *    bez `category`) → przyciski „Zostaw” / inne kategorie,
+ * 3. po potwierdzeniu **automatycznie**: karta w stylu i formatowaniu
+ *    produktów z tej kategorii (`ai-product-card` z `category` + `draft`),
+ *    zdjęcie **AI+** i zdjęcie **AI** (`/api/admin/ai-image`, presety
+ *    przypisane do przycisków w Ustawieniach → AI),
+ * 4. podgląd wszystkich zdjęć i pytanie o **kolejne zdjęcia** tego produktu –
+ *    każde dodane jest automatycznie przerabiane na wersję **AI**; potem
+ *    znowu podgląd. Kolejność w karcie: AI+, AI, AI dodatkowych, a **oryginały
+ *    na końcu**,
+ * 5. pytania o cenę, liczbę sztuk i kolekcję,
+ * 5a. **wymiary**: produkty z kategorii podają wymiary → model zostawia w opisie
+ *    znacznik `{WYMIARY}`, a agent pyta o nie i podstawia w tym samym zapisie;
+ *    gdy przykłady wymiarów nie mają, agent i tak pyta na końcu (można pominąć)
+ *    i dopisuje je jako osobne zdanie,
+ * 6. tłumaczenie nazwy i opisu (`/api/admin/ai-translate`) – już z wymiarami,
+ * 7. przy cenie i stanie > 0 pytanie, czy włączyć produkt; zapis
+ *    (`POST /api/admin/products`, zajęty slug → sufiks) i `en_product_{id}`.
  *
  * Na końcu podsumowanie z kosztem przebiegu w PLN i USD (suma `costUsd`
- * z odpowiedzi tras × kurs z Ustawień → AI). Pytania realizuje `ask()` –
- * obietnica rozwiązywana przez UI, dzięki czemu przebieg jest zwykłą funkcją
- * `async` czytaną od góry do dołu.
+ * z odpowiedzi tras × kurs z Ustawień → AI). Agent nie pisze, na czym się
+ * wzorował – po prostu się wzoruje (decyzja właściciela 17.09.2026).
  */
 
 type Category = { slug: string; label: string };
 type Collection = { slug: string; label: string };
 type Preset = { id: string; name: string };
 
-type Msg = { id: number; who: "agent" | "user"; text: string; images?: string[] };
-
 type Choice = { value: string; label: string };
+type Msg = {
+  id: number;
+  who: "agent" | "user";
+  text: string;
+  images?: string[];
+  /** Przyciski wyboru pod wypowiedzią – aktywne tylko przy ostatnim pytaniu. */
+  choices?: Choice[];
+};
 type Question = {
   text: string;
-  /** Gotowe odpowiedzi – przyciski nad polem tekstowym. */
   choices?: Choice[];
-  /** Czy pole tekstowe jest sensowne (przy pytaniach „wybierz z listy” bywa zbędne). */
+  /** Pole tekstowe na dole: liczba, tekst albo brak (przy samych przyciskach). */
   input?: "text" | "number" | "none";
   placeholder?: string;
-  /** Pytanie o pliki – zamiast tekstu pokazuje wybór zdjęć. */
+  /** Pytanie o pliki – na dole pokazuje wybór zdjęć. */
   files?: boolean;
 };
-type Answer = { text: string; files?: File[]; /** Tekst pokazywany w dzienniku zamiast `text` (np. etykieta przycisku). */ label?: string };
+type Answer = { text: string; files?: File[]; label?: string };
 
 const CONFIRM =
-  "Agent wykona kilka płatnych wywołań AI (rozpoznanie i opis, zdjęcia AI+ i AI, tłumaczenie) " +
+  "Agent wykona kilka płatnych wywołań AI (rozpoznanie i opis, zdjęcia AI+ i AI, wersje AI dodatkowych zdjęć, tłumaczenie) " +
   "i po drodze zada Ci parę pytań. Kontynuować?";
 
 /** Ile razy próbujemy wolnego sluga, gdy nazwa się powtarza. */
@@ -97,6 +110,34 @@ function parseCount(text: string): number | null {
   const n = parseInt(text.replace(/[^\d]/g, ""), 10);
   return Number.isFinite(n) && n >= 0 ? n : null;
 }
+function errorText(e: unknown): string {
+  return (e instanceof Error ? e.message : "błąd").replace(/[—―]/g, "–");
+}
+
+/**
+ * Wiadomość agenta: `**pogrubienie**`, nowe linie i puste linie jako odstępy.
+ * Długie myślniki zamieniane na półpauzy – agent ich nie używa, a model bywa
+ * głuchy na tę prośbę.
+ */
+function MessageText({ text }: { text: string }) {
+  const lines = text.replace(/[—―]/g, "–").split("\n");
+  return (
+    <>
+      {lines.map((line, i) => {
+        if (!line.trim()) return <span key={i} className="block h-2" aria-hidden="true" />;
+        const parts: ReactNode[] = [];
+        line.split(/(\*\*[^*]+\*\*)/g).forEach((chunk, j) => {
+          if (chunk.startsWith("**") && chunk.endsWith("**")) {
+            parts.push(<strong key={j} className="font-semibold text-espresso">{chunk.slice(2, -2)}</strong>);
+          } else if (chunk) {
+            parts.push(chunk);
+          }
+        });
+        return <span key={i} className="block">{parts}</span>;
+      })}
+    </>
+  );
+}
 
 /** Sygnał przerwania przebiegu – rzucany, gdy okno zostanie zamknięte w trakcie. */
 class Aborted extends Error {}
@@ -111,9 +152,9 @@ export default function ProductAgent({
   usdPlnRate: number;
   categories: Category[];
   collections: Collection[];
-  /** Presety promptów (wbudowane + własne) – wybór stylu zdjęć. */
+  /** Presety promptów (wbudowane + własne) – nazwy do komunikatów. */
   presets: Preset[];
-  /** Preset przypisany do przycisku AI / AI+ w ustawieniach – proponowany jako domyślny. */
+  /** Preset przypisany do przycisku AI / AI+ w ustawieniach – tym stylem generuje agent. */
   defaultPreset: Record<AiVariant, string>;
 }) {
   const router = useRouter();
@@ -137,8 +178,8 @@ export default function ProductAgent({
     logRef.current?.scrollTo({ top: logRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, question, busyLabel]);
 
-  function sayRaw(text: string, images?: string[]) {
-    setMessages((prev) => [...prev, { id: nextId.current++, who: "agent", text, images }]);
+  function sayRaw(text: string, images?: string[], choices?: Choice[]) {
+    setMessages((prev) => [...prev, { id: nextId.current++, who: "agent", text, images, choices }]);
   }
   function say(text: string, images?: string[]) {
     if (abortRef.current) throw new Aborted("przerwane");
@@ -148,9 +189,15 @@ export default function ProductAgent({
     setMessages((prev) => [...prev, { id: nextId.current++, who: "user", text }]);
   }
 
-  /** Zadaje pytanie i czeka na odpowiedź z UI (przycisk, pole tekstowe albo pliki). */
+  /**
+   * Zadaje pytanie i czeka na odpowiedź. Przyciski wyboru trafiają do rozmowy
+   * jako wiadomość agenta (pod treścią pytania); pole tekstowe / wybór plików
+   * zostaje na dole okna.
+   */
   function ask(q: Question): Promise<Answer> {
+    if (abortRef.current) return Promise.reject(new Aborted("przerwane"));
     setBusyLabel("");
+    sayRaw(q.text, undefined, q.choices);
     setQuestion(q);
     setDraft("");
     return new Promise<Answer>((resolve, reject) => {
@@ -164,6 +211,8 @@ export default function ProductAgent({
     rejectRef.current = null;
     setQuestion(null);
     setDraft("");
+    // Przyciski przy odpowiedzianym pytaniu znikają – zostaje sama treść
+    setMessages((prev) => prev.map((m) => (m.choices ? { ...m, choices: undefined } : m)));
     const shown = a.label ?? a.text;
     if (shown) said(shown);
     resolve?.(a);
@@ -189,75 +238,146 @@ export default function ProductAgent({
     reset();
     abortRef.current = false;
     setOpen(true);
-    say(
-      "Cześć! Wgraj jedno zdjęcie produktu, a ja rozpoznam, co to jest, dobiorę kategorię, " +
-        "napiszę nazwę i opis w stylu Twojego sklepu, wygeneruję zdjęcia AI+ i AI, przetłumaczę kartę " +
-        "na angielski i zapiszę produkt. Po drodze zapytam o cenę, liczbę sztuk, kolekcję i styl zdjęć."
+    sayRaw(
+      "Cześć! Wgraj **jedno zdjęcie produktu**.\n\n" +
+        "Rozpoznam, co to jest, i zaproponuję kategorię. Po jej potwierdzeniu napiszę nazwę i opis " +
+        "w stylu Twojego sklepu, wygeneruję zdjęcia AI+ i AI, a potem zapytam o kolejne zdjęcia, cenę, " +
+        "liczbę sztuk i kolekcję. Na koniec przetłumaczę kartę na angielski i zapiszę produkt."
     );
-    setQuestion({ text: "Wybierz zdjęcie produktu.", files: true, input: "none" });
+    setQuestion({ text: "", files: true, input: "none" });
   }
 
   // ── Przebieg agenta ───────────────────────────────────────────────────────
   async function run(firstFile: File) {
     setRunning(true);
     let cost = 0;
+    const presetName = (id: string) => presets.find((p) => p.id === id)?.name ?? id;
     try {
       if (!confirm(CONFIRM)) throw new Aborted("anulowane");
 
       // 1. Upload
       setBusyLabel("Wgrywam zdjęcie…");
       const originalUrl = await uploadFile(firstFile);
-      say("Zdjęcie wgrane.", [originalUrl]);
+      say("**Zdjęcie wgrane.**", [originalUrl]);
 
-      // 2. Karta produktu
-      setBusyLabel("Rozpoznaję produkt, dobieram kategorię i piszę kartę w stylu sklepu…");
-      const card = await postJson<{
+      // 2. Rozpoznanie i propozycja kategorii
+      setBusyLabel("Rozpoznaję, co jest na zdjęciu, i dobieram kategorię…");
+      type CardResponse = {
         name: string; slug: string; category: string; categoryLabel: string; categoryMatched: boolean;
-        description: string; examples: string[]; costUsd: number;
-      }>("/api/admin/ai-product-card", { url: originalUrl });
-      cost += card.costUsd ?? 0;
-      if (!card.category) throw new Error("W sklepie nie ma żadnej kategorii – dodaj ją najpierw w zakładce Kategorie.");
+        description: string; draft: { name: string; description: string }; costUsd: number;
+        dimensions?: { placeholder: boolean; format: string };
+      };
+      const first = await postJson<CardResponse>("/api/admin/ai-product-card", { url: originalUrl });
+      cost += first.costUsd ?? 0;
+      if (!first.category) throw new Error("W sklepie nie ma żadnej kategorii – dodaj ją najpierw w zakładce Kategorie.");
       say(
-        (card.categoryMatched
-          ? `Rozpoznałem produkt i przypisałem go do kategorii „${card.categoryLabel}”.`
-          : `Nie byłem pewien kategorii – tymczasowo ustawiłem „${card.categoryLabel}”.`) +
-          (card.examples.length
-            ? ` Wzorowałem się na produktach: ${card.examples.join(", ")}.`
-            : " W tej kategorii nie ma jeszcze produktów, więc opis napisałem od zera.") +
-          `\n\nNazwa: ${card.name}\nOpis: ${card.description}`
+        `**Rozpoznałem:** ${first.name}\n\n` +
+          (first.categoryMatched
+            ? `**Proponowana kategoria:** ${first.categoryLabel}`
+            : `Nie byłem pewien kategorii – **proponuję:** ${first.categoryLabel}`)
       );
-
-      // Kategoria – potwierdzenie albo zmiana
       const cat = await ask({
-        text: "Czy kategoria jest właściwa? Wybierz inną, jeśli trzeba.",
+        text: "Czy kategoria jest właściwa?",
         choices: [
-          { value: card.category, label: `Zostaw: ${card.categoryLabel}` },
-          ...categories.filter((c) => c.slug !== card.category).map((c) => ({ value: c.slug, label: c.label })),
+          { value: first.category, label: `Tak, zostaw: ${first.categoryLabel}` },
+          ...categories.filter((c) => c.slug !== first.category).map((c) => ({ value: c.slug, label: c.label })),
         ],
         input: "none",
       });
-      const category = categories.find((c) => c.slug === cat.text) ?? categories.find((c) => c.slug === card.category)!;
-      say(`Kategoria: ${category.label}.`);
+      const category = categories.find((c) => c.slug === cat.text) ?? categories.find((c) => c.slug === first.category)!;
 
-      // 3. Cena
+      // 3. Karta w stylu kategorii (automatycznie po potwierdzeniu)
+      setBusyLabel(`Piszę nazwę i opis w stylu kategorii „${category.label}”…`);
+      const card = await postJson<CardResponse>("/api/admin/ai-product-card", {
+        url: originalUrl,
+        category: category.slug,
+        draft: first.draft,
+      });
+      cost += card.costUsd ?? 0;
+      const hasPlaceholder = card.description.includes(AI_DIMENSIONS_PLACEHOLDER);
+      say(
+        `**Kategoria:** ${category.label}\n\n` +
+          `**Nazwa:** ${card.name}\n\n` +
+          `**Opis:**\n${card.description.replace(AI_DIMENSIONS_PLACEHOLDER, "[wymiary – zapytam o nie na końcu]")}`
+      );
+
+      // Zdjęcia AI+ i AI ze zdjęcia głównego – presety przypisane do przycisków
+      const generate = async (variant: AiVariant, sourceUrl: string, what: string): Promise<string | null> => {
+        const label = variant === "ai_plus" ? "AI+" : "AI";
+        setBusyLabel(`Generuję zdjęcie ${label} ${what}…`);
+        try {
+          const gen = await postJson<{ url: string; costUsd?: number; preset?: string }>("/api/admin/ai-image", {
+            url: sourceUrl,
+            variant,
+            presetId: defaultPreset[variant],
+          });
+          cost += gen.costUsd ?? 0;
+          say(`**Zdjęcie ${label}** ${what} gotowe (styl: ${gen.preset ?? presetName(defaultPreset[variant])}).`, [gen.url]);
+          return gen.url;
+        } catch (e) {
+          say(`Zdjęcia ${label} ${what} nie udało się wygenerować (${errorText(e)}) – **idę dalej bez niego**.`);
+          return null;
+        }
+      };
+      const aiPlus = await generate("ai_plus", originalUrl, "(scena)");
+      const aiPlain = await generate("ai", originalUrl, "(jednolite tło)");
+
+      // 4. Zestaw zdjęć i kolejne zdjęcia produktu (każde dostaje wersję AI)
+      const extrasOriginal: string[] = [];
+      const extrasAi: string[] = [];
+      const currentSet = () =>
+        [aiPlus, aiPlain, ...extrasAi, originalUrl, ...extrasOriginal].filter((u): u is string => Boolean(u));
+      for (;;) {
+        say(
+          `**Zestaw zdjęć** (${currentSet().length}) w kolejności, w jakiej trafi do karty: AI+, AI, wersje AI dodatkowych zdjęć, oryginały na końcu.`,
+          currentSet()
+        );
+        const a = await ask({
+          text: "Czy chcesz dodać kolejne zdjęcia tego produktu? Każde dodane przerobię na wersję AI.",
+          choices: [
+            { value: "more", label: "Tak, dodaję kolejne zdjęcia" },
+            { value: "next", label: "Nie, zdjęcia są kompletne" },
+          ],
+          input: "none",
+        });
+        if (a.text !== "more") break;
+        const files = await ask({ text: "Wybierz kolejne zdjęcia (można kilka naraz).", files: true, input: "none" });
+        const chosen = files.files ?? [];
+        if (chosen.length === 0) continue;
+        for (const [i, f] of chosen.entries()) {
+          setBusyLabel(`Wgrywam ${f.name}…`);
+          let url: string;
+          try {
+            url = await uploadFile(f);
+          } catch (e) {
+            say(`Nie udało się wgrać **${f.name}** (${errorText(e)}).`);
+            continue;
+          }
+          extrasOriginal.push(url);
+          const ai = await generate("ai", url, `dodatkowego zdjęcia ${i + 1}/${chosen.length}`);
+          if (ai) extrasAi.push(ai);
+        }
+      }
+      const images = currentSet();
+
+      // 5. Cena, liczba sztuk, kolekcja
       let price: number | null = null;
       while (price === null) {
         const a = await ask({
-          text: "Jaka ma być cena (zł)? Wpisz kwotę, np. 85 albo 120,50.",
+          text: "Jaka ma być **cena** (zł)? Wpisz kwotę w polu na dole, np. 85 albo 120,50.",
           input: "number",
           placeholder: "np. 85",
-          choices: [{ value: "0", label: "Ustalę później (0 zł, produkt zostanie nieaktywny)" }],
+          choices: [{ value: "0", label: "Ustalę później (0 zł – produkt zostanie nieaktywny)" }],
         });
         price = parseMoney(a.text);
         if (price === null) say("Nie rozumiem tej kwoty – wpisz samą liczbę, np. 85.");
       }
-      say(price > 0 ? `Cena: ${price.toFixed(2).replace(".", ",")} zł.` : "Cena zostaje do ustalenia (0 zł).");
+      say(price > 0 ? `**Cena:** ${price.toFixed(2).replace(".", ",")} zł` : "**Cena:** do ustalenia (0 zł)");
 
-      // Liczba sztuk
       let stock: number | null = null;
       while (stock === null) {
         const a = await ask({
-          text: "Ile sztuk jest dostępnych?",
+          text: "Ile **sztuk** jest dostępnych?",
           input: "number",
           placeholder: "np. 3",
           choices: [1, 2, 3, 5].map((n) => ({ value: String(n), label: `${n} szt.` })),
@@ -265,108 +385,63 @@ export default function ProductAgent({
         stock = parseCount(a.text);
         if (stock === null) say("Podaj liczbę sztuk, np. 2.");
       }
-      say(`Stan magazynowy: ${stock} szt.`);
+      say(`**Stan magazynowy:** ${stock} szt.`);
 
-      // Kolekcja
       let collection: string | null = null;
       if (collections.length > 0) {
         const a = await ask({
-          text: "Do której kolekcji (serii) należy ten produkt?",
+          text: "Do której **kolekcji** (serii) należy ten produkt?",
           choices: [{ value: "", label: "Bez kolekcji" }, ...collections.map((c) => ({ value: c.slug, label: c.label }))],
           input: "none",
         });
         collection = a.text || null;
-        say(collection ? `Kolekcja: ${collections.find((c) => c.slug === collection)?.label ?? collection}.` : "Bez kolekcji.");
-      } else {
-        say("W sklepie nie ma jeszcze kolekcji – pomijam ten wybór.");
+        say(collection ? `**Kolekcja:** ${collections.find((c) => c.slug === collection)?.label ?? collection}` : "**Kolekcja:** brak");
       }
 
-      // 4. Styl zdjęć i generowanie
-      const presetName = (id: string) => presets.find((p) => p.id === id)?.name ?? id;
-      const pickPreset = (variant: AiVariant, label: string) =>
-        ask({
-          text: `Jaki styl zdjęcia ${label}? Domyślnie: „${presetName(defaultPreset[variant])}”.`,
-          choices: [
-            { value: defaultPreset[variant], label: `Domyślny: ${presetName(defaultPreset[variant])}` },
-            ...presets.filter((p) => p.id !== defaultPreset[variant]).map((p) => ({ value: p.id, label: p.name })),
-          ],
-          input: "none",
-        });
-
-      const generated: Record<AiVariant, string | null> = { ai_plus: null, ai: null };
-      const generate = async (variant: AiVariant, presetId: string) => {
-        setBusyLabel(`Generuję zdjęcie ${variant === "ai_plus" ? "AI+" : "AI"} (${presetName(presetId)})…`);
-        try {
-          const gen = await postJson<{ url: string; costUsd?: number; preset?: string }>("/api/admin/ai-image", {
-            url: originalUrl,
-            variant,
-            presetId,
-          });
-          cost += gen.costUsd ?? 0;
-          generated[variant] = gen.url;
-          say(`Zdjęcie ${variant === "ai_plus" ? "AI+" : "AI"} gotowe (styl: ${gen.preset ?? presetName(presetId)}).`, [gen.url]);
-        } catch (e) {
-          say(`Zdjęcia ${variant === "ai_plus" ? "AI+" : "AI"} nie udało się wygenerować: ${e instanceof Error ? e.message : "błąd"}. Idę dalej bez niego.`);
-        }
-      };
-
-      const plusPreset = await pickPreset("ai_plus", "AI+ (scena z rekwizytami)");
-      await generate("ai_plus", plusPreset.text);
-      const plainPreset = await pickPreset("ai", "AI (jednolite tło)");
-      await generate("ai", plainPreset.text);
-
-      // Podgląd zestawu i pętla poprawek
-      const extras: string[] = [];
+      // 5a. Wymiary – model ich nie zna ze zdjęcia. Gdy produkty z kategorii je
+      // podają, w opisie czeka znacznik i wymiary są obowiązkowe (w tym samym
+      // zapisie); inaczej pytamy na końcu i dopisujemy osobnym zdaniem
+      let description = card.description;
+      const format = card.dimensions?.format?.trim();
       for (;;) {
-        const set = [generated.ai_plus, generated.ai, originalUrl, ...extras].filter((u): u is string => Boolean(u));
-        say("Tak wygląda zestaw zdjęć w kolejności, w jakiej trafi do karty: AI+, AI, oryginał, dodatkowe.", set);
         const a = await ask({
-          text: "Co dalej ze zdjęciami?",
-          choices: [
-            { value: "next", label: "Dalej – zdjęcia są w porządku" },
-            { value: "more", label: "Dodaj kolejne własne zdjęcia" },
-            { value: "redo_plus", label: "Wygeneruj AI+ jeszcze raz w innym stylu" },
-            { value: "redo_ai", label: "Wygeneruj AI jeszcze raz w innym stylu" },
-          ],
-          input: "none",
+          text: hasPlaceholder
+            ? `Podaj **wymiary** produktu${format ? ` w zapisie jak w innych produktach tej kategorii, np. „${format}”` : ", np. „Wysokość: 9 cm, średnica: 8 cm”"} – wstawię je w opis.`
+            : "Podaj **wymiary** produktu (np. „Wysokość: 9 cm, średnica: 8 cm”) – dopiszę je do opisu. Możesz też pominąć.",
+          input: "text",
+          placeholder: format || "np. Wysokość: 9 cm, średnica: 8 cm",
+          choices: hasPlaceholder ? undefined : [{ value: "", label: "Pomiń wymiary" }],
         });
-        if (a.text === "next") break;
-        if (a.text === "more") {
-          const files = await ask({ text: "Wybierz dodatkowe zdjęcia (można kilka).", files: true, input: "none" });
-          for (const f of files.files ?? []) {
-            setBusyLabel(`Wgrywam ${f.name}…`);
-            try {
-              extras.push(await uploadFile(f));
-            } catch (e) {
-              say(`Nie udało się wgrać ${f.name}: ${e instanceof Error ? e.message : "błąd"}.`);
-            }
-          }
-          if (files.files?.length) say(`Dodałem ${files.files.length} zdj.`);
-        } else if (a.text === "redo_plus") {
-          const p = await pickPreset("ai_plus", "AI+");
-          await generate("ai_plus", p.text);
-        } else if (a.text === "redo_ai") {
-          const p = await pickPreset("ai", "AI");
-          await generate("ai", p.text);
+        const dims = a.text.trim().replace(/[\u2014\u2015]/g, "–");
+        if (hasPlaceholder) {
+          if (!dims) { say("Ta kategoria podaje wymiary w opisach – wpisz je proszę."); continue; }
+          description = description.replace(AI_DIMENSIONS_PLACEHOLDER, dims);
+          say(`**Wymiary:** ${dims}\n\n**Opis z wymiarami:**\n${description}`);
+        } else if (dims) {
+          const end = (t: string) => (/[.!?]$/.test(t) ? "" : ".");
+          description = `${description.trim()}${end(description.trim())} ${dims}${end(dims)}`;
+          say(`**Wymiary:** ${dims}\n\n**Opis z wymiarami:**\n${description}`);
+        } else {
+          say("**Wymiary:** pominięte.");
         }
+        break;
       }
-      const images = [generated.ai_plus, generated.ai, originalUrl, ...extras].filter((u): u is string => Boolean(u));
 
-      // 5. Angielska wersja
+      // 6. Angielska wersja
       setBusyLabel("Tłumaczę nazwę i opis na angielski…");
       let english: { name: string; description: string } | null = null;
       try {
         const tr = await postJson<{ texts: string[]; costUsd?: number }>("/api/admin/ai-translate", {
-          texts: [card.name, card.description],
+          texts: [card.name, description],
         });
         english = { name: tr.texts[0] ?? "", description: tr.texts[1] ?? "" };
         cost += tr.costUsd ?? 0;
-        say(`Wersja angielska gotowa.\n\nName: ${english.name}\nDescription: ${english.description}`);
+        say(`**Wersja angielska**\n\n**Name:** ${english.name}\n\n**Description:**\n${english.description}`);
       } catch (e) {
-        say(`Tłumaczenia nie udało się zrobić (${e instanceof Error ? e.message : "błąd"}) – uzupełnisz je w zakładce EN produktu.`);
+        say(`Tłumaczenia nie udało się zrobić (${errorText(e)}) – uzupełnisz je w zakładce EN produktu.`);
       }
 
-      // 6. Widoczność i zapis
+      // 7. Widoczność i zapis
       let active = false;
       if (price > 0 && stock > 0) {
         const a = await ask({
@@ -379,13 +454,13 @@ export default function ProductAgent({
         });
         active = a.text === "yes";
       } else {
-        say("Bez ceny albo bez sztuk produkt zostaje nieaktywny – włączysz go po uzupełnieniu.");
+        say("Bez ceny albo bez sztuk produkt zostaje **nieaktywny** – włączysz go po uzupełnieniu.");
       }
 
       setBusyLabel("Zapisuję produkt…");
       const base = {
         name: card.name,
-        description: card.description,
+        description,
         price,
         category: category.slug,
         collection,
@@ -424,8 +499,11 @@ export default function ProductAgent({
       }
 
       say(
-        `Gotowe. Zapisałem produkt „${card.name}” (${active ? "aktywny, widoczny w sklepie" : "nieaktywny"}), ` +
-          `${images.length} zdj., cena ${price.toFixed(2).replace(".", ",")} zł, ${stock} szt.`
+        `**Gotowe.** Zapisałem produkt **${card.name}**.\n\n` +
+          `**Status:** ${active ? "aktywny, widoczny w sklepie" : "nieaktywny"}\n` +
+          `**Zdjęcia:** ${images.length}\n` +
+          `**Cena:** ${price.toFixed(2).replace(".", ",")} zł\n` +
+          `**Sztuk:** ${stock}`
       );
       setBusyLabel("");
       setDone({ id: saved.id, costUsd: cost });
@@ -435,7 +513,7 @@ export default function ProductAgent({
       if (e instanceof Aborted) {
         sayRaw("Przerwano.");
       } else {
-        sayRaw(`Nie udało się dokończyć: ${e instanceof Error ? e.message : "błąd"}. Możesz zamknąć okno i spróbować ponownie.`);
+        sayRaw(`**Nie udało się dokończyć:** ${errorText(e)}\n\nMożesz zamknąć okno i spróbować ponownie.`);
       }
       if (cost > 0) setDone({ id: "", costUsd: cost });
     } finally {
@@ -444,7 +522,7 @@ export default function ProductAgent({
     }
   }
 
-  // Odpowiedź na pierwsze pytanie (zdjęcie) uruchamia przebieg
+  // Wybór plików: pierwsze zdjęcie uruchamia przebieg, kolejne odpowiadają na pytanie
   function onFiles(files: File[]) {
     if (files.length === 0) return;
     if (!running) {
@@ -462,6 +540,10 @@ export default function ProductAgent({
     if (!text) return;
     answer({ text });
   }
+
+  const textInputActive = Boolean(question && !question.files && question.input !== "none");
+  // Przyciski w rozmowie działają tylko przy bieżącym (jeszcze nieodpowiedzianym) pytaniu
+  const choicesActive = Boolean(question?.choices);
 
   return (
     <>
@@ -496,29 +578,51 @@ export default function ProductAgent({
 
             {/* Dziennik rozmowy */}
             <div ref={logRef} className="flex-1 overflow-y-auto px-5 py-4 space-y-3 bg-cream/40">
-              {messages.map((m) => (
-                <div key={m.id} className={`flex ${m.who === "user" ? "justify-end" : "justify-start"}`}>
-                  <div
-                    className={`max-w-[85%] px-4 py-2.5 text-sm leading-relaxed whitespace-pre-line ${
-                      m.who === "user"
-                        ? "bg-espresso text-cream"
-                        : "bg-warm-white border border-sand text-charcoal"
-                    }`}
-                  >
-                    {m.text}
-                    {m.images && m.images.length > 0 && (
-                      <div className="mt-2 grid grid-cols-3 sm:grid-cols-4 gap-2">
-                        {m.images.map((url, i) => (
-                          <div key={`${url}-${i}`} className="relative aspect-[4/3] bg-cream border border-sand overflow-hidden">
-                            <Image src={url} alt={`Zdjęcie ${i + 1}`} fill unoptimized className="object-contain" sizes="120px" />
-                            <span className="absolute left-1 top-1 bg-espresso/80 text-cream text-[9px] px-1">{i + 1}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+              {messages.map((m) => {
+                const wide = Boolean(m.images?.length || m.choices?.length);
+                return (
+                  <div key={m.id} className={`flex ${m.who === "user" ? "justify-end" : "justify-start"}`}>
+                    <div
+                      className={`${wide ? "w-full" : "max-w-[85%]"} px-4 py-3 text-sm leading-relaxed ${
+                        m.who === "user"
+                          ? "bg-espresso text-cream"
+                          : "bg-warm-white border border-sand text-charcoal"
+                      }`}
+                    >
+                      {m.who === "agent" ? <MessageText text={m.text} /> : m.text}
+                      {m.images && m.images.length > 0 && (
+                        // Podgląd na pełną szerokość dymka – w dymku dopasowanym do
+                        // krótkiego tekstu siatka kurczyła się do ikonek
+                        <div className="mt-3 grid grid-cols-3 sm:grid-cols-4 gap-2">
+                          {m.images.map((url, i) => (
+                            <div key={`${url}-${i}`} className="relative aspect-[4/3] bg-cream border border-sand overflow-hidden">
+                              <Image src={url} alt={`Zdjęcie ${i + 1}`} fill unoptimized className="object-contain" sizes="160px" />
+                              <span className="absolute left-1 top-1 bg-espresso/80 text-cream text-[10px] px-1.5 py-0.5">{i + 1}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {m.choices && m.choices.length > 0 && (
+                        // Przyciski wyboru pod wypowiedzią agenta – aktywne przy
+                        // bieżącym pytaniu; po odpowiedzi znikają z wiadomości
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {m.choices.map((c) => (
+                            <button
+                              key={c.value + c.label}
+                              type="button"
+                              disabled={!choicesActive}
+                              onClick={() => answer({ text: c.value, label: c.label })}
+                              className="border border-clay text-clay hover:bg-clay hover:text-cream text-xs px-3 py-1.5 transition-colors disabled:opacity-50"
+                            >
+                              {c.label}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
               {busyLabel && (
                 <div className="flex items-center gap-2 text-sm text-charcoal/80">
                   <Loader2 size={14} className="animate-spin text-clay" />
@@ -546,23 +650,8 @@ export default function ProductAgent({
               )}
             </div>
 
-            {/* Pole odpowiedzi */}
-            <div className="border-t border-sand px-5 py-4 shrink-0 space-y-3">
-              {question && <p className="text-sm text-espresso">{question.text}</p>}
-              {question?.choices && (
-                <div className="flex flex-wrap gap-2">
-                  {question.choices.map((c) => (
-                    <button
-                      key={c.value + c.label}
-                      type="button"
-                      onClick={() => answer({ text: c.value, label: c.label })}
-                      className="border border-clay text-clay hover:bg-clay hover:text-cream text-xs px-3 py-1.5 transition-colors"
-                    >
-                      {c.label}
-                    </button>
-                  ))}
-                </div>
-              )}
+            {/* Pole odpowiedzi – tekst albo pliki; przyciski wyboru są w rozmowie */}
+            <div className="border-t border-sand px-5 py-4 shrink-0">
               {question?.files ? (
                 <label className="flex items-center justify-center gap-2 border-2 border-dashed border-sand hover:border-clay cursor-pointer py-4 text-xs tracking-widest uppercase text-charcoal/80 transition-colors">
                   <Upload size={16} strokeWidth={1.5} />
@@ -576,22 +665,27 @@ export default function ProductAgent({
                   />
                 </label>
               ) : (
-                <form
-                  onSubmit={(e) => { e.preventDefault(); submitText(); }}
-                  className="flex gap-2"
-                >
+                <form onSubmit={(e) => { e.preventDefault(); submitText(); }} className="flex gap-2">
                   <input
-                    type={question?.input === "number" ? "text" : "text"}
+                    type="text"
                     inputMode={question?.input === "number" ? "decimal" : undefined}
                     value={draft}
                     onChange={(e) => setDraft(e.target.value)}
-                    disabled={!question || question.input === "none"}
-                    placeholder={question ? (question.placeholder ?? "Odpowiedz…") : (running ? "Agent pracuje…" : "")}
+                    disabled={!textInputActive}
+                    placeholder={
+                      textInputActive
+                        ? (question?.placeholder ?? "Odpowiedz…")
+                        : question
+                        ? "Wybierz odpowiedź przyciskiem w rozmowie"
+                        : running
+                        ? "Agent pracuje…"
+                        : ""
+                    }
                     className="flex-1 min-w-0 bg-cream border border-sand focus:border-clay outline-none px-4 py-2.5 text-espresso text-sm disabled:opacity-60"
                   />
                   <button
                     type="submit"
-                    disabled={!question || question.input === "none" || !draft.trim()}
+                    disabled={!textInputActive || !draft.trim()}
                     className="bg-clay hover:bg-espresso text-cream text-xs tracking-widest uppercase px-4 py-2.5 transition-colors disabled:bg-sand disabled:text-charcoal/40"
                   >
                     Wyślij
