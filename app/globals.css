@@ -167,6 +167,19 @@ h1, h2, h3, h4 {
   animation: uc-float 1.8s ease-in-out infinite;
 }
 
+/* Przełącznik języka w nagłówku (desktop): dwie flagi jedna na drugiej.
+   Flaga drugiego języka jest przycięta do zera w prawym górnym rogu, a po
+   najechaniu rozwija się po skosie do połowy – flaga dzieli się na pół
+   (lewy dół = bieżący język, prawa góra = drugi). Kliknięcie przełącza język. */
+.uc-flag-split .uc-flag-other {
+  clip-path: polygon(100% 0, 100% 0, 100% 100%);
+  transition: clip-path 0.35s ease;
+}
+.uc-flag-split:hover .uc-flag-other,
+.uc-flag-split:focus-visible .uc-flag-other {
+  clip-path: polygon(100% 0, 0 100%, 100% 100%);
+}
+
 /* Ruch wyłączony systemowo – treść od razu na swoim miejscu */
 @media (prefers-reduced-motion: reduce) {
   .uc-reveal,
@@ -175,6 +188,9 @@ h1, h2, h3, h4 {
     animation: none;
     opacity: 1;
     transform: none;
+  }
+  .uc-flag-split .uc-flag-other {
+    transition: none;
   }
 }
 

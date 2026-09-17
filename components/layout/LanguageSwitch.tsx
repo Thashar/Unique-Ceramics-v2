@@ -1,30 +1,27 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
-import { FlagGB, FlagPL } from "@/components/ui/Flags";
+import { FLAG_SIZE, FlagGB, FlagPL } from "@/components/ui/Flags";
 import { LOCALES, switchLocalePath, type Locale } from "@/lib/i18n";
 import { useLocale, useT } from "@/lib/use-locale";
 
 const FLAG: Record<Locale, typeof FlagPL> = { pl: FlagPL, en: FlagGB };
-const CLOSE_DELAY_MS = 180;
 
 /**
- * Przełącznik języka w nagłówku: flaga bieżącego języka, a po **najechaniu**
- * pod nią pojawia się **sama flaga drugiego języka** – bez dymka, bez ramki
- * i bez napisu (decyzja właściciela 17.09.2026; wersja w konwencji dymków
- * koszyka i konta wycofana). Nazwa języka zostaje w `aria-label`/`title`.
- * **Język zmienia wyłącznie kliknięcie w drugą flagę** – kliknięcie w flagę
- * bieżącego języka tylko pokazuje lub chowa tę pod spodem (tak działa na
- * dotyku, gdzie najechania nie ma), nigdy nie przełącza.
+ * Przełącznik języka w nagłówku (desktop): **jedna flaga**, która po najechaniu
+ * dzieli się po skosie na pół – lewy dół zostaje flagą bieżącego języka, prawa
+ * góra odsłania flagę drugiego (animacja `clip-path` w `app/globals.css`,
+ * klasy `uc-flag-split` / `uc-flag-other`). **Kliknięcie przełącza język**
+ * (decyzja właściciela 17.09.2026; wcześniejsze wersje z rozwijaną drugą flagą
+ * i z dymkiem wycofane). Nazwa języka zostaje w `aria-label`/`title`.
  *
  * Link prowadzi na **tę samą stronę** w drugim języku (`switchLocalePath`);
  * strona bez odpowiednika – np. koszyk z wersji angielskiej – odsyła na
  * stronę główną danego języka.
  *
  * `variant="menu"` to wersja do menu mobilnego – obie flagi obok siebie,
- * bieżąca przygaszona.
+ * bieżąca przygaszona (na telefonie nie ma najechania).
  */
 export default function LanguageSwitch({
   iconClass = "",
@@ -38,42 +35,9 @@ export default function LanguageSwitch({
   const locale = useLocale();
   const pathname = usePathname() ?? "/";
   const dict = useT();
-  const [open, setOpen] = useState(false);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const rootRef = useRef<HTMLDivElement>(null);
 
   const names: Record<Locale, string> = { pl: dict.common.polish, en: dict.common.english };
-  // Pokazujemy tylko drugi język – flaga, którą już widać w pasku, nie jest opcją
   const other = LOCALES.find((code) => code !== locale) ?? locale;
-
-  // Krótka zwłoka przy zjeżdżaniu, żeby przejście kursorem z flagi na tę
-  // pod spodem nie zamykało jej w połowie drogi
-  const show = () => {
-    if (timer.current) clearTimeout(timer.current);
-    setOpen(true);
-  };
-  const hide = () => {
-    if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(() => setOpen(false), CLOSE_DELAY_MS);
-  };
-  useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
-
-  // Otwarte kliknięciem (dotyk) zamyka klik poza przełącznikiem i Escape
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (e: MouseEvent) => {
-      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
-    };
-    document.addEventListener("mousedown", onDown);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onDown);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
 
   if (variant === "menu") {
     return (
@@ -104,50 +68,20 @@ export default function LanguageSwitch({
   const Other = FLAG[other];
 
   return (
-    <div
-      ref={rootRef}
-      className="relative"
-      onMouseEnter={show}
-      onMouseLeave={hide}
+    <Link
+      href={switchLocalePath(pathname, other)}
+      hrefLang={other}
+      onClick={onNavigate}
+      aria-label={`${dict.common.switchTo}: ${names[other]}`}
+      title={`${dict.common.switchTo}: ${names[other]}`}
+      className={`uc-flag-split block p-2 ${iconClass}`}
     >
-      {/* Flaga bieżącego języka to przycisk, nie link: kliknięcie w nią
-          niczego nie przełącza – tylko pokazuje/chowa drugą flagę */}
-      <button
-        type="button"
-        onClick={() => {
-          if (timer.current) clearTimeout(timer.current);
-          setOpen((v) => !v);
-        }}
-        aria-haspopup="true"
-        aria-expanded={open}
-        aria-label={`${dict.common.language}: ${names[locale]}`}
-        title={`${dict.common.language}: ${names[locale]}`}
-        className={`block p-2 ${iconClass}`}
-      >
-        <Current />
-      </button>
-
-      {/* Druga flaga wysuwa się pod pierwszą, dokładnie w tej samej osi.
-          `pt-1` zamiast odstępu marginesem – szczelina jest częścią elementu,
-          więc kursor przechodzący przez nią nie wywołuje `mouseleave` */}
-      <div
-        className={`absolute left-0 top-full pt-1 z-50 transition-all duration-150 ${
-          open ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-1 pointer-events-none"
-        }`}
-      >
-        <Link
-          href={switchLocalePath(pathname, other)}
-          hrefLang={other}
-          onClick={onNavigate}
-          tabIndex={open ? 0 : -1}
-          aria-hidden={!open}
-          aria-label={names[other]}
-          title={names[other]}
-          className="block p-2 opacity-90 hover:opacity-100 transition-opacity"
-        >
-          <Other />
-        </Link>
-      </div>
-    </div>
+      <span className={`relative block ${FLAG_SIZE}`}>
+        <Current className="absolute inset-0 h-full w-full" />
+        {/* Flaga drugiego języka – przycięta do zera, po najechaniu odsłania
+            się po skosie do połowy (patrz globals.css) */}
+        <Other className="uc-flag-other absolute inset-0 h-full w-full" />
+      </span>
+    </Link>
   );
 }
