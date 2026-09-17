@@ -111,8 +111,9 @@ async function uploadFile(file: File): Promise<string> {
 function usd(value: number): string {
   return value < 0.01 && value > 0 ? `$${value.toFixed(4)}` : `$${value.toFixed(2)}`;
 }
+/** Niskie kwoty (poniżej 5 gr) z czterema miejscami, żeby nie pokazywać „0,00 zł” za realne wywołanie. */
 function pln(value: number): string {
-  return `${value.toFixed(value < 0.01 && value > 0 ? 4 : 2).replace(".", ",")} zł`;
+  return `${value.toFixed(value > 0 && value < 0.05 ? 4 : 2).replace(".", ",")} zł`;
 }
 function parseMoney(text: string): number | null {
   const n = parseFloat(text.replace(",", ".").replace(/[^\d.]/g, ""));
@@ -155,12 +156,15 @@ function MessageText({ text }: { text: string }) {
 class Aborted extends Error {}
 
 /**
- * Koszt przebiegu w USD z podziałem na to, za co się płaci: zdjęcia AI,
- * treść karty (rozpoznanie, kategoria, nazwa i opis) i tłumaczenie. Sama
- * rozmowa z agentem – pytania i przyciski – nie używa modelu i kosztuje 0.
+ * Koszt przebiegu w USD z podziałem na to, za co się płaci:
+ * - `images` – zdjęcia AI,
+ * - `content` – treść karty produktu (nazwa i opis w stylu kategorii, krok 2),
+ * - `translation` – tłumaczenie na angielski,
+ * - `agent` – rozmowa z agentem: jego rozumowanie, czyli rozpoznanie zdjęcia
+ *   i dobór kategorii (krok 1). Same pytania i przyciski nie wołają modelu.
  */
-type Cost = { images: number; content: number; translation: number };
-const total = (c: Cost) => c.images + c.content + c.translation;
+type Cost = { images: number; content: number; translation: number; agent: number };
+const total = (c: Cost) => c.images + c.content + c.translation + c.agent;
 
 export default function ProductAgent({
   usdPlnRate,
@@ -270,7 +274,7 @@ export default function ProductAgent({
   // ── Przebieg agenta ───────────────────────────────────────────────────────
   async function run(firstFile: File) {
     setRunning(true);
-    const cost: Cost = { images: 0, content: 0, translation: 0 };
+    const cost: Cost = { images: 0, content: 0, translation: 0, agent: 0 };
     const presetName = (id: string) => presets.find((p) => p.id === id)?.name ?? id;
     try {
       if (!confirm(CONFIRM)) throw new Aborted("anulowane");
@@ -293,7 +297,7 @@ export default function ProductAgent({
         };
       };
       const first = await postJson<CardResponse>("/api/admin/ai-product-card", { url: originalUrl });
-      cost.content += first.costUsd ?? 0;
+      cost.agent += first.costUsd ?? 0;
       if (!first.category) throw new Error("W sklepie nie ma żadnej kategorii – dodaj ją najpierw w zakładce Kategorie.");
       say(
         `**Rozpoznałem:** ${first.name}\n\n` +
@@ -717,31 +721,30 @@ export default function ProductAgent({
               {done && (
                 <div className="border border-sand bg-warm-white px-4 py-3 text-sm">
                   <p className="text-xs tracking-widest uppercase text-charcoal/80 mb-2">Koszt tego przebiegu</p>
-                  {/* Rozbicie: za co zapłacono. Rozmowa (pytania, przyciski) nie woła
-                      modelu, więc stoi z zerem – żeby było widać, że nie kosztuje */}
-                  <dl className="space-y-1 text-sm">
+                  {/* Rozbicie: nazwy po lewej, kwoty po prawej – siatka, nie flex,
+                      żeby na telefonie nic nie łamało się między kolumnami */}
+                  <dl className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-1.5 text-sm">
                     {([
                       ["Generowanie zdjęć", done.cost.images],
-                      ["Treść karty (rozpoznanie, kategoria, nazwa, opis)", done.cost.content],
+                      ["Treść karty produktu", done.cost.content],
                       ["Tłumaczenie na angielski", done.cost.translation],
-                      ["Rozmowa z agentem (pytania, wybory)", 0],
+                      ["Rozmowa z agentem", done.cost.agent],
                     ] as [string, number][]).map(([label, value]) => (
-                      <div key={label} className="flex justify-between gap-4">
+                      <div key={label} className="contents">
                         <dt className="text-charcoal/80">{label}</dt>
-                        <dd className="tabular-nums text-espresso">
-                          {pln(value * usdPlnRate)} <span className="text-charcoal/80">({usd(value)})</span>
-                        </dd>
+                        <dd className="text-right tabular-nums text-espresso whitespace-nowrap">{pln(value * usdPlnRate)}</dd>
                       </div>
                     ))}
-                    <div className="flex justify-between gap-4 border-t border-sand pt-2 mt-1">
-                      <dt className="font-medium text-espresso">Razem</dt>
-                      <dd className="font-serif text-xl text-espresso tabular-nums">
+                    <div className="contents">
+                      <dt className="border-t border-sand pt-2 mt-1 font-medium text-espresso">Razem</dt>
+                      <dd className="border-t border-sand pt-2 mt-1 text-right font-serif text-xl text-espresso tabular-nums whitespace-nowrap">
                         {pln(total(done.cost) * usdPlnRate)}
-                        <span className="text-sm text-charcoal/80 ml-2">({usd(total(done.cost))}, kurs {usdPlnRate.toFixed(2).replace(".", ",")} zł)</span>
                       </dd>
                     </div>
                   </dl>
-                  <p className="text-[11px] text-charcoal/80 mt-2">Wg stawek Google AI z cennika w kodzie – kwota orientacyjna.</p>
+                  <p className="text-[11px] text-charcoal/80 mt-2">
+                    {usd(total(done.cost))} po kursie {usdPlnRate.toFixed(2).replace(".", ",")} zł – wg stawek Google AI z cennika w kodzie, kwota orientacyjna.
+                  </p>
                   {done.id && (
                     <button
                       type="button"

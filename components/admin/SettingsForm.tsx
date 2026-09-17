@@ -200,15 +200,18 @@ function agentUsage(byVariant: AiUsageStats["byVariant"]) {
       .filter((v) => names.includes(v.variant))
       .reduce((acc, v) => ({ count: acc.count + v.count, costUsd: acc.costUsd + v.costUsd }), { count: 0, costUsd: 0 });
   const images = pick(["agent_ai", "agent_ai_plus"]);
-  const content = pick(["agent_product_fill", "agent_product_card"]);
+  const content = pick(["agent_product_card"]);
   const translation = pick(["agent_translate"]);
+  // Rozmowa z agentem = jego rozumowanie: rozpoznanie zdjęcia i dobór kategorii
+  const agent = pick(["agent_product_fill"]);
   return {
     images,
     content,
     translation,
+    agent,
     total: {
-      count: images.count + content.count + translation.count,
-      costUsd: images.costUsd + content.costUsd + translation.costUsd,
+      count: images.count + content.count + translation.count + agent.count,
+      costUsd: images.costUsd + content.costUsd + translation.costUsd + agent.costUsd,
     },
   };
 }
@@ -221,7 +224,8 @@ function usd(value: number): string {
 
 function pln(value: number, rate: number): string {
   const converted = value * rate;
-  return `${converted.toFixed(converted < 0.01 && converted > 0 ? 4 : 2).replace(".", ",")} zł`;
+  // Niskie kwoty (poniżej 5 gr) z czterema miejscami – realne wywołanie nie może pokazać „0,00 zł”
+  return `${converted.toFixed(converted > 0 && converted < 0.05 ? 4 : 2).replace(".", ",")} zł`;
 }
 
 /** Kafelek okresu: łączny koszt na wierzchu, pod spodem rozbicie zdjęcia / teksty. */
@@ -1664,20 +1668,27 @@ export default function SettingsForm({ section, initial, aiUsage, english = {} }
                 {(() => {
                   const agent = agentUsage(aiUsage.byVariant);
                   if (agent.total.count === 0) return null;
-                  const cell = (b: { count: number; costUsd: number }) =>
-                    `${b.count} × · ${usd(b.costUsd)}${aiRateNumber > 0 ? ` (${pln(b.costUsd, aiRateNumber)})` : ""}`;
+                  const rows: [string, { count: number; costUsd: number }][] = [
+                    ["Generowanie zdjęć", agent.images],
+                    ["Treść karty produktu", agent.content],
+                    ["Tłumaczenie na angielski", agent.translation],
+                    ["Rozmowa z agentem", agent.agent],
+                  ];
+                  const money = (v: number) => (aiRateNumber > 0 ? pln(v, aiRateNumber) : usd(v));
                   return (
-                    <div className="border border-sand bg-warm-white p-4 space-y-1.5 text-sm">
-                      <p className="text-xs tracking-widest uppercase text-charcoal/80">Agent dodawania produktów – łącznie</p>
-                      <p className="font-serif text-2xl text-espresso">
-                        {usd(agent.total.costUsd)}
-                        {aiRateNumber > 0 && <span className="text-sm text-charcoal/80 ml-2">{pln(agent.total.costUsd, aiRateNumber)}</span>}
-                      </p>
-                      <dl className="text-[11px] text-charcoal/80 space-y-0.5">
-                        <div className="flex justify-between gap-2"><dt>Zdjęcia AI+ / AI</dt><dd className="tabular-nums">{cell(agent.images)}</dd></div>
-                        <div className="flex justify-between gap-2"><dt>Treść karty (rozpoznanie, kategoria, nazwa, opis)</dt><dd className="tabular-nums">{cell(agent.content)}</dd></div>
-                        <div className="flex justify-between gap-2"><dt>Tłumaczenie</dt><dd className="tabular-nums">{cell(agent.translation)}</dd></div>
-                        <div className="flex justify-between gap-2"><dt>Rozmowa z agentem (pytania, wybory)</dt><dd className="tabular-nums">0 × · $0</dd></div>
+                    <div className="border border-sand bg-warm-white p-4 space-y-2 text-sm">
+                      <p className="text-xs tracking-widest uppercase text-charcoal/80">Agent dodawania produktów</p>
+                      <dl className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-1 text-sm">
+                        {rows.map(([label, b]) => (
+                          <div key={label} className="contents">
+                            <dt className="text-charcoal/80">{label} <span className="text-[11px]">({b.count} ×)</span></dt>
+                            <dd className="text-right tabular-nums text-espresso whitespace-nowrap">{money(b.costUsd)}</dd>
+                          </div>
+                        ))}
+                        <div className="contents">
+                          <dt className="border-t border-sand pt-2 mt-1 font-medium text-espresso">Razem</dt>
+                          <dd className="border-t border-sand pt-2 mt-1 text-right font-serif text-xl text-espresso tabular-nums whitespace-nowrap">{money(agent.total.costUsd)}</dd>
+                        </div>
                       </dl>
                       <p className="text-[11px] text-charcoal/80">
                         Liczone od 17.09.2026 – wcześniejsze wywołania agenta są w ogólnych statystykach, bez rozróżnienia.
