@@ -15,6 +15,7 @@ import {
 import { dateToWarsawLocal, formatWarsaw, warsawLocalToDate } from "@/lib/warsaw-time";
 import { AI_VARIANT_LABEL, type AiVariant } from "@/lib/ai";
 import AiImageButtons, { AI_CONFIRM, type AiGenerating } from "@/components/admin/AiImageButtons";
+import ImageLightbox from "@/components/ui/ImageLightbox";
 import LangSwitch from "@/components/admin/LangSwitch";
 import TranslateButton from "@/components/admin/TranslateButton";
 import { translateTexts } from "@/lib/admin-translate";
@@ -118,6 +119,8 @@ export default function ProductForm({
   const [filling, setFilling] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  // Podgląd zdjęcia w pełnym rozmiarze – ten sam lightbox co na karcie produktu w sklepie
+  const [preview, setPreview] = useState<number | null>(null);
 
   // Podgląd przeceny pod polem rabatu – liczony z ceny bez narzutu na wysyłkę
   const discountPreview = (() => {
@@ -494,7 +497,14 @@ export default function ProductForm({
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 items-start gap-2 sm:gap-3 mb-3">
           {images.map((url, i) => (
             <div key={`${i}-${url}`} className="border border-sand bg-warm-white p-1.5">
-              <div className="relative w-full aspect-[4/3] bg-cream overflow-hidden">
+              {/* Kliknięcie w zdjęcie otwiera podgląd w pełnym rozmiarze (ImageLightbox) */}
+              <button
+                type="button"
+                onClick={() => setPreview(i)}
+                title="Pokaż w pełnym rozmiarze"
+                aria-label={`Pokaż zdjęcie ${i + 1} w pełnym rozmiarze`}
+                className="relative block w-full aspect-[4/3] bg-cream overflow-hidden cursor-zoom-in"
+              >
                 {/* contain, nie cover – w edycji ma być widoczne całe zdjęcie */}
                 <Image src={url} alt={`Zdjęcie ${i + 1}`} fill className="object-contain" sizes="(max-width: 640px) 33vw, 160px" />
                 {i === 0 && images.length > 1 && (
@@ -502,7 +512,7 @@ export default function ProductForm({
                     Główne
                   </span>
                 )}
-              </div>
+              </button>
               {/* Jeden rząd: przesuń w lewo, przesuń w prawo, obróć w lewo, obróć w prawo, usuń
                   (obrót jest trwały, przez serwer – jak w galeriach ustawień) */}
               <div className="flex items-center justify-between mt-1.5">
@@ -569,9 +579,19 @@ export default function ProductForm({
             </label>
           )}
         </div>
+        {preview !== null && images[preview] && (
+          <ImageLightbox
+            images={images}
+            name={form.name || "Zdjęcie produktu"}
+            index={preview}
+            onIndexChange={setPreview}
+            onClose={() => setPreview(null)}
+          />
+        )}
         <p className="text-[11px] text-charcoal/80">
-          Pierwsze zdjęcie jest główne – widać je na liście produktów i w koszyku. Strzałki zmieniają
-          kolejność, krzyżyk usuwa zdjęcie (maks. {PRODUCT_MAX_IMAGES}).
+          Pierwsze zdjęcie jest główne – widać je na liście produktów i w koszyku. Kliknięcie w zdjęcie
+          otwiera podgląd w pełnym rozmiarze, strzałki zmieniają kolejność, obrót zapisuje obrócony plik,
+          krzyżyk usuwa zdjęcie (maks. {PRODUCT_MAX_IMAGES}).
         </p>
         <p className="text-[11px] text-charcoal/80 mt-1">
           <strong className="font-medium">AI</strong> tworzy wersję zdjęcia na jednolitym, matowym tle,{" "}
