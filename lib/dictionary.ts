@@ -140,8 +140,10 @@ const pl = {
   },
   workshops: {
     eyebrow: "Nauka",
-    title: "Warsztaty ceramiczne",
-    heroAlt: "Warsztaty ceramiczne",
+    // „Gliwice” w widocznym nagłówku – strona ma się pozycjonować na
+    // „warsztaty ceramiczne Gliwice”; pracownia jest w Kleszczowie pod Gliwicami
+    title: "Warsztaty ceramiczne – Gliwice i okolice",
+    heroAlt: "Warsztaty ceramiczne pod Gliwicami",
     galleryAlt: "Zdjęcia z warsztatów ceramicznych",
     duration: "Czas trwania",
     participants: "Liczba uczestników",
@@ -153,6 +155,13 @@ const pl = {
     faqWrite: "Napisz albo zadzwoń – chętnie wszystko wyjaśnię.",
     faqCta: "Napisz do mnie",
     aiNotice: "Zdjęcia w tej sekcji zostały wygenerowane przy wsparciu AI.",
+    // Widoczny blok „gdzie” – jedyne miejsce na stronie, które nazywa
+    // miejscowość i dojazd (poza stopką); treść strony poza tym idzie z panelu
+    whereTitle: "Gdzie odbywają się warsztaty ceramiczne?",
+    whereText:
+      "W mojej pracowni w Kleszczowie pod Gliwicami – kilkanaście minut samochodem z centrum Gliwic, blisko też z Zabrza, Knurowa, Pyskowic i Rybnika. Na miejscu czeka wszystko, czego potrzeba: glina, narzędzia, szkliwa i piec. Warsztaty prowadzę w małych grupach, w umówionych terminach – także w weekendy.",
+    whereDirections: "Jak dojechać",
+    whereBook: "Zapytaj o termin",
   },
   contact: {
     eyebrow: "Napisz do mnie",
@@ -250,10 +259,10 @@ const pl = {
     aboutTitle: "O mnie – Alicja Ulbrich",
     aboutDescription:
       "Alicja Ulbrich i pracownia Unique Ceramics z okolic Gliwic. Poznaj historię ręcznie robionej ceramiki tworzonej z pasji do gliny na Śląsku.",
-    workshopsTitle: "Warsztaty ceramiczne",
+    workshopsTitle: "Warsztaty ceramiczne Gliwice – pracownia ceramiczna",
     workshopsDescription:
-      "Warsztaty ceramiczne w małych grupach w okolicach Gliwic – dla początkujących i zaawansowanych. Lepienie z gliny, toczenie, szkliwienie.",
-    workshopsOgTitle: "Warsztaty ceramiczne – Unique Ceramics",
+      "Warsztaty ceramiczne w Gliwicach i okolicy – pracownia w Kleszczowie, małe grupy, dla początkujących. Lepienie z gliny, szkliwienie, urodziny, wieczory panieńskie, firmy.",
+    workshopsOgTitle: "Warsztaty ceramiczne Gliwice – Unique Ceramics",
     contactTitle: "Kontakt",
     contactDescription:
       "Skontaktuj się z pracownią ceramiczną Unique Ceramics – Familijna 23, 44-164 Kleszczów (k. Gliwic). Telefon, e-mail, Instagram.",
@@ -395,8 +404,8 @@ const en: Dictionary = {
   },
   workshops: {
     eyebrow: "Learning",
-    title: "Pottery workshops",
-    heroAlt: "Pottery workshops",
+    title: "Pottery workshops – Gliwice and around",
+    heroAlt: "Pottery workshops near Gliwice",
     galleryAlt: "Photos from pottery workshops",
     duration: "Duration",
     participants: "Participants",
@@ -408,6 +417,11 @@ const en: Dictionary = {
     faqWrite: "Write or call – I will gladly explain everything.",
     faqCta: "Get in touch",
     aiNotice: "The photos in this section were generated with the help of AI.",
+    whereTitle: "Where do the pottery workshops take place?",
+    whereText:
+      "In my studio in Kleszczów near Gliwice, Poland – a short drive from the centre of Gliwice and close to Zabrze, Knurów, Pyskowice and Rybnik. Everything you need is on site: clay, tools, glazes and a kiln. Workshops run in small groups on agreed dates, including weekends.",
+    whereDirections: "Get directions",
+    whereBook: "Ask about a date",
   },
   contact: {
     eyebrow: "Get in touch",
@@ -502,10 +516,10 @@ const en: Dictionary = {
     aboutTitle: "About me – Alicja Ulbrich",
     aboutDescription:
       "Alicja Ulbrich and the Unique Ceramics studio near Gliwice, Poland. The story of handmade ceramics created out of a passion for clay in Silesia.",
-    workshopsTitle: "Pottery workshops",
+    workshopsTitle: "Pottery workshops Gliwice – ceramics studio",
     workshopsDescription:
-      "Small-group pottery workshops near Gliwice, Poland – for beginners and advanced makers. Hand-building, wheel throwing, glazing.",
-    workshopsOgTitle: "Pottery workshops – Unique Ceramics",
+      "Pottery workshops in and around Gliwice, Poland – studio in Kleszczów, small groups, beginners welcome. Hand-building, glazing, birthdays, hen parties, team building.",
+    workshopsOgTitle: "Pottery workshops Gliwice – Unique Ceramics",
     contactTitle: "Contact",
     contactDescription:
       "Get in touch with the Unique Ceramics pottery studio – Familijna 23, 44-164 Kleszczów near Gliwice, Poland. Phone, e-mail, Instagram.",

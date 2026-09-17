@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { ICON_MAP, CheckCircle, Leaf } from "./icons";
+import { ArrowRight, MapPin } from "lucide-react";
 import WorkshopIncludes from "./WorkshopIncludes";
 import Header from "@/components/layout/HeaderWrapper";
 import Footer from "@/components/layout/Footer";
@@ -95,6 +96,7 @@ export default async function WorkshopsPage({ locale = "pl" }: { locale?: Locale
     "workshops_hero_height",
     "workshops_content_gallery", "workshops_content_image", "workshops_content_position",
     "workshops_intro", "workshops_includes_gallery", "contact_phone",
+    "contact_address_street", "contact_address_city",
     "workshops_offers", "workshops_includes", "workshops_faq",
   ]);
   const heroImage = s.workshops_hero_image;
@@ -297,6 +299,51 @@ export default async function WorkshopsPage({ locale = "pl" }: { locale?: Locale
             </div>
           </div>
         )}
+
+        {/* Gdzie odbywają się warsztaty – **widoczny** blok z miejscowością
+            i dojazdem. Strona ma się pozycjonować na „warsztaty ceramiczne
+            Gliwice”, a przed 17.09.2026 słowo „Gliwice” padało na niej tylko
+            w stopce; reszta treści idzie z panelu, więc ten fragment siedzi
+            w kodzie (`workshops.where*` w słowniku). Adres z ustawień kontaktu,
+            odnośnik do map Google z tym samym adresem */}
+        <div className="bg-warm-white px-6 lg:px-10 pb-20">
+          <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center gap-5 md:gap-8 bg-espresso p-6 sm:p-7 md:p-8 rounded-2xl">
+            <span
+              className="inline-flex items-center justify-center w-11 h-11 md:w-14 md:h-14 rounded-full border border-terracotta/40 bg-terracotta/10 text-terracotta shrink-0"
+              aria-hidden="true"
+            >
+              <MapPin strokeWidth={1.5} className="w-5 h-5 md:w-6 md:h-6" />
+            </span>
+            <div className="flex-1 min-w-0">
+              <h2 className="font-serif text-xl md:text-2xl text-cream mb-2">{d.workshops.whereTitle}</h2>
+              <p className="text-sand/90 text-sm leading-relaxed">{d.workshops.whereText}</p>
+              {(s.contact_address_street || s.contact_address_city) && (
+                <address className="not-italic text-sand/90 text-sm mt-2">
+                  {[s.contact_address_street, s.contact_address_city].filter(Boolean).join(", ")}
+                </address>
+              )}
+            </div>
+            <div className="flex flex-col sm:flex-row md:flex-col gap-3 shrink-0">
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                  [s.contact_address_street, s.contact_address_city].filter(Boolean).join(", ") || "Unique Ceramics Kleszczów"
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group inline-flex items-center justify-center gap-3 border border-terracotta/50 hover:border-terracotta hover:bg-terracotta hover:text-espresso text-cream text-[11px] sm:text-xs tracking-widest uppercase px-5 sm:px-6 py-3 sm:py-3.5 transition-all duration-300 rounded-md"
+              >
+                {d.workshops.whereDirections}
+                <ArrowRight size={14} strokeWidth={1.5} className="group-hover:translate-x-1 transition-transform" aria-hidden="true" />
+              </a>
+              <Link
+                href={localePath(locale, "/kontakt")}
+                className="inline-flex items-center justify-center bg-clay hover:bg-terracotta hover:text-espresso text-warm-white text-[11px] sm:text-xs tracking-widest uppercase px-5 sm:px-6 py-3 sm:py-3.5 transition-colors rounded-md"
+              >
+                {d.workshops.whereBook}
+              </Link>
+            </div>
+          </div>
+        </div>
 
         {/* Co zawiera warsztat – lista po lewej, pokaz zdjęć po prawej.
             Bez zdjęć lista zwęża się i zostaje na środku, żeby nie wisiała w pustce. */}
