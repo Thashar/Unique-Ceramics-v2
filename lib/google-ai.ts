@@ -77,17 +77,27 @@ function num(value: unknown): number {
 // listę aliasów po obu stronach – wcześniej lista wejściowa była krótsza niż
 // wyjściowa, więc przy nietrafionej nazwie wejście liczyło się jako zero
 // i koszt tokenów wejściowych przepadał.
+//
+// ⚠️ Interactions API (nasza główna droga) nazywa liczniki **`total_input_tokens`**,
+// `total_output_tokens`, `total_thought_tokens` i `total_tokens` (dokumentacja:
+// „Understand and count tokens – Interactions API”). Do 17.09.2026 na liście były
+// tylko `input_tokens`/`output_tokens`, więc rozpoznawana była wyłącznie suma
+// `total_tokens` – każde wywołanie lądowało w rejestrze jako szacowane, z zerem
+// tokenów wejściowych, a teksty (bez szacunku) z zerowym kosztem.
 const PROMPT_KEYS = [
+  "total_input_tokens", "totalInputTokens",
   "input_tokens", "inputTokens", "input_token_count", "inputTokenCount",
   "prompt_tokens", "promptTokens", "prompt_token_count", "promptTokenCount",
 ];
 const OUTPUT_KEYS = [
+  "total_output_tokens", "totalOutputTokens",
   "output_tokens", "outputTokens", "output_token_count", "outputTokenCount",
   "completion_tokens", "completionTokens",
   "candidates_tokens", "candidatesTokens", "candidates_token_count", "candidatesTokenCount",
 ];
 /** Tokeny „myślenia” są rozliczane jak wyjściowe, a bywają podane osobno. */
 const THOUGHT_KEYS = [
+  "total_thought_tokens", "totalThoughtTokens",
   "thoughts_token_count", "thoughtsTokenCount",
   "reasoning_tokens", "reasoningTokens", "thinking_tokens", "thinkingTokens",
 ];
