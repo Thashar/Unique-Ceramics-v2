@@ -503,7 +503,7 @@ export default function ProductForm({
                   </span>
                 )}
               </div>
-              {/* Jeden rząd: przesuń w lewo, obróć w lewo, obróć w prawo, przesuń w prawo, usuń
+              {/* Jeden rząd: przesuń w lewo, przesuń w prawo, obróć w lewo, obróć w prawo, usuń
                   (obrót jest trwały, przez serwer – jak w galeriach ustawień) */}
               <div className="flex items-center justify-between mt-1.5">
                 <button
@@ -515,6 +515,16 @@ export default function ProductForm({
                   className="p-1 text-charcoal hover:text-espresso disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <MoveLeft size={14} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => moveImage(i, 1)}
+                  disabled={i === images.length - 1}
+                  title="Przesuń w prawo"
+                  aria-label={`Przesuń zdjęcie ${i + 1} w prawo`}
+                  className="p-1 text-charcoal hover:text-espresso disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <MoveRight size={14} />
                 </button>
                 <button
                   type="button"
@@ -535,16 +545,6 @@ export default function ProductForm({
                   className="p-1 text-charcoal hover:text-espresso disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <RotateCw size={14} className={rotating === i ? "animate-spin" : ""} />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => moveImage(i, 1)}
-                  disabled={i === images.length - 1}
-                  title="Przesuń w prawo"
-                  aria-label={`Przesuń zdjęcie ${i + 1} w prawo`}
-                  className="p-1 text-charcoal hover:text-espresso disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  <MoveRight size={14} />
                 </button>
                 <button
                   type="button"
