@@ -6,7 +6,7 @@ import { getAiUsageStats } from "@/lib/ai-usage";
 import SettingsForm from "@/components/admin/SettingsForm";
 import { SIMILAR_MIN_SCORE_KEY } from "@/lib/similar-products";
 import { TAX_SETTING_KEYS } from "@/lib/tax";
-import { ENGLISH_SETTING_KEYS_ALL } from "@/components/admin/SettingsEnglish";
+import { ENGLISH_SETTING_KEYS_ALL } from "@/lib/english-settings";
 import { EN_KEY_PREFIX } from "@/lib/i18n-content";
 
 const VALID_SECTIONS = new Set([
