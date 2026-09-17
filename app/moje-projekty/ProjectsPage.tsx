@@ -26,9 +26,12 @@ export function projectsMetadata(locale: Locale): Metadata {
 export default async function ProjectsPage({ locale = "pl" }: { locale?: Locale }) {
   const d = t(locale);
   const en = await englishContentFor(locale);
-  const projects = (await getProjects()).map((p) => localizeProject(locale, p, en));
-  // Adresy liczymy z całej listy – patrz `lib/portfolio-slug.ts`
-  const slugs = projectSlugs(projects);
+  const original = await getProjects();
+  // Adresy liczymy z całej listy **przed** tłumaczeniem – slug projektu bierze
+  // się z polskiego tytułu i jest ten sam w obu językach (tak szuka go strona
+  // projektu). Liczony z angielskiego tytułu dawał 404 na `/en` (17.09.2026)
+  const slugs = projectSlugs(original);
+  const projects = original.map((p) => localizeProject(locale, p, en));
 
   return (
     <>
