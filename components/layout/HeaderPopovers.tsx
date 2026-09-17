@@ -456,8 +456,11 @@ export function AccountPopover({ iconClass }: { iconClass: string }) {
   return (
     <HoverPopover trigger={trigger} label="Konto" width="w-56" forceClose={forceClose}>
       <div className="pb-2">
+        {/* Bez adresu e-mail pod nagłówkiem – dymek otwiera się po najechaniu,
+            więc adres wyświetlałby się każdemu, kto przesunie kursor nad ikoną
+            (decyzja właściciela 17.09.2026) */}
         <PopoverHeading title={session.user?.name ?? "Moje konto"} />
-        <p className="px-4 pt-2.5 pb-1 text-xs text-charcoal/80 truncate">{session.user?.email}</p>
+        <div className="pt-1.5" />
         <Link href="/konto" onClick={close} className={row}>
           <User size={15} strokeWidth={1.5} />
           Moje konto
