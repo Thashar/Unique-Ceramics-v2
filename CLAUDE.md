@@ -143,7 +143,7 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` – zwracają wartość z DB l
 | `regulamin` | HTML treści regulaminu. Sprzedawcą jest **Alicja Ulbrich**, sklep **nie jest podatnikiem VAT** (ceny bez VAT, na życzenie rachunek zamiast faktury). Punkty I.5 i I.6 opisują **zdjęcia przygotowane z pomocą AI**: model zmienia wyłącznie tło, scenerię, oświetlenie i kadr, a rekwizyty ze zdjęcia nie wchodzą w skład zamówienia. Zmieniając te zasady w kodzie, pamiętaj, że **na produkcji obowiązuje wersja z bazy** (klucz `regulamin`) – wartość domyślna z `lib/settings.ts` wchodzi tylko wtedy, gdy wiersza nie ma |
 | `polityka_prywatnosci` | HTML polityki prywatności |
 | `home_hero_image` / `home_hero_position` | Zdjęcie + pozycja hero na stronie głównej |
-| `home_hero_eyebrow`, `home_hero_title`, `home_hero_text`, `home_hero_cta_primary`, `home_hero_cta_secondary`, `home_hero_scroll` | **Teksty sekcji hero** – napis nad nagłówkiem (domyślnie „Unique Ceramics – Alicja Ulbrich” – nazwisko ma być widoczne na stronie głównej, decyzja właściciela 16.09.2026; **na produkcji obowiązuje wartość z bazy**, więc zmianę trzeba wpisać w panelu), nagłówek, opis, etykiety obu przycisków i napis przy strzałce na dole |
+| `home_hero_eyebrow`, `home_hero_title`, `home_hero_text`, `home_hero_cta_primary`, `home_hero_cta_secondary`, `home_hero_scroll` | **Teksty sekcji hero** – napis nad nagłówkiem (domyślnie „Unique Ceramics - Alicja Ulbrich” – nazwisko ma być widoczne na stronie głównej, decyzja właściciela 16.09.2026; **na produkcji obowiązuje wartość z bazy**, więc zmianę trzeba wpisać w panelu), nagłówek, opis, etykiety obu przycisków i napis przy strzałce na dole |
 | `home_about_eyebrow`, `home_about_title`, `home_about_text`, `home_about_cta` | **Teksty sekcji „O mnie”** na stronie głównej (`AboutTeaser`) |
 | `home_workshops_eyebrow`, `home_workshops_title`, `home_workshops_text`, `home_workshops_cta` | **Teksty sekcji „Warsztaty”** na stronie głównej (`WorkshopsTeaser`) |
 | | Wszystkie trzy zestawy działają tak samo: edycja w /admin/ustawienia (zakładka „Strona główna”), Enter łamie wiersz (`whitespace-pre-line`), pusta linia w opisie robi odstęp między akapitami, a **puste ustawienie ukrywa dany element** – można zostawić samo zdjęcie. Adresy przycisków są stałe (`/sklep`, `/o-mnie`, `/warsztaty`); domyślne treści siedzą w `lib/home-sections.ts` |
@@ -621,14 +621,14 @@ W treściach interfejsu, komentarzach i dokumentacji używaj **półpauzy `–`*
   wpisany wprost obok `robots`. **Nowa strona = własny canonical.**
 - **Tytułu nie kończ marką** – dokłada ją szablon z layoutu (`%s | Unique Ceramics`). Wpisany
   drugi raz w `generateMetadata` dawał „… – Unique Ceramics | Unique Ceramics”.
-- **Strona główna ma tytuł „Unique Ceramics – Alicja Ulbrich”** (decyzja właściciela 16.09.2026):
+- **Strona główna ma tytuł „Unique Ceramics - Alicja Ulbrich”** (decyzja właściciela 16.09.2026):
   w `app/page.tsx` przez `title: { absolute }`, bo szablon dołożyłby markę drugi raz. Ten sam
   tekst jest domyślnym tytułem layoutu, tytułem OG/Twitter, nazwą `WebPage` strony głównej
   i `alternateName` w `WebSite` oraz `LocalBusiness` (Google czyta `alternateName` przy
   ustalaniu nazwy witryny). **Nazwisko ma pozycjonować stronę**, więc występuje też w treści:
   opisy meta, `founder` (z `jobTitle`, `url`, `worksFor`), sekcja `sr-only` „Obszar obsługi”
   na stronie głównej, `Person` na `/o-mnie` i **widoczny** wiersz praw autorskich w stopce
-  („© rok Unique Ceramics – Alicja Ulbrich”) na każdej stronie. Zmieniając nazwisko albo
+  („© rok Unique Ceramics - Alicja Ulbrich”) na każdej stronie. Zmieniając nazwisko albo
   nazwę, popraw wszystkie te miejsca naraz – rozjazd między nimi osłabia powiązanie
   nazwiska z marką.
 - **Opis strony głównej** (`HOME_DESCRIPTION` w `app/page.tsx`) to tekst od właściciela
@@ -637,8 +637,13 @@ W treściach interfejsu, komentarzach i dokumentacji używaj **półpauzy `–`*
   description, OG, Twittera i `WebPage.description`. **Google i tak sam wybiera fragment**
   – do 17.09.2026 pokazywał tekst sekcji „O mnie” (`home_about_text` z panelu), bo uznał go
   za trafniejszy od meta; jeśli nadal to robi, zbliż treść tej sekcji w panelu do opisu.
-  Myślnik w tytule i opisie jest **półpauzą** (sprawdzone na żywym HTML-u) – w wyniku Google
-  wygląda na długi tylko przez krój wyszukiwarki, nie zamieniaj go na dywiz.
+- ⚠️ **W nazwie „Unique Ceramics - Alicja Ulbrich” stoi zwykły dywiz , nie półpauza** –
+  wyjątek od zasady typografii, decyzja właściciela 17.09.2026: półpauza w kroju wyników Google
+  wyglądała jak długi myślnik, a w wyszukiwarce ma go nie być. Dotyczy tytułu strony
+  (layout, , OG/Twitter),  w JSON-LD, praw autorskich w stopce
+  i domyślnego napisu hero (; **na produkcji obowiązuje wartość z bazy** –
+  w panelu też trzeba wpisać dywiz). **Nie zamieniaj go z powrotem na .** W opisach
+  (meta description) półpauza zostaje.
 - `googleBot` w layoucie ma **`max-image-preview: large`** (plus `max-snippet`/`max-video-preview`
   bez limitu). To jedyne ustawienie, którym wpływamy na to, czy Google **może** pokazać duże
   zdjęcie przy wyniku; **którego** zdjęcia użyje, i tak decyduje sam.

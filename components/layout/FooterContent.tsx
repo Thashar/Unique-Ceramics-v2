@@ -86,7 +86,7 @@ export default function FooterContent({ instagram }: { instagram?: string }) {
             <span className="font-serif text-[11px] sm:text-xs text-cream/70 tracking-wide whitespace-nowrap">Unique Ceramics</span>
           </div>
           <p className="text-[11px] sm:text-xs text-sand/70 text-center">
-            © {new Date().getFullYear()} Unique Ceramics – Alicja Ulbrich. Wszelkie prawa zastrzeżone.
+            © {new Date().getFullYear()} Unique Ceramics - Alicja Ulbrich. Wszelkie prawa zastrzeżone.
           </p>
           {/* Mobile: własny wiersz, wyśrodkowany. Desktop: przy prawej krawędzi –
               pozycjonowany absolutnie, żeby nie zbijać wyśrodkowania reszty belki. */}

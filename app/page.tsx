@@ -6,7 +6,7 @@ export const revalidate = 3600;
 // właściciela 16.09.2026): tak ma wyglądać wynik w Google, a nazwisko ma
 // pozycjonować stronę. `absolute` omija szablon `%s | Unique Ceramics`
 // z layoutu – inaczej marka stałaby w tytule dwa razy.
-const HOME_TITLE = "Unique Ceramics – Alicja Ulbrich";
+const HOME_TITLE = "Unique Ceramics - Alicja Ulbrich";
 // Opis wyniku w Google (treść od właściciela, 17.09.2026). Ten sam tekst idzie
 // do Open Graph i do schematu `WebPage`, żeby sygnały się nie rozjeżdżały.
 // Google i tak sam wybiera fragment do wyniku – gdy uzna treść strony za
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     url: "https://uniqueceramics.pl",
     // Zdjęcie hero (z panelu) jako JPEG 1200×630 z kadrem z panelu – nie logo
     // i nie WebP, którego WhatsApp nie renderuje
-    images: [ogImage(OG_PAGE_IMAGE.home, "Unique Ceramics – Alicja Ulbrich")],
+    images: [ogImage(OG_PAGE_IMAGE.home, "Unique Ceramics - Alicja Ulbrich")],
   },
   twitter: {
     card: "summary_large_image",

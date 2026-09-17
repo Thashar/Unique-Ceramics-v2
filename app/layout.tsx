@@ -45,7 +45,7 @@ const BASE = "https://uniqueceramics.pl";
 export const metadata: Metadata = {
   metadataBase: new URL(BASE),
   title: {
-    default: "Unique Ceramics – Alicja Ulbrich",
+    default: "Unique Ceramics - Alicja Ulbrich",
     template: "%s | Unique Ceramics",
   },
   description:
@@ -92,7 +92,7 @@ export const metadata: Metadata = {
     locale: "pl_PL",
     type: "website",
     url: BASE,
-    title: "Unique Ceramics – Alicja Ulbrich",
+    title: "Unique Ceramics - Alicja Ulbrich",
     description:
       "Ręcznie robiona ceramika Alicji Ulbrich z okolic Gliwic – kubki, miski, naczynia i ozdoby. Każdy egzemplarz jest niepowtarzalny. Zamów z dostawą w całej Polsce.",
     // Hero ze strony głównej jako JPEG (trasa `/api/og/strona/glowna`; bez
@@ -101,7 +101,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Unique Ceramics – Alicja Ulbrich",
+    title: "Unique Ceramics - Alicja Ulbrich",
     description:
       "Ręcznie robiona ceramika Alicji Ulbrich z okolic Gliwic. Kubki, miski, naczynia i ozdoby – każdy egzemplarz niepowtarzalny.",
     images: [OG_IMAGE.url],
