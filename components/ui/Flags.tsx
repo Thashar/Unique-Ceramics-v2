@@ -10,18 +10,19 @@
  * Proporcje 3:2 dla obu flag (brytyjska jest 2:1, więc `slice` przycina jej
  * boki zamiast zostawiać pasy).
  *
- * Na wierzchu leży **maska w kolorze `espresso`** – ta sama, co na zdjęciach
- * hero (`bg-espresso/55`): pełne, nasycone kolory flag wyskakiwały z ciemnego
- * nagłówka, a przygaszone siedzą w nim jak reszta ikon (decyzja właściciela
- * 17.09.2026). `Tint` jest ostatnim elementem SVG, więc obejmuje cały rysunek.
+ * Na wierzchu leży **maska w kolorze `espresso`** – jak na zdjęciach hero,
+ * tylko odrobinę lżejsza (40% zamiast 55%): pełne, nasycone kolory flag
+ * wyskakiwały z ciemnego nagłówka, a przygaszone siedzą w nim jak reszta ikon
+ * (decyzja właściciela 17.09.2026). `Tint` jest ostatnim elementem SVG, więc
+ * obejmuje cały rysunek.
  */
 
 const FRAME = "rounded-[3px] ring-1 ring-white/25 shrink-0";
 export const FLAG_SIZE = "h-[18px] w-[27px]";
 
-/** Kolor i krycie maski – jak `bg-espresso/55` na zdjęciu hero. */
+/** Kolor maski jak na zdjęciu hero; krycie **trochę niższe** niż tamte 55% (decyzja właściciela 17.09.2026). */
 const TINT = "#2C2825";
-const TINT_OPACITY = 0.55;
+const TINT_OPACITY = 0.4;
 
 function Tint({ width, height }: { width: number; height: number }) {
   return <rect width={width} height={height} fill={TINT} fillOpacity={TINT_OPACITY} />;
