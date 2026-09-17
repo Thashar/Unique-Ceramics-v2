@@ -1,5 +1,6 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import { Playfair_Display, Inter } from "next/font/google";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import SiteAnalytics from "@/components/layout/SiteAnalytics";
 import Providers from "@/components/layout/Providers";
 import { COOKIE_CONSENT_KEY } from "@/lib/cookie-consent";
@@ -160,6 +161,8 @@ export default function RootLayout({
             z własnej domeny (`/_vercel/insights/*`), w trybie deweloperskim
             z `va.vercel-scripts.com` (jest w CSP). */}
         <SiteAnalytics />
+        {/* Vercel Speed Insights – zbiera dane o wydajności strony (Web Vitals) */}
+        <SpeedInsights />
       </body>
     </html>
   );
