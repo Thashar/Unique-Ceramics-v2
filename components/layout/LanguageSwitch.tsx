@@ -15,8 +15,9 @@ const CLOSE_DELAY_MS = 180;
  * pod nią pojawia się **sama flaga drugiego języka** – bez dymka, bez ramki
  * i bez napisu (decyzja właściciela 17.09.2026; wersja w konwencji dymków
  * koszyka i konta wycofana). Nazwa języka zostaje w `aria-label`/`title`.
- * Kliknięcie flagi w pasku od razu przełącza język, więc działa też na
- * dotyku, gdzie najechania nie ma.
+ * **Język zmienia wyłącznie kliknięcie w drugą flagę** – kliknięcie w flagę
+ * bieżącego języka tylko pokazuje lub chowa tę pod spodem (tak działa na
+ * dotyku, gdzie najechania nie ma), nigdy nie przełącza.
  *
  * Link prowadzi na **tę samą stronę** w drugim języku (`switchLocalePath`);
  * strona bez odpowiednika – np. koszyk z wersji angielskiej – odsyła na
@@ -39,6 +40,7 @@ export default function LanguageSwitch({
   const dict = useT();
   const [open, setOpen] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
 
   const names: Record<Locale, string> = { pl: dict.common.polish, en: dict.common.english };
   // Pokazujemy tylko drugi język – flaga, którą już widać w pasku, nie jest opcją
@@ -55,6 +57,23 @@ export default function LanguageSwitch({
     timer.current = setTimeout(() => setOpen(false), CLOSE_DELAY_MS);
   };
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
+
+  // Otwarte kliknięciem (dotyk) zamyka klik poza przełącznikiem i Escape
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
 
   if (variant === "menu") {
     return (
@@ -86,22 +105,27 @@ export default function LanguageSwitch({
 
   return (
     <div
+      ref={rootRef}
       className="relative"
       onMouseEnter={show}
       onMouseLeave={hide}
-      onFocus={show}
-      onBlur={hide}
     >
-      <Link
-        href={switchLocalePath(pathname, other)}
-        hrefLang={other}
-        onClick={onNavigate}
+      {/* Flaga bieżącego języka to przycisk, nie link: kliknięcie w nią
+          niczego nie przełącza – tylko pokazuje/chowa drugą flagę */}
+      <button
+        type="button"
+        onClick={() => {
+          if (timer.current) clearTimeout(timer.current);
+          setOpen((v) => !v);
+        }}
+        aria-haspopup="true"
+        aria-expanded={open}
         aria-label={`${dict.common.language}: ${names[locale]}`}
-        title={dict.common.switchTo}
+        title={`${dict.common.language}: ${names[locale]}`}
         className={`block p-2 ${iconClass}`}
       >
         <Current />
-      </Link>
+      </button>
 
       {/* Druga flaga wysuwa się pod pierwszą, dokładnie w tej samej osi.
           `pt-1` zamiast odstępu marginesem – szczelina jest częścią elementu,
