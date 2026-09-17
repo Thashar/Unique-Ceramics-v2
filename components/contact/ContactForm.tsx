@@ -2,11 +2,10 @@
 
 import { useState } from "react";
 import { SITE_URL } from "@/lib/seo";
+import { localePath } from "@/lib/i18n";
+import { useLocale, useT } from "@/lib/use-locale";
 
 type Status = "idle" | "sending" | "success" | "error";
-
-/** Temat ustawiany z automatu, gdy klient przychodzi z karty wyprzedanego produktu. */
-const PRODUCT_SUBJECT = "Zamówienie ze sklepu";
 
 interface Props {
   workshopOptions?: string[];
@@ -20,18 +19,22 @@ interface Props {
 }
 
 export default function ContactForm({ workshopOptions = [], productSlug = "" }: Props) {
+  const locale = useLocale();
+  const d = useT();
+  // Temat ustawiany z automatu, gdy klient przychodzi z karty wyprzedanego produktu
+  const PRODUCT_SUBJECT = d.contact.subjectProduct;
   // Slug przepuszczamy przez ten sam wzorzec co adresy produktów – do treści
   // wiadomości trafia wtedy wyłącznie nasz własny link
   const safeSlug = /^[a-z0-9-]{1,120}$/.test(productSlug) ? productSlug : "";
   const productMessage = safeSlug
-    ? `Chcę zapytać o produkt: ${SITE_URL}/sklep/${safeSlug}\n\n`
+    ? `${d.contact.productMessage(`${SITE_URL}${localePath(locale, `/sklep/${safeSlug}`)}`)}\n\n`
     : "";
 
   const [status, setStatus] = useState<Status>("idle");
   const [subject, setSubject] = useState(safeSlug ? PRODUCT_SUBJECT : "");
   const [workshopType, setWorkshopType] = useState("");
 
-  const showWorkshopSelect = subject === "Warsztaty" && workshopOptions.length > 0;
+  const showWorkshopSelect = subject === d.contact.subjectWorkshops && workshopOptions.length > 0;
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -72,18 +75,18 @@ export default function ContactForm({ workshopOptions = [], productSlug = "" }: 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
         <div>
           <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">
-            Imię
+            {d.contact.name}
           </label>
           <input
             name="name"
             type="text"
             className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors rounded-md"
-            placeholder="Twoje imię"
+            placeholder={d.contact.namePlaceholder}
           />
         </div>
         <div>
           <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">
-            Telefon
+            {d.contact.phone}
           </label>
           <input
             name="phone"
@@ -109,7 +112,7 @@ export default function ContactForm({ workshopOptions = [], productSlug = "" }: 
 
       <div>
         <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">
-          Temat
+          {d.contact.subject}
         </label>
         <select
           value={subject}
@@ -119,25 +122,25 @@ export default function ContactForm({ workshopOptions = [], productSlug = "" }: 
           }}
           className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors rounded-md"
         >
-          <option value="">Wybierz temat</option>
+          <option value="">{d.contact.chooseSubject}</option>
           <option>{PRODUCT_SUBJECT}</option>
-          <option>Zamówienie indywidualne</option>
-          <option>Warsztaty</option>
-          <option>Inne</option>
+          <option>{d.contact.subjectCustom}</option>
+          <option>{d.contact.subjectWorkshops}</option>
+          <option>{d.contact.subjectOther}</option>
         </select>
       </div>
 
       {showWorkshopSelect && (
         <div>
           <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">
-            Rodzaj warsztatu
+            {d.contact.workshopType}
           </label>
           <select
             value={workshopType}
             onChange={(e) => setWorkshopType(e.target.value)}
             className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors rounded-md"
           >
-            <option value="">Wybierz rodzaj warsztatu</option>
+            <option value="">{d.contact.chooseWorkshop}</option>
             {workshopOptions.map((name) => (
               <option key={name} value={name}>{name}</option>
             ))}
@@ -147,7 +150,7 @@ export default function ContactForm({ workshopOptions = [], productSlug = "" }: 
 
       <div>
         <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">
-          Wiadomość *
+          {d.contact.message} *
         </label>
         <textarea
           name="message"
@@ -155,7 +158,7 @@ export default function ContactForm({ workshopOptions = [], productSlug = "" }: 
           defaultValue={productMessage}
           rows={5}
           className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors resize-none rounded-md"
-          placeholder="Jak mogę pomóc?"
+          placeholder={d.contact.messagePlaceholder}
         />
       </div>
 
@@ -164,17 +167,17 @@ export default function ContactForm({ workshopOptions = [], productSlug = "" }: 
         disabled={status === "sending"}
         className="w-full bg-clay hover:bg-terracotta hover:text-espresso text-warm-white text-xs tracking-widest uppercase py-4 transition-colors disabled:opacity-60 disabled:cursor-not-allowed rounded-md"
       >
-        {status === "sending" ? "Wysyłanie…" : "Wyślij wiadomość"}
+        {status === "sending" ? d.contact.sending : d.contact.send}
       </button>
 
       {status === "success" && (
         <p className="text-sm text-center text-clay">
-          Wiadomość wysłana – odpiszę w ciągu 1–2 dni roboczych.
+          {d.contact.success}
         </p>
       )}
       {status === "error" && (
         <p className="text-sm text-center text-red-700">
-          Coś poszło nie tak. Spróbuj ponownie lub napisz bezpośrednio na e-mail.
+          {d.contact.error}
         </p>
       )}
     </form>

@@ -5,6 +5,8 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { ShoppingBag } from "lucide-react";
 import ProductPriceTag from "@/components/ui/ProductPriceTag";
+import { localePath } from "@/lib/i18n";
+import { useLocale, useT } from "@/lib/use-locale";
 
 
 type ProductCardProduct = {
@@ -60,8 +62,10 @@ export default function ProductCard({
    */
   instant?: boolean;
 }) {
+  const locale = useLocale();
+  const d = useT();
   const content = (
-      <Link href={`/sklep/${product.slug}`} className="group block">
+      <Link href={localePath(locale, `/sklep/${product.slug}`)} className="group block">
         {/* Zdjęcie */}
         <div className={`relative aspect-[4/5] overflow-hidden bg-mist ${compact ? "mb-2" : "mb-4"} rounded-lg`}>
           {product.images[0] ? (
@@ -95,7 +99,7 @@ export default function ProductCard({
                   : "top-3 left-3 text-[11px] px-2.5 py-1"
               }`}
             >
-              Ostatnie sztuki
+              {d.shop.lastPieces}
             </span>
           )}
           {product.stock === 0 && (
@@ -106,7 +110,7 @@ export default function ProductCard({
                   : "top-3 left-3 text-[11px] px-2.5 py-1"
               }`}
             >
-              Wyprzedano
+              {d.shop.soldOut}
             </span>
           )}
           {/* Hover overlay */}
@@ -142,6 +146,7 @@ export default function ProductCard({
               freeShippingNote={freeShippingNote}
               discountPercent={product.discountPercent ?? 0}
               size={compact ? "sm" : "md"}
+              locale={locale}
             />
           </p>
         </div>

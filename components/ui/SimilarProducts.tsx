@@ -4,6 +4,7 @@ import ProductCard from "@/components/ui/ProductCard";
 import ClayRule from "@/components/ui/ClayRule";
 import { categoryLabel, type Category } from "@/lib/category-defaults";
 import { DRAG_SCROLL_CLASS, HINT_FADE_MS, useDragScroll } from "@/lib/use-drag-scroll";
+import { useT } from "@/lib/use-locale";
 
 type CarouselProduct = {
   id: string;
@@ -28,7 +29,7 @@ type CarouselProduct = {
 export default function SimilarProducts({
   products,
   categories,
-  title = "Mogą Ci się spodobać",
+  title,
   lowStockBadge = true,
 }: {
   products: CarouselProduct[];
@@ -38,6 +39,8 @@ export default function SimilarProducts({
   lowStockBadge?: boolean;
 }) {
   const { attach, onScroll, hint } = useDragScroll();
+  const d = useT();
+  title = title ?? d.product.similar;
 
   if (products.length === 0) return null;
 

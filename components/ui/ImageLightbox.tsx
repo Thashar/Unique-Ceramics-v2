@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { ChevronLeft, ChevronRight, Loader2, Minus, Plus, X } from "lucide-react";
+import { useT } from "@/lib/use-locale";
 
 /** Granice powiększenia w podglądzie. */
 const MIN_SCALE = 1;
@@ -65,6 +66,7 @@ export default function ImageLightbox({
   onClose: () => void;
 }) {
   const mounted = useMounted();
+  const d = useT();
   const [view, setView] = useState<View>(RESET);
   const [loadedSrc, setLoadedSrc] = useState<string | null>(null);
   /** Czy palec albo kursor trzyma zdjęcie – wtedy transform idzie bez animacji. */
@@ -284,7 +286,7 @@ export default function ImageLightbox({
     <div
       role="dialog"
       aria-modal="true"
-      aria-label={`Podgląd zdjęcia – ${name}`}
+      aria-label={d.product.preview(name)}
       className="fixed inset-0 z-[80] bg-espresso/95 flex flex-col"
     >
       {/* Górny pasek: licznik zdjęć, powiększanie, zamknięcie */}
@@ -297,7 +299,7 @@ export default function ImageLightbox({
             type="button"
             onClick={() => zoomTo(view.s - ZOOM_STEP)}
             disabled={view.s <= MIN_SCALE}
-            aria-label="Pomniejsz"
+            aria-label={d.product.zoomOut}
             className="w-10 h-10 flex items-center justify-center border border-sand/25 hover:bg-sand/10 transition-colors disabled:opacity-30 rounded-full"
           >
             <Minus size={18} />
@@ -309,7 +311,7 @@ export default function ImageLightbox({
             type="button"
             onClick={() => zoomTo(view.s + ZOOM_STEP)}
             disabled={view.s >= MAX_SCALE}
-            aria-label="Powiększ"
+            aria-label={d.product.zoomIn}
             className="w-10 h-10 flex items-center justify-center border border-sand/25 hover:bg-sand/10 transition-colors disabled:opacity-30 rounded-full"
           >
             <Plus size={18} />
@@ -317,7 +319,7 @@ export default function ImageLightbox({
           <button
             type="button"
             onClick={onClose}
-            aria-label="Zamknij podgląd"
+            aria-label={d.product.close}
             className="w-10 h-10 flex items-center justify-center border border-sand/25 hover:bg-sand/10 transition-colors ml-1 rounded-full"
           >
             <X size={20} />
@@ -363,7 +365,7 @@ export default function ImageLightbox({
             <button
               type="button"
               onClick={() => go(-1)}
-              aria-label="Poprzednie zdjęcie"
+              aria-label={d.product.prev}
               className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center bg-espresso/70 text-cream border border-sand/25 hover:bg-espresso transition-colors rounded-full"
             >
               <ChevronLeft size={22} />
@@ -371,7 +373,7 @@ export default function ImageLightbox({
             <button
               type="button"
               onClick={() => go(1)}
-              aria-label="Następne zdjęcie"
+              aria-label={d.product.next}
               className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center bg-espresso/70 text-cream border border-sand/25 hover:bg-espresso transition-colors rounded-full"
             >
               <ChevronRight size={22} />

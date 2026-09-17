@@ -6,6 +6,7 @@ import { getProjects } from "@/lib/portfolio";
 import { projectSlugs, projectPath } from "@/lib/portfolio-slug";
 import { categoryPath } from "@/lib/category-seo";
 import { absoluteUrl } from "@/lib/seo";
+import { hasEnglishVersion, localePath } from "@/lib/i18n";
 
 // Odświeżaj sitemapę co godzinę – nowe produkty trafiają do niej bez deployu
 export const revalidate = 3600;
@@ -76,5 +77,31 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...(project.images.length ? { images: project.images.map(absoluteUrl) } : {}),
   }));
 
-  return [...routes, ...categoryRoutes, ...productRoutes, ...projectRoutes];
+  return withEnglish([...routes, ...categoryRoutes, ...productRoutes, ...projectRoutes]);
+}
+
+/**
+ * Wersja angielska: każda strona, która ją ma (patrz `hasEnglishVersion`),
+ * dostaje wpis `hreflang` i osobny adres `/en/...` w sitemapie. Priorytet
+ * angielskiej kopii jest niższy – to dodatek do czytania, nie drugi sklep.
+ */
+function withEnglish(entries: MetadataRoute.Sitemap): MetadataRoute.Sitemap {
+  const out: MetadataRoute.Sitemap = [];
+  for (const entry of entries) {
+    const path = entry.url.slice(BASE.length) || "/";
+    if (!hasEnglishVersion(path)) {
+      out.push(entry);
+      continue;
+    }
+    const en = `${BASE}${localePath("en", path)}`;
+    const languages = { pl: entry.url, en, "x-default": entry.url };
+    out.push({ ...entry, alternates: { languages } });
+    out.push({
+      ...entry,
+      url: en,
+      priority: Math.max(0.1, Math.round(((entry.priority ?? 0.5) - 0.2) * 10) / 10),
+      alternates: { languages },
+    });
+  }
+  return out;
 }

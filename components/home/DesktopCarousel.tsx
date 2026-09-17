@@ -4,6 +4,7 @@ import { useRef, useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import ProductCard from "@/components/ui/ProductCard";
 import { categoryLabel, type Category } from "@/lib/category-defaults";
+import { useT } from "@/lib/use-locale";
 
 const DURATION = 520;
 const GAP = 32; // gap-8
@@ -23,6 +24,7 @@ export default function DesktopCarousel({ products, categories, lowStockBadge = 
   const innerRef = useRef<HTMLDivElement>(null);
   const leftArrowRef = useRef<HTMLButtonElement>(null);
   const rightArrowRef = useRef<HTMLButtonElement>(null);
+  const d = useT();
   const [page, setPage] = useState(0);
   const isAnimating = useRef(false);
   const currentOffset = useRef(0);
@@ -97,7 +99,7 @@ export default function DesktopCarousel({ products, categories, lowStockBadge = 
           disabled={page === 0}
           className="absolute -translate-y-1/2 text-espresso/70 hover:text-espresso disabled:opacity-0 disabled:pointer-events-none transition-colors duration-200"
           style={{ left: "-56px", top: 0 }}
-          aria-label="Poprzednia strona"
+          aria-label={d.home.prevPage}
         >
           <ChevronLeft size={36} strokeWidth={2.5} />
         </button>
@@ -111,7 +113,7 @@ export default function DesktopCarousel({ products, categories, lowStockBadge = 
           disabled={page === totalPages - 1}
           className="absolute -translate-y-1/2 text-espresso/70 hover:text-espresso disabled:opacity-0 disabled:pointer-events-none transition-colors duration-200"
           style={{ right: "-56px", top: 0 }}
-          aria-label="Następna strona"
+          aria-label={d.home.nextPage}
         >
           <ChevronRight size={36} strokeWidth={2.5} />
         </button>

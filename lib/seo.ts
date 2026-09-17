@@ -7,6 +7,7 @@
 //    robi to za nas – używaj go zamiast pisania bloku openGraph ręcznie.
 
 import type { Metadata } from "next";
+import { OG_LOCALE, hasEnglishVersion, localePath, stripLocale, type Locale } from "./i18n";
 
 export const SITE_URL = "https://uniqueceramics.pl";
 export const SITE_NAME = "Unique Ceramics";
@@ -49,7 +50,24 @@ type PageMetaInput = {
   image?: typeof OG_IMAGE;
   /** Strony prywatne (koszyk, konto) – bez indeksowania. */
   noIndex?: boolean;
+  /**
+   * Język strony. Po angielsku canonical wskazuje `/en/...`, a `hreflang`
+   * spina obie wersje; po polsku `hreflang` pojawia się tylko tam, gdzie
+   * wersja angielska istnieje (patrz `hasEnglishVersion`).
+   */
+  locale?: Locale;
 };
+
+/**
+ * Wpisy `hreflang` dla polskiej ścieżki (bez prefiksu): polska wersja jest
+ * też `x-default`. Strona bez odpowiednika po angielsku nie dostaje nic.
+ */
+export function languageAlternates(plainPath: string): Record<string, string> | undefined {
+  const clean = stripLocale(plainPath);
+  if (!hasEnglishVersion(clean)) return undefined;
+  const pl = `${SITE_URL}${clean}`;
+  return { pl, en: `${SITE_URL}${localePath("en", clean)}`, "x-default": pl };
+}
 
 /** Buduje komplet metadanych strony: opis, canonical, Open Graph i kartę Twitter. */
 export function pageMetadata({
@@ -59,19 +77,21 @@ export function pageMetadata({
   ogTitle,
   image = OG_IMAGE,
   noIndex,
+  locale = "pl",
 }: PageMetaInput): Metadata {
-  const url = `${SITE_URL}${path}`;
+  const url = `${SITE_URL}${localePath(locale, path)}`;
   const socialTitle = ogTitle ?? `${title} – ${SITE_NAME}`;
+  const languages = noIndex ? undefined : languageAlternates(path);
 
   return {
     title,
     description,
-    alternates: { canonical: url },
+    alternates: { canonical: url, ...(languages ? { languages } : {}) },
     ...(noIndex ? { robots: { index: false, follow: false } } : {}),
     openGraph: {
       type: "website",
       siteName: SITE_NAME,
-      locale: "pl_PL",
+      locale: OG_LOCALE[locale],
       url,
       title: socialTitle,
       description,

@@ -4,8 +4,11 @@ import { useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
-import { Loader2 } from "lucide-react";
 import RichEditor from "@/components/admin/RichEditor";
+import { Field, MultilineField, SaveButton } from "@/components/admin/settings-fields";
+import SettingsEnglish from "@/components/admin/SettingsEnglish";
+import LangSwitch from "@/components/admin/LangSwitch";
+import type { Locale } from "@/lib/i18n";
 import ImageUploader from "@/components/admin/ImageUploader";
 import FocalPointPicker from "@/components/admin/FocalPointPicker";
 import GalleryEditor from "@/components/admin/GalleryEditor";
@@ -146,6 +149,11 @@ interface Props {
   };
   /** Statystyki zużycia AI – liczone tylko dla zakładki „AI (zdjęcia)” */
   aiUsage?: AiUsageStats | null;
+  /**
+   * Angielskie wersje ustawień (klucze `en_*` z bazy), kluczowane **polskim**
+   * kluczem – edytowane po przełączeniu zakładki na EN (`SettingsEnglish`).
+   */
+  english?: Record<string, string>;
 }
 
 const MODEL_LABEL = new Map<string, string>([
@@ -225,50 +233,6 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean
   );
 }
 
-function Field({ label, value, setter, type = "text", placeholder, mono }: {
-  label: string;
-  value: string;
-  setter: (v: string) => void;
-  type?: string;
-  placeholder?: string;
-  mono?: boolean;
-}) {
-  return (
-    <div>
-      <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">{label}</label>
-      <input
-        type={type}
-        value={value}
-        onChange={(e) => setter(e.target.value)}
-        placeholder={placeholder}
-        className={`w-full bg-warm-white border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors${mono ? " font-mono" : ""}`}
-      />
-    </div>
-  );
-}
-
-/** Pole wieloliniowe – Enter wstawia nowy wiersz zachowywany przy renderze. */
-function MultilineField({ label, value, setter, placeholder, rows = 3 }: {
-  label: string;
-  value: string;
-  setter: (v: string) => void;
-  placeholder?: string;
-  rows?: number;
-}) {
-  return (
-    <div>
-      <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">{label}</label>
-      <textarea
-        value={value}
-        onChange={(e) => setter(e.target.value)}
-        placeholder={placeholder}
-        rows={rows}
-        className="w-full bg-warm-white border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors resize-y"
-      />
-    </div>
-  );
-}
-
 /**
  * Teksty pełnoekranowej sekcji strony głównej („O mnie", „Warsztaty").
  * Ten sam układ pól co w hero – tam jednak są dwa przyciski i napis przy
@@ -315,36 +279,6 @@ function Toast({ children }: { children: React.ReactNode }) {
   const mounted = useSyncExternalStore(noopSubscribe, () => true, () => false);
   if (!mounted) return null;
   return createPortal(children, document.body);
-}
-
-/**
- * Zapis idzie do API, więc przycisk sam pilnuje stanu „w toku”: kręcące się kółko
- * daje znać, że kliknięcie zostało przyjęte, a blokada chroni przed dublowaniem zapisu.
- */
-function SaveButton({ onClick, label }: { onClick: () => void | Promise<void>; label: string }) {
-  const [saving, setSaving] = useState(false);
-
-  const handleClick = async () => {
-    if (saving) return;
-    setSaving(true);
-    try {
-      await onClick();
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <button
-      onClick={handleClick}
-      disabled={saving}
-      aria-busy={saving}
-      className="inline-flex items-center gap-2 bg-clay hover:bg-espresso text-cream text-xs tracking-widest uppercase px-6 py-3 transition-colors disabled:cursor-wait disabled:hover:bg-clay"
-    >
-      {saving && <Loader2 size={14} className="animate-spin" aria-hidden="true" />}
-      {label}
-    </button>
-  );
 }
 
 function OverlayControl({
@@ -400,9 +334,35 @@ function OverlayControl({
   );
 }
 
-export default function SettingsForm({ section, initial, aiUsage }: Props) {
+/**
+ * Nagłówek zakładki z przełącznikiem PL / EN po prawej. Przełącznik pokazuje
+ * się tylko w zakładkach, które mają treść do przetłumaczenia.
+ */
+function SectionHeading({
+  title,
+  lang,
+  onLang,
+  translatable,
+}: {
+  title: string;
+  lang: Locale;
+  onLang: (l: Locale) => void;
+  translatable: boolean;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <h2 className="font-serif text-2xl text-espresso">{title}</h2>
+      {translatable && <LangSwitch value={lang} onChange={onLang} />}
+    </div>
+  );
+}
+
+export default function SettingsForm({ section, initial, aiUsage, english = {} }: Props) {
   const [toast, setToast] = useState<"ok" | false>(false);
   const [errMsg, setErrMsg] = useState("");
+  // PL / EN – przełącznik u góry po prawej w zakładkach, które mają wersję
+  // angielską (patrz `ENGLISH_SETTING_KEYS` w `SettingsEnglish`)
+  const [lang, setLang] = useState<Locale>("pl");
 
   // Strona główna
   const [homeHeroImage, setHomeHeroImage] = useState(initial.home_hero_image);
@@ -584,310 +544,348 @@ export default function SettingsForm({ section, initial, aiUsage }: Props) {
 
       {section === "strona_glowna" && (
         <div className="max-w-2xl space-y-8">
-          <h2 className="font-serif text-2xl text-espresso">Strona główna</h2>
+          <SectionHeading title="Strona główna" lang={lang} onLang={setLang} translatable />
+          {lang === "en" ? (
+            <SettingsEnglish
+              section="strona_glowna"
+              initial={english}
+              source={{
+                home_hero_eyebrow: heroEyebrow, home_hero_title: heroTitle, home_hero_text: heroText,
+                home_hero_cta_primary: heroCtaPrimary, home_hero_cta_secondary: heroCtaSecondary, home_hero_scroll: heroScroll,
+                home_about_eyebrow: aboutEyebrow, home_about_title: aboutTitle, home_about_text: aboutText, home_about_cta: aboutCta,
+                home_workshops_eyebrow: workshopsEyebrow, home_workshops_title: workshopsTitle, home_workshops_text: workshopsText, home_workshops_cta: workshopsCta,
+              }}
+              save={save}
+            />
+          ) : (
+            <>
 
-          <div className="space-y-4">
-            <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/80">Sekcja hero (nagłówek)</h3>
-            <p className="text-xs text-charcoal/80">Pierwsze zdjęcie widoczne po wejściu na stronę – duże, pełnoekranowe tło.</p>
-            <ImageUploader
-              currentUrl={homeHeroImage}
-              onUploaded={(url) => setHomeHeroImage(url)}
-              label="Zdjęcie hero"
-            />
-            <FocalPointPicker
-              imageUrl={homeHeroImage}
-              value={homeHeroPos}
-              onChange={setHomeHeroPos}
-            />
-          </div>
+              <div className="space-y-4">
+                <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/80">Sekcja hero (nagłówek)</h3>
+                <p className="text-xs text-charcoal/80">Pierwsze zdjęcie widoczne po wejściu na stronę – duże, pełnoekranowe tło.</p>
+                <ImageUploader
+                  currentUrl={homeHeroImage}
+                  onUploaded={(url) => setHomeHeroImage(url)}
+                  label="Zdjęcie hero"
+                />
+                <FocalPointPicker
+                  imageUrl={homeHeroImage}
+                  value={homeHeroPos}
+                  onChange={setHomeHeroPos}
+                />
+              </div>
 
-          <div className="border-t border-sand pt-6 space-y-4">
-            <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/80">Teksty sekcji hero</h3>
-            <p className="text-xs text-charcoal/80">
-              Napisy na pierwszym ekranie strony głównej. <strong>Puste pole ukrywa dany element</strong> –
-              można zostawić samo zdjęcie. W nagłówku i opisie Enter łamie wiersz.
-            </p>
-            <Field
-              label="Napis nad nagłówkiem"
-              value={heroEyebrow}
-              setter={setHeroEyebrow}
-              placeholder={HOME_HERO_DEFAULT.eyebrow}
-            />
-            <MultilineField
-              label="Nagłówek"
-              value={heroTitle}
-              setter={setHeroTitle}
-              placeholder={HOME_HERO_DEFAULT.title}
-              rows={2}
-            />
-            <MultilineField
-              label="Opis pod nagłówkiem"
-              value={heroText}
-              setter={setHeroText}
-              placeholder={HOME_HERO_DEFAULT.text}
-              rows={4}
-            />
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Field
-                label="Przycisk 1 (do sklepu)"
-                value={heroCtaPrimary}
-                setter={setHeroCtaPrimary}
-                placeholder={HOME_HERO_DEFAULT.ctaPrimary}
+              <div className="border-t border-sand pt-6 space-y-4">
+                <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/80">Teksty sekcji hero</h3>
+                <p className="text-xs text-charcoal/80">
+                  Napisy na pierwszym ekranie strony głównej. <strong>Puste pole ukrywa dany element</strong> –
+                  można zostawić samo zdjęcie. W nagłówku i opisie Enter łamie wiersz.
+                </p>
+                <Field
+                  label="Napis nad nagłówkiem"
+                  value={heroEyebrow}
+                  setter={setHeroEyebrow}
+                  placeholder={HOME_HERO_DEFAULT.eyebrow}
+                />
+                <MultilineField
+                  label="Nagłówek"
+                  value={heroTitle}
+                  setter={setHeroTitle}
+                  placeholder={HOME_HERO_DEFAULT.title}
+                  rows={2}
+                />
+                <MultilineField
+                  label="Opis pod nagłówkiem"
+                  value={heroText}
+                  setter={setHeroText}
+                  placeholder={HOME_HERO_DEFAULT.text}
+                  rows={4}
+                />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Field
+                    label="Przycisk 1 (do sklepu)"
+                    value={heroCtaPrimary}
+                    setter={setHeroCtaPrimary}
+                    placeholder={HOME_HERO_DEFAULT.ctaPrimary}
+                  />
+                  <Field
+                    label={"Przycisk 2 (do „O mnie”)"}
+                    value={heroCtaSecondary}
+                    setter={setHeroCtaSecondary}
+                    placeholder={HOME_HERO_DEFAULT.ctaSecondary}
+                  />
+                </div>
+                <Field
+                  label="Napis przy strzałce na dole"
+                  value={heroScroll}
+                  setter={setHeroScroll}
+                  placeholder={HOME_HERO_DEFAULT.scroll}
+                />
+              </div>
+
+              <div className="border-t border-sand pt-6 space-y-4">
+                <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/80">Sekcja „O mnie&rdquo;</h3>
+                <p className="text-xs text-charcoal/80">Tło sekcji z historią – widoczne za tekstem na stronie głównej.</p>
+                <ImageUploader
+                  currentUrl={homeAboutImage}
+                  onUploaded={(url) => setHomeAboutImage(url)}
+                  label="Zdjęcie sekcji O mnie"
+                />
+                <FocalPointPicker
+                  imageUrl={homeAboutImage}
+                  value={homeAboutPos}
+                  onChange={setHomeAboutPos}
+                />
+                <SectionTextFields
+                  eyebrow={aboutEyebrow}
+                  setEyebrow={setAboutEyebrow}
+                  title={aboutTitle}
+                  setTitle={setAboutTitle}
+                  text={aboutText}
+                  setText={setAboutText}
+                  cta={aboutCta}
+                  setCta={setAboutCta}
+                  defaults={HOME_ABOUT_DEFAULT}
+                  ctaLabel={'Przycisk (do „O mnie”)'}
+                />
+              </div>
+
+              <div className="border-t border-sand pt-6 space-y-4">
+                <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/80">Sekcja „Warsztaty&rdquo;</h3>
+                <p className="text-xs text-charcoal/80">Tło sekcji warsztatów – widoczne za tekstem na stronie głównej.</p>
+                <ImageUploader
+                  currentUrl={homeWorkshopsImage}
+                  onUploaded={(url) => setHomeWorkshopsImage(url)}
+                  label="Zdjęcie sekcji Warsztaty"
+                />
+                <FocalPointPicker
+                  imageUrl={homeWorkshopsImage}
+                  value={homeWorkshopsPos}
+                  onChange={setHomeWorkshopsPos}
+                />
+                <SectionTextFields
+                  eyebrow={workshopsEyebrow}
+                  setEyebrow={setWorkshopsEyebrow}
+                  title={workshopsTitle}
+                  setTitle={setWorkshopsTitle}
+                  text={workshopsText}
+                  setText={setWorkshopsText}
+                  cta={workshopsCta}
+                  setCta={setWorkshopsCta}
+                  defaults={HOME_WORKSHOPS_DEFAULT}
+                  ctaLabel={'Przycisk (do „Warsztaty”)'}
+                />
+              </div>
+
+              <SaveButton
+                onClick={() => save([
+                  { key: "home_hero_image",        value: homeHeroImage },
+                  { key: "home_hero_position",     value: homeHeroPos },
+                  { key: "home_hero_eyebrow",         value: heroEyebrow },
+                  { key: "home_hero_title",           value: heroTitle },
+                  { key: "home_hero_text",            value: heroText },
+                  { key: "home_hero_cta_primary",     value: heroCtaPrimary },
+                  { key: "home_hero_cta_secondary",   value: heroCtaSecondary },
+                  { key: "home_hero_scroll",          value: heroScroll },
+                  { key: "home_about_image",       value: homeAboutImage },
+                  { key: "home_about_position",       value: homeAboutPos },
+                  { key: "home_about_eyebrow",        value: aboutEyebrow },
+                  { key: "home_about_title",          value: aboutTitle },
+                  { key: "home_about_text",           value: aboutText },
+                  { key: "home_about_cta",            value: aboutCta },
+                  { key: "home_workshops_image",      value: homeWorkshopsImage },
+                  { key: "home_workshops_position",   value: homeWorkshopsPos },
+                  { key: "home_workshops_eyebrow",    value: workshopsEyebrow },
+                  { key: "home_workshops_title",      value: workshopsTitle },
+                  { key: "home_workshops_text",       value: workshopsText },
+                  { key: "home_workshops_cta",        value: workshopsCta },
+                ])}
+                label="Zapisz stronę główną"
               />
-              <Field
-                label={"Przycisk 2 (do „O mnie”)"}
-                value={heroCtaSecondary}
-                setter={setHeroCtaSecondary}
-                placeholder={HOME_HERO_DEFAULT.ctaSecondary}
-              />
-            </div>
-            <Field
-              label="Napis przy strzałce na dole"
-              value={heroScroll}
-              setter={setHeroScroll}
-              placeholder={HOME_HERO_DEFAULT.scroll}
-            />
-          </div>
-
-          <div className="border-t border-sand pt-6 space-y-4">
-            <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/80">Sekcja „O mnie&rdquo;</h3>
-            <p className="text-xs text-charcoal/80">Tło sekcji z historią – widoczne za tekstem na stronie głównej.</p>
-            <ImageUploader
-              currentUrl={homeAboutImage}
-              onUploaded={(url) => setHomeAboutImage(url)}
-              label="Zdjęcie sekcji O mnie"
-            />
-            <FocalPointPicker
-              imageUrl={homeAboutImage}
-              value={homeAboutPos}
-              onChange={setHomeAboutPos}
-            />
-            <SectionTextFields
-              eyebrow={aboutEyebrow}
-              setEyebrow={setAboutEyebrow}
-              title={aboutTitle}
-              setTitle={setAboutTitle}
-              text={aboutText}
-              setText={setAboutText}
-              cta={aboutCta}
-              setCta={setAboutCta}
-              defaults={HOME_ABOUT_DEFAULT}
-              ctaLabel={'Przycisk (do „O mnie”)'}
-            />
-          </div>
-
-          <div className="border-t border-sand pt-6 space-y-4">
-            <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/80">Sekcja „Warsztaty&rdquo;</h3>
-            <p className="text-xs text-charcoal/80">Tło sekcji warsztatów – widoczne za tekstem na stronie głównej.</p>
-            <ImageUploader
-              currentUrl={homeWorkshopsImage}
-              onUploaded={(url) => setHomeWorkshopsImage(url)}
-              label="Zdjęcie sekcji Warsztaty"
-            />
-            <FocalPointPicker
-              imageUrl={homeWorkshopsImage}
-              value={homeWorkshopsPos}
-              onChange={setHomeWorkshopsPos}
-            />
-            <SectionTextFields
-              eyebrow={workshopsEyebrow}
-              setEyebrow={setWorkshopsEyebrow}
-              title={workshopsTitle}
-              setTitle={setWorkshopsTitle}
-              text={workshopsText}
-              setText={setWorkshopsText}
-              cta={workshopsCta}
-              setCta={setWorkshopsCta}
-              defaults={HOME_WORKSHOPS_DEFAULT}
-              ctaLabel={'Przycisk (do „Warsztaty”)'}
-            />
-          </div>
-
-          <SaveButton
-            onClick={() => save([
-              { key: "home_hero_image",        value: homeHeroImage },
-              { key: "home_hero_position",     value: homeHeroPos },
-              { key: "home_hero_eyebrow",         value: heroEyebrow },
-              { key: "home_hero_title",           value: heroTitle },
-              { key: "home_hero_text",            value: heroText },
-              { key: "home_hero_cta_primary",     value: heroCtaPrimary },
-              { key: "home_hero_cta_secondary",   value: heroCtaSecondary },
-              { key: "home_hero_scroll",          value: heroScroll },
-              { key: "home_about_image",       value: homeAboutImage },
-              { key: "home_about_position",       value: homeAboutPos },
-              { key: "home_about_eyebrow",        value: aboutEyebrow },
-              { key: "home_about_title",          value: aboutTitle },
-              { key: "home_about_text",           value: aboutText },
-              { key: "home_about_cta",            value: aboutCta },
-              { key: "home_workshops_image",      value: homeWorkshopsImage },
-              { key: "home_workshops_position",   value: homeWorkshopsPos },
-              { key: "home_workshops_eyebrow",    value: workshopsEyebrow },
-              { key: "home_workshops_title",      value: workshopsTitle },
-              { key: "home_workshops_text",       value: workshopsText },
-              { key: "home_workshops_cta",        value: workshopsCta },
-            ])}
-            label="Zapisz stronę główną"
-          />
+            </>
+          )}
         </div>
       )}
 
       {section === "omnie" && (
         <div className="max-w-2xl space-y-8">
-          <h2 className="font-serif text-2xl text-espresso">O mnie</h2>
+          <SectionHeading title="O mnie" lang={lang} onLang={setLang} translatable />
+          {lang === "en" ? (
+            <SettingsEnglish
+              section="omnie"
+              initial={english}
+              source={{ about_story: aboutStory, about_values_title: aboutValuesTitle, about_values: aboutValues }}
+              save={save}
+            />
+          ) : (
+            <>
 
-          <div className="space-y-4">
-            <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/80">Zdjęcie nagłówka (hero)</h3>
-            <ImageUploader
-              currentUrl={aboutImage}
-              onUploaded={(url) => setAboutImage(url)}
-              label="Zdjęcie hero"
-            />
-            <FocalPointPicker imageUrl={aboutImage} value={aboutHeroPos} onChange={setAboutHeroPos} aspectRatio="3/1" />
-            <OverlayControl
-              imageUrl={aboutImage}
-              position={aboutHeroPos}
-              color={aboutOverlayColor}
-              opacity={aboutOverlayOpacity}
-              onColorChange={setAboutOverlayColor}
-              onOpacityChange={setAboutOverlayOpacity}
-              aspectRatio="3/1"
-            />
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label className="text-xs tracking-widest uppercase text-charcoal/80">Wysokość nagłówka z obrazem</label>
-                <span className="text-sm font-medium text-espresso tabular-nums">{aboutHeroHeight}vh</span>
+              <div className="space-y-4">
+                <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/80">Zdjęcie nagłówka (hero)</h3>
+                <ImageUploader
+                  currentUrl={aboutImage}
+                  onUploaded={(url) => setAboutImage(url)}
+                  label="Zdjęcie hero"
+                />
+                <FocalPointPicker imageUrl={aboutImage} value={aboutHeroPos} onChange={setAboutHeroPos} aspectRatio="3/1" />
+                <OverlayControl
+                  imageUrl={aboutImage}
+                  position={aboutHeroPos}
+                  color={aboutOverlayColor}
+                  opacity={aboutOverlayOpacity}
+                  onColorChange={setAboutOverlayColor}
+                  onOpacityChange={setAboutOverlayOpacity}
+                  aspectRatio="3/1"
+                />
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs tracking-widest uppercase text-charcoal/80">Wysokość nagłówka z obrazem</label>
+                    <span className="text-sm font-medium text-espresso tabular-nums">{aboutHeroHeight}vh</span>
+                  </div>
+                  <input type="range" min="30" max="80" step="5" value={aboutHeroHeight} onChange={(e) => setAboutHeroHeight(e.target.value)} className="w-full accent-clay" />
+                  <p className="text-[11px] text-charcoal/80">Aktywne gdy zdjęcie jest ustawione. Bez zdjęcia nagłówek ma jasne tło jak w /kontakt.</p>
+                </div>
               </div>
-              <input type="range" min="30" max="80" step="5" value={aboutHeroHeight} onChange={(e) => setAboutHeroHeight(e.target.value)} className="w-full accent-clay" />
-              <p className="text-[11px] text-charcoal/80">Aktywne gdy zdjęcie jest ustawione. Bez zdjęcia nagłówek ma jasne tło jak w /kontakt.</p>
-            </div>
-          </div>
 
-          <div className="border-t border-sand pt-6 space-y-4">
-            <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/80">Galeria przy opisie (prawa kolumna)</h3>
-            <p className="text-xs text-charcoal/80">Jeżeli pusta – kolumna zdjęć znika, tekst zajmuje całą szerokość.</p>
-            <GalleryEditor json={aboutGallery} onChange={setAboutGallery} />
-          </div>
+              <div className="border-t border-sand pt-6 space-y-4">
+                <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/80">Galeria przy opisie (prawa kolumna)</h3>
+                <p className="text-xs text-charcoal/80">Jeżeli pusta – kolumna zdjęć znika, tekst zajmuje całą szerokość.</p>
+                <GalleryEditor json={aboutGallery} onChange={setAboutGallery} />
+              </div>
 
-          <div className="border-t border-sand pt-6">
-            <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-3">Treść – historia</label>
-            <RichEditor value={aboutStory} onChange={setAboutStory} />
-          </div>
+              <div className="border-t border-sand pt-6">
+                <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-3">Treść – historia</label>
+                <RichEditor value={aboutStory} onChange={setAboutStory} />
+              </div>
 
-          <div className="border-t border-sand pt-6 space-y-4">
-            <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/80">Sekcja „Jak pracuję&rdquo;</h3>
-            <p className="text-xs text-charcoal/80">Karty pod treścią strony. Pusty nagłówek ukrywa sam tytuł sekcji, brak kart – całą sekcję.</p>
-            <div className="space-y-1.5">
-              <label className="block text-xs tracking-widest uppercase text-charcoal/80">Nagłówek sekcji</label>
-              <input
-                type="text"
-                value={aboutValuesTitle}
-                onChange={(e) => setAboutValuesTitle(e.target.value)}
-                className="w-full bg-warm-white border border-sand text-espresso text-sm px-3 py-2 outline-none focus:border-clay"
-                placeholder={ABOUT_VALUES_TITLE_DEFAULT}
+              <div className="border-t border-sand pt-6 space-y-4">
+                <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/80">Sekcja „Jak pracuję&rdquo;</h3>
+                <p className="text-xs text-charcoal/80">Karty pod treścią strony. Pusty nagłówek ukrywa sam tytuł sekcji, brak kart – całą sekcję.</p>
+                <div className="space-y-1.5">
+                  <label className="block text-xs tracking-widest uppercase text-charcoal/80">Nagłówek sekcji</label>
+                  <input
+                    type="text"
+                    value={aboutValuesTitle}
+                    onChange={(e) => setAboutValuesTitle(e.target.value)}
+                    className="w-full bg-warm-white border border-sand text-espresso text-sm px-3 py-2 outline-none focus:border-clay"
+                    placeholder={ABOUT_VALUES_TITLE_DEFAULT}
+                  />
+                </div>
+                <AboutValuesEditor json={aboutValues} onChange={setAboutValues} />
+              </div>
+
+              <SaveButton
+                onClick={() => save([
+                  { key: "about_hero_image",           value: aboutImage },
+                  { key: "about_hero_position",        value: aboutHeroPos },
+                  { key: "about_hero_overlay_color",   value: aboutOverlayColor },
+                  { key: "about_hero_overlay_opacity", value: aboutOverlayOpacity },
+                  { key: "about_hero_height",          value: aboutHeroHeight },
+                  { key: "about_content_gallery",      value: aboutGallery },
+                  // Stare klucze trzymamy zgodne z pierwszym zdjęciem galerii (zgodność wstecz)
+                  { key: "about_content_image",        value: galleryHead(aboutGallery).url },
+                  { key: "about_content_position",     value: galleryHead(aboutGallery).position },
+                  { key: "about_story",                value: aboutStory },
+                  { key: "about_values_title",         value: aboutValuesTitle },
+                  { key: "about_values",               value: aboutValues },
+                ])}
+                label="Zapisz stronę O mnie"
               />
-            </div>
-            <AboutValuesEditor json={aboutValues} onChange={setAboutValues} />
-          </div>
-
-          <SaveButton
-            onClick={() => save([
-              { key: "about_hero_image",           value: aboutImage },
-              { key: "about_hero_position",        value: aboutHeroPos },
-              { key: "about_hero_overlay_color",   value: aboutOverlayColor },
-              { key: "about_hero_overlay_opacity", value: aboutOverlayOpacity },
-              { key: "about_hero_height",          value: aboutHeroHeight },
-              { key: "about_content_gallery",      value: aboutGallery },
-              // Stare klucze trzymamy zgodne z pierwszym zdjęciem galerii (zgodność wstecz)
-              { key: "about_content_image",        value: galleryHead(aboutGallery).url },
-              { key: "about_content_position",     value: galleryHead(aboutGallery).position },
-              { key: "about_story",                value: aboutStory },
-              { key: "about_values_title",         value: aboutValuesTitle },
-              { key: "about_values",               value: aboutValues },
-            ])}
-            label="Zapisz stronę O mnie"
-          />
+            </>
+          )}
         </div>
       )}
 
 
       {section === "warsztaty" && (
         <div className="max-w-2xl space-y-8">
-          <h2 className="font-serif text-2xl text-espresso">Warsztaty</h2>
+          <SectionHeading title="Warsztaty" lang={lang} onLang={setLang} translatable />
+          {lang === "en" ? (
+            <SettingsEnglish
+              section="warsztaty"
+              initial={english}
+              source={{ workshops_intro: workshopsIntro, workshops_offers: workshopsOffers, workshops_includes: workshopsIncludes, workshops_faq: workshopsFaq }}
+              save={save}
+            />
+          ) : (
+            <>
 
-          <div className="space-y-4">
-            <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/80">Zdjęcie nagłówka (hero)</h3>
-            <ImageUploader
-              currentUrl={workshopsImage}
-              onUploaded={(url) => setWorkshopsImage(url)}
-              label="Zdjęcie hero"
-            />
-            <FocalPointPicker imageUrl={workshopsImage} value={workshopsHeroPos} onChange={setWorkshopsHeroPos} aspectRatio="3/1" />
-            <OverlayControl
-              imageUrl={workshopsImage}
-              position={workshopsHeroPos}
-              color={workshopsOverlayColor}
-              opacity={workshopsOverlayOpacity}
-              onColorChange={setWorkshopsOverlayColor}
-              onOpacityChange={setWorkshopsOverlayOpacity}
-              aspectRatio="3/1"
-            />
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label className="text-xs tracking-widest uppercase text-charcoal/80">Wysokość nagłówka z obrazem</label>
-                <span className="text-sm font-medium text-espresso tabular-nums">{workshopsHeroHeight}vh</span>
+              <div className="space-y-4">
+                <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/80">Zdjęcie nagłówka (hero)</h3>
+                <ImageUploader
+                  currentUrl={workshopsImage}
+                  onUploaded={(url) => setWorkshopsImage(url)}
+                  label="Zdjęcie hero"
+                />
+                <FocalPointPicker imageUrl={workshopsImage} value={workshopsHeroPos} onChange={setWorkshopsHeroPos} aspectRatio="3/1" />
+                <OverlayControl
+                  imageUrl={workshopsImage}
+                  position={workshopsHeroPos}
+                  color={workshopsOverlayColor}
+                  opacity={workshopsOverlayOpacity}
+                  onColorChange={setWorkshopsOverlayColor}
+                  onOpacityChange={setWorkshopsOverlayOpacity}
+                  aspectRatio="3/1"
+                />
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs tracking-widest uppercase text-charcoal/80">Wysokość nagłówka z obrazem</label>
+                    <span className="text-sm font-medium text-espresso tabular-nums">{workshopsHeroHeight}vh</span>
+                  </div>
+                  <input type="range" min="30" max="80" step="5" value={workshopsHeroHeight} onChange={(e) => setWorkshopsHeroHeight(e.target.value)} className="w-full accent-clay" />
+                  <p className="text-[11px] text-charcoal/80">Aktywne gdy zdjęcie jest ustawione. Bez zdjęcia nagłówek ma jasne tło jak w /kontakt.</p>
+                </div>
               </div>
-              <input type="range" min="30" max="80" step="5" value={workshopsHeroHeight} onChange={(e) => setWorkshopsHeroHeight(e.target.value)} className="w-full accent-clay" />
-              <p className="text-[11px] text-charcoal/80">Aktywne gdy zdjęcie jest ustawione. Bez zdjęcia nagłówek ma jasne tło jak w /kontakt.</p>
-            </div>
-          </div>
 
-          <div className="border-t border-sand pt-6 space-y-4">
-            <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/80">Galeria przy opisie (prawa kolumna)</h3>
-            <p className="text-xs text-charcoal/80">Jeżeli pusta – kolumna zdjęć znika, tekst zajmuje całą szerokość.</p>
-            <GalleryEditor json={workshopsGallery} onChange={setWorkshopsGallery} />
-          </div>
+              <div className="border-t border-sand pt-6 space-y-4">
+                <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/80">Galeria przy opisie (prawa kolumna)</h3>
+                <p className="text-xs text-charcoal/80">Jeżeli pusta – kolumna zdjęć znika, tekst zajmuje całą szerokość.</p>
+                <GalleryEditor json={workshopsGallery} onChange={setWorkshopsGallery} />
+              </div>
 
-          <div className="border-t border-sand pt-6">
-            <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-3">Tekst wprowadzający</label>
-            <RichEditor value={workshopsIntro} onChange={setWorkshopsIntro} contentClass="rich-content-lg" />
-          </div>
+              <div className="border-t border-sand pt-6">
+                <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-3">Tekst wprowadzający</label>
+                <RichEditor value={workshopsIntro} onChange={setWorkshopsIntro} contentClass="rich-content-lg" />
+              </div>
 
-          <div className="border-t border-sand pt-6 space-y-4">
-            <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/80">Galeria przy „Co zawiera warsztat?&rdquo;</h3>
-            <p className="text-xs text-charcoal/80">Zdjęcia obok listy z wyposażeniem warsztatu. Jeżeli pusta – lista zajmuje całą szerokość.</p>
-            <GalleryEditor json={workshopsIncludesGallery} onChange={setWorkshopsIncludesGallery} />
-          </div>
+              <div className="border-t border-sand pt-6 space-y-4">
+                <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/80">Galeria przy „Co zawiera warsztat?&rdquo;</h3>
+                <p className="text-xs text-charcoal/80">Zdjęcia obok listy z wyposażeniem warsztatu. Jeżeli pusta – lista zajmuje całą szerokość.</p>
+                <GalleryEditor json={workshopsIncludesGallery} onChange={setWorkshopsIncludesGallery} />
+              </div>
 
-          <div className="border-t border-sand pt-6">
-            <WorkshopsOffersEditor
-              offersJson={workshopsOffers}
-              includesJson={workshopsIncludes}
-              faqJson={workshopsFaq}
-              onOffersChange={setWorkshopsOffers}
-              onIncludesChange={setWorkshopsIncludes}
-              onFaqChange={setWorkshopsFaq}
-            />
-          </div>
+              <div className="border-t border-sand pt-6">
+                <WorkshopsOffersEditor
+                  offersJson={workshopsOffers}
+                  includesJson={workshopsIncludes}
+                  faqJson={workshopsFaq}
+                  onOffersChange={setWorkshopsOffers}
+                  onIncludesChange={setWorkshopsIncludes}
+                  onFaqChange={setWorkshopsFaq}
+                />
+              </div>
 
-          <SaveButton
-            onClick={() => save([
-              { key: "workshops_hero_image",           value: workshopsImage },
-              { key: "workshops_hero_position",        value: workshopsHeroPos },
-              { key: "workshops_hero_overlay_color",   value: workshopsOverlayColor },
-              { key: "workshops_hero_overlay_opacity", value: workshopsOverlayOpacity },
-              { key: "workshops_hero_height",          value: workshopsHeroHeight },
-              { key: "workshops_content_gallery",      value: workshopsGallery },
-              // Stare klucze trzymamy zgodne z pierwszym zdjęciem galerii (zgodność wstecz)
-              { key: "workshops_content_image",        value: galleryHead(workshopsGallery).url },
-              { key: "workshops_content_position",     value: galleryHead(workshopsGallery).position },
-              { key: "workshops_intro",                value: workshopsIntro },
-              { key: "workshops_includes_gallery",     value: workshopsIncludesGallery },
-              { key: "workshops_offers",               value: workshopsOffers },
-              { key: "workshops_includes",             value: workshopsIncludes },
-              { key: "workshops_faq",                  value: workshopsFaq },
-            ])}
-            label="Zapisz stronę Warsztaty"
-          />
+              <SaveButton
+                onClick={() => save([
+                  { key: "workshops_hero_image",           value: workshopsImage },
+                  { key: "workshops_hero_position",        value: workshopsHeroPos },
+                  { key: "workshops_hero_overlay_color",   value: workshopsOverlayColor },
+                  { key: "workshops_hero_overlay_opacity", value: workshopsOverlayOpacity },
+                  { key: "workshops_hero_height",          value: workshopsHeroHeight },
+                  { key: "workshops_content_gallery",      value: workshopsGallery },
+                  // Stare klucze trzymamy zgodne z pierwszym zdjęciem galerii (zgodność wstecz)
+                  { key: "workshops_content_image",        value: galleryHead(workshopsGallery).url },
+                  { key: "workshops_content_position",     value: galleryHead(workshopsGallery).position },
+                  { key: "workshops_intro",                value: workshopsIntro },
+                  { key: "workshops_includes_gallery",     value: workshopsIncludesGallery },
+                  { key: "workshops_offers",               value: workshopsOffers },
+                  { key: "workshops_includes",             value: workshopsIncludes },
+                  { key: "workshops_faq",                  value: workshopsFaq },
+                ])}
+                label="Zapisz stronę Warsztaty"
+              />
+            </>
+          )}
         </div>
       )}
 
@@ -915,52 +913,63 @@ export default function SettingsForm({ section, initial, aiUsage }: Props) {
 
       {section === "kontakt" && (
         <div className="max-w-md space-y-5">
-          <h2 className="font-serif text-2xl text-espresso">Dane kontaktowe</h2>
-          <Field label="Telefon" value={phone} setter={setPhone} type="tel" />
-          <Field label="E-mail" value={email} setter={setEmail} type="email" />
-          <Field label="Instagram (np. @unique.ceramics)" value={instagram} setter={setInstagram} />
-          <Field label="Facebook (pełny URL strony)" value={facebook} setter={setFacebook} placeholder="https://facebook.com/..." />
-          <Field label="YouTube (pełny URL kanału)" value={youtube} setter={setYoutube} placeholder="https://youtube.com/..." />
-          <Field label="WhatsApp (numer telefonu, np. 48668443706)" value={whatsapp} setter={setWhatsapp} placeholder="48668443706" />
-          <p className="text-xs text-charcoal/80">Facebook, YouTube i WhatsApp wyświetlają się w stopce tylko gdy są wypełnione.</p>
+          <SectionHeading title="Dane kontaktowe" lang={lang} onLang={setLang} translatable />
+          {lang === "en" ? (
+            <SettingsEnglish
+              section="kontakt"
+              initial={english}
+              source={{ contact_hours: hours }}
+              save={save}
+            />
+          ) : (
+            <>
+              <Field label="Telefon" value={phone} setter={setPhone} type="tel" />
+              <Field label="E-mail" value={email} setter={setEmail} type="email" />
+              <Field label="Instagram (np. @unique.ceramics)" value={instagram} setter={setInstagram} />
+              <Field label="Facebook (pełny URL strony)" value={facebook} setter={setFacebook} placeholder="https://facebook.com/..." />
+              <Field label="YouTube (pełny URL kanału)" value={youtube} setter={setYoutube} placeholder="https://youtube.com/..." />
+              <Field label="WhatsApp (numer telefonu, np. 48668443706)" value={whatsapp} setter={setWhatsapp} placeholder="48668443706" />
+              <p className="text-xs text-charcoal/80">Facebook, YouTube i WhatsApp wyświetlają się w stopce tylko gdy są wypełnione.</p>
 
-          <h2 className="font-serif text-2xl text-espresso pt-4">Adres pracowni</h2>
-          <Field label="Ulica i numer" value={addrStreet} setter={setAddrStreet} placeholder="ul. Familijna 23" />
-          <Field label="Kod pocztowy i miejscowość" value={addrCity} setter={setAddrCity} placeholder="44-164 Kleszczów (k. Gliwic)" />
-          <Field label="Województwo (opcjonalnie)" value={addrRegion} setter={setAddrRegion} placeholder="woj. śląskie" />
+              <h2 className="font-serif text-2xl text-espresso pt-4">Adres pracowni</h2>
+              <Field label="Ulica i numer" value={addrStreet} setter={setAddrStreet} placeholder="ul. Familijna 23" />
+              <Field label="Kod pocztowy i miejscowość" value={addrCity} setter={setAddrCity} placeholder="44-164 Kleszczów (k. Gliwic)" />
+              <Field label="Województwo (opcjonalnie)" value={addrRegion} setter={setAddrRegion} placeholder="woj. śląskie" />
 
-          <h2 className="font-serif text-2xl text-espresso pt-4">Godziny otwarcia</h2>
-          <MultilineField
-            label="Godziny otwarcia (Enter = nowy wiersz)"
-            value={hours}
-            setter={setHours}
-            rows={3}
-            placeholder={"Wt–Czw 17:00–19:00\nSo 15:00–17:00"}
-          />
-          <p className="text-xs text-charcoal/80">
-            Adres i godziny wyświetlają się w kolumnie &bdquo;Kontakt&rdquo; w stopce oraz na stronie /kontakt.
-            Każdy <strong>Enter</strong> łamie wiersz dokładnie w tym miejscu – przecinek też rozdziela wpisy,
-            ale wtedy o złamaniu decyduje szerokość ekranu.
-            Godziny trafiają do danych strukturalnych (SEO), więc zachowaj format
-            <span className="font-mono"> Skrót dni HH:MM–HH:MM</span> w każdym wierszu,
-            np. <span className="font-mono">Wt–Czw 17:00–19:00</span>.
-          </p>
+              <h2 className="font-serif text-2xl text-espresso pt-4">Godziny otwarcia</h2>
+              <MultilineField
+                label="Godziny otwarcia (Enter = nowy wiersz)"
+                value={hours}
+                setter={setHours}
+                rows={3}
+                placeholder={"Wt–Czw 17:00–19:00\nSo 15:00–17:00"}
+              />
+              <p className="text-xs text-charcoal/80">
+                Adres i godziny wyświetlają się w kolumnie &bdquo;Kontakt&rdquo; w stopce oraz na stronie /kontakt.
+                Każdy <strong>Enter</strong> łamie wiersz dokładnie w tym miejscu – przecinek też rozdziela wpisy,
+                ale wtedy o złamaniu decyduje szerokość ekranu.
+                Godziny trafiają do danych strukturalnych (SEO), więc zachowaj format
+                <span className="font-mono"> Skrót dni HH:MM–HH:MM</span> w każdym wierszu,
+                np. <span className="font-mono">Wt–Czw 17:00–19:00</span>.
+              </p>
 
-          <SaveButton
-            onClick={() => save([
-              { key: "contact_phone", value: phone },
-              { key: "contact_email", value: email },
-              { key: "contact_instagram", value: instagram },
-              { key: "contact_facebook", value: facebook },
-              { key: "contact_youtube", value: youtube },
-              { key: "contact_whatsapp", value: whatsapp },
-              { key: "contact_hours", value: hours },
-              { key: "contact_address_street", value: addrStreet },
-              { key: "contact_address_city", value: addrCity },
-              { key: "contact_address_region", value: addrRegion },
-            ])}
-            label="Zapisz kontakt"
-          />
+              <SaveButton
+                onClick={() => save([
+                  { key: "contact_phone", value: phone },
+                  { key: "contact_email", value: email },
+                  { key: "contact_instagram", value: instagram },
+                  { key: "contact_facebook", value: facebook },
+                  { key: "contact_youtube", value: youtube },
+                  { key: "contact_whatsapp", value: whatsapp },
+                  { key: "contact_hours", value: hours },
+                  { key: "contact_address_street", value: addrStreet },
+                  { key: "contact_address_city", value: addrCity },
+                  { key: "contact_address_region", value: addrRegion },
+                ])}
+                label="Zapisz kontakt"
+              />
+            </>
+          )}
         </div>
       )}
 
@@ -1033,60 +1042,71 @@ export default function SettingsForm({ section, initial, aiUsage }: Props) {
 
       {section === "urlop" && (
         <div className="max-w-md space-y-6">
-          <h2 className="font-serif text-2xl text-espresso">Urlop</h2>
-          <p className="text-xs text-charcoal/80 leading-relaxed">
-            Gdy urlop jest włączony, w sklepie pojawia się pasek informacyjny,
-            a zamówienia złożone w tym czasie zawierają wzmiankę w e-mailu potwierdzającym.
-          </p>
-
-          <div className="flex items-center justify-between">
-            <span className="text-xs tracking-widest uppercase text-charcoal/80">Tryb urlopu aktywny</span>
-            <Toggle checked={vacationEnabled} onChange={setVacationEnabled} />
-          </div>
-
-          {vacationEnabled && (
+          <SectionHeading title="Urlop" lang={lang} onLang={setLang} translatable />
+          {lang === "en" ? (
+            <SettingsEnglish
+              section="urlop"
+              initial={english}
+              source={{ vacation_message: vacationMessage }}
+              save={save}
+            />
+          ) : (
             <>
-              <div>
-                <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">
-                  Realizacja zamówień od
-                </label>
-                <input
-                  type="date"
-                  value={vacationEndDate}
-                  onChange={(e) => setVacationEndDate(e.target.value)}
-                  className="w-full bg-warm-white border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors"
-                />
-                <p className="text-[11px] text-charcoal/80 mt-1">
-                  Jeśli puste – komunikat nie będzie zawierał daty.
-                </p>
+              <p className="text-xs text-charcoal/80 leading-relaxed">
+                Gdy urlop jest włączony, w sklepie pojawia się pasek informacyjny,
+                a zamówienia złożone w tym czasie zawierają wzmiankę w e-mailu potwierdzającym.
+              </p>
+
+              <div className="flex items-center justify-between">
+                <span className="text-xs tracking-widest uppercase text-charcoal/80">Tryb urlopu aktywny</span>
+                <Toggle checked={vacationEnabled} onChange={setVacationEnabled} />
               </div>
 
-              <div>
-                <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">
-                  Własna wiadomość (opcjonalnie)
-                </label>
-                <input
-                  type="text"
-                  value={vacationMessage}
-                  onChange={(e) => setVacationMessage(e.target.value)}
-                  placeholder="Jestem na urlopie – zamówienia będą realizowane od..."
-                  className="w-full bg-warm-white border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors"
-                />
-                <p className="text-[11px] text-charcoal/80 mt-1">
-                  Jeśli puste – komunikat zostanie wygenerowany automatycznie na podstawie daty.
-                </p>
-              </div>
+              {vacationEnabled && (
+                <>
+                  <div>
+                    <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">
+                      Realizacja zamówień od
+                    </label>
+                    <input
+                      type="date"
+                      value={vacationEndDate}
+                      onChange={(e) => setVacationEndDate(e.target.value)}
+                      className="w-full bg-warm-white border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors"
+                    />
+                    <p className="text-[11px] text-charcoal/80 mt-1">
+                      Jeśli puste – komunikat nie będzie zawierał daty.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">
+                      Własna wiadomość (opcjonalnie)
+                    </label>
+                    <input
+                      type="text"
+                      value={vacationMessage}
+                      onChange={(e) => setVacationMessage(e.target.value)}
+                      placeholder="Jestem na urlopie – zamówienia będą realizowane od..."
+                      className="w-full bg-warm-white border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm transition-colors"
+                    />
+                    <p className="text-[11px] text-charcoal/80 mt-1">
+                      Jeśli puste – komunikat zostanie wygenerowany automatycznie na podstawie daty.
+                    </p>
+                  </div>
+                </>
+              )}
+
+              <SaveButton
+                onClick={() => save([
+                  { key: "vacation_enabled", value: vacationEnabled ? "true" : "false" },
+                  { key: "vacation_end_date", value: vacationEndDate },
+                  { key: "vacation_message", value: vacationMessage },
+                ])}
+                label="Zapisz ustawienia urlopu"
+              />
             </>
           )}
-
-          <SaveButton
-            onClick={() => save([
-              { key: "vacation_enabled", value: vacationEnabled ? "true" : "false" },
-              { key: "vacation_end_date", value: vacationEndDate },
-              { key: "vacation_message", value: vacationMessage },
-            ])}
-            label="Zapisz ustawienia urlopu"
-          />
         </div>
       )}
 

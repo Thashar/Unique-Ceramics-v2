@@ -22,6 +22,15 @@ export const ABOUT_VALUES_DEFAULT: AboutValue[] = [
 
 export const ABOUT_VALUES_DEFAULT_JSON = JSON.stringify(ABOUT_VALUES_DEFAULT);
 
+/** Te same domyślne karty po angielsku – dla `/en/o-mnie`, dopóki panel nie ma własnych. */
+export const ABOUT_VALUES_TITLE_DEFAULT_EN = "How I work";
+export const ABOUT_VALUES_DEFAULT_EN: AboutValue[] = [
+  { id: 1, title: "By hand", text: "I make every piece myself. No mass production, no casting." },
+  { id: 2, title: "With care", text: "I pay attention to every detail – from the shape, through the glaze, to the packaging." },
+  { id: 3, title: "With passion", text: "Ceramics is not just a job – it is the way I see and create beauty." },
+];
+export const ABOUT_VALUES_DEFAULT_EN_JSON = JSON.stringify(ABOUT_VALUES_DEFAULT_EN);
+
 /** Więcej kart nie zmieściłoby się w siatce bez rozjeżdżania układu. */
 export const MAX_ABOUT_VALUES = 6;
 

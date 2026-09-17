@@ -1,21 +1,30 @@
 "use client";
 
 import { useState } from "react";
+import { SITE_URL } from "@/lib/seo";
+import { localePath } from "@/lib/i18n";
+import { t } from "@/lib/dictionary";
+import { useLocale } from "@/lib/use-locale";
 
-const ORDER_TYPES = [
-  "Zestaw ślubny",
-  "Prezent firmowy",
-  "Personalizacja (imię, data)",
-  "Indywidualny projekt",
-  "Inne",
-];
+export default function CustomOrderForm({ productSlug = "" }: { productSlug?: string }) {
+  const locale = useLocale();
+  const d = t(locale).custom;
+  // Rodzaje zamówienia idą do panelu **zawsze po polsku** – w selekcie stoi
+  // etykieta w języku strony, a wysyłamy polską wartość o tym samym indeksie
+  const orderTypeLabels = d.orderTypes;
+  const orderTypeValues = t("pl").custom.orderTypes;
+  // Slug produktu z `?produkt=` (karta produktu w wersji angielskiej) – ten sam
+  // wzorzec co adresy produktów, więc w treści ląduje wyłącznie nasz własny link
+  const safeSlug = /^[a-z0-9-]{1,120}$/.test(productSlug) ? productSlug : "";
+  const productLine = safeSlug
+    ? `${d.productInterest(`${SITE_URL}${localePath(locale, `/sklep/${safeSlug}`)}`)}\n\n`
+    : "";
 
-export default function CustomOrderForm({ topOffset: _topOffset = false }: { topOffset?: boolean }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [orderType, setOrderType] = useState(ORDER_TYPES[0]);
-  const [description, setDescription] = useState("");
+  const [orderTypeIdx, setOrderTypeIdx] = useState(0);
+  const [description, setDescription] = useState(productLine);
   const [deadline, setDeadline] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -34,8 +43,9 @@ export default function CustomOrderForm({ topOffset: _topOffset = false }: { top
           customerName: name,
           customerEmail: email,
           customerPhone: phone,
-          orderType,
-          description,
+          orderType: orderTypeValues[orderTypeIdx] ?? orderTypeValues[0],
+          // Dopisek, skąd przyszło zapytanie – po polsku pusty
+          description: d.fromEnglish ? `${d.fromEnglish}\n${description}` : description,
           deadline,
         }),
       });
@@ -43,7 +53,7 @@ export default function CustomOrderForm({ topOffset: _topOffset = false }: { top
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        setError(data.error || "Wystąpił błąd. Spróbuj ponownie.");
+        setError(data.error || d.error);
         return;
       }
 
@@ -51,11 +61,11 @@ export default function CustomOrderForm({ topOffset: _topOffset = false }: { top
       setName("");
       setEmail("");
       setPhone("");
-      setOrderType(ORDER_TYPES[0]);
+      setOrderTypeIdx(0);
       setDescription("");
       setDeadline("");
     } catch {
-      setError("Wystąpił błąd sieci. Spróbuj ponownie.");
+      setError(d.networkError);
     } finally {
       setLoading(false);
     }
@@ -65,12 +75,9 @@ export default function CustomOrderForm({ topOffset: _topOffset = false }: { top
     <main className="flex-1">
       <div className="bg-cream px-6 lg:px-10 py-10">
         <div className="max-w-7xl mx-auto max-w-2xl">
-          <p className="text-xs tracking-[0.3em] uppercase text-clay mb-3">Na zamówienie</p>
-          <h1 className="font-serif text-5xl text-espresso mb-6">Zamówienie indywidualne</h1>
-          <p className="text-charcoal/80 leading-relaxed">
-            Tworzę ceramikę na zamówienie – zestawy ślubne, prezenty firmowe lub spersonalizowaną ceramikę, której nie ma w sklepie.
-            Czas realizacji wynosi zazwyczaj 4+ tygodnie od potwierdzenia projektu.
-          </p>
+          <p className="text-xs tracking-[0.3em] uppercase text-clay mb-3">{d.eyebrow}</p>
+          <h1 className="font-serif text-5xl text-espresso mb-6">{d.title}</h1>
+          <p className="text-charcoal/80 leading-relaxed">{d.intro}</p>
         </div>
       </div>
 
@@ -78,13 +85,13 @@ export default function CustomOrderForm({ topOffset: _topOffset = false }: { top
         <div className="max-w-2xl mx-auto">
           {success ? (
             <div className="bg-green-50 border border-green-200 p-8 text-center rounded-xl">
-              <p className="text-green-800 font-medium text-lg mb-2">Zapytanie zostało wysłane!</p>
-              <p className="text-green-700 text-sm">Odpiszę w ciągu 2 dni roboczych.</p>
+              <p className="text-green-800 font-medium text-lg mb-2">{d.successTitle}</p>
+              <p className="text-green-700 text-sm">{d.successText}</p>
               <button
                 onClick={() => setSuccess(false)}
                 className="mt-6 text-xs tracking-widest uppercase text-clay hover:text-espresso transition-colors"
               >
-                Wyślij kolejne zapytanie
+                {d.again}
               </button>
             </div>
           ) : (
@@ -98,7 +105,7 @@ export default function CustomOrderForm({ topOffset: _topOffset = false }: { top
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">
-                    Imię i nazwisko *
+                    {d.fullName} *
                   </label>
                   <input
                     type="text"
@@ -110,7 +117,7 @@ export default function CustomOrderForm({ topOffset: _topOffset = false }: { top
                 </div>
                 <div>
                   <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">
-                    E-mail *
+                    {d.email} *
                   </label>
                   <input
                     type="email"
@@ -124,7 +131,7 @@ export default function CustomOrderForm({ topOffset: _topOffset = false }: { top
 
               <div>
                 <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">
-                  Telefon
+                  {d.phone}
                 </label>
                 <input
                   type="tel"
@@ -136,36 +143,36 @@ export default function CustomOrderForm({ topOffset: _topOffset = false }: { top
 
               <div>
                 <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">
-                  Rodzaj zamówienia
+                  {d.orderType}
                 </label>
                 <select
-                  value={orderType}
-                  onChange={(e) => setOrderType(e.target.value)}
+                  value={orderTypeIdx}
+                  onChange={(e) => setOrderTypeIdx(Number(e.target.value))}
                   className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm rounded-md"
                 >
-                  {ORDER_TYPES.map((t) => (
-                    <option key={t}>{t}</option>
+                  {orderTypeLabels.map((label, i) => (
+                    <option key={label} value={i}>{label}</option>
                   ))}
                 </select>
               </div>
 
               <div>
                 <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">
-                  Opis zamówienia *
+                  {d.description} *
                 </label>
                 <textarea
                   required
                   rows={6}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Opisz co chcesz zamówić – rodzaj przedmiotów, ilość, preferowane kolory, rozmiary, styl..."
+                  placeholder={d.descriptionPlaceholder}
                   className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm resize-none rounded-md"
                 />
               </div>
 
               <div>
                 <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">
-                  Preferowany termin realizacji
+                  {d.deadline}
                 </label>
                 <input
                   type="date"
@@ -180,17 +187,16 @@ export default function CustomOrderForm({ topOffset: _topOffset = false }: { top
                 disabled={loading}
                 className="w-full bg-clay hover:bg-terracotta hover:text-espresso text-warm-white text-xs tracking-widest uppercase py-5 transition-colors disabled:opacity-60 disabled:cursor-not-allowed rounded-md"
               >
-                {loading ? "Wysyłanie..." : "Wyślij zapytanie"}
+                {loading ? d.sending : d.submit}
               </button>
             </form>
           )}
 
           <div className="mt-12 p-8 bg-cream text-sm text-charcoal/80 leading-relaxed space-y-2 rounded-xl">
-            <p className="font-medium text-espresso text-base mb-4">Co dalej?</p>
-            <p>1. Przesłę odpowiedź w ciągu 2 dni roboczych.</p>
-            <p>2. Omówimy szczegóły projektu i ustalimy wycenę.</p>
-            <p>3. Po akceptacji rozpoczynam pracę po wpłacie zaliczki 50%.</p>
-            <p>4. Czas realizacji: 4+ tygodnie od potwierdzenia.</p>
+            <p className="font-medium text-espresso text-base mb-4">{d.nextTitle}</p>
+            {d.nextSteps.map((step) => (
+              <p key={step}>{step}</p>
+            ))}
           </div>
         </div>
       </div>

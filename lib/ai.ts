@@ -261,6 +261,35 @@ export function resolveAiPreset(
 /** Wariant zapisywany w rejestrze zużycia dla generowania samego promptu. */
 export const AI_PROMPT_VARIANT = "prompt_build";
 
+/** Wariant zapisywany w rejestrze zużycia dla tłumaczeń treści na angielski. */
+export const AI_TRANSLATE_VARIANT = "translate";
+
+/** Limity jednego żądania tłumaczenia – panel wysyła całą sekcję naraz. */
+export const AI_TRANSLATE_LIMITS = { items: 200, chars: 40_000 } as const;
+
+/**
+ * Prompt tłumaczący listę polskich tekstów na angielski. Model dostaje tablicę
+ * JSON i ma oddać tablicę **tej samej długości i kolejności** – po tym
+ * przypisujemy tłumaczenia z powrotem do pól (`replaceStrings`
+ * w `lib/i18n-content.ts`). Fragmenty bywają HTML-em z edytora – znaczniki
+ * i atrybuty mają zostać nietknięte, tłumaczony jest sam tekst między nimi.
+ */
+export function buildTranslatePrompt(texts: string[]): string {
+  return `You are a professional Polish-to-English translator for a small handmade ceramics studio's website (Unique Ceramics, Alicja Ulbrich, near Gliwice, Poland).
+Translate every item of the JSON array below from Polish into natural, warm British English suitable for a shop and portfolio site.
+
+Rules:
+- Return ONLY a JSON array of strings, with exactly the same number of items in the same order. No commentary, no code fences.
+- Keep HTML tags, attributes and entities exactly as they are; translate only the text between tags.
+- Keep line breaks (\n) where the original has them.
+- Keep numbers, prices, units ("zł" stays "zł"), proper names, product names in quotes, e-mail addresses, phone numbers and URLs unchanged.
+- Use an en dash (–), never an em dash (—).
+- Keep the tone of the original: first person ("I make…") where the Polish uses first person.
+- If an item is empty, return an empty string for it.
+
+Items:
+${JSON.stringify(texts)}`;
+}
 /**
  * Prompt dla modelu tekstowego, który z polskiego opisu stylistyki układa
  * angielski opis sceny. Model ma pisać **wyłącznie o scenie**: reguły produktu

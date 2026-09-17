@@ -1,6 +1,8 @@
 import Link from "next/link";
 import type { Category } from "@/lib/category-defaults";
 import { categoryPath } from "@/lib/category-seo";
+import { localePath, type Locale } from "@/lib/i18n";
+import { t } from "@/lib/dictionary";
 
 /**
  * Pasek kategorii nad siatką produktów – wspólny dla `/sklep` i stron kategorii.
@@ -16,12 +18,15 @@ export default function CategoryBar({
   categories,
   activeSlug,
   vacationEnabled,
+  locale = "pl",
 }: {
   categories: Category[];
   /** Slug otwartej kategorii; `null` na `/sklep` (zakładka „Wszystkie"). */
   activeSlug: string | null;
   vacationEnabled: boolean;
+  locale?: Locale;
 }) {
+  const d = t(locale);
   return (
     <div
       className="border-b border-sand bg-cream sticky z-30 shadow-sm"
@@ -31,10 +36,10 @@ export default function CategoryBar({
       }}
     >
       <div className="max-w-7xl mx-auto px-6 lg:px-10 flex gap-1.5 md:gap-2 overflow-x-auto py-2 md:py-4 no-scrollbar">
-        {[{ slug: null, label: "Wszystkie" }, ...categories].map((cat) => (
+        {[{ slug: null, label: d.shop.all }, ...categories].map((cat) => (
           <Link
             key={cat.slug ?? "wszystkie"}
-            href={cat.slug ? categoryPath(cat.slug) : "/sklep"}
+            href={localePath(locale, cat.slug ? categoryPath(cat.slug) : "/sklep")}
             className={`shrink-0 px-3 py-1 md:px-5 md:py-2 text-[10px] md:text-xs tracking-wider md:tracking-widest uppercase transition-all duration-200 ${
               activeSlug === cat.slug
                 ? "bg-espresso text-warm-white"

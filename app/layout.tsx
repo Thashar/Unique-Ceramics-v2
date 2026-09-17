@@ -143,7 +143,8 @@ export default function RootLayout({
         <script
           dangerouslySetInnerHTML={{
             __html:
-              `if(location.pathname==='/')history.scrollRestoration='manual';` +
+              // Strona główna w obu językach (`/` i `/en`) ma scroll-snap
+              `if(location.pathname==='/'||location.pathname==='/en')history.scrollRestoration='manual';` +
               `try{var c=localStorage.getItem('${COOKIE_CONSENT_KEY}');` +
               `if(c==='all'||c==='necessary')document.documentElement.setAttribute('data-cc','1')}catch(e){}`,
           }}

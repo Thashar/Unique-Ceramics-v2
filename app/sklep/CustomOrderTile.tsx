@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { ArrowRight, Gift } from "lucide-react";
 import CustomOrderPoints from "@/components/ui/CustomOrderPoints";
+import { localePath, type Locale } from "@/lib/i18n";
+import { t } from "@/lib/dictionary";
 
 /**
  * Zaproszenie do zamówień indywidualnych na końcu siatki produktów.
@@ -34,7 +36,8 @@ import CustomOrderPoints from "@/components/ui/CustomOrderPoints";
  * Zastąpił pływający przycisk, który zasłaniał produkty i dało się go schować
  * na stałe. Stoi na końcu **każdej strony** katalogu i każdej kategorii.
  */
-export default function CustomOrderTile() {
+export default function CustomOrderTile({ locale = "pl" }: { locale?: Locale } = {}) {
+  const d = t(locale);
   return (
     <div className="col-span-full flex flex-col md:flex-row md:items-center gap-5 md:gap-7 bg-espresso p-5 sm:p-7 md:p-8 rounded-2xl">
       <span
@@ -46,21 +49,21 @@ export default function CustomOrderTile() {
 
       <div className="flex-1 min-w-0">
         <p className="text-[10px] sm:text-[11px] tracking-widest uppercase text-terracotta mb-1.5 sm:mb-2">
-          Zamówienia indywidualne
+          {d.shop.customEyebrow}
         </p>
         <h3 className="font-serif text-lg sm:text-xl md:text-2xl text-cream leading-snug">
-          Potrzebujesz ceramiki na zamówienie?
+          {d.shop.customTitle}
         </h3>
         {/* Trzy hasła zamiast akapitu – to samo, co niosło zdanie, ale czytelne
             jednym rzutem oka. Ta sama lista stoi w bloku na `/kontakt` */}
-        <CustomOrderPoints inline className="mt-3 sm:mt-4" />
+        <CustomOrderPoints inline className="mt-3 sm:mt-4" locale={locale} />
       </div>
 
       <Link
-        href="/zamowienie-indywidualne"
+        href={localePath(locale, "/zamowienie-indywidualne")}
         className="group w-full md:w-auto shrink-0 inline-flex items-center justify-center gap-3 border border-terracotta/50 hover:border-terracotta hover:bg-terracotta hover:text-espresso text-cream text-[11px] sm:text-xs tracking-widest uppercase px-5 sm:px-6 py-3 sm:py-3.5 transition-all duration-300 rounded-md"
       >
-        Napisz do mnie
+        {d.shop.customCta}
         <ArrowRight
           size={14}
           strokeWidth={1.5}

@@ -1,20 +1,24 @@
 "use client";
 
 import { useRef, useEffect } from "react";
+import type { Locale } from "@/lib/i18n";
 
 export default function VacationBanner({
   message,
   returnDate,
+  locale = "pl",
 }: {
   message: string;
   returnDate?: string;
+  /** Język strony – decyduje o formacie daty powrotu. */
+  locale?: Locale;
 }) {
   if (!message && !returnDate) return null;
 
   let formattedDate = "";
   if (returnDate) {
     try {
-      formattedDate = new Date(returnDate + "T00:00:00").toLocaleDateString("pl-PL", {
+      formattedDate = new Date(returnDate + "T00:00:00").toLocaleDateString(locale === "en" ? "en-GB" : "pl-PL", {
         day: "numeric",
         month: "long",
         year: "numeric",

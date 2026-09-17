@@ -6,6 +6,8 @@ import { getAiUsageStats } from "@/lib/ai-usage";
 import SettingsForm from "@/components/admin/SettingsForm";
 import { SIMILAR_MIN_SCORE_KEY } from "@/lib/similar-products";
 import { TAX_SETTING_KEYS } from "@/lib/tax";
+import { ENGLISH_SETTING_KEYS_ALL } from "@/components/admin/SettingsEnglish";
+import { EN_KEY_PREFIX } from "@/lib/i18n-content";
 
 const VALID_SECTIONS = new Set([
   "strona_glowna", "omnie", "warsztaty", "regulamin", "polityka",
@@ -103,7 +105,14 @@ export default async function AdminSettingsPage({
     "ai_prompt_preset_ai_plus",
     SIMILAR_MIN_SCORE_KEY,
     ...TAX_SETTING_KEYS,
+    // Angielskie wersje treści (klucze `en_*`) – zakładka EN w sekcjach
+    ...ENGLISH_SETTING_KEYS_ALL,
   ]);
+
+  // Wartości `en_*` pod polskimi kluczami – tak czyta je `SettingsEnglish`
+  const english = Object.fromEntries(
+    ENGLISH_SETTING_KEYS_ALL.map((key) => [key.slice(EN_KEY_PREFIX.length), settings[key] ?? ""])
+  );
 
   // Statystyki zużycia AI potrzebne tylko na jednej zakładce – nie odpytuj bazy poza nią
   const aiUsage = section === "ai" ? await getAiUsageStats() : null;
@@ -112,7 +121,7 @@ export default async function AdminSettingsPage({
     <div className="max-w-2xl">
       <h1 className="font-serif text-3xl text-espresso mb-8">Ustawienia</h1>
       {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-      <SettingsForm section={section} initial={settings as any} aiUsage={aiUsage} />
+      <SettingsForm section={section} initial={settings as any} aiUsage={aiUsage} english={english} />
     </div>
   );
 }

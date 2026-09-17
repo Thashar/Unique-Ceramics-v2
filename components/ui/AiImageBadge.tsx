@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Sparkles, Info } from "lucide-react";
+import { useT } from "@/lib/use-locale";
 
 /**
  * Treść wyjaśnienia – ta sama wszędzie, gdzie pokazujemy znaczek.
@@ -56,7 +57,7 @@ const SIZES = {
 export default function AiImageBadge({
   size = "md",
   align = "left",
-  notice = AI_IMAGE_NOTICE,
+  notice,
   className = "",
 }: {
   size?: keyof typeof SIZES;
@@ -66,6 +67,10 @@ export default function AiImageBadge({
   align?: "left" | "right";
   className?: string;
 }) {
+  const d = useT();
+  // Bez własnej treści – wyjaśnienie o zdjęciach produktów w języku strony
+  // (po polsku identyczne z `AI_IMAGE_NOTICE`)
+  notice = notice ?? d.product.aiNotice;
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<TipPos | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);

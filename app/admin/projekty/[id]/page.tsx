@@ -4,6 +4,8 @@ import { requireAdmin } from "@/lib/admin-auth";
 import { db } from "@/lib/db";
 import { redirect, notFound } from "next/navigation";
 import ProjectForm from "@/components/admin/ProjectForm";
+import { getSetting } from "@/lib/settings";
+import { enProjectKey, parseProjectTranslation } from "@/lib/i18n-content";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 
@@ -19,6 +21,9 @@ export default async function EditProjectPage({
   const { id } = await params;
   const project = await db.project.findUnique({ where: { id } });
   if (!project) notFound();
+
+  // Angielski tytuł i opis – zakładka EN formularza (klucz `en_project_{id}` w `Setting`)
+  const english = parseProjectTranslation(await getSetting(enProjectKey(project.id)));
 
   return (
     <div>
@@ -39,6 +44,7 @@ export default async function EditProjectPage({
           order: project.order,
           active: project.active,
         }}
+        english={english}
       />
     </div>
   );

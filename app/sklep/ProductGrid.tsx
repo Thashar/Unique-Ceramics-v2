@@ -8,6 +8,7 @@ import CustomOrderTile from "./CustomOrderTile";
 import { isAiGeneratedImage } from "@/lib/ai";
 import type { getShopProducts } from "@/lib/products";
 import { categoryLabel, type Category } from "@/lib/category-defaults";
+import { useLocale, useT } from "@/lib/use-locale";
 
 
 type Product = Awaited<ReturnType<typeof getShopProducts>>["inStock"][0];
@@ -104,6 +105,8 @@ function usePerPagePreference(): number {
 }
 
 export default function ProductGrid({ products, kategoria, dbError, categories, quantityTeaser = null, freeShippingNote = false, lowStockBadge = true }: Props) {
+  const d = useT();
+  const locale = useLocale();
   const storedLayout = useLayoutPreference();
   const storedPerPage = usePerPagePreference();
   // Nadpisania z bieżącej sesji – zapis do localStorage nie powiadamia własnej karty
@@ -130,8 +133,8 @@ export default function ProductGrid({ products, kategoria, dbError, categories, 
     return (
       <div className="text-center py-24">
         <ShoppingBag size={48} strokeWidth={1} className="mx-auto text-sand mb-6" />
-        <p className="font-serif text-2xl text-espresso mb-2">Sklep chwilowo niedostępny</p>
-        <p className="text-charcoal/80 text-sm">Spróbuj ponownie za chwilę.</p>
+        <p className="font-serif text-2xl text-espresso mb-2">{d.shop.unavailable}</p>
+        <p className="text-charcoal/80 text-sm">{d.shop.tryAgain}</p>
       </div>
     );
   }
@@ -140,13 +143,13 @@ export default function ProductGrid({ products, kategoria, dbError, categories, 
     return (
       <div className="text-center py-24">
         <ShoppingBag size={48} strokeWidth={1} className="mx-auto text-sand mb-6" />
-        <p className="font-serif text-2xl text-espresso mb-2">Brak produktów</p>
+        <p className="font-serif text-2xl text-espresso mb-2">{d.shop.noProducts}</p>
         <p className="text-charcoal/80 text-sm">
-          {kategoria ? "Brak produktów w tej kategorii." : "Sklep jest w przygotowaniu."}
+          {kategoria ? d.shop.noProductsInCategory : d.shop.inPreparation}
         </p>
         {/* Pusta kategoria to najlepszy moment na zamówienie indywidualne */}
         <div className="max-w-3xl mx-auto mt-10 text-left grid">
-          <CustomOrderTile />
+          <CustomOrderTile locale={locale} />
         </div>
       </div>
     );
@@ -166,7 +169,7 @@ export default function ProductGrid({ products, kategoria, dbError, categories, 
       <div className="flex items-center justify-between gap-4 mb-3 md:mb-8">
         <p className="text-xs text-charcoal/80 tracking-widest uppercase">
           {products.length}{" "}
-          {products.length === 1 ? "produkt" : products.length < 5 ? "produkty" : "produktów"}
+          {products.length === 1 ? d.shop.product1 : products.length < 5 ? d.shop.product2 : d.shop.product5}
         </p>
 
         <div className="flex items-center gap-3">
@@ -174,7 +177,7 @@ export default function ProductGrid({ products, kategoria, dbError, categories, 
           {products.length > PER_PAGE_OPTIONS[0] && (
             <div className="flex items-center gap-1.5">
               <span className="text-xs text-charcoal/80 tracking-widest uppercase hidden sm:inline">
-                Na stronie
+                {d.shop.perPage}
               </span>
               <div className="flex items-center">
                 {PER_PAGE_OPTIONS.map((option) => (
@@ -201,8 +204,8 @@ export default function ProductGrid({ products, kategoria, dbError, categories, 
               className={`p-1.5 transition-colors ${
                 !compact ? "text-espresso" : "text-charcoal/80 hover:text-espresso"
               }`}
-              aria-label="Widok standardowy"
-              title="Widok standardowy"
+              aria-label={d.shop.standardView}
+              title={d.shop.standardView}
             >
               <LayoutGrid size={18} strokeWidth={1.5} />
             </button>
@@ -211,8 +214,8 @@ export default function ProductGrid({ products, kategoria, dbError, categories, 
               className={`p-1.5 transition-colors ${
                 compact ? "text-espresso" : "text-charcoal/80 hover:text-espresso"
               }`}
-              aria-label="Widok kompaktowy"
-              title="Widok kompaktowy"
+              aria-label={d.shop.compactView}
+              title={d.shop.compactView}
             >
               <Grid3X3 size={18} strokeWidth={1.5} />
             </button>
@@ -247,11 +250,11 @@ export default function ProductGrid({ products, kategoria, dbError, categories, 
         {/* Domknięcie każdej strony – pas przez cały wiersz siatki
             (`col-span-full`), także przy stronicowaniu, żeby zaproszenie
             trafiło do klienta niezależnie od tego, gdzie skończy przeglądanie */}
-        <CustomOrderTile />
+        <CustomOrderTile locale={locale} />
       </div>
 
       {pageCount > 1 && (
-        <nav className="flex items-center justify-center gap-1.5 mt-12" aria-label="Strony produktów">
+        <nav className="flex items-center justify-center gap-1.5 mt-12" aria-label={d.shop.pages}>
           {Array.from({ length: pageCount }, (_, i) => i + 1).map((number) => (
             <button
               key={number}

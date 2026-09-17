@@ -3,6 +3,7 @@
 import { useRef, useState, useEffect } from "react";
 import ProductCard from "@/components/ui/ProductCard";
 import { categoryLabel, type Category } from "@/lib/category-defaults";
+import { useT } from "@/lib/use-locale";
 
 const DURATION = 520;
 const easeInOutSine = (t: number) => -(Math.cos(Math.PI * t) - 1) / 2;
@@ -35,6 +36,7 @@ export default function ProductCarousel({ products, categories, lowStockBadge = 
     const min = Math.min(PAD, window.innerWidth - PAD - trackW);
     return Math.max(min, raw);
   }
+  const d = useT();
   const [current, setCurrent] = useState(0);
   const innerRef = useRef<HTMLDivElement>(null);
   const isAnimating = useRef(false);
@@ -131,7 +133,7 @@ export default function ProductCarousel({ products, categories, lowStockBadge = 
               className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
                 i === current ? "bg-clay scale-125" : "bg-sand"
               }`}
-              aria-label={`Strona ${i + 1}`}
+              aria-label={`${d.home.page} ${i + 1}`}
             />
           ))}
         </div>

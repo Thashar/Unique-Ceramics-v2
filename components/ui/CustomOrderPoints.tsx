@@ -1,15 +1,18 @@
 import { Globe, Package, Palette } from "lucide-react";
+import type { Locale } from "@/lib/i18n";
+import { t } from "@/lib/dictionary";
 
 /**
  * Trzy rzeczy, które klient powinien wiedzieć o zamówieniach indywidualnych.
  * Jedno źródło dla wszystkich miejsc, w których je wypisujemy – pasa na końcu
  * katalogu (`app/sklep/CustomOrderTile.tsx`) i bloku na `/kontakt`.
  */
-export const CUSTOM_ORDER_POINTS = [
-  { icon: Palette, label: "Zrealizuję Twój projekt" },
-  { icon: Package, label: "Pojedyncza sztuka lub komplet" },
-  { icon: Globe, label: "Wysyłka także za granicę" },
-];
+const POINT_ICONS = [Palette, Package, Globe];
+
+/** Hasła w danym języku – treść w `lib/dictionary.ts` (`shop.customPoints`). */
+export function customOrderPoints(locale: Locale) {
+  return t(locale).shop.customPoints.map((label, i) => ({ icon: POINT_ICONS[i] ?? Palette, label }));
+}
 
 /**
  * Lista haseł z ikonami, na ciemnym tle (`espresso`).
@@ -22,9 +25,11 @@ export const CUSTOM_ORDER_POINTS = [
 export default function CustomOrderPoints({
   inline = false,
   className = "",
+  locale = "pl",
 }: {
   inline?: boolean;
   className?: string;
+  locale?: Locale;
 }) {
   return (
     <ul
@@ -32,7 +37,7 @@ export default function CustomOrderPoints({
         inline ? "md:flex-row md:flex-wrap md:gap-x-6 md:gap-y-2" : ""
       } ${className}`}
     >
-      {CUSTOM_ORDER_POINTS.map(({ icon: Icon, label }) => (
+      {customOrderPoints(locale).map(({ icon: Icon, label }) => (
         <li
           key={label}
           className="flex items-center gap-2 text-sand/90 text-[12px] sm:text-[13px]"

@@ -1,5 +1,7 @@
 import { BadgePercent, Truck } from "lucide-react";
 import { discountedPrice, shownDiscountPercent } from "@/lib/product-price";
+import { formatPrice, type Locale } from "@/lib/i18n";
+import { t } from "@/lib/dictionary";
 
 /**
  * Cena produktu – z rabatem produktowym i dopiskami o trwających promocjach.
@@ -20,6 +22,7 @@ export default function ProductPriceTag({
   freeShippingNote = false,
   size = "md",
   className = "",
+  locale = "pl",
 }: {
   /** Cena bazowa produktu z bazy (przed rabatem produktowym). */
   price: number;
@@ -32,15 +35,11 @@ export default function ProductPriceTag({
   /** `lg` = karta produktu, `md`/`sm` = kafelek listy (kompaktowy). */
   size?: "sm" | "md" | "lg";
   className?: string;
+  /** Język strony – po angielsku kwota idzie jako „PLN 160.00”, bez „zł”. */
+  locale?: Locale;
 }) {
-  const format = (value: number) =>
-    size === "lg"
-      ? `${value.toFixed(2).replace(".", ",")} zł`
-      : new Intl.NumberFormat("pl-PL", {
-          style: "currency",
-          currency: "PLN",
-          minimumFractionDigits: 0,
-        }).format(value);
+  // Na karcie produktu pełne grosze, w katalogu bez końcówki „,00”
+  const format = (value: number) => formatPrice(locale, value, { compact: size !== "lg" });
 
   const before = price;
   const after = discountedPrice(price, discountPercent);
@@ -92,7 +91,7 @@ export default function ProductPriceTag({
         {freeShippingNote && (
           <span className="inline-flex items-center gap-1">
             <Truck className={iconClass} strokeWidth={1.75} aria-hidden="true" />
-            Darmowa wysyłka
+            {t(locale).shop.freeShipping}
           </span>
         )}
         {quantityTeaser && (

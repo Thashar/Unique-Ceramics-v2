@@ -8,14 +8,23 @@ import { isAiGeneratedImage } from "@/lib/ai";
 import ProductCarousel from "@/components/home/ProductCarousel";
 import DesktopCarousel from "@/components/home/DesktopCarousel";
 import { getSetting } from "@/lib/settings";
+import { localePath, type Locale } from "@/lib/i18n";
+import { t } from "@/lib/dictionary";
+import { englishContentFor } from "@/lib/content-translations";
+import { localizeCategories, localizeProduct } from "@/lib/i18n-content";
 
-export default async function FeaturedProducts() {
+export default async function FeaturedProducts({ locale = "pl" }: { locale?: Locale } = {}) {
+  const d = t(locale);
   let products: Awaited<ReturnType<typeof getFeaturedProducts>> = [];
   let categories: Category[] = [];
   let lowStockBadge = true;
   try {
     [products, categories] = await Promise.all([getFeaturedProducts(), getCategories()]);
     lowStockBadge = (await getSetting("low_stock_badge_enabled")) !== "false";
+    // Angielskie nazwy z panelu – bez tłumaczenia zostaje polski oryginał
+    const en = await englishContentFor(locale);
+    products = products.map((p) => localizeProduct(locale, p, en));
+    categories = localizeCategories(locale, categories, en);
   } catch {
     // Baza niedostępna – sekcja nie wyświetla produktów
   }
@@ -44,9 +53,9 @@ export default async function FeaturedProducts() {
         <div className="max-w-7xl mx-auto w-full px-6 lg:px-10">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8 lg:mb-12">
             <div>
-              <p className="text-xs tracking-[0.3em] uppercase text-clay mb-3">Kolekcja</p>
+              <p className="text-xs tracking-[0.3em] uppercase text-clay mb-3">{d.home.collection}</p>
               <h2 className="font-serif text-4xl md:text-5xl text-espresso leading-tight">
-                Wybrane prace
+                {d.home.featured}
               </h2>
             </div>
             {/* Znaczek AI po lewej od odnośnika do sklepu – ta sama informacja
@@ -54,10 +63,10 @@ export default async function FeaturedProducts() {
             <div className="flex items-center gap-5">
               {aiImages && <AiImageBadge size="lg" />}
               <Link
-                href="/sklep"
+                href={localePath(locale, "/sklep")}
                 className="inline-flex items-center gap-2 text-sm tracking-widest uppercase text-clay hover:text-espresso transition-colors group shrink-0"
               >
-                Cały sklep
+                {d.home.allShop}
                 <ArrowRight
                   size={15}
                   className="group-hover:translate-x-1 transition-transform"

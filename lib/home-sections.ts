@@ -67,3 +67,33 @@ export const HOME_TEXT_SETTING_KEYS = [
   ...Object.values(HOME_ABOUT_KEYS),
   ...Object.values(HOME_WORKSHOPS_KEYS),
 ];
+
+/**
+ * Angielskie wartości domyślne tych samych sekcji – pokazywane na `/en`,
+ * dopóki właściciel nie wpisze własnych w panelu (klucze `en_home_*`).
+ * Odpowiadają polskim defaultom wyżej; zmieniając jedne, popraw drugie.
+ */
+export const HOME_HERO_DEFAULT_EN = {
+  eyebrow: "Unique Ceramics - Alicja Ulbrich",
+  title: "Handmade\nwith heart",
+  text: "Unique functional ceramics from a studio near Gliwice, Poland – every piece is one of a kind. Made with passion and attention to every detail.",
+  ctaPrimary: "Browse the shop",
+  ctaSecondary: "About me",
+  scroll: "Scroll",
+} as const;
+
+export const HOME_ABOUT_DEFAULT_EN = {
+  eyebrow: "Pottery studio · Gliwice",
+  title: "Handmade\nwith heart",
+  text:
+    "For 20 years I have worked with ceramics in industry, and I brought that experience into artistic ceramics, which I have been making for about a year. I make every piece myself, paying attention to detail, aesthetics and the unique character of each object.\n\n" +
+    "Ceramics gives me great satisfaction and lets me find inner calm and a moment of quiet. It also motivates me to keep developing my skills.",
+  cta: "Read my story",
+} as const;
+
+export const HOME_WORKSHOPS_DEFAULT_EN = {
+  eyebrow: "Workshops",
+  title: "Try making\nsomething of your own",
+  text: "I run pottery workshops for groups and individuals. Perfect for birthdays, hen parties, company events or simply a special evening with friends. No experience needed!",
+  cta: "See the dates",
+} as const;

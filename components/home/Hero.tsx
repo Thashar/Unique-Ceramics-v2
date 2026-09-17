@@ -3,6 +3,8 @@ import Image from "next/image";
 import type { CSSProperties } from "react";
 import { ArrowRight } from "lucide-react";
 import { HOME_HERO_DEFAULT } from "@/lib/home-sections";
+import { localePath, type Locale } from "@/lib/i18n";
+import { t } from "@/lib/dictionary";
 
 /**
  * Sekcja hero strony głównej. **Cały tekst pochodzi z ustawień**
@@ -39,6 +41,7 @@ export default function Hero({
   ctaPrimary = HOME_HERO_DEFAULT.ctaPrimary,
   ctaSecondary = HOME_HERO_DEFAULT.ctaSecondary,
   scrollLabel = HOME_HERO_DEFAULT.scroll,
+  locale = "pl",
 }: {
   heroImage?: string;
   heroPosition?: string;
@@ -49,6 +52,7 @@ export default function Hero({
   ctaPrimary?: string;
   ctaSecondary?: string;
   scrollLabel?: string;
+  locale?: Locale;
 }) {
   return (
     <section className="relative flex items-center overflow-hidden" style={{ height: "100svh" }} data-snap data-header-theme="transparent">
@@ -57,7 +61,7 @@ export default function Hero({
         {heroImage && (
           <Image
             src={heroImage}
-            alt="Ceramika ręcznie robiona"
+            alt={t(locale).home.heroAlt}
             fill
             priority
             // Zdjęcie hero jest kandydatem na LCP, a konkuruje o pasmo
@@ -108,7 +112,7 @@ export default function Hero({
           <div className="uc-reveal flex flex-wrap items-center gap-5" style={reveal(0.9, 0.7, 12)}>
             {ctaPrimary && (
               <Link
-                href="/sklep"
+                href={localePath(locale, "/sklep")}
                 className="inline-flex items-center gap-3 bg-clay hover:bg-terracotta hover:text-espresso text-warm-white text-sm tracking-widest uppercase px-8 py-4 transition-colors duration-300 rounded-md"
               >
                 {ctaPrimary}
@@ -117,7 +121,7 @@ export default function Hero({
             )}
             {ctaSecondary && (
               <Link
-                href="/o-mnie"
+                href={localePath(locale, "/o-mnie")}
                 className="inline-flex items-center gap-3 border border-cream/50 hover:border-cream text-cream text-sm tracking-widest uppercase px-8 py-4 transition-colors duration-300 rounded-md"
               >
                 {ctaSecondary}

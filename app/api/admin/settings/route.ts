@@ -11,6 +11,9 @@ const HTML_KEYS = new Set([
   "polityka_prywatnosci",
   "about_story",
   "workshops_intro",
+  // Angielskie wersje tych samych treści (patrz `lib/i18n-content.ts`)
+  "en_about_story",
+  "en_workshops_intro",
 ]);
 
 function parseBody(body: unknown): { key: string; value: string }[] | null {

@@ -6,16 +6,26 @@ import FooterAddressClient from "./FooterAddressClient";
 import FooterMap from "./FooterMap";
 import ThasharWordmark from "./ThasharWordmark";
 import { LOGO_SRC, LOGO_WIDTH, LOGO_HEIGHT } from "@/lib/logo";
+import { localePath, type Locale } from "@/lib/i18n";
+import { t } from "@/lib/dictionary";
 
-const NAV_LINKS = [
-  ["Sklep", "/sklep"],
-  ["Warsztaty", "/warsztaty"],
-  ["O mnie", "/o-mnie"],
-  ["Zamówienie indywidualne", "/zamowienie-indywidualne"],
-  ["Kontakt", "/kontakt"],
-  ["Regulamin", "/regulamin"],
-  ["Polityka prywatności", "/polityka-prywatnosci"],
-];
+/**
+ * Odnośniki stopki – etykiety ze słownika, adresy przez `localePath`: na
+ * wersji angielskiej regulamin i polityka prowadzą do polskich stron (istnieją
+ * tylko po polsku), reszta do `/en/...`.
+ */
+function navLinks(locale: Locale): [string, string][] {
+  const d = t(locale);
+  return [
+    [d.nav.shop, "/sklep"],
+    [d.nav.workshops, "/warsztaty"],
+    [d.nav.about, "/o-mnie"],
+    [d.footer.customOrder, "/zamowienie-indywidualne"],
+    [d.nav.contact, "/kontakt"],
+    [d.footer.terms, "/regulamin"],
+    [d.footer.privacy, "/polityka-prywatnosci"],
+  ].map(([label, href]) => [label, localePath(locale, href)]);
+}
 
 /**
  * Wspólna treść stopki: [panel Instagram | nawigacja | kontakt | mapa]
@@ -26,7 +36,8 @@ const NAV_LINKS = [
  * Musi być w pełni synchroniczny – `Footer` jest używany na wszystkich
  * podstronach, także tych renderowanych statycznie.
  */
-export default function FooterContent({ instagram }: { instagram?: string }) {
+export default function FooterContent({ instagram, locale = "pl" }: { instagram?: string; locale?: Locale }) {
+  const d = t(locale);
   return (
     <>
       {/* Dekoracyjne elementy – clipped do sekcji */}
@@ -42,9 +53,9 @@ export default function FooterContent({ instagram }: { instagram?: string }) {
 
           {/* Nawigacja – pl-16 = 4rem po linii (symetria z pr-16) */}
           <div className="lg:pl-16">
-            <p className="text-xs tracking-widest uppercase text-terracotta mb-5">Nawigacja</p>
+            <p className="text-xs tracking-widest uppercase text-terracotta mb-5">{d.footer.navigation}</p>
             <nav className="flex flex-col gap-3">
-              {NAV_LINKS.map(([label, href]) => (
+              {navLinks(locale).map(([label, href]) => (
                 <Link key={href} href={href} className="text-sm hover:text-cream transition-colors">
                   {label}
                 </Link>
@@ -54,7 +65,7 @@ export default function FooterContent({ instagram }: { instagram?: string }) {
 
           {/* Kontakt – telefon, e-mail, social, adres pracowni i godziny otwarcia */}
           <div className="lg:pl-8">
-            <p className="text-xs tracking-widest uppercase text-terracotta mb-5">Kontakt</p>
+            <p className="text-xs tracking-widest uppercase text-terracotta mb-5">{d.footer.contact}</p>
             <div className="flex flex-col gap-3">
               <FooterContactsClient />
             </div>
@@ -62,7 +73,7 @@ export default function FooterContent({ instagram }: { instagram?: string }) {
 
           {/* Adres pracowni + mapa */}
           <div className="lg:pl-8">
-            <p className="text-xs tracking-widest uppercase text-terracotta mb-5">Gdzie mnie znajdziesz</p>
+            <p className="text-xs tracking-widest uppercase text-terracotta mb-5">{d.footer.findMe}</p>
             <FooterAddressClient />
             <div className="w-full aspect-square overflow-hidden rounded-sm">
               <FooterMap />
@@ -86,7 +97,7 @@ export default function FooterContent({ instagram }: { instagram?: string }) {
             <span className="font-serif text-[11px] sm:text-xs text-cream/70 tracking-wide whitespace-nowrap">Unique Ceramics</span>
           </div>
           <p className="text-[11px] sm:text-xs text-sand/70 text-center">
-            © {new Date().getFullYear()} Unique Ceramics - Alicja Ulbrich. Wszelkie prawa zastrzeżone.
+            © {new Date().getFullYear()} Unique Ceramics - Alicja Ulbrich. {d.footer.rights}
           </p>
           {/* Mobile: własny wiersz, wyśrodkowany. Desktop: przy prawej krawędzi –
               pozycjonowany absolutnie, żeby nie zbijać wyśrodkowania reszty belki. */}

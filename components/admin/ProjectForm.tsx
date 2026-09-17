@@ -9,6 +9,11 @@ import { uploadErrorMessage } from "@/lib/upload-error";
 import { PROJECT_MAX_IMAGES } from "@/lib/portfolio-validation";
 import { AI_VARIANT_LABEL, type AiVariant } from "@/lib/ai";
 import AiImageButtons, { AI_CONFIRM, type AiGenerating } from "@/components/admin/AiImageButtons";
+import LangSwitch from "@/components/admin/LangSwitch";
+import TranslateButton from "@/components/admin/TranslateButton";
+import { translateTexts } from "@/lib/admin-translate";
+import { enProjectKey, type ProjectTranslation } from "@/lib/i18n-content";
+import type { Locale } from "@/lib/i18n";
 
 const RichEditor = dynamic(() => import("@/components/admin/RichEditor"), { ssr: false });
 
@@ -21,8 +26,20 @@ type Project = {
   active: boolean;
 };
 
-export default function ProjectForm({ project }: { project?: Project }) {
+export default function ProjectForm({
+  project,
+  english,
+}: {
+  project?: Project;
+  /** Angielski tytuł i opis z `Setting` (`en_project_{id}`) – zakładka EN formularza. */
+  english?: ProjectTranslation;
+}) {
   const router = useRouter();
+  // PL / EN – jak w formularzu produktu: angielska wersja to osobne pola,
+  // zapisywane po zapisie projektu pod `en_project_{id}`
+  const [lang, setLang] = useState<Locale>("pl");
+  const [enTitle, setEnTitle] = useState(english?.title ?? "");
+  const [enDescription, setEnDescription] = useState(english?.description ?? "");
   const [title, setTitle] = useState(project?.title ?? "");
   const [description, setDescription] = useState(project?.description ?? "");
   const [images, setImages] = useState<string[]>(project?.images ?? []);
@@ -110,14 +127,42 @@ export default function ProjectForm({ project }: { project?: Project }) {
       body: JSON.stringify(body),
     });
 
-    setSaving(false);
     if (!res.ok) {
+      setSaving(false);
       setError("Nie udało się zapisać projektu.");
       return;
     }
+
+    // Wersja angielska osobno, do `Setting` – nowy projekt ma id dopiero po zapisie
+    const saved = await res.json().catch(() => null);
+    const projectId: string | undefined = project?.id ?? saved?.id;
+    const hadEnglish = Boolean(english?.title || english?.description);
+    if (projectId && (enTitle.trim() || enDescription.trim() || hadEnglish)) {
+      const value = JSON.stringify({ title: enTitle.trim(), description: enDescription });
+      const enRes = await fetch("/api/admin/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify([{ key: enProjectKey(projectId), value }]),
+      });
+      if (!enRes.ok) {
+        setSaving(false);
+        setError("Projekt zapisany, ale nie udało się zapisać wersji angielskiej – spróbuj ponownie.");
+        return;
+      }
+    }
+    setSaving(false);
     router.push("/admin/projekty");
     router.refresh();
   }
+
+  /** Tłumaczy bieżący polski tytuł i opis (HTML z edytora zostaje HTML-em). */
+  async function translateProject() {
+    const [t, d] = await translateTexts([title, description]);
+    setEnTitle(t);
+    setEnDescription(d);
+  }
+  // Pola polskie są w zakładce EN tylko ukryte – przy błędzie walidacji wracamy na PL
+  const showPolish = () => setLang("pl");
 
   async function handleDelete() {
     if (!project || !confirm("Na pewno usunąć ten projekt?")) return;
@@ -130,6 +175,43 @@ export default function ProjectForm({ project }: { project?: Project }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8 max-w-2xl">
+      {/* Przełącznik języka treści – u góry po prawej */}
+      <div className="flex justify-end">
+        <LangSwitch value={lang} onChange={setLang} />
+      </div>
+
+      {lang === "en" && (
+        <div className="space-y-6">
+          <div className="bg-mist border border-sand p-4 text-xs text-charcoal/80 leading-relaxed space-y-3">
+            <p>
+              Tytuł i opis pokazywane na wersji angielskiej (<code className="font-mono">/en</code>).
+              Puste pole = strona pokaże polski tekst. Zapisują się razem z projektem.
+            </p>
+            <TranslateButton
+              onTranslate={translateProject}
+              hasContent={Boolean(enTitle.trim() || enDescription.trim())}
+              label="Przetłumacz tytuł i opis przez AI"
+            />
+          </div>
+          <div>
+            <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">Tytuł (EN)</label>
+            <input
+              type="text"
+              value={enTitle}
+              onChange={(e) => setEnTitle(e.target.value)}
+              placeholder={title}
+              className="w-full border border-sand bg-warm-white px-4 py-3 text-sm text-charcoal focus:outline-none focus:border-terracotta transition-colors"
+            />
+          </div>
+          <div>
+            <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-3">Opis (EN)</label>
+            <RichEditor value={enDescription} onChange={setEnDescription} contentClass="rich-content-sm" />
+          </div>
+        </div>
+      )}
+
+      {/* Pola polskie – ukryte (nie odmontowane) w zakładce EN */}
+      <div className={lang === "en" ? "hidden" : "space-y-8"}>
       {/* Tytuł */}
       <div>
         <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">
@@ -138,6 +220,7 @@ export default function ProjectForm({ project }: { project?: Project }) {
         <input
           type="text"
           required
+          onInvalid={showPolish}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           className="w-full border border-sand bg-warm-white px-4 py-3 text-sm text-charcoal focus:outline-none focus:border-terracotta transition-colors"
@@ -243,6 +326,7 @@ export default function ProjectForm({ project }: { project?: Project }) {
         <label htmlFor="active" className="text-sm text-charcoal cursor-pointer">
           Widoczny na stronie
         </label>
+      </div>
       </div>
 
       {error && <p className="text-red-700 text-sm">{error}</p>}

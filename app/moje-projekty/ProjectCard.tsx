@@ -5,6 +5,7 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { ImageIcon } from "lucide-react";
 import { projectPath } from "@/lib/portfolio-slug";
+import { useLocalePath } from "@/lib/use-locale";
 
 /**
  * Kafelek projektu w siatce portfolio – celowo ten sam materiał co karta produktu
@@ -21,6 +22,7 @@ export default function ProjectCard({
   slug: string;
   image?: string;
 }) {
+  const href = useLocalePath();
   return (
     <motion.div
       initial={{ opacity: 0, y: 24 }}
@@ -28,7 +30,7 @@ export default function ProjectCard({
       viewport={{ once: true, amount: 0.1 }}
       transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
     >
-      <Link href={projectPath(slug)} className="group block">
+      <Link href={href(projectPath(slug))} className="group block">
         <div className="relative aspect-[4/5] overflow-hidden bg-mist mb-4 rounded-lg">
           {image ? (
             <Image

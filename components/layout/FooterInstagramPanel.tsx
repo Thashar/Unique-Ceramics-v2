@@ -5,6 +5,7 @@ import InstagramIcon from "@/components/ui/InstagramIcon";
 import FacebookIcon from "@/components/ui/FacebookIcon";
 import { ArrowRight } from "lucide-react";
 import { useContacts } from "@/lib/public-contacts";
+import { useT } from "@/lib/use-locale";
 
 /**
  * Panel Instagrama w stopce. Na stronie głównej handle przychodzi propsem
@@ -18,6 +19,7 @@ import { useContacts } from "@/lib/public-contacts";
  */
 export default function FooterInstagramPanel({ instagram }: { instagram?: string }) {
   const contacts = useContacts();
+  const d = useT();
   const value = instagram || contacts.instagram;
   const handle = value.startsWith("@") ? value.slice(1) : value;
   const displayHandle = value.startsWith("@") ? value : `@${value}`;
@@ -36,10 +38,10 @@ export default function FooterInstagramPanel({ instagram }: { instagram?: string
       </div>
 
       <h2 className="font-serif text-2xl lg:text-3xl text-cream mb-3 leading-snug">
-        Śledź moją pracownię
+        {d.footer.followTitle}
       </h2>
       <p className="text-sand/60 text-sm leading-relaxed mb-7 max-w-xs">
-        Na Instagramie pokazuję proces tworzenia, nowe prace i zakulisowe chwile z pracowni.
+        {d.footer.followText}
       </p>
 
       <a
@@ -78,7 +80,7 @@ export default function FooterInstagramPanel({ instagram }: { instagram?: string
         <span className="mt-3 inline-flex items-center gap-3 border border-sand/20 text-sand/60 text-sm tracking-widest uppercase px-6 py-3.5 self-start rounded-md">
           <FacebookIcon size={14} />
           Facebook
-          <span className="text-[10px] tracking-[0.2em] text-sand/60">wkrótce</span>
+          <span className="text-[10px] tracking-[0.2em] text-sand/60">{d.footer.soon}</span>
         </span>
       )}
     </motion.div>

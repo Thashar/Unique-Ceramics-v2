@@ -2,7 +2,9 @@ export const dynamic = "force-dynamic";
 
 import { db } from "@/lib/db";
 import { DEFAULT_CATEGORIES, type Category } from "@/lib/categories";
-import CategoriesManager from "@/components/admin/CategoriesManager";
+import CategoriesSection from "@/components/admin/CategoriesSection";
+import { getSettings } from "@/lib/settings";
+import { enCategoryKey } from "@/lib/i18n-content";
 import CollectionsManager from "@/components/admin/CollectionsManager";
 import type { Collection } from "@/lib/collection-defaults";
 
@@ -30,6 +32,10 @@ export default async function CategoriesPage() {
   } catch {
     collections = [];
   }
+
+  // Angielskie etykiety kategorii (klucze `en_category_{id}`) – zakładka EN
+  const enRows = await getSettings(categories.map((c) => enCategoryKey(c.id)));
+  const english = Object.fromEntries(categories.map((c) => [c.id, enRows[enCategoryKey(c.id)] ?? ""]));
 
   return (
     <div>
@@ -60,7 +66,7 @@ CREATE UNIQUE INDEX "Category_slug_key" ON "Category"("slug");`}</pre>
         </div>
       ) : (
         <>
-          <CategoriesManager initialCategories={categories} />
+          <CategoriesSection initialCategories={categories} english={english} />
           <CollectionsManager initial={collections} />
         </>
       )}

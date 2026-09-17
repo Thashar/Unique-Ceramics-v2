@@ -7,6 +7,7 @@ import AiImageBadge from "@/components/ui/AiImageBadge";
 import ImageLightbox from "./ImageLightbox";
 import { isAiGeneratedImage } from "@/lib/ai";
 import { DRAG_SCROLL_CLASS, HINT_FADE_MS, useDragScroll } from "@/lib/use-drag-scroll";
+import { useT } from "@/lib/use-locale";
 
 /** Poniżej tylu pikseli gest traktujemy jako drgnięcie palca, nie przesunięcie. */
 const AXIS_LOCK_PX = 8;
@@ -28,6 +29,7 @@ export default function ProductGallery({
   images: string[];
   name: string;
 }) {
+  const d = useT();
   const [activeImage, setActiveImage] = useState(0);
   // Przesunięcie taśmy w trakcie gestu (px). Null = palec nie dotyka zdjęcia.
   const [drag, setDrag] = useState<number | null>(null);
@@ -153,7 +155,7 @@ export default function ProductGallery({
         tabIndex={hasMany ? 0 : -1}
         role={hasMany ? "group" : undefined}
         aria-roledescription={hasMany ? "karuzela" : undefined}
-        aria-label={hasMany ? `Zdjęcia produktu ${name}` : undefined}
+        aria-label={hasMany ? d.product.galleryOf(name) : undefined}
       >
         <div
           className="flex h-full w-full"
@@ -186,7 +188,7 @@ export default function ProductGallery({
         <button
           type="button"
           onClick={() => setZoomOpen(true)}
-          aria-label="Powiększ zdjęcie"
+          aria-label={d.product.zoom}
           className="absolute top-3 right-3 w-9 h-9 flex items-center justify-center bg-warm-white/85 text-espresso shadow-sm transition-colors hover:bg-warm-white cursor-zoom-in"
         >
           <Expand size={16} strokeWidth={1.5} />
@@ -199,7 +201,7 @@ export default function ProductGallery({
               type="button"
               onClick={() => go(-1)}
               disabled={activeImage === 0}
-              aria-label="Poprzednie zdjęcie"
+              aria-label={d.product.prev}
               className="hidden md:flex absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 items-center justify-center bg-warm-white/90 text-espresso shadow-sm transition-opacity hover:bg-warm-white disabled:opacity-0 disabled:pointer-events-none"
             >
               <ChevronLeft size={20} />
@@ -208,7 +210,7 @@ export default function ProductGallery({
               type="button"
               onClick={() => go(1)}
               disabled={activeImage === images.length - 1}
-              aria-label="Następne zdjęcie"
+              aria-label={d.product.next}
               className="hidden md:flex absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 items-center justify-center bg-warm-white/90 text-espresso shadow-sm transition-opacity hover:bg-warm-white disabled:opacity-0 disabled:pointer-events-none"
             >
               <ChevronRight size={20} />
@@ -239,7 +241,7 @@ export default function ProductGallery({
               <button
                 key={i}
                 onClick={() => setActiveImage(i)}
-                aria-label={`Pokaż zdjęcie ${i + 1}`}
+                aria-label={d.product.show(i + 1)}
                 aria-current={activeImage === i}
                 /* Na telefonie w rzędzie mieszczą się dokładnie trzy miniatury
                    na szerokość oglądanego zdjęcia – szerokość liczona z odstępu,

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "
 import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { GalleryImage } from "@/lib/gallery";
+import { useT } from "@/lib/use-locale";
 
 interface Props {
   images: GalleryImage[];
@@ -51,6 +52,7 @@ export default function ImageGallery({
   // [ostatnie, 1, 2, …, n, pierwsze] – realne zdjęcia zajmują pozycje 1…n
   const slides = isSlider ? [images[count - 1], ...images, images[0]] : images;
 
+  const d = useT();
   const [index, setIndex] = useState(isSlider ? 1 : 0);
   // Wyłącza przejście na czas przeskoku z klonu na realne zdjęcie
   const [instant, setInstant] = useState(false);
@@ -282,7 +284,7 @@ export default function ImageGallery({
       {/* Strzałki – tylko przy wskaźniku myszy, na dotyku wystarczy swipe */}
       <button
         type="button"
-        aria-label="Poprzednie zdjęcie"
+        aria-label={d.product.prev}
         onClick={(e) => { e.stopPropagation(); go(-1); }}
         className="hidden md:flex absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 items-center justify-center rounded-full bg-espresso/70 text-cream opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:bg-espresso transition-opacity"
       >
@@ -290,7 +292,7 @@ export default function ImageGallery({
       </button>
       <button
         type="button"
-        aria-label="Następne zdjęcie"
+        aria-label={d.product.next}
         onClick={(e) => { e.stopPropagation(); go(1); }}
         className="hidden md:flex absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 items-center justify-center rounded-full bg-espresso/70 text-cream opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:bg-espresso transition-opacity"
       >
@@ -303,7 +305,7 @@ export default function ImageGallery({
           <button
             key={`${i}-${img.url}`}
             type="button"
-            aria-label={`Zdjęcie ${i + 1} z ${count}`}
+            aria-label={d.product.photoOf(i + 1, count)}
             aria-current={i === logical}
             onClick={(e) => { e.stopPropagation(); goTo(i); }}
             className={`h-1.5 rounded-full transition-all ${

@@ -5,6 +5,8 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { HOME_WORKSHOPS_DEFAULT } from "@/lib/home-sections";
+import { useLocale, useT } from "@/lib/use-locale";
+import { localePath } from "@/lib/i18n";
 
 /**
  * Pełnoekranowa sekcja „Warsztaty" na stronie głównej. **Cały tekst pochodzi
@@ -29,6 +31,8 @@ export default function WorkshopsTeaser({
   text?: string;
   cta?: string;
 }) {
+  const locale = useLocale();
+  const d = useT();
   return (
     <section
       className="relative overflow-hidden flex items-center"
@@ -41,7 +45,7 @@ export default function WorkshopsTeaser({
         {workshopsImage && (
           <Image
             src={workshopsImage}
-            alt="Warsztaty ceramiczne"
+            alt={d.home.workshopsAlt}
             fill
             className="object-cover"
             style={{ objectPosition: workshopsPosition }}
@@ -99,7 +103,7 @@ export default function WorkshopsTeaser({
               transition={{ duration: 0.6, delay: 0.4 }}
             >
               <Link
-                href="/warsztaty"
+                href={localePath(locale, "/warsztaty")}
                 className="inline-flex items-center gap-3 border border-cream/60 hover:border-cream text-cream text-sm tracking-widest uppercase px-8 py-4 transition-colors duration-300 group rounded-md"
               >
                 {cta}

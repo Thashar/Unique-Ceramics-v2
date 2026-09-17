@@ -1,0 +1,291 @@
+import { Suspense } from "react";
+import type { Metadata } from "next";
+import Link from "next/link";
+import { ArrowRight, Gift, Phone, Mail, Clock, MapPin } from "lucide-react";
+import CustomOrderPoints from "@/components/ui/CustomOrderPoints";
+import ClayRule from "@/components/ui/ClayRule";
+import InstagramIcon from "@/components/ui/InstagramIcon";
+import FacebookIcon from "@/components/ui/FacebookIcon";
+import WhatsAppIcon from "@/components/ui/WhatsAppIcon";
+import Header from "@/components/layout/HeaderWrapper";
+import Footer from "@/components/layout/Footer";
+import { getSettings } from "@/lib/settings";
+import { normalizeHours } from "@/lib/opening-hours";
+import ContactForm from "@/components/contact/ContactForm";
+import ContactFormParams from "@/components/contact/ContactFormParams";
+import { pageMetadata } from "@/lib/seo";
+import BreadcrumbSchema from "@/components/seo/BreadcrumbSchema";
+import { localePath, type Locale } from "@/lib/i18n";
+import { t } from "@/lib/dictionary";
+import { englishContentFor } from "@/lib/content-translations";
+import { localizedSetting } from "@/lib/i18n-content";
+
+export function contactMetadata(locale: Locale): Metadata {
+  const m = t(locale).meta;
+  return pageMetadata({
+    title: m.contactTitle,
+    description: m.contactDescription,
+    path: "/kontakt",
+    locale,
+  });
+}
+
+function parseWorkshopTitles(json: string): string[] {
+  try {
+    const arr = JSON.parse(json);
+    if (!Array.isArray(arr)) return [];
+    return arr
+      .filter((w: { active?: boolean; title?: string }) => w.active && w.title)
+      .map((w: { title: string }) => w.title);
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Strona kontaktu – wspólna dla `/kontakt` i `/en/kontakt`. Godziny otwarcia
+ * po angielsku idą z `en_contact_hours` (panel → Kontakt → EN), tytuły
+ * warsztatów w selekcie formularza – z `en_workshops_offers`.
+ */
+export default async function ContactPage({ locale = "pl" }: { locale?: Locale }) {
+  const d = t(locale);
+  const en = await englishContentFor(locale);
+  const settings = await getSettings([
+    "contact_phone",
+    "contact_email",
+    "contact_instagram",
+    "contact_facebook",
+    "contact_whatsapp",
+    "contact_hours",
+    "contact_address_street",
+    "contact_address_city",
+    "contact_address_region",
+    "workshops_offers",
+  ]);
+
+  const phone = settings.contact_phone;
+  const email = settings.contact_email;
+  const instagram = settings.contact_instagram;
+  const facebook = settings.contact_facebook;
+  const whatsapp = settings.contact_whatsapp;
+  const hours = normalizeHours(localizedSetting(locale, "contact_hours", settings, en));
+  const addrStreet = settings.contact_address_street;
+  const addrCity = settings.contact_address_city;
+  const addrRegion = settings.contact_address_region;
+  const workshopOptions = parseWorkshopTitles(localizedSetting(locale, "workshops_offers", settings, en));
+
+  // Link wa.me wymaga samych cyfr (bez spacji, +, myślników)
+  const whatsappNumber = whatsapp.replace(/[^\d]/g, "");
+
+  // Derive href from instagram handle (strip leading @)
+  const instagramHandle = instagram.startsWith("@")
+    ? instagram.slice(1)
+    : instagram;
+  const instagramHref = `https://instagram.com/${instagramHandle}`;
+
+  // W panelu wpisuje się pełny URL profilu, a taki adres w kolumnie kontaktu
+  // czyta się źle – pokazujemy go bez protokołu, „www." i końcowego ukośnika
+  const facebookLabel = facebook
+    .replace(/^https?:\/\//, "")
+    .replace(/^www\./, "")
+    .replace(/\/$/, "");
+
+  // Derive tel href (strip spaces)
+  const phoneHref = `tel:${phone.replace(/\s/g, "")}`;
+
+  return (
+    <>
+      <BreadcrumbSchema locale={locale} items={[{ name: d.nav.contact, path: "/kontakt" }]} />
+      <Header locale={locale} />
+      <main className="flex-1">
+        {/* Nagłówek */}
+        <div className="bg-cream px-6 lg:px-10 py-10">
+          <div className="max-w-7xl mx-auto">
+            <p className="text-xs tracking-[0.3em] uppercase text-clay mb-3">{d.contact.eyebrow}</p>
+            <h1 className="font-serif text-5xl md:text-6xl text-espresso">{d.contact.title}</h1>
+          </div>
+        </div>
+
+        {/* Obszar obsługi – tylko dla robotów/SEO, niewidoczny wizualnie */}
+        <section aria-label={d.contact.areaTitle} className="sr-only">
+          <p>{d.contact.areaText}</p>
+        </section>
+
+        {/* Siatka */}
+        <div className="bg-warm-white py-20 px-6 lg:px-10">
+          <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20">
+            {/* Dane kontaktowe */}
+            <div>
+              <ClayRule className="mb-7" />
+              <h2 className="font-serif text-2xl text-espresso mb-8">{d.contact.details}</h2>
+              <div className="space-y-6">
+                <a
+                  href={phoneHref}
+                  className="flex items-start gap-4 text-charcoal/80 hover:text-clay transition-colors group"
+                >
+                  <div className="w-10 h-10 bg-cream rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-terracotta/10 transition-colors">
+                    <Phone size={18} strokeWidth={1.5} className="text-clay" />
+                  </div>
+                  <div>
+                    <p className="text-xs tracking-widest uppercase text-clay mb-1">{d.contact.phone}</p>
+                    <p className="text-lg">{phone}</p>
+                  </div>
+                </a>
+
+                <a
+                  href={`mailto:${email}`}
+                  className="flex items-start gap-4 text-charcoal/80 hover:text-clay transition-colors group"
+                >
+                  <div className="w-10 h-10 bg-cream rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-terracotta/10 transition-colors">
+                    <Mail size={18} strokeWidth={1.5} className="text-clay" />
+                  </div>
+                  <div>
+                    <p className="text-xs tracking-widest uppercase text-clay mb-1">{d.contact.email}</p>
+                    <p className="text-lg">{email}</p>
+                  </div>
+                </a>
+
+                <a
+                  href={instagramHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-start gap-4 text-charcoal/80 hover:text-clay transition-colors group"
+                >
+                  <div className="w-10 h-10 bg-cream rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-terracotta/10 transition-colors">
+                    <InstagramIcon size={18} className="text-clay" />
+                  </div>
+                  <div>
+                    <p className="text-xs tracking-widest uppercase text-clay mb-1">Instagram</p>
+                    <p className="text-lg">{instagram}</p>
+                  </div>
+                </a>
+
+                {facebook && (
+                  <a
+                    href={facebook}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-start gap-4 text-charcoal/80 hover:text-clay transition-colors group"
+                  >
+                    <div className="w-10 h-10 bg-cream rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-terracotta/10 transition-colors">
+                      <FacebookIcon size={18} className="text-clay" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs tracking-widest uppercase text-clay mb-1">Facebook</p>
+                      <p className="text-lg break-words">{facebookLabel}</p>
+                    </div>
+                  </a>
+                )}
+
+                {whatsapp && (
+                  <a
+                    href={`https://wa.me/${whatsappNumber}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-start gap-4 text-charcoal/80 hover:text-clay transition-colors group"
+                  >
+                    <div className="w-10 h-10 bg-cream rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-terracotta/10 transition-colors">
+                      <WhatsAppIcon size={18} className="text-clay" />
+                    </div>
+                    <div>
+                      <p className="text-xs tracking-widest uppercase text-clay mb-1">WhatsApp</p>
+                      <p className="text-lg">{whatsapp}</p>
+                    </div>
+                  </a>
+                )}
+
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 bg-cream rounded-full flex items-center justify-center flex-shrink-0">
+                    <MapPin size={18} strokeWidth={1.5} className="text-clay" />
+                  </div>
+                  <div>
+                    <p className="text-xs tracking-widest uppercase text-clay mb-1">{d.contact.location}</p>
+                    <address className="not-italic text-charcoal/80 leading-relaxed text-sm">
+                      {addrStreet}
+                      {addrCity && <><br />{addrCity}</>}
+                      {addrRegion && <><br />{addrRegion}</>}
+                    </address>
+                  </div>
+                </div>
+
+                {hours && (
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 bg-cream rounded-full flex items-center justify-center flex-shrink-0">
+                      <Clock size={18} strokeWidth={1.5} className="text-clay" />
+                    </div>
+                    <div>
+                      <p className="text-xs tracking-widest uppercase text-clay mb-1">{d.contact.hours}</p>
+                      <p className="text-charcoal/80 text-sm leading-relaxed whitespace-pre-line">{hours}</p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 bg-cream rounded-full flex items-center justify-center flex-shrink-0">
+                    <Clock size={18} strokeWidth={1.5} className="text-clay" />
+                  </div>
+                  <div>
+                    <p className="text-xs tracking-widest uppercase text-clay mb-1">{d.contact.responseTime}</p>
+                    <p className="text-charcoal/80 text-sm leading-relaxed">{d.contact.responseText}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Formularz */}
+            <div>
+              <ClayRule className="mb-7" />
+              <h2 className="font-serif text-2xl text-espresso mb-8">{d.contact.formTitle}</h2>
+              {/* `?produkt=` (przycisk „Zapytaj o produkt" przy wyprzedanym towarze)
+                  czyta `ContactFormParams`, a `useSearchParams` na stronie ISR wymaga
+                  granicy Suspense. Fallbackiem jest **ten sam formularz bez prefillu**,
+                  więc w prerenderze siedzi gotowy formularz, a nie pusta ramka */}
+              <Suspense fallback={<ContactForm workshopOptions={workshopOptions} />}>
+                <ContactFormParams workshopOptions={workshopOptions} />
+              </Suspense>
+            </div>
+
+            {/* Zaproszenie do zamówień indywidualnych **przez obie kolumny**
+                (`lg:col-span-2`) – w wąskiej kolumnie kontaktu robiło się z niego
+                wysokie pudło, a pas przez całą szerokość domyka stronę tak samo
+                jak koniec katalogu. Stoi **po formularzu w kodzie**, więc na telefonie
+                ląduje pod przyciskiem wysyłki, a nie przed nim.
+                Ten sam materiał co `app/sklep/CustomOrderTile.tsx`
+                i zamknięcie FAQ na /warsztaty: tło espresso, ikona prezentu w kółku,
+                te same trzy hasła i przycisk w ramce */}
+            <div className="lg:col-span-2 flex flex-col md:flex-row md:items-center gap-5 md:gap-7 bg-espresso p-6 sm:p-7 md:p-8 rounded-2xl">
+              <span
+                className="inline-flex items-center justify-center w-11 h-11 md:w-14 md:h-14 rounded-full border border-terracotta/40 bg-terracotta/10 text-terracotta shrink-0"
+                aria-hidden="true"
+              >
+                <Gift strokeWidth={1.5} className="w-5 h-5 md:w-6 md:h-6" />
+              </span>
+
+              <div className="flex-1 min-w-0">
+                <h3 className="font-serif text-xl md:text-2xl text-cream mb-2">
+                  {d.contact.customTitle}
+                </h3>
+                <p className="text-sand/90 text-sm leading-relaxed">{d.contact.customText}</p>
+                <CustomOrderPoints inline className="mt-4" locale={locale} />
+              </div>
+
+              <Link
+                href={localePath(locale, "/zamowienie-indywidualne")}
+                className="group w-full md:w-auto shrink-0 inline-flex items-center justify-center gap-3 border border-terracotta/50 hover:border-terracotta hover:bg-terracotta hover:text-espresso text-cream text-[11px] sm:text-xs tracking-widest uppercase px-5 sm:px-6 py-3 sm:py-3.5 transition-all duration-300 rounded-md"
+              >
+                {d.contact.customCta}
+                <ArrowRight
+                  size={14}
+                  strokeWidth={1.5}
+                  className="group-hover:translate-x-1 transition-transform"
+                  aria-hidden="true"
+                />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </main>
+      <Footer locale={locale} />
+    </>
+  );
+}

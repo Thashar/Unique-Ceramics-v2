@@ -7,7 +7,10 @@ import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { CartPopover, AccountPopover } from "@/components/layout/HeaderPopovers";
+import LanguageSwitch from "@/components/layout/LanguageSwitch";
 import { LOGO_SRC, LOGO_WIDTH, LOGO_HEIGHT } from "@/lib/logo";
+import { localePath, stripLocale } from "@/lib/i18n";
+import { useLocale, useT } from "@/lib/use-locale";
 
 // Dystans (px) zjazdu poniżej górnej krawędzi stopki, na którym header
 // płynnie zanika do zera – dobrany tak, by zniknął zanim zacznie zasłaniać
@@ -32,13 +35,15 @@ const VISIBLE_RATIO = 0.3;
 // progu, więc rzadka lista potrafiłaby przegapić moment zmiany).
 const IO_THRESHOLDS = [0, 0.1, 0.2, 0.25, 0.3, 0.35, 0.4, 0.5, 0.75, 1];
 
+// Etykiety idą ze słownika (`lib/dictionary.ts`), adresy przez `localePath` –
+// na `/en/...` linki prowadzą do angielskich wersji stron
 const ALL_NAV_LINKS = [
-  { href: "/sklep",         label: "Sklep",          always: true  },
-  { href: "/o-mnie",        label: "O mnie",          always: true  },
-  { href: "/moje-projekty", label: "Moje projekty",   always: false },
-  { href: "/warsztaty",     label: "Warsztaty",       always: true  },
-  { href: "/kontakt",       label: "Kontakt",         always: true  },
-];
+  { href: "/sklep",         key: "shop",      always: true  },
+  { href: "/o-mnie",        key: "about",     always: true  },
+  { href: "/moje-projekty", key: "projects",  always: false },
+  { href: "/warsztaty",     key: "workshops", always: true  },
+  { href: "/kontakt",       key: "contact",   always: true  },
+] as const;
 
 export default function Header({ topOffset = false, showProjects = true }: { topOffset?: boolean; showProjects?: boolean }) {
   // Na homepage header jest przezroczysty gdy widoczna sekcja z ciemnym tłem
@@ -48,7 +53,11 @@ export default function Header({ topOffset = false, showProjects = true }: { top
   // Auto-chowanie na mobile przy przewijaniu w dół (podstrony)
   const [hidden, setHidden] = useState(false);
   const pathname = usePathname();
-  const isHome = pathname === "/";
+  const locale = useLocale();
+  const dict = useT();
+  // Ścieżka bez prefiksu języka – `/en` to też strona główna, `/en/sklep` to sklep
+  const plainPath = stripLocale(pathname ?? "/");
+  const isHome = plainPath === "/";
 
   const headerRef = useRef<HTMLElement>(null);
   const menuOpenRef = useRef(menuOpen);
@@ -62,7 +71,9 @@ export default function Header({ topOffset = false, showProjects = true }: { top
     if (isHome) setTransparentVisible(true);
   }
 
-  const navLinks = ALL_NAV_LINKS.filter((l) => l.always || showProjects);
+  const navLinks = ALL_NAV_LINKS
+    .filter((l) => l.always || showProjects)
+    .map((l) => ({ href: localePath(locale, l.href), plain: l.href, label: dict.nav[l.key] }));
   const dark = !isHome || !transparentVisible;
   // Kolor ikon koszyka i konta – ten sam co dotąd, przekazywany do dymków
   const iconClass = `transition-colors duration-500 ${
@@ -295,7 +306,7 @@ export default function Header({ topOffset = false, showProjects = true }: { top
             pozycji na zero – strona lądowała wtedy w losowym miejscu, a header
             zostawał ciemny nad widocznym hero. */}
         <Link
-          href="/"
+          href={localePath(locale, "/")}
           className="flex min-w-0 items-center gap-2 sm:gap-3 group"
           onClick={() => {
             if (isHome) window.scrollTo({ top: 0, behavior: "smooth" });
@@ -342,7 +353,7 @@ export default function Header({ topOffset = false, showProjects = true }: { top
               Unique Ceramics
             </span>
             <span className="text-[length:clamp(0.3125rem,0.24rem_+_0.36vw,0.40625rem)] tracking-[0.18em] uppercase whitespace-nowrap mt-0.5 text-white">
-              Ręcznie tworzone z sercem
+              {dict.common.tagline}
             </span>
           </div>
         </Link>
@@ -353,7 +364,7 @@ export default function Header({ topOffset = false, showProjects = true }: { top
             i ikon – dopiero od `xl` jest na to miejsce. */}
         <nav className="hidden md:flex items-center gap-4 lg:gap-8 xl:gap-10">
           {navLinks.map((link) => {
-            const isActive = pathname === link.href || pathname.startsWith(link.href + "/");
+            const isActive = plainPath === link.plain || plainPath.startsWith(link.plain + "/");
             return (
               <Link
                 key={link.href}
@@ -380,15 +391,23 @@ export default function Header({ topOffset = false, showProjects = true }: { top
             jego zawartość, a na ikonę osoby – menu konta albo formularz logowania
             (patrz `HeaderPopovers`); kliknięcie nadal prowadzi na stronę. */}
         <div className="flex items-center gap-1">
-          <CartPopover iconClass={iconClass} />
-          <AccountPopover iconClass={iconClass} />
+          {/* Na wersji angielskiej nie da się nic kupić ani zalogować – koszyk
+              i konto zostają po polsku, więc ich ikon tam nie ma. Zamiast nich
+              stoi sam przełącznik języka (flaga), obecny w obu wersjach */}
+          {locale === "pl" && (
+            <>
+              <CartPopover iconClass={iconClass} />
+              <AccountPopover iconClass={iconClass} />
+            </>
+          )}
+          <LanguageSwitch iconClass={iconClass} />
 
           <button
             className={`md:hidden p-2 transition-colors duration-500 ${
               dark ? "text-cream hover:text-terracotta" : "text-cream hover:text-sand"
             }`}
             onClick={() => setMenuOpen(!menuOpen)}
-            aria-label={menuOpen ? "Zamknij menu" : "Otwórz menu"}
+            aria-label={menuOpen ? dict.nav.closeMenu : dict.nav.openMenu}
             aria-expanded={menuOpen}
             aria-controls="mobile-nav"
           >
@@ -407,12 +426,12 @@ export default function Header({ topOffset = false, showProjects = true }: { top
             exit={{ opacity: 0, transition: { duration: 0 } }}
             id="mobile-nav"
             role="dialog"
-            aria-label="Menu nawigacyjne"
+            aria-label={dict.nav.menu}
             className="md:hidden bg-espresso border-t border-white/10 px-6 pb-8 pt-4"
           >
             <nav className="flex flex-col gap-1 mt-2">
               {navLinks.map((link) => {
-                const isActive = pathname === link.href || pathname.startsWith(link.href + "/");
+                const isActive = plainPath === link.plain || plainPath.startsWith(link.plain + "/");
                 return (
                   <Link
                     key={link.href}
@@ -426,13 +445,18 @@ export default function Header({ topOffset = false, showProjects = true }: { top
                   </Link>
                 );
               })}
-              <Link
-                href="/konto"
-                onClick={() => setMenuOpen(false)}
-                className="py-3 text-base tracking-widest uppercase text-cream/75 hover:text-cream transition-colors"
-              >
-                Moje konto
-              </Link>
+              {locale === "pl" && (
+                <Link
+                  href="/konto"
+                  onClick={() => setMenuOpen(false)}
+                  className="py-3 border-b border-white/10 text-base tracking-widest uppercase text-cream/75 hover:text-cream transition-colors"
+                >
+                  {dict.nav.account}
+                </Link>
+              )}
+              {/* Przełącznik języka także w menu – na telefonie flaga w pasku
+                  jest mała, a tu ma pełne nazwy */}
+              <LanguageSwitch variant="menu" onNavigate={() => setMenuOpen(false)} />
             </nav>
           </motion.div>
         )}

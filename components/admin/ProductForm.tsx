@@ -15,6 +15,11 @@ import {
 import { dateToWarsawLocal, formatWarsaw, warsawLocalToDate } from "@/lib/warsaw-time";
 import { AI_VARIANT_LABEL, type AiVariant } from "@/lib/ai";
 import AiImageButtons, { AI_CONFIRM, type AiGenerating } from "@/components/admin/AiImageButtons";
+import LangSwitch from "@/components/admin/LangSwitch";
+import TranslateButton from "@/components/admin/TranslateButton";
+import { translateTexts } from "@/lib/admin-translate";
+import { enProductKey, type ProductTranslation } from "@/lib/i18n-content";
+import type { Locale } from "@/lib/i18n";
 
 const HOUR_MS = 3_600_000;
 
@@ -66,13 +71,21 @@ export default function ProductForm({
   initial,
   categories,
   collections = [],
+  english,
 }: {
   product?: Product;
   initial?: ProductDraft;
   categories: Category[];
   collections?: Collection[];
+  /** Angielska nazwa i opis z `Setting` (`en_product_{id}`) – zakładka EN formularza. */
+  english?: ProductTranslation;
 }) {
   const router = useRouter();
+  // PL / EN – przełącznik u góry po prawej; angielska wersja to osobne pola
+  // zapisywane po zapisie produktu pod `en_product_{id}` (bez migracji bazy)
+  const [lang, setLang] = useState<Locale>("pl");
+  const [enName, setEnName] = useState(english?.name ?? "");
+  const [enDescription, setEnDescription] = useState(english?.description ?? "");
   // `product` = edycja istniejącego (PUT + możliwość usunięcia),
   // `initial` = wypełnione pola nowego produktu (kopia) – zapis idzie przez POST
   const base = product ?? initial;
@@ -360,8 +373,39 @@ export default function ProductForm({
       return;
     }
 
+    // Angielska wersja idzie osobno, do `Setting` – nowy produkt ma id dopiero
+    // po zapisie (POST oddaje utworzony wiersz). Błąd tego zapisu nie cofa
+    // produktu, tylko zostaje na ekranie
+    const saved = await res.json().catch(() => null);
+    const productId: string | undefined = product?.id ?? saved?.id;
+    const hadEnglish = Boolean(english?.name || english?.description);
+    if (productId && (enName.trim() || enDescription.trim() || hadEnglish)) {
+      const value = JSON.stringify({ name: enName.trim(), description: enDescription.trim() });
+      const enRes = await fetch("/api/admin/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify([{ key: enProductKey(productId), value }]),
+      });
+      if (!enRes.ok) {
+        setError("Produkt zapisany, ale nie udało się zapisać wersji angielskiej – spróbuj ponownie.");
+        setSaving(false);
+        return;
+      }
+    }
+
     router.push("/admin/produkty");
     router.refresh();
+  }
+
+  // Pola polskie są w zakładce EN tylko ukryte, więc przeglądarka nie pokaże
+  // przy nich komunikatu walidacji – wracamy na PL, żeby brak było widać
+  const showPolish = () => setLang("pl");
+
+  /** Tłumaczy bieżącą polską nazwę i opis (także niezapisane) na angielski. */
+  async function translateProduct() {
+    const [name, description] = await translateTexts([form.name, form.description]);
+    setEnName(name);
+    setEnDescription(description);
   }
 
   async function handleDelete() {
@@ -378,6 +422,42 @@ export default function ProductForm({
         <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3">{error}</div>
       )}
 
+      {/* Przełącznik języka treści – u góry po prawej. Zdjęcia, cena, stan
+          i reszta pól są wspólne; po angielsku różni się tylko nazwa i opis */}
+      <div className="flex justify-end">
+        <LangSwitch value={lang} onChange={setLang} />
+      </div>
+
+      {lang === "en" && (
+        <div className="space-y-6">
+          <div className="bg-mist border border-sand p-4 text-xs text-charcoal/80 leading-relaxed space-y-3">
+            <p>
+              Nazwa i opis pokazywane na wersji angielskiej (<code className="font-mono">/en</code>).
+              Puste pole = strona pokaże polski tekst. Zapisują się razem z produktem
+              przyciskiem na dole.
+            </p>
+            <TranslateButton
+              onTranslate={translateProduct}
+              hasContent={Boolean(enName.trim() || enDescription.trim())}
+              label="Przetłumacz nazwę i opis przez AI"
+            />
+          </div>
+          <div>
+            <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">Nazwa (EN)</label>
+            <input value={enName} onChange={(e) => setEnName(e.target.value)} placeholder={form.name}
+              className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm" />
+          </div>
+          <div>
+            <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">Opis (EN)</label>
+            <textarea rows={8} value={enDescription} onChange={(e) => setEnDescription(e.target.value)} placeholder={form.description}
+              className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm resize-y" />
+          </div>
+        </div>
+      )}
+
+      {/* Pola polskie – ukryte (nie odmontowane) w zakładce EN, żeby stan
+          i walidacja `required` przeglądarki dalej działały */}
+      <div className={lang === "en" ? "hidden" : "space-y-8"}>
       {/* Zdjęcia */}
       <div>
         <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-3">Zdjęcia produktu</label>
@@ -460,7 +540,7 @@ export default function ProductForm({
       <div className="grid grid-cols-2 gap-6">
         <div className="col-span-2">
           <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">Nazwa *</label>
-          <input required value={form.name}
+          <input required value={form.name} onInvalid={showPolish}
             onChange={(e) => {
               set("name", e.target.value);
               if (!product) set("slug", autoSlug(e.target.value));
@@ -469,7 +549,7 @@ export default function ProductForm({
         </div>
         <div>
           <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">Slug URL *</label>
-          <input required value={form.slug} onChange={(e) => set("slug", e.target.value)}
+          <input required value={form.slug} onInvalid={showPolish} onChange={(e) => set("slug", e.target.value)}
             className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm font-mono" />
         </div>
         <div>
@@ -494,7 +574,7 @@ export default function ProductForm({
         </div>
         <div>
           <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">Cena (zł) *</label>
-          <input required type="number" step="0.01" min="0" value={form.price}
+          <input required type="number" step="0.01" min="0" value={form.price} onInvalid={showPolish}
             onChange={(e) => set("price", e.target.value)}
             className="w-full bg-cream border border-sand focus:border-clay outline-none px-4 py-3 text-espresso text-sm" />
         </div>
@@ -648,6 +728,7 @@ export default function ProductForm({
             <p className="text-xs text-charcoal/80 mt-0.5">Wyświetla informację o naturalnej unikalności ceramiki na stronie produktu.</p>
           </div>
         </label>
+      </div>
       </div>
 
       {/* Przyciski */}

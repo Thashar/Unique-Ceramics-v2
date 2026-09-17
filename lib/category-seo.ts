@@ -20,7 +20,10 @@
  * Moduł neutralny (bez bazy) – korzysta z niego strona serwerowa i panel.
  */
 
-/** Adres strony kategorii. */
+import { t } from "./dictionary";
+import type { Locale } from "./i18n";
+
+/** Adres strony kategorii (bez prefiksu języka – dokłada go `localePath`). */
 export function categoryPath(slug: string): string {
   return `/sklep/kategoria/${slug}`;
 }
@@ -32,15 +35,15 @@ export function categoryPath(slug: string): string {
  * działać z każdą nazwą, bo kategorie dodaje właściciel.
  */
 
-/** Tytuł strony – bez marki, dokłada ją szablon z layoutu. */
-export function categoryTitle(label: string): string {
-  return `${label} – ceramika ręcznie robiona`;
+/** Tytuł strony – bez marki, dokłada ją szablon z layoutu. Treść w `lib/dictionary.ts`. */
+export function categoryTitle(label: string, locale: Locale = "pl"): string {
+  return t(locale).meta.categoryTitle(label);
 }
 
 /**
  * Opis kategorii dla wyszukiwarki. Mieści się w ~160 znakach, które Google
  * pokazuje pod tytułem – dłuższy zostałby ucięty w połowie zdania.
  */
-export function categoryDescription(label: string): string {
-  return `${label} wykonane ręcznie w pracowni pod Gliwicami. Każdą sztukę formuję i szkliwię pojedynczo, więc dwie nigdy nie są identyczne. Wysyłka w całej Polsce.`;
+export function categoryDescription(label: string, locale: Locale = "pl"): string {
+  return t(locale).meta.categoryDescription(label);
 }
