@@ -4,13 +4,46 @@ import { db } from "@/lib/db";
 import Link from "next/link";
 import Image from "next/image";
 import { Suspense } from "react";
-import { Plus, ShoppingBag, Star } from "lucide-react";
+import { Languages, Plus, ShoppingBag, Star } from "lucide-react";
 import ProductsSearch from "@/components/admin/ProductsSearch";
 import ProductRowActions from "@/components/admin/ProductRowActions";
 import { getCategories } from "@/lib/categories";
 import { productOrderBy, resolveProductSort, sortByName } from "@/lib/product-sort";
 import { discountState, type DiscountState } from "@/lib/product-price";
 import { formatWarsaw } from "@/lib/warsaw-time";
+import { EN_KEY_PREFIX, parseEnglishRows, type ProductTranslation } from "@/lib/i18n-content";
+
+/**
+ * Znaczek wersji angielskiej przy nazwie produktu. Produkt bez angielskiej
+ * nazwy i opisu „jedzie na bypassie” – `/en` pokazuje polski tekst – więc
+ * bursztynowy znaczek z ikoną języków mówi, że w formularzu (zakładka EN)
+ * jest jeszcze coś do wypełnienia. Zielony = komplet.
+ */
+function EnglishBadge({ translation }: { translation?: ProductTranslation }) {
+  const hasName = Boolean(translation?.name);
+  const hasDescription = Boolean(translation?.description.trim());
+  if (hasName && hasDescription) {
+    return (
+      <span
+        title="Wersja angielska: nazwa i opis uzupełnione"
+        className="inline-flex items-center gap-1 text-[10px] tracking-wide uppercase px-1.5 py-0.5 rounded-sm shrink-0 bg-green-50 text-green-700 ring-1 ring-green-200"
+      >
+        <Languages size={10} strokeWidth={2} aria-hidden="true" />
+        EN
+      </span>
+    );
+  }
+  const missing = !hasName && !hasDescription ? "nazwy i opisu" : !hasName ? "nazwy" : "opisu";
+  return (
+    <span
+      title={`Brak angielskiej ${missing} – na /en pokazuje się polski tekst. Uzupełnij w zakładce EN formularza produktu.`}
+      className="inline-flex items-center gap-1 text-[10px] tracking-wide uppercase px-1.5 py-0.5 rounded-sm shrink-0 bg-amber-50 text-amber-800 ring-1 ring-amber-200"
+    >
+      <Languages size={10} strokeWidth={2} aria-hidden="true" />
+      EN?
+    </span>
+  );
+}
 
 /** Kolory znacznika rabatu – zielony dla działającego, bursztyn dla zaplanowanego. */
 const DISCOUNT_BADGE: Record<Exclude<DiscountState, "none">, string> = {
@@ -58,6 +91,19 @@ export default async function AdminProductsPage({
   }),
   ]);
   const products = sortByName(rows, sort);
+
+  // Angielskie wersje (`en_product_{id}` w `Setting`) – do znaczka przy nazwie.
+  // Odczyt w try/catch: brak tłumaczeń nie może wywrócić listy produktów
+  let english: Record<string, ProductTranslation> = {};
+  try {
+    const rowsEn = await db.setting.findMany({
+      where: { key: { startsWith: `${EN_KEY_PREFIX}product_` } },
+      select: { key: true, value: true },
+    });
+    english = parseEnglishRows(rowsEn).products;
+  } catch (e) {
+    console.error("[admin/produkty] odczyt tłumaczeń:", e);
+  }
 
   return (
     <div>
@@ -139,6 +185,7 @@ export default async function AdminProductsPage({
                         </span>
                       );
                     })()}
+                    <EnglishBadge translation={english[product.id]} />
                   </div>
                   <p className="text-xs text-charcoal/80 capitalize">{product.category}</p>
                   <div className="flex items-center justify-between mt-1.5">
@@ -195,6 +242,7 @@ export default async function AdminProductsPage({
                         </span>
                       );
                     })()}
+                    <EnglishBadge translation={english[product.id]} />
                   </div>
                   <p className="text-xs text-charcoal/80 capitalize mt-0.5">{product.category}</p>
                 </div>
