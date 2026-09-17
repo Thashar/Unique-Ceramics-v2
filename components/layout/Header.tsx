@@ -400,7 +400,11 @@ export default function Header({ topOffset = false, showProjects = true }: { top
               <AccountPopover iconClass={iconClass} />
             </>
           )}
-          <LanguageSwitch iconClass={iconClass} />
+          {/* Flaga tylko od `md` – na telefonie przełącznik jest w menu
+              hamburgera, a w pasku zabierała miejsce obok koszyka i konta */}
+          <div className="hidden md:block">
+            <LanguageSwitch iconClass={iconClass} />
+          </div>
 
           <button
             className={`md:hidden p-2 transition-colors duration-500 ${
