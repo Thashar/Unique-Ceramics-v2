@@ -275,20 +275,25 @@ export const AI_TRANSLATE_LIMITS = { items: 200, chars: 40_000 } as const;
  * i atrybuty mają zostać nietknięte, tłumaczony jest sam tekst między nimi.
  */
 export function buildTranslatePrompt(texts: string[]): string {
+  // Obiekt z kluczami t0…tN zamiast tablicy: model potrafił rozbijać wielolinijkowy
+  // opis na kilka pozycji albo sklejać dwie w jedną, a wtedy liczba pozycji się
+  // nie zgadzała i tłumaczenie było odrzucane („niepełne tłumaczenie”, 17.09.2026).
+  // Klucze pozwalają dopasować odpowiedź niezależnie od liczby i kolejności
+  const items = Object.fromEntries(texts.map((t, i) => [`t${i}`, t]));
   return `You are a professional Polish-to-English translator for a small handmade ceramics studio's website (Unique Ceramics, Alicja Ulbrich, near Gliwice, Poland).
-Translate every item of the JSON array below from Polish into natural, warm British English suitable for a shop and portfolio site.
+Translate every value of the JSON object below from Polish into natural, warm British English suitable for a shop and portfolio site.
 
 Rules:
-- Return ONLY a JSON array of strings, with exactly the same number of items in the same order. No commentary, no code fences.
+- Return ONLY a JSON object with exactly the same keys (${Object.keys(items).join(", ")}), each mapped to its translation as one string. No commentary, no code fences.
+- A value with several lines or paragraphs stays ONE string – keep its line breaks (\\n) exactly where the original has them; never split a value into several keys.
 - Keep HTML tags, attributes and entities exactly as they are; translate only the text between tags.
-- Keep line breaks (\n) where the original has them.
-- Keep numbers, prices, units ("zł" stays "zł"), proper names, product names in quotes, e-mail addresses, phone numbers and URLs unchanged.
+- Keep numbers, prices, units ("zł" stays "zł", "cm", "ml"), proper names, product names in quotes, e-mail addresses, phone numbers and URLs unchanged.
 - Use an en dash (–), never an em dash (—).
 - Keep the tone of the original: first person ("I make…") where the Polish uses first person.
-- If an item is empty, return an empty string for it.
+- If a value is empty, return an empty string for it.
 
 Items:
-${JSON.stringify(texts)}`;
+${JSON.stringify(items)}`;
 }
 /**
  * Prompt dla modelu tekstowego, który z polskiego opisu stylistyki układa

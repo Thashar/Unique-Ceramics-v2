@@ -78,9 +78,9 @@ export async function POST(req: Request) {
       ...result.usage,
     });
 
-    const translated = parseArray(result.text);
-    if (!translated || translated.length !== texts.length) {
-      console.error("[admin/ai-translate] zła liczba pozycji:", translated?.length, "oczekiwano", texts.length);
+    const translated = parseTranslations(result.text, texts.length);
+    if (!translated) {
+      console.error("[admin/ai-translate] nie da się dopasować odpowiedzi:", result.text.slice(0, 300));
       return NextResponse.json(
         { error: "Model zwrócił niepełne tłumaczenie – spróbuj ponownie." },
         { status: 502 }
@@ -102,17 +102,35 @@ export async function POST(req: Request) {
   }
 }
 
-/** Tablica stringów z odpowiedzi modelu – znosi bloki ``` i tekst wokół JSON-a. */
-function parseArray(raw: string): string[] | null {
+/**
+ * Tłumaczenia z odpowiedzi modelu – znosi bloki ``` i tekst wokół JSON-a.
+ * Oczekujemy obiektu `{ t0, t1, … }` (patrz `buildTranslatePrompt`); tablicę
+ * o właściwej długości też przyjmujemy. Brakujący klucz = odpowiedź niepełna.
+ */
+function parseTranslations(raw: string, count: number): string[] | null {
   const cleaned = raw.replace(/```[a-z]*\n?/gi, "").replace(/```/g, "").trim();
-  const start = cleaned.indexOf("[");
-  const end = cleaned.lastIndexOf("]");
+  const objStart = cleaned.indexOf("{");
+  const arrStart = cleaned.indexOf("[");
+  const useObject = objStart >= 0 && (arrStart < 0 || objStart < arrStart);
+  const start = useObject ? objStart : arrStart;
+  const end = cleaned.lastIndexOf(useObject ? "}" : "]");
   if (start < 0 || end <= start) return null;
+  let parsed: unknown;
   try {
-    const parsed = JSON.parse(cleaned.slice(start, end + 1));
-    if (!Array.isArray(parsed) || parsed.some((t) => typeof t !== "string")) return null;
-    return parsed as string[];
+    parsed = JSON.parse(cleaned.slice(start, end + 1));
   } catch {
     return null;
   }
+  if (Array.isArray(parsed)) {
+    return parsed.length === count && parsed.every((t) => typeof t === "string") ? (parsed as string[]) : null;
+  }
+  if (!parsed || typeof parsed !== "object") return null;
+  const obj = parsed as Record<string, unknown>;
+  const out: string[] = [];
+  for (let i = 0; i < count; i++) {
+    const value = obj[`t${i}`];
+    if (typeof value !== "string") return null;
+    out.push(value);
+  }
+  return out;
 }
