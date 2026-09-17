@@ -7,6 +7,8 @@ import { Suspense } from "react";
 import { Languages, Plus, ShoppingBag, Star } from "lucide-react";
 import ProductsSearch from "@/components/admin/ProductsSearch";
 import ProductRowActions from "@/components/admin/ProductRowActions";
+import QuickAddProduct from "@/components/admin/QuickAddProduct";
+import { getSetting } from "@/lib/settings";
 import { getCategories } from "@/lib/categories";
 import { productOrderBy, resolveProductSort, sortByName } from "@/lib/product-sort";
 import { discountState, type DiscountState } from "@/lib/product-price";
@@ -91,6 +93,8 @@ export default async function AdminProductsPage({
   }),
   ]);
   const products = sortByName(rows, sort);
+  // Kurs USD→PLN z Ustawień → AI – do podsumowania kosztu szybkiego dodawania
+  const usdPlnRate = Math.max(0, parseFloat((await getSetting("ai_usd_pln_rate")).replace(",", ".")) || 0);
 
   // Angielskie wersje (`en_product_{id}` w `Setting`) – do znaczka przy nazwie.
   // Odczyt w try/catch: brak tłumaczeń nie może wywrócić listy produktów
@@ -112,14 +116,18 @@ export default async function AdminProductsPage({
           <h1 className="font-serif text-3xl text-espresso">Produkty</h1>
           <p className="text-sm text-charcoal/80 mt-0.5">{products.length} wyników</p>
         </div>
-        <Link
-          href="/admin/produkty/nowy"
-          className="flex items-center gap-2 bg-clay hover:bg-terracotta hover:text-espresso text-warm-white text-xs tracking-widest uppercase px-4 py-2.5 transition-colors"
-        >
-          <Plus size={15} />
-          <span className="hidden sm:inline">Dodaj produkt</span>
-          <span className="sm:hidden">Dodaj</span>
-        </Link>
+        <div className="flex items-center gap-2">
+          {/* Szybkie dodawanie: jedno zdjęcie → kompletna karta z AI (patrz `QuickAddProduct`) */}
+          <QuickAddProduct usdPlnRate={usdPlnRate} />
+          <Link
+            href="/admin/produkty/nowy"
+            className="flex items-center gap-2 bg-clay hover:bg-terracotta hover:text-espresso text-warm-white text-xs tracking-widest uppercase px-4 py-2.5 transition-colors"
+          >
+            <Plus size={15} />
+            <span className="hidden sm:inline">Dodaj produkt</span>
+            <span className="sm:hidden">Dodaj</span>
+          </Link>
+        </div>
       </div>
 
       <Suspense fallback={null}>

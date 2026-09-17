@@ -8,6 +8,7 @@ import {
   AI_TEXT_MODEL_SETTING_KEY,
   AI_TRANSLATE_LIMITS,
   AI_TRANSLATE_VARIANT,
+  aiCostUsd,
   buildTranslatePrompt,
   resolveAiTextModel,
 } from "@/lib/ai";
@@ -90,6 +91,7 @@ export async function POST(req: Request) {
     return NextResponse.json({
       texts: translated.map((t) => t.replace(/[—―]/g, "–")),
       model,
+      costUsd: aiCostUsd(model, result.usage.promptTokens, result.usage.outputTokens),
     });
   } catch (e) {
     console.error("[admin/ai-translate] tłumaczenie:", e);

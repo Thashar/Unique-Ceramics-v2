@@ -14,6 +14,7 @@ import {
   AI_MODEL_SETTING_KEY,
   AI_PRESET_SETTING_KEY,
   AI_PRESETS_SETTING_KEY,
+  aiCostUsd,
   buildImagePrompt,
   isAiVariant,
   parseAiPresets,
@@ -91,6 +92,8 @@ export async function POST(req: Request) {
   );
 
   let generated: Buffer;
+  // Koszt tego wywołania (USD) – panel sumuje go w szybkim dodawaniu produktu
+  let costUsd = 0;
   try {
     const result = await generateProductImage({
       model,
@@ -101,6 +104,7 @@ export async function POST(req: Request) {
     // Zużycie zapisujemy od razu po udanym wywołaniu – od tego momentu jest płatne,
     // niezależnie od tego, czy dalsza obróbka i zapis do Storage się powiodą
     await recordAiUsage({ kind: "image", variant, model, ...result.usage });
+    costUsd = aiCostUsd(model, result.usage.promptTokens, result.usage.outputTokens);
     // Rozmiar i format nadaje `uploadImageWithVariants` (WebP, maks. 1920 px,
     // maksymalna jakość) razem z wariantami rozmiarowymi – tu zostaje surowy wynik
     generated = Buffer.from(result.image.data);
@@ -128,5 +132,5 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: saved.error }, { status: 500 });
   }
 
-  return NextResponse.json({ url: saved.url, model });
+  return NextResponse.json({ url: saved.url, model, costUsd });
 }

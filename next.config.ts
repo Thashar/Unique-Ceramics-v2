@@ -100,6 +100,7 @@ const nextConfig: NextConfig = {
     "/api/admin/rotate": SHARP_TRACE,
     "/api/admin/ai-image": SHARP_TRACE,
     "/api/admin/ai-text": SHARP_TRACE,
+    "/api/admin/ai-product-card": SHARP_TRACE,
     // `[slug]` w kluczu jest wzorcem glob (klasa znaków), nie nazwą katalogu –
     // wpis „/api/og/[slug]" nie pasował do niczego i ta trasa przez cały czas
     // budowała się bez dołożonych plików sharpa
@@ -115,6 +116,7 @@ const nextConfig: NextConfig = {
     "/api/admin/rotate": SHARP_TRACE_EXCLUDE,
     "/api/admin/ai-image": SHARP_TRACE_EXCLUDE,
     "/api/admin/ai-text": SHARP_TRACE_EXCLUDE,
+    "/api/admin/ai-product-card": SHARP_TRACE_EXCLUDE,
     "/api/og/**": SHARP_TRACE_EXCLUDE,
     "/api/admin/image-variants": SHARP_TRACE_EXCLUDE,
   },

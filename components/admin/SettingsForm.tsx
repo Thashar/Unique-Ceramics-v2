@@ -175,6 +175,9 @@ const VARIANT_LABEL: Record<string, string> = {
   ai: "AI (zdjęcie)",
   ai_plus: "AI+ (zdjęcie)",
   product_fill: "Uzupełnianie opisu",
+  product_card: "Szybkie dodawanie – styl z kategorii",
+  translate: "Tłumaczenie na angielski",
+  prompt_build: "Układanie promptu",
 };
 
 /** Kwoty AI bywają rzędu setnych centa – pokazujemy tyle miejsc, ile ma sens. */

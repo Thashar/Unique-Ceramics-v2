@@ -393,6 +393,49 @@ Odpowiedz wyłącznie obiektem JSON, bez komentarzy i bez bloków kodu:
 {"name":"...","slug":"...","category":"...","description":"..."}`;
 }
 
+/** Wariant zapisywany w rejestrze zużycia dla szybkiego dodawania produktu (drugi krok – styl z kategorii). */
+export const AI_CARD_VARIANT = "product_card";
+
+/**
+ * Drugi krok szybkiego dodawania produktu: model dostaje **wstępne rozpoznanie**
+ * (z `buildProductFillPrompt`) i **dwa losowe produkty z tej samej kategorii**
+ * jako wzór stylu. Ma napisać nazwę i opis w tej samej konwencji – długość,
+ * ton, sposób nazywania motywu i szkliwa – zachowując to, co realnie widać
+ * na zdjęciu (przykłady są wzorem stylu, nie źródłem faktów o produkcie).
+ */
+export function buildProductCardPrompt(
+  category: { slug: string; label: string },
+  draft: { name: string; description: string },
+  examples: { name: string; description: string }[],
+): string {
+  const list = examples
+    .map((e, i) => `Przykład ${i + 1}:\nNazwa: ${e.name}\nOpis: ${e.description || "(bez opisu)"}`)
+    .join("\n\n");
+  return `Jesteś asystentem sklepu z ręcznie robioną ceramiką artystyczną (Unique Ceramics).
+Na podstawie zdjęcia produktu przygotuj ostateczną nazwę i opis do karty produktu w kategorii "${category.label}".
+
+Wstępne rozpoznanie zdjęcia (możesz je poprawić, jeśli widzisz coś innego):
+Nazwa: ${draft.name || "(brak)"}
+Opis: ${draft.description || "(brak)"}
+
+Poniżej są produkty, które już są w tej kategorii sklepu. **Wzoruj się na ich stylu**: długości nazwy i opisu,
+tonie, kolejności informacji, sposobie nazywania motywu, kształtu, koloru i szkliwa. Nie kopiuj ich treści
+i nie przypisuj nowemu produktowi cech, których nie widać na zdjęciu.
+
+${list}
+
+Zasady:
+- Pisz po polsku, w tonie spokojnym i rzeczowym, bez marketingowego przesadzania.
+- Jako myślnika używaj wyłącznie półpauzy "–" (krótki myślnik). Nigdy nie używaj pauzy "—" ani encji &mdash;.
+- To, co jest na ceramice (motyw, wizerunek, napis, znak, detal formy), ma trafić do nazwy i opisu – nazwane wprost, nie ogólnikiem.
+- "name": nazwa produktu w konwencji przykładów (zwykle 2-5 słów), bez cudzysłowów i bez ceny.
+- "slug": nazwa małymi literami, bez polskich znaków, wyrazy połączone myślnikami (tylko a-z, 0-9 i myślnik).
+- "description": opis w konwencji przykładów. Nie wymyślaj wymiarów, pojemności ani ceny.
+
+Odpowiedz wyłącznie obiektem JSON, bez komentarzy i bez bloków kodu:
+{"name":"...","slug":"...","description":"..."}`;
+}
+
 // ── Koszty ────────────────────────────────────────────────────────────────────
 
 /**
