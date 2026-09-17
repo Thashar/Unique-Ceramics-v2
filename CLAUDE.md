@@ -52,6 +52,7 @@ Dodając plik potrzebny w runtime na produkcji, sprawdź, czy nie wpada pod któ
 | Płatności online | Stripe (Checkout + webhook) |
 | Hasła | bcryptjs (koszt 12) |
 | Statystyki odwiedzin | Vercel Web Analytics (`@vercel/analytics`) – `<Analytics />` z `@vercel/analytics/next` w `app/layout.tsx`; bez cookies, bez konfiguracji w kodzie. Dane włącza się w panelu Vercel (projekt → Analytics). Na produkcji skrypt i beacony idą z własnej domeny (`/_vercel/insights/*`, objęte `'self'` w CSP); w trybie deweloperskim skrypt ładuje się z `va.vercel-scripts.com` – ten host jest w `script-src` tylko po to, żeby lokalnie nie sypało błędami CSP |
+| Wydajność (Web Vitals) | Vercel Speed Insights (`@vercel/speed-insights`) – `<SpeedInsights />` z `@vercel/speed-insights/next` w `app/layout.tsx` (dodane przez Vercel, PR #86, 17.09.2026). Skrypt idzie z `/_vercel/speed-insights/*` na własnej domenie (objęte `'self'` w CSP). Dane w panelu Vercel → Speed Insights |
 
 ---
 
