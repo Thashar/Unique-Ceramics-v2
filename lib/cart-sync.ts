@@ -146,6 +146,52 @@ export function mergeCarts(
   return [...merged.values()].filter((i) => i.quantity > 0);
 }
 
+/** Co zrobić z koszykiem po wczytaniu strony przez zalogowanego klienta. */
+export type CartReconcileAction =
+  /** Koszyk gościa (albo cudzy) – scalamy unią i odsyłamy na konto. */
+  | "merge"
+  /** Lokalne zmiany, których serwer nie potwierdził – lokalny wygrywa, idzie na konto. */
+  | "push"
+  /** Koszyk już uzgodniony i bez zmian – konto jest prawdą, bierzemy je bez scalania. */
+  | "pull";
+
+/**
+ * Rozstrzyga, który koszyk obowiązuje po wczytaniu strony przez zalogowanego.
+ *
+ * Do 17.09.2026 **każde** załadowanie strony (także po deployu, także na
+ * telefonie otwartym od tygodnia) scalało koszyk z urządzenia z koszykiem konta
+ * **unią** – tak jak przy logowaniu. Usunięcie pozycji na jednym urządzeniu nie
+ * było więc usunięciem, tylko brakiem w jednym z dwóch koszyków, a unia
+ * z drugiego urządzenia ją przywracała. Produkty usunięte (albo kupione)
+ * wracały do koszyka po każdym przeładowaniu.
+ *
+ * Unia ma sens **wyłącznie raz** – gdy koszyk gościa spotyka konto po
+ * zalogowaniu (`owner !== userId`). Później konto jest źródłem prawdy:
+ * urządzenie bierze je bez scalania (`pull`), chyba że ma własne zmiany,
+ * których serwer jeszcze nie potwierdził (`dirty` → `push`).
+ */
+export function reconcileCart(args: {
+  local: SyncCartItem[];
+  saved: SyncCartItem[];
+  /** Konto, z którym lokalny koszyk został już uzgodniony; `null` = koszyk gościa. */
+  owner: string | null;
+  userId: string;
+  /** Czy w lokalnym koszyku są zmiany niezapisane jeszcze na koncie. */
+  dirty: boolean;
+}): { items: SyncCartItem[]; action: CartReconcileAction } {
+  if (args.owner !== args.userId) {
+    return { items: mergeCarts(args.local, args.saved), action: "merge" };
+  }
+  if (args.dirty) return { items: args.local, action: "push" };
+  return { items: args.saved, action: "pull" };
+}
+
+/** Czy dwa koszyki są tożsame co do pozycji i ilości (kolejność ma znaczenie). */
+export function sameCart(a: SyncCartItem[], b: SyncCartItem[]): boolean {
+  if (a.length !== b.length) return false;
+  return a.every((x, i) => x.id === b[i].id && x.quantity === b[i].quantity);
+}
+
 /** Komunikat o wyprzedanych pozycjach – jeden dla dowolnej ich liczby. */
 export function soldOutMessage(names: string[]): string | null {
   if (names.length === 0) return null;

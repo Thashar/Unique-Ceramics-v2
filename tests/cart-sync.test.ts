@@ -7,7 +7,9 @@
 import { describe, expect, it } from "vitest";
 import {
   mergeCarts,
+  reconcileCart,
   reducedMessage,
+  sameCart,
   soldOutMessage,
   syncCartWithServer,
   type SyncCartItem,
@@ -141,6 +143,47 @@ describe("scalanie koszyka po zalogowaniu", () => {
       []
     );
     expect(merged).toEqual([]);
+  });
+});
+
+describe("uzgodnienie koszyka po wczytaniu strony", () => {
+  const local = [item({ id: "a" }), item({ id: "b" })];
+  const saved = [item({ id: "b" })];
+
+  it("koszyk gościa (bez właściciela) scala się z kontem unią", () => {
+    const r = reconcileCart({ local, saved, owner: null, userId: "u1", dirty: false });
+    expect(r.action).toBe("merge");
+    expect(r.items.map((i) => i.id).sort()).toEqual(["a", "b"]);
+  });
+
+  it("koszyk uzgodniony z innym kontem też scala się unią", () => {
+    const r = reconcileCart({ local, saved, owner: "u0", userId: "u1", dirty: false });
+    expect(r.action).toBe("merge");
+  });
+
+  it("REGRESJA: koszyk już uzgodniony bierze konto bez scalania – usunięcie nie wraca", () => {
+    // Na drugim urządzeniu usunięto „a”; to urządzenie ma je jeszcze lokalnie
+    const r = reconcileCart({ local, saved, owner: "u1", userId: "u1", dirty: false });
+    expect(r.action).toBe("pull");
+    expect(r.items.map((i) => i.id)).toEqual(["b"]);
+  });
+
+  it("puste konto czyści uzgodniony koszyk (zamówienie złożone gdzie indziej)", () => {
+    const r = reconcileCart({ local, saved: [], owner: "u1", userId: "u1", dirty: false });
+    expect(r.action).toBe("pull");
+    expect(r.items).toEqual([]);
+  });
+
+  it("niewysłane zmiany lokalne wygrywają z kontem", () => {
+    const r = reconcileCart({ local, saved, owner: "u1", userId: "u1", dirty: true });
+    expect(r.action).toBe("push");
+    expect(r.items).toBe(local);
+  });
+
+  it("sameCart porównuje pozycje i ilości", () => {
+    expect(sameCart([item({ id: "a", quantity: 2 })], [item({ id: "a", quantity: 2 })])).toBe(true);
+    expect(sameCart([item({ id: "a", quantity: 2 })], [item({ id: "a", quantity: 1 })])).toBe(false);
+    expect(sameCart([item({ id: "a" })], [])).toBe(false);
   });
 });
 

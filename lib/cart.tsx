@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import {
-  mergeCarts,
+  reconcileCart,
   reducedMessage,
+  sameCart,
   soldOutMessage,
   syncCartWithServer,
   type CartPriceUpdate,
@@ -26,6 +27,15 @@ export type CartItem = {
 };
 
 const STORAGE_KEY = "uc-cart";
+/**
+ * Konto, z którym lokalny koszyk został już uzgodniony. Brak = koszyk gościa,
+ * który przy najbliższym zalogowaniu scali się z kontem (jedyny moment unii).
+ */
+const OWNER_KEY = "uc-cart-owner";
+/** Lokalna zmiana koszyka, której serwer jeszcze nie potwierdził (`PUT` w drodze albo nieudany). */
+const DIRTY_KEY = "uc-cart-dirty";
+/** Powrót do karty odświeża koszyk z konta nie częściej niż co tyle. */
+const PULL_THROTTLE_MS = 15_000;
 
 function normalize(raw: unknown[]): CartItem[] {
   return raw.map((i) => {
@@ -58,12 +68,30 @@ let items: CartItem[] = EMPTY;
 let loaded = false;
 const listeners = new Set<() => void>();
 
+function parseStored(stored: string | null): CartItem[] {
+  if (!stored) return EMPTY;
+  try {
+    return normalize(JSON.parse(stored));
+  } catch {
+    return EMPTY;
+  }
+}
+
 function load() {
   if (loaded) return;
   loaded = true;
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) items = normalize(JSON.parse(stored));
+    items = parseStored(localStorage.getItem(STORAGE_KEY));
+  } catch {}
+  // Inna karta tej samej przeglądarki zmieniła koszyk – przejmujemy jej stan,
+  // zamiast trzymać w pamięci stary i nadpisać nim localStorage przy pierwszej
+  // własnej zmianie (tak stara karta potrafiła „wskrzesić” usunięte produkty)
+  try {
+    window.addEventListener("storage", (e) => {
+      if (e.key !== STORAGE_KEY) return;
+      items = parseStored(e.newValue);
+      listeners.forEach((l) => l());
+    });
   } catch {}
 }
 
@@ -73,9 +101,45 @@ function persist() {
   } catch {}
 }
 
-function setItems(next: CartItem[]) {
+function readOwner(): string | null {
+  try {
+    return localStorage.getItem(OWNER_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function writeOwner(userId: string | null) {
+  try {
+    if (userId === null) localStorage.removeItem(OWNER_KEY);
+    else localStorage.setItem(OWNER_KEY, userId);
+  } catch {}
+}
+
+function readDirty(): boolean {
+  try {
+    return localStorage.getItem(DIRTY_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function writeDirty(dirty: boolean) {
+  try {
+    if (dirty) localStorage.setItem(DIRTY_KEY, "1");
+    else localStorage.removeItem(DIRTY_KEY);
+  } catch {}
+}
+
+/**
+ * Zapisuje nowy stan koszyka. Każda zmiana **z tego urządzenia** oznacza koszyk
+ * jako „brudny” – do czasu, aż serwer potwierdzi zapis na koncie. Stan wzięty
+ * **z konta** (`fromServer`) brudny nie jest: nie ma czego odsyłać.
+ */
+function setItems(next: CartItem[], opts: { fromServer?: boolean } = {}) {
   items = next;
   persist();
+  if (!opts.fromServer) writeDirty(true);
   listeners.forEach((l) => l());
 }
 
@@ -322,15 +386,63 @@ export async function refreshCartFromServer(
 
 // ── Koszyk przypisany do konta ───────────────────────────────────────────────
 
+/** Koszyk zapisany na koncie; `null`, gdy serwer nie odpowiedział poprawnie. */
+async function fetchAccountCart(): Promise<CartItem[] | null> {
+  try {
+    const res = await fetch("/api/account/cart");
+    if (!res.ok) return null;
+    const data = await res.json();
+    return Array.isArray(data?.items) ? normalize(data.items) : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Zapisuje koszyk na koncie. Po potwierdzeniu zdejmuje znacznik „brudny” –
+ * ale tylko wtedy, gdy w międzyczasie koszyk się nie zmienił (wtedy czeka
+ * na niego kolejny zapis).
+ */
+async function putAccountCart(snapshot: CartItem[]): Promise<boolean> {
+  try {
+    const res = await fetch("/api/account/cart", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ items: snapshot }),
+    });
+    if (!res.ok) return false;
+    if (getSnapshot() === snapshot) writeDirty(false);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Po wylogowaniu koszyk nie może zostać na cudzym ekranie. */
+function forgetAccountCart() {
+  setItems([], { fromServer: true });
+  writeOwner(null);
+  writeDirty(false);
+}
+
 /**
  * Trzyma koszyk w zgodzie z kontem klienta.
  *
- *  • **po zalogowaniu** – koszyk z urządzenia scala się z zapisanym na koncie
- *    (`mergeCarts`: ilości to większa z dwóch, nie suma) i wraca na serwer,
- *    dzięki czemu klient znajduje go na innym urządzeniu;
+ *  • **pierwsze spotkanie koszyka z kontem** (koszyk gościa po zalogowaniu,
+ *    `uc-cart-owner` ≠ id) – scalenie unią (`mergeCarts`: ilości to większa
+ *    z dwóch, nie suma), zapis na konto i oznaczenie koszyka jako uzgodnionego;
+ *  • **każde kolejne wczytanie strony** (przeładowanie, nowa karta, po deployu,
+ *    telefon otwarty od tygodnia) – **konto jest prawdą**: koszyk z urządzenia
+ *    zostaje zastąpiony zapisanym na koncie, chyba że ma zmiany, których
+ *    serwer jeszcze nie potwierdził (`uc-cart-dirty`) – wtedy idą na konto;
  *  • **przy każdej zmianie** zalogowanego koszyka – zapis na konto;
- *  • **po wylogowaniu** – koszyk na urządzeniu jest czyszczony, żeby nie został
- *    na cudzym ekranie.
+ *  • **po powrocie do karty** (`visibilitychange`/`focus`/`pageshow`) – ponowne
+ *    pobranie z konta, żeby karta otwarta w tle nie pokazywała starego koszyka;
+ *  • **po wylogowaniu** – koszyk na urządzeniu jest czyszczony.
+ *
+ * ⚠️ Nie wracaj do scalania unią przy każdym wczytaniu strony. Unia nie umie
+ * wyrazić usunięcia: pozycja usunięta na jednym urządzeniu (albo kupiona)
+ * wracała z drugiego przy najbliższym przeładowaniu – patrz `reconcileCart`.
  *
  * Wylogowanie rozpoznajemy po **przejściu** `authenticated → unauthenticated`.
  * Sam stan `unauthenticated` nie wystarcza: gość nigdy nie był zalogowany,
@@ -339,6 +451,10 @@ export async function refreshCartFromServer(
 export function useCartAccountSync(status: string, userId: string | null): void {
   const previousStatus = useRef<string | null>(null);
   const syncedFor = useRef<string | null>(null);
+  // Konto, dla którego uzgodnienie się zakończyło – dopiero wtedy zmiany
+  // koszyka mogą iść na serwer (inaczej zapis z urządzenia wyprzedzałby
+  // odczyt konta i nadpisywał je koszykiem gościa)
+  const [readyFor, setReadyFor] = useState<string | null>(null);
 
   useEffect(() => {
     const was = previousStatus.current;
@@ -350,7 +466,8 @@ export function useCartAccountSync(status: string, userId: string | null): void 
     if (status === "unauthenticated") {
       if (was === "authenticated") {
         syncedFor.current = null;
-        clearCartStore();
+        setReadyFor(null);
+        forgetAccountCart();
       }
       return;
     }
@@ -359,45 +476,80 @@ export function useCartAccountSync(status: string, userId: string | null): void 
     if (syncedFor.current === userId) return;
     syncedFor.current = userId;
 
-    let cancelled = false;
+    // Zamiast flagi `cancelled` sprawdzamy `syncedFor` – wylogowanie w trakcie
+    // zeruje ją, a wynik uzgodnienia nie może wtedy trafić do pustego koszyka
+    const stillMine = () => syncedFor.current === userId;
+
     (async () => {
       try {
-        const res = await fetch("/api/account/cart");
-        if (!res.ok || cancelled) return;
-        const data = await res.json();
-        const saved: CartItem[] = Array.isArray(data?.items) ? normalize(data.items) : [];
-        const merged = mergeCarts(getSnapshot(), saved);
-        setItems(merged);
-        await fetch("/api/account/cart", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ items: merged }),
+        const saved = await fetchAccountCart();
+        if (!saved || !stillMine()) return;
+
+        const { items: next, action } = reconcileCart({
+          local: getSnapshot(),
+          saved,
+          owner: readOwner(),
+          userId,
+          dirty: readDirty(),
         });
-        // Scalony koszyk może zawierać pozycje sprzed dłuższego czasu –
+
+        if (action === "pull") {
+          if (!sameCart(next, getSnapshot())) setItems(next, { fromServer: true });
+        } else {
+          setItems(next);
+          await putAccountCart(next);
+          if (!stillMine()) return;
+        }
+        writeOwner(userId);
+
+        // Koszyk z konta może zawierać pozycje sprzed dłuższego czasu –
         // od razu sprawdzamy, czy nadal są w sprzedaży
-        await refreshCartFromServer(merged.map((i) => i.id));
+        await refreshCartFromServer(next.map((i) => i.id));
       } catch {
         // Koszyk na urządzeniu zostaje – lepiej niż go zgubić
+      } finally {
+        if (stillMine()) setReadyFor(userId);
       }
     })();
-
-    return () => {
-      cancelled = true;
-    };
   }, [status, userId]);
 
   // Zapis na konto przy każdej zmianie koszyka zalogowanego klienta
   const current = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   useEffect(() => {
-    if (status !== "authenticated" || !userId) return;
-    if (syncedFor.current !== userId) return; // scalanie jeszcze trwa
+    if (status !== "authenticated" || !userId || readyFor !== userId) return;
+    if (!readDirty()) return;
     const timer = setTimeout(() => {
-      fetch("/api/account/cart", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items: current }),
-      }).catch(() => {});
+      void putAccountCart(current);
     }, 600);
     return () => clearTimeout(timer);
-  }, [current, status, userId]);
+  }, [current, status, userId, readyFor]);
+
+  // Powrót do karty – koszyk z konta zamiast tego, który karta pamięta z rana
+  useEffect(() => {
+    if (status !== "authenticated" || !userId || readyFor !== userId) return;
+    let last = Date.now();
+
+    const pull = async () => {
+      if (document.visibilityState !== "visible") return;
+      if (Date.now() - last < PULL_THROTTLE_MS) return;
+      last = Date.now();
+      // Niewysłane zmiany lokalne mają pierwszeństwo – odeśle je zapis wyżej
+      if (readDirty() || readOwner() !== userId) return;
+
+      const saved = await fetchAccountCart();
+      if (!saved || readDirty() || syncedFor.current !== userId) return;
+      if (sameCart(saved, getSnapshot())) return;
+      setItems(saved, { fromServer: true });
+      await refreshCartFromServer(saved.map((i) => i.id));
+    };
+
+    document.addEventListener("visibilitychange", pull);
+    window.addEventListener("focus", pull);
+    window.addEventListener("pageshow", pull);
+    return () => {
+      document.removeEventListener("visibilitychange", pull);
+      window.removeEventListener("focus", pull);
+      window.removeEventListener("pageshow", pull);
+    };
+  }, [status, userId, readyFor]);
 }

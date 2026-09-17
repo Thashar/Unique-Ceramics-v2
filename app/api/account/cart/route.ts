@@ -2,7 +2,9 @@
 //
 // Koszyk gościa żyje w localStorage. Po zalogowaniu scalamy go z tym zapisanym
 // na koncie, żeby klient znalazł swoje produkty także na innym urządzeniu –
-// i żeby nie przepadły, gdy zaloguje się w trakcie zakupów.
+// i żeby nie przepadły, gdy zaloguje się w trakcie zakupów. Od tej chwili
+// **konto jest źródłem prawdy** – kolejne urządzenia biorą je bez scalania
+// (patrz `useCartAccountSync` w `lib/cart.tsx`).
 //
 // Przechowywanie: tabela `Setting`, klucz `user_cart_{userId}` – ten sam wzorzec
 // co adres dostawy (`user_address_{userId}`), więc nie wymaga migracji.
@@ -66,8 +68,13 @@ export async function GET() {
     return NextResponse.json({ items: row ? normalize(JSON.parse(row.value)) : [] });
   } catch (e) {
     console.error("[account/cart] odczyt koszyka nieudany:", e);
-    // Pusta lista, nie błąd – koszyk z urządzenia zostaje nietknięty
-    return NextResponse.json({ items: [] });
+    // Błąd, nie pusta lista: po uzgodnieniu konto jest źródłem prawdy i pusta
+    // odpowiedź wyczyściłaby koszyk na urządzeniu przy chwilowej awarii bazy.
+    // Na `!res.ok` klient zostawia koszyk z urządzenia nietknięty
+    return NextResponse.json(
+      { error: "Nie udało się odczytać koszyka" },
+      { status: 503 }
+    );
   }
 }
 
