@@ -12,13 +12,14 @@ const FLAG: Record<Locale, typeof FlagPL> = { pl: FlagPL, en: FlagGB };
 
 /**
  * Przełącznik języka w nagłówku: flaga bieżącego języka, a po kliknięciu
- * rozwijana lista z obiema wersjami (bieżąca wyróżniona). Link prowadzi na
- * **tę samą stronę** w drugim języku (`switchLocalePath`); strona bez
- * odpowiednika – np. koszyk z wersji angielskiej – odsyła na stronę główną
- * danego języka.
+ * rozwija się **sama flaga drugiego języka, bez napisu** (decyzja właściciela
+ * 17.09.2026) – nazwa języka zostaje tylko w `aria-label`/`title`. Link
+ * prowadzi na **tę samą stronę** w drugim języku (`switchLocalePath`); strona
+ * bez odpowiednika – np. koszyk z wersji angielskiej – odsyła na stronę
+ * główną danego języka.
  *
- * `variant="menu"` to wersja do menu mobilnego – bez rozwijania, oba języki
- * obok siebie.
+ * `variant="menu"` to wersja do menu mobilnego – bez rozwijania, obie flagi
+ * obok siebie (bieżąca przygaszona).
  */
 export default function LanguageSwitch({
   iconClass = "",
@@ -56,7 +57,7 @@ export default function LanguageSwitch({
 
   if (variant === "menu") {
     return (
-      <div className="flex items-center gap-4 py-3">
+      <div className="flex items-center gap-5 py-3">
         {LOCALES.map((code) => {
           const Flag = FLAG[code];
           const active = code === locale;
@@ -67,12 +68,11 @@ export default function LanguageSwitch({
               hrefLang={code}
               onClick={onNavigate}
               aria-current={active ? "true" : undefined}
-              className={`inline-flex items-center gap-2 text-sm tracking-widest uppercase transition-colors ${
-                active ? "text-terracotta" : "text-cream/75 hover:text-cream"
-              }`}
+              aria-label={names[code]}
+              title={names[code]}
+              className={`inline-flex transition-opacity ${active ? "opacity-50" : "hover:opacity-80"}`}
             >
               <Flag />
-              {names[code]}
             </Link>
           );
         })}
@@ -81,6 +81,8 @@ export default function LanguageSwitch({
   }
 
   const Current = FLAG[locale];
+  // Rozwijamy tylko drugi język – flaga, którą już widać, nie jest opcją
+  const others = LOCALES.filter((code) => code !== locale);
 
   return (
     <div ref={rootRef} className="relative">
@@ -105,11 +107,10 @@ export default function LanguageSwitch({
       {open && (
         <div
           role="menu"
-          className="absolute right-0 top-full mt-1 min-w-[150px] rounded-md bg-espresso border border-white/10 shadow-lg py-1 z-50"
+          className="absolute right-0 top-full mt-1 rounded-md bg-espresso border border-white/10 shadow-lg p-1.5 z-50"
         >
-          {LOCALES.map((code) => {
+          {others.map((code) => {
             const Flag = FLAG[code];
-            const active = code === locale;
             return (
               <Link
                 key={code}
@@ -120,13 +121,11 @@ export default function LanguageSwitch({
                   setOpen(false);
                   onNavigate?.();
                 }}
-                aria-current={active ? "true" : undefined}
-                className={`flex items-center gap-3 px-3 py-2 text-xs tracking-widest uppercase whitespace-nowrap transition-colors ${
-                  active ? "text-terracotta" : "text-cream/80 hover:text-cream hover:bg-white/8"
-                }`}
+                aria-label={names[code]}
+                title={names[code]}
+                className="flex items-center justify-center p-1.5 rounded-sm transition-colors hover:bg-white/8"
               >
                 <Flag />
-                {names[code]}
               </Link>
             );
           })}
