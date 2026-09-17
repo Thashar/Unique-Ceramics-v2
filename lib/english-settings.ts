@@ -18,8 +18,8 @@ export const ENGLISH_SETTING_KEYS: Record<string, string[]> = {
     "home_about_eyebrow", "home_about_title", "home_about_text", "home_about_cta",
     "home_workshops_eyebrow", "home_workshops_title", "home_workshops_text", "home_workshops_cta",
   ],
-  omnie: ["about_story", "about_values_title", "about_values"],
-  warsztaty: ["workshops_intro", "workshops_offers", "workshops_includes", "workshops_faq"],
+  omnie: ["about_hero_eyebrow", "about_hero_title", "about_story", "about_values_title", "about_values"],
+  warsztaty: ["workshops_hero_eyebrow", "workshops_hero_title", "workshops_intro", "workshops_offers", "workshops_includes", "workshops_faq"],
   kontakt: ["contact_hours"],
   urlop: ["vacation_message"],
 };

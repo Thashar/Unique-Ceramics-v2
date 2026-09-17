@@ -92,6 +92,7 @@ export default async function WorkshopsPage({ locale = "pl" }: { locale?: Locale
   const d = t(locale);
   const s = await getSettings([
     "workshops_hero_image", "workshops_hero_position",
+    "workshops_hero_eyebrow", "workshops_hero_title",
     "workshops_hero_overlay_color", "workshops_hero_overlay_opacity",
     "workshops_hero_height",
     "workshops_content_gallery", "workshops_content_image", "workshops_content_position",
@@ -112,6 +113,17 @@ export default async function WorkshopsPage({ locale = "pl" }: { locale?: Locale
   const hasIncludesGallery = includesGallery.length > 0;
   const en = await englishContentFor(locale);
   const intro = localizedSetting(locale, "workshops_intro", s, en);
+  // Teksty nagłówka z panelu (Warsztaty → „Teksty nagłówka”); nietknięte domyślne
+  // po angielsku dostają angielski tekst ze słownika. Pusty napis nad nagłówkiem
+  // znika, pusty nagłówek wraca do domyślnego – strona musi mieć h1
+  const heroEyebrow = localizedSetting(locale, "workshops_hero_eyebrow", s, en, {
+    pl: t("pl").workshops.eyebrow,
+    en: t("en").workshops.eyebrow,
+  }).trim();
+  const heroTitle = localizedSetting(locale, "workshops_hero_title", s, en, {
+    pl: t("pl").workshops.title,
+    en: t("en").workshops.title,
+  }).trim() || d.workshops.title;
 
   const workshops = parseJson<WorkshopOffer>(localizedSetting(locale, "workshops_offers", s, en)).filter((w) => w.active);
   const includes = parseJson<WorkshopInclude>(localizedSetting(locale, "workshops_includes", s, en));
@@ -205,16 +217,16 @@ export default async function WorkshopsPage({ locale = "pl" }: { locale?: Locale
             <div className="absolute inset-0" style={{ backgroundColor: overlayBg }} />
             <div className="absolute inset-0 flex items-end">
               <div className="max-w-7xl mx-auto px-6 lg:px-10 w-full pb-16">
-                <p className="text-xs tracking-[0.3em] uppercase text-terracotta mb-3">{d.workshops.eyebrow}</p>
-                <h1 className="font-serif text-5xl md:text-6xl text-cream">{d.workshops.title}</h1>
+                {heroEyebrow && <p className="text-xs tracking-[0.3em] uppercase text-terracotta mb-3">{heroEyebrow}</p>}
+                <h1 className="font-serif text-5xl md:text-6xl text-cream">{heroTitle}</h1>
               </div>
             </div>
           </div>
         ) : (
           <div className="bg-cream px-6 lg:px-10 py-10">
             <div className="max-w-7xl mx-auto">
-              <p className="text-xs tracking-[0.3em] uppercase text-clay mb-3">{d.workshops.eyebrow}</p>
-              <h1 className="font-serif text-5xl md:text-6xl text-espresso">{d.workshops.title}</h1>
+              {heroEyebrow && <p className="text-xs tracking-[0.3em] uppercase text-clay mb-3">{heroEyebrow}</p>}
+              <h1 className="font-serif text-5xl md:text-6xl text-espresso">{heroTitle}</h1>
             </div>
           </div>
         )}

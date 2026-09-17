@@ -68,6 +68,7 @@ export default async function AboutPage({ locale = "pl" }: { locale?: Locale }) 
   const d = t(locale);
   const s = await getSettings([
     "about_hero_image", "about_hero_position",
+    "about_hero_eyebrow", "about_hero_title",
     "about_hero_overlay_color", "about_hero_overlay_opacity",
     "about_hero_height",
     "about_content_gallery", "about_content_image", "about_content_position",
@@ -84,6 +85,17 @@ export default async function AboutPage({ locale = "pl" }: { locale?: Locale }) 
   const hasGallery = gallery.length > 0;
   const en = await englishContentFor(locale);
   const story = localizedSetting(locale, "about_story", s, en);
+  // Teksty nagłówka z panelu (O mnie → „Teksty nagłówka”); nietknięte domyślne
+  // po angielsku dostają angielski tekst ze słownika. Pusty napis nad nagłówkiem
+  // znika, pusty nagłówek wraca do domyślnego – strona musi mieć h1
+  const heroEyebrow = localizedSetting(locale, "about_hero_eyebrow", s, en, {
+    pl: t("pl").about.eyebrow,
+    en: t("en").about.eyebrow,
+  }).trim();
+  const heroTitle = localizedSetting(locale, "about_hero_title", s, en, {
+    pl: t("pl").about.title,
+    en: t("en").about.title,
+  }).trim() || d.about.title;
   // Sekcja „Jak pracuję” – treść z panelu; pusta lista ukrywa całą sekcję.
   // Po angielsku: klucze `en_about_values*` z panelu, a przy nietkniętych
   // domyślnych – angielskie domyślne z kodu
@@ -119,16 +131,16 @@ export default async function AboutPage({ locale = "pl" }: { locale?: Locale }) 
             <div className="absolute inset-0" style={{ backgroundColor: overlayBg }} />
             <div className="absolute inset-0 flex items-end">
               <div className="max-w-7xl mx-auto px-6 lg:px-10 w-full pb-16">
-                <p className="text-xs tracking-[0.3em] uppercase text-terracotta mb-3">{d.about.eyebrow}</p>
-                <h1 className="font-serif text-5xl md:text-6xl text-cream">{d.about.title}</h1>
+                {heroEyebrow && <p className="text-xs tracking-[0.3em] uppercase text-terracotta mb-3">{heroEyebrow}</p>}
+                <h1 className="font-serif text-5xl md:text-6xl text-cream">{heroTitle}</h1>
               </div>
             </div>
           </div>
         ) : (
           <div className="bg-cream px-6 lg:px-10 py-10">
             <div className="max-w-7xl mx-auto">
-              <p className="text-xs tracking-[0.3em] uppercase text-clay mb-3">{d.about.eyebrow}</p>
-              <h1 className="font-serif text-5xl md:text-6xl text-espresso">{d.about.title}</h1>
+              {heroEyebrow && <p className="text-xs tracking-[0.3em] uppercase text-clay mb-3">{heroEyebrow}</p>}
+              <h1 className="font-serif text-5xl md:text-6xl text-espresso">{heroTitle}</h1>
             </div>
           </div>
         )}

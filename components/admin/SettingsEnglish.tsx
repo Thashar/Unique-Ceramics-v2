@@ -15,6 +15,11 @@ import {
   HOME_WORKSHOPS_DEFAULT_EN,
 } from "@/lib/home-sections";
 import { ABOUT_VALUES_TITLE_DEFAULT_EN } from "@/lib/about-values";
+import { t } from "@/lib/dictionary";
+
+// Domyślne angielskie teksty nagłówków /o-mnie i /warsztaty – ze słownika
+const ABOUT_HEAD_EN = t("en").about;
+const WORKSHOPS_HEAD_EN = t("en").workshops;
 
 // Jodit działa tylko w przeglądarce – ten sam import co w formularzu projektu
 const RichEditor = dynamic(() => import("@/components/admin/RichEditor"), { ssr: false });
@@ -117,6 +122,10 @@ export default function SettingsEnglish({ section, initial, source, save }: Prop
 
       {section === "omnie" && (
         <>
+          <Group title="Teksty nagłówka (EN)">
+            <Field label="Napis nad nagłówkiem" value={values.about_hero_eyebrow} setter={set("about_hero_eyebrow")} placeholder={ABOUT_HEAD_EN.eyebrow} />
+            <Field label="Nagłówek (h1)" value={values.about_hero_title} setter={set("about_hero_title")} placeholder={ABOUT_HEAD_EN.title} />
+          </Group>
           <div>
             <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-3">Treść – historia (EN)</label>
             <RichEditor key={version} value={values.about_story} onChange={set("about_story")} />
@@ -131,6 +140,10 @@ export default function SettingsEnglish({ section, initial, source, save }: Prop
 
       {section === "warsztaty" && (
         <>
+          <Group title="Teksty nagłówka (EN)">
+            <Field label="Napis nad nagłówkiem" value={values.workshops_hero_eyebrow} setter={set("workshops_hero_eyebrow")} placeholder={WORKSHOPS_HEAD_EN.eyebrow} />
+            <Field label="Nagłówek (h1)" value={values.workshops_hero_title} setter={set("workshops_hero_title")} placeholder={WORKSHOPS_HEAD_EN.title} />
+          </Group>
           <div>
             <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-3">Tekst wprowadzający (EN)</label>
             <RichEditor key={version} value={values.workshops_intro} onChange={set("workshops_intro")} contentClass="rich-content-lg" />

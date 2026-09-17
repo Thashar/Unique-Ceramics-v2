@@ -19,6 +19,11 @@ import ImageVariantsPanel from "@/components/admin/ImageVariantsPanel";
 import StorageCleanupPanel from "@/components/admin/StorageCleanupPanel";
 import { parseGallery, galleryHead } from "@/lib/gallery";
 import { ABOUT_VALUES_TITLE_DEFAULT } from "@/lib/about-values";
+import { t } from "@/lib/dictionary";
+
+// Domyślne teksty nagłówków /o-mnie i /warsztaty – ze słownika, jako podpowiedzi pól
+const ABOUT_HEAD_DEFAULT = t("pl").about;
+const WORKSHOPS_HEAD_DEFAULT = t("pl").workshops;
 import {
   MAX_SIMILARITY_SCORE,
   SIMILARITY_RULES,
@@ -82,6 +87,8 @@ interface Props {
     home_workshops_cta: string;
     about_hero_image: string;
     about_hero_position: string;
+    about_hero_eyebrow: string;
+    about_hero_title: string;
     about_hero_overlay_color: string;
     about_hero_overlay_opacity: string;
     about_hero_height: string;
@@ -93,6 +100,8 @@ interface Props {
     about_values: string;
     workshops_hero_image: string;
     workshops_hero_position: string;
+    workshops_hero_eyebrow: string;
+    workshops_hero_title: string;
     workshops_hero_overlay_color: string;
     workshops_hero_overlay_opacity: string;
     workshops_hero_height: string;
@@ -431,6 +440,8 @@ export default function SettingsForm({ section, initial, aiUsage, english = {} }
   // O mnie
   const [aboutImage, setAboutImage] = useState(initial.about_hero_image);
   const [aboutHeroPos, setAboutHeroPos] = useState(initial.about_hero_position);
+  const [aboutHeroEyebrow, setAboutHeroEyebrow] = useState(initial.about_hero_eyebrow);
+  const [aboutHeroTitle, setAboutHeroTitle] = useState(initial.about_hero_title);
   const [aboutOverlayColor, setAboutOverlayColor] = useState(initial.about_hero_overlay_color);
   const [aboutOverlayOpacity, setAboutOverlayOpacity] = useState(initial.about_hero_overlay_opacity);
   const [aboutHeroHeight, setAboutHeroHeight] = useState(initial.about_hero_height);
@@ -448,6 +459,8 @@ export default function SettingsForm({ section, initial, aiUsage, english = {} }
   // Warsztaty
   const [workshopsImage, setWorkshopsImage] = useState(initial.workshops_hero_image);
   const [workshopsHeroPos, setWorkshopsHeroPos] = useState(initial.workshops_hero_position);
+  const [workshopsHeroEyebrow, setWorkshopsHeroEyebrow] = useState(initial.workshops_hero_eyebrow);
+  const [workshopsHeroTitle, setWorkshopsHeroTitle] = useState(initial.workshops_hero_title);
   const [workshopsOverlayColor, setWorkshopsOverlayColor] = useState(initial.workshops_hero_overlay_color);
   const [workshopsOverlayOpacity, setWorkshopsOverlayOpacity] = useState(initial.workshops_hero_overlay_opacity);
   const [workshopsHeroHeight, setWorkshopsHeroHeight] = useState(initial.workshops_hero_height);
@@ -758,7 +771,13 @@ export default function SettingsForm({ section, initial, aiUsage, english = {} }
             <SettingsEnglish
               section="omnie"
               initial={english}
-              source={{ about_story: aboutStory, about_values_title: aboutValuesTitle, about_values: aboutValues }}
+              source={{
+                about_hero_eyebrow: aboutHeroEyebrow,
+                about_hero_title: aboutHeroTitle,
+                about_story: aboutStory,
+                about_values_title: aboutValuesTitle,
+                about_values: aboutValues,
+              }}
               save={save}
             />
           ) : (
@@ -789,6 +808,15 @@ export default function SettingsForm({ section, initial, aiUsage, english = {} }
                   <input type="range" min="30" max="80" step="5" value={aboutHeroHeight} onChange={(e) => setAboutHeroHeight(e.target.value)} className="w-full accent-clay" />
                   <p className="text-[11px] text-charcoal/80">Aktywne gdy zdjęcie jest ustawione. Bez zdjęcia nagłówek ma jasne tło jak w /kontakt.</p>
                 </div>
+              </div>
+
+              {/* Teksty nagłówka – jak na stronie głównej; pusty napis nad nagłówkiem
+                  znika, pusty nagłówek wraca do domyślnego (strona musi mieć h1) */}
+              <div className="border-t border-sand pt-6 space-y-4">
+                <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/80">Teksty nagłówka</h3>
+                <p className="text-xs text-charcoal/80">Wyświetlane na zdjęciu hero albo na jasnym tle, gdy zdjęcia nie ma. Pusty napis nad nagłówkiem go ukrywa; pusty nagłówek wraca do domyślnego.</p>
+                <Field label="Napis nad nagłówkiem" value={aboutHeroEyebrow} setter={setAboutHeroEyebrow} placeholder={ABOUT_HEAD_DEFAULT.eyebrow} />
+                <Field label="Nagłówek (h1)" value={aboutHeroTitle} setter={setAboutHeroTitle} placeholder={ABOUT_HEAD_DEFAULT.title} />
               </div>
 
               <div className="border-t border-sand pt-6 space-y-4">
@@ -825,6 +853,8 @@ export default function SettingsForm({ section, initial, aiUsage, english = {} }
                   { key: "about_hero_overlay_color",   value: aboutOverlayColor },
                   { key: "about_hero_overlay_opacity", value: aboutOverlayOpacity },
                   { key: "about_hero_height",          value: aboutHeroHeight },
+                  { key: "about_hero_eyebrow",         value: aboutHeroEyebrow },
+                  { key: "about_hero_title",           value: aboutHeroTitle },
                   { key: "about_content_gallery",      value: aboutGallery },
                   // Stare klucze trzymamy zgodne z pierwszym zdjęciem galerii (zgodność wstecz)
                   { key: "about_content_image",        value: galleryHead(aboutGallery).url },
@@ -848,7 +878,14 @@ export default function SettingsForm({ section, initial, aiUsage, english = {} }
             <SettingsEnglish
               section="warsztaty"
               initial={english}
-              source={{ workshops_intro: workshopsIntro, workshops_offers: workshopsOffers, workshops_includes: workshopsIncludes, workshops_faq: workshopsFaq }}
+              source={{
+                workshops_hero_eyebrow: workshopsHeroEyebrow,
+                workshops_hero_title: workshopsHeroTitle,
+                workshops_intro: workshopsIntro,
+                workshops_offers: workshopsOffers,
+                workshops_includes: workshopsIncludes,
+                workshops_faq: workshopsFaq,
+              }}
               save={save}
             />
           ) : (
@@ -879,6 +916,15 @@ export default function SettingsForm({ section, initial, aiUsage, english = {} }
                   <input type="range" min="30" max="80" step="5" value={workshopsHeroHeight} onChange={(e) => setWorkshopsHeroHeight(e.target.value)} className="w-full accent-clay" />
                   <p className="text-[11px] text-charcoal/80">Aktywne gdy zdjęcie jest ustawione. Bez zdjęcia nagłówek ma jasne tło jak w /kontakt.</p>
                 </div>
+              </div>
+
+              {/* Teksty nagłówka – jak na stronie głównej; pusty napis nad nagłówkiem
+                  znika, pusty nagłówek wraca do domyślnego (strona musi mieć h1) */}
+              <div className="border-t border-sand pt-6 space-y-4">
+                <h3 className="text-sm font-medium tracking-widest uppercase text-charcoal/80">Teksty nagłówka</h3>
+                <p className="text-xs text-charcoal/80">Wyświetlane na zdjęciu hero albo na jasnym tle, gdy zdjęcia nie ma. Pusty napis nad nagłówkiem go ukrywa; pusty nagłówek wraca do domyślnego. Nagłówek z „Gliwice” pomaga w wyszukiwarce – nie usuwaj nazwy miasta bez potrzeby.</p>
+                <Field label="Napis nad nagłówkiem" value={workshopsHeroEyebrow} setter={setWorkshopsHeroEyebrow} placeholder={WORKSHOPS_HEAD_DEFAULT.eyebrow} />
+                <Field label="Nagłówek (h1)" value={workshopsHeroTitle} setter={setWorkshopsHeroTitle} placeholder={WORKSHOPS_HEAD_DEFAULT.title} />
               </div>
 
               <div className="border-t border-sand pt-6 space-y-4">
@@ -916,6 +962,8 @@ export default function SettingsForm({ section, initial, aiUsage, english = {} }
                   { key: "workshops_hero_overlay_color",   value: workshopsOverlayColor },
                   { key: "workshops_hero_overlay_opacity", value: workshopsOverlayOpacity },
                   { key: "workshops_hero_height",          value: workshopsHeroHeight },
+                  { key: "workshops_hero_eyebrow",         value: workshopsHeroEyebrow },
+                  { key: "workshops_hero_title",           value: workshopsHeroTitle },
                   { key: "workshops_content_gallery",      value: workshopsGallery },
                   // Stare klucze trzymamy zgodne z pierwszym zdjęciem galerii (zgodność wstecz)
                   { key: "workshops_content_image",        value: galleryHead(workshopsGallery).url },

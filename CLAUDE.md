@@ -151,6 +151,7 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` – zwracają wartość z DB l
 | `home_about_image` / `home_about_position` | Zdjęcie + pozycja sekcji „O mnie" na stronie głównej |
 | `home_workshops_image` / `home_workshops_position` | Zdjęcie + pozycja sekcji warsztatów na stronie głównej |
 | `about_hero_image` | Ścieżka do zdjęcia hero na /o-mnie |
+| `about_hero_eyebrow` / `about_hero_title` | **Teksty nagłówka /o-mnie** (napis nad nagłówkiem + `h1`), edytowane w Ustawieniach → O mnie → „Teksty nagłówka” (od 17.09.2026 – wcześniej na sztywno w słowniku). Domyślne wartości to `t("pl").about.eyebrow/title` z `lib/dictionary.ts`; wersja angielska pod `en_about_hero_*` (zakładka EN), a przy nietkniętych domyślnych – angielski tekst ze słownika. **Pusty napis nad nagłówkiem znika, pusty nagłówek wraca do domyślnego** – strona musi mieć `h1` (inaczej niż w hero strony głównej, gdzie puste pole ukrywa element). Tytuł `<title>` strony zostaje w słowniku (`meta.*`) – nie zależy od tych pól |
 | `about_hero_overlay_color` | Kolor maski na hero /o-mnie (hex, default: #2C2825) |
 | `about_hero_overlay_opacity` | Przezroczystość maski /o-mnie (0–100, default: 50) |
 | `about_story` | HTML treści strony o mnie |
@@ -161,6 +162,7 @@ Funkcje: `getSetting(key)`, `getSettings(keys[])` – zwracają wartość z DB l
 | `workshops_content_image` / `workshops_content_position` | **Zgodność wstecz** – jak `about_content_*`, dla /warsztaty |
 | `shop_*` (`shop_subtitle`, `shop_hero_image`, `shop_hero_position`, `shop_hero_overlay_color`, `shop_hero_overlay_opacity`, `shop_hero_height`) | **Nieużywane / przestarzałe** – zakładka „Sklep" w ustawieniach została usunięta, a publiczna strona /sklep nie czyta tych kluczy. Pozostają tylko jako defaulty w `lib/settings.ts`; do ewentualnego usunięcia |
 | `workshops_hero_image` | Ścieżka do zdjęcia hero na /warsztaty |
+| `workshops_hero_eyebrow` / `workshops_hero_title` | **Teksty nagłówka /warsztaty** – działają identycznie jak `about_hero_*` (Ustawienia → Warsztaty → „Teksty nagłówka”, `en_workshops_hero_*` w zakładce EN). Domyślny `h1` „Warsztaty ceramiczne – Gliwice i okolice” pozycjonuje stronę na „warsztaty ceramiczne Gliwice” – panel przypomina, żeby nie wyrzucać nazwy miasta |
 | `workshops_hero_overlay_color` | Kolor maski na hero /warsztaty (hex, default: #2C2825) |
 | `workshops_hero_overlay_opacity` | Przezroczystość maski /warsztaty (0–100, default: 60) |
 | `workshops_intro` | HTML wprowadzenia do warsztatów |

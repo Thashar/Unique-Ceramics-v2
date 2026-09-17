@@ -3,6 +3,7 @@ import { db, withDbRetry } from "@/lib/db";
 import { AI_MODEL_DEFAULT, AI_PRESET_DEFAULT, AI_TEXT_MODEL_DEFAULT } from "@/lib/ai";
 import { DEFAULT_MIN_SCORE, SIMILAR_MIN_SCORE_KEY } from "@/lib/similar-products";
 import { ABOUT_VALUES_DEFAULT_JSON, ABOUT_VALUES_TITLE_DEFAULT } from "@/lib/about-values";
+import { t } from "@/lib/dictionary";
 import {
   HOME_ABOUT_DEFAULT,
   HOME_HERO_DEFAULT,
@@ -214,6 +215,9 @@ const DEFAULTS: Record<string, string> = {
   home_workshops_cta: HOME_WORKSHOPS_DEFAULT.cta,
   about_hero_image: "",
   about_hero_position: "50% 50%",
+  // Nagłówek strony /o-mnie – domyślnie teksty ze słownika (`lib/dictionary.ts`)
+  about_hero_eyebrow: t("pl").about.eyebrow,
+  about_hero_title: t("pl").about.title,
   about_hero_overlay_color: "#2C2825",
   about_hero_overlay_opacity: "50",
   about_hero_height: "50",
@@ -225,6 +229,9 @@ const DEFAULTS: Record<string, string> = {
   about_values: ABOUT_VALUES_DEFAULT_JSON,
   workshops_hero_image: "",
   workshops_hero_position: "50% 50%",
+  // Nagłówek strony /warsztaty – domyślnie teksty ze słownika
+  workshops_hero_eyebrow: t("pl").workshops.eyebrow,
+  workshops_hero_title: t("pl").workshops.title,
   workshops_hero_overlay_color: "#2C2825",
   workshops_hero_overlay_opacity: "60",
   workshops_hero_height: "50",
