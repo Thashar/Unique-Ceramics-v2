@@ -446,24 +446,22 @@ Zasady:
 - To, co jest na ceramice (motyw, wizerunek, napis, znak, detal formy), ma trafić do nazwy i opisu – nazwane wprost, nie ogólnikiem.
 - "name": nazwa produktu w konwencji przykładów (zwykle 2-5 słów), bez cudzysłowów i bez ceny.
 - "slug": nazwa małymi literami, bez polskich znaków, wyrazy połączone myślnikami (tylko a-z, 0-9 i myślnik).
-- "description": opis w konwencji przykładów. Nie wymyślaj wymiarów, pojemności ani ceny.
-- Wymiary: jeśli przykładowe opisy podają wymiary (wysokość, średnica, pojemność itp.), w nowym opisie
-  wstaw w tym samym miejscu i w tej samej formie zapisu dokładnie znacznik ${AI_DIMENSIONS_PLACEHOLDER}
-  zamiast liczb – właściciel wpisze prawdziwe wymiary, a Ty nie masz ich skąd znać. Jeśli przykłady wymiarów nie podają,
-  nie dodawaj znacznika ani wymiarów.
-- "dimensionsFormat": jeśli przykłady podają wymiary, przepisz z nich jeden zapis wymiarów dosłownie
-  (np. "Wysokość: 9 cm, średnica: 8 cm") jako wzór formatu; w przeciwnym razie pusty ciąg.
+- "description": **najwyżej dwa zdania** o samym przedmiocie (co to jest, co go zdobi, kształt, kolor, szkliwo),
+  w tonie i słownictwie przykładów. **Bez wymiarów, pojemności, ceny i bez zdania o wypale** – te części karta
+  składa osobno z pól niżej.
+- "firingNote": jeśli któryś przykład zawiera zdanie o temperaturze wypału i trwałości (np. "Miska wypalana jest
+  w temperaturze 1230°C, dzięki czemu cechuje się wysoką trwałością i odpornością na codzienne użytkowanie."),
+  przepisz je z dopasowaniem nazwy przedmiotu do nowego produktu; w przeciwnym razie pusty ciąg.
+- "dimensions": lista wymiarów, które podają przykłady, w ich kolejności i z ich etykietami dosłownie
+  (np. "średnica górna", "średnica dolna", "wysokość", "średnica", "długość"), każda z przykładową wartością
+  z przykładów (np. "ok. 8 cm") – to tylko podpowiedź dla właściciela, prawdziwe wartości poda on sam.
+  Jeśli przykłady wymiarów nie podają, pusta lista.
+- "capacity": jeśli przykłady podają pojemność, obiekt {"present": true, "example": "ok. 300 ml"}; w przeciwnym
+  razie {"present": false, "example": ""}.
 
 Odpowiedz wyłącznie obiektem JSON, bez komentarzy i bez bloków kodu:
-{"name":"...","slug":"...","description":"...","dimensionsFormat":"..."}`;
+{"name":"...","slug":"...","description":"...","firingNote":"...","dimensions":[{"label":"...","example":"..."}],"capacity":{"present":false,"example":""}}`;
 }
-
-/**
- * Znacznik wymiarów w opisie z `buildProductCardPrompt`. Model nie zna wymiarów
- * ze zdjęcia, więc gdy produkty z kategorii je podają, w opisie zostaje ten
- * znacznik, a agent pyta właściciela i podstawia prawdziwe liczby.
- */
-export const AI_DIMENSIONS_PLACEHOLDER = "{WYMIARY}";
 
 // ── Koszty ────────────────────────────────────────────────────────────────────
 

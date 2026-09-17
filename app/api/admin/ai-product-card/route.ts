@@ -9,7 +9,6 @@ import { recordAiUsage } from "@/lib/ai-usage";
 import {
   AI_AGENT_MODEL_SETTING_KEY,
   AI_CARD_VARIANT,
-  AI_DIMENSIONS_PLACEHOLDER,
   AI_TEXT_LIMITS,
   AI_TEXT_MODEL_SETTING_KEY,
   AI_TEXT_VARIANT,
@@ -34,8 +33,43 @@ const EXAMPLES = 2;
 
 type Draft = { name: string; slug: string; category: string; description: string };
 
-/** Zapis wymiarów (`{WYMIARY}` w opisie) i wzór formatu z przykładów – dopełnia je agent. */
-type Dimensions = { placeholder: boolean; format: string };
+/**
+ * Klocki karty poza opisem właściwym – model odczytuje je ze wzorów, agent
+ * pyta o wartości, a układ składa `buildProductDescription` (`lib/product-description.ts`).
+ */
+type CardExtras = {
+  /** Zdanie o temperaturze wypału z wzorów (puste = wzory go nie mają). */
+  firingNote: string;
+  /** Etykiety wymiarów z wzorów z przykładową wartością (podpowiedź, nie fakt). */
+  dimensions: { label: string; example: string }[];
+  capacity: { present: boolean; example: string };
+  /** Sugerowana cena – mediana cen produktów wzorcowych; 0 = brak. */
+  suggestedPrice: number;
+};
+
+function readExtras(parsed: Record<string, unknown>): Omit<CardExtras, "suggestedPrice"> {
+  const dims = Array.isArray(parsed.dimensions) ? parsed.dimensions : [];
+  const cap = parsed.capacity && typeof parsed.capacity === "object" ? (parsed.capacity as Record<string, unknown>) : {};
+  return {
+    firingNote: cleanText(parsed.firingNote, 300),
+    dimensions: dims
+      .map((d) => {
+        const o = d && typeof d === "object" ? (d as Record<string, unknown>) : {};
+        return { label: cleanText(o.label, 40), example: cleanText(o.example, 40) };
+      })
+      .filter((d) => d.label)
+      .slice(0, 6),
+    capacity: { present: cap.present === true, example: cleanText(cap.example, 40) },
+  };
+}
+
+function median(values: number[]): number {
+  const sorted = values.filter((v) => Number.isFinite(v) && v > 0).sort((a, b) => a - b);
+  if (sorted.length === 0) return 0;
+  const mid = Math.floor(sorted.length / 2);
+  const value = sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+  return Math.round(value);
+}
 
 /**
  * Karta produktu ze zdjęcia dla **agenta dodawania produktów** (ADMIN).
@@ -53,9 +87,10 @@ type Dimensions = { placeholder: boolean; format: string };
  *   bez `draft` krok 1 jest wykonywany od nowa.
  *
  * Model: `ai_agent_model` z Ustawień → AI (puste = model tekstowy). Zwraca
- * `{ name, slug, category, categoryLabel, categoryMatched, description, draft, examples, dimensions, model, costUsd }` –
- * `dimensions.placeholder` = opis zawiera `{WYMIARY}` (produkty z kategorii podają
- * wymiary, model ich nie zna), `dimensions.format` = wzór zapisu z przykładów.
+ * `{ name, slug, category, categoryLabel, categoryMatched, description, draft, examples, extras, model, costUsd }` –
+ * `description` to najwyżej dwa zdania o przedmiocie, a `extras` (`firingNote`,
+ * `dimensions`, `capacity`, `suggestedPrice`) to klocki odczytane ze wzorów,
+ * z których agent po pytaniach składa pełny opis (`buildProductDescription`).
  * Zdjęć i zapisu ta trasa nie dotyka – robi to `ProductAgent` po kolei
  * istniejącymi trasami.
  */
@@ -151,28 +186,33 @@ export async function POST(req: Request) {
   const category = categories.find((c) => c.slug === requestedCategory);
   if (!category) return NextResponse.json({ error: "Nieznana kategoria." }, { status: 400 });
 
-  let examples: { name: string; description: string }[] = [];
+  let examples: { name: string; description: string; price: number }[] = [];
   try {
     const rows = await withDbRetry(() =>
       db.product.findMany({
         where: { category: category.slug, active: true },
-        select: { name: true, description: true },
+        select: { name: true, description: true, price: true },
         take: 40,
         orderBy: { createdAt: "desc" },
       })
     );
     // Dwa losowe z ostatnich czterdziestu – wzór stylu, nie ranking
     examples = rows
-      .map((r) => ({ name: r.name, description: r.description ?? "", key: Math.random() }))
+      .map((r) => ({ name: r.name, description: r.description ?? "", price: r.price, key: Math.random() }))
       .sort((a, b) => a.key - b.key)
       .slice(0, EXAMPLES)
-      .map(({ name, description }) => ({ name, description }));
+      .map(({ name, description, price }) => ({ name, description, price }));
   } catch (e) {
     console.error("[admin/ai-product-card] odczyt przykładów:", e);
   }
 
   let final: Draft = { ...draft, category: category.slug };
-  let dimensions: Dimensions = { placeholder: false, format: "" };
+  let extras: CardExtras = {
+    firingNote: "",
+    dimensions: [],
+    capacity: { present: false, example: "" },
+    suggestedPrice: median(examples.map((e) => e.price)),
+  };
   if (examples.length > 0) {
     try {
       const result = await generateProductText({
@@ -191,10 +231,7 @@ export async function POST(req: Request) {
           category: category.slug,
           description: cleanText(parsed.description, AI_TEXT_LIMITS.description) || draft.description,
         };
-        dimensions = {
-          placeholder: final.description.includes(AI_DIMENSIONS_PLACEHOLDER),
-          format: cleanText(parsed.dimensionsFormat, 120),
-        };
+        extras = { ...extras, ...readExtras(parsed) };
       }
     } catch (e) {
       // Wynik kroku 1 jest już użyteczny – nie przerywamy przez błąd stylizacji
@@ -212,7 +249,7 @@ export async function POST(req: Request) {
     categoryMatched: true,
     draft: { name: final.name, description: final.description },
     examples: examples.map((e) => e.name),
-    dimensions,
+    extras,
     model,
     costUsd,
   });

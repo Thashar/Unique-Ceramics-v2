@@ -7,7 +7,13 @@ import Image from "next/image";
 import { Bot, Loader2, Sparkles, Upload, X } from "lucide-react";
 import { uploadErrorMessage } from "@/lib/upload-error";
 import { enProductKey } from "@/lib/i18n-content";
-import { AI_DIMENSIONS_PLACEHOLDER, type AiVariant } from "@/lib/ai";
+import type { AiVariant } from "@/lib/ai";
+import {
+  DEFAULT_DIMENSION_LABELS,
+  buildProductDescription,
+  normalizeMeasure,
+  type DimensionValue,
+} from "@/lib/product-description";
 
 /**
  * „Agent dodawania produktów” – rozmowa w oknie panelu: jedno zdjęcie na
@@ -27,18 +33,23 @@ import { AI_DIMENSIONS_PLACEHOLDER, type AiVariant } from "@/lib/ai";
  *    produktów z tej kategorii (`ai-product-card` z `category` + `draft`),
  *    zdjęcie **AI+** i zdjęcie **AI** (`/api/admin/ai-image`, presety
  *    przypisane do przycisków w Ustawieniach → AI),
- * 4. podgląd wszystkich zdjęć i pytanie o **kolejne zdjęcia** tego produktu –
- *    każde dodane jest automatycznie przerabiane na wersję **AI**; potem
- *    znowu podgląd. Kolejność w karcie: AI+, AI, AI dodatkowych, a **oryginały
- *    na końcu**,
- * 5. pytania o cenę, liczbę sztuk i kolekcję,
- * 5a. **wymiary**: produkty z kategorii podają wymiary → model zostawia w opisie
- *    znacznik `{WYMIARY}`, a agent pyta o nie i podstawia w tym samym zapisie;
- *    gdy przykłady wymiarów nie mają, agent i tak pyta na końcu (można pominąć)
- *    i dopisuje je jako osobne zdanie,
- * 6. tłumaczenie nazwy i opisu (`/api/admin/ai-translate`) – już z wymiarami,
- * 7. przy cenie i stanie > 0 pytanie, czy włączyć produkt; zapis
+ * 4. podgląd wszystkich zdjęć i pytanie o **kolejne zdjęcie** tego produktu –
+ *    jedno naraz: najpierw wybór trybu (**AI+** albo **AI**), potem plik,
+ *    generowanie i znowu podgląd. Kolejność w karcie: AI+, AI, wersje AI
+ *    dodatkowych, a **oryginały na końcu**,
+ * 5. pytania o cenę (z **sugestią** – mediana cen produktów wzorcowych), liczbę
+ *    sztuk i kolekcję,
+ * 6. **wymiary i pojemność** – etykiety i podpowiedzi wartości pochodzą ze
+ *    wzorów (`extras` z trasy), a opis składa `buildProductDescription`
+ *    w stałym układzie: opis (2 zdania), zdanie o wypale ze wzorów,
+ *    „Wymiary:”, „Pojemność:” – model nie skleja tego sam, bo potrafił wkleić
+ *    wymiary dwa razy i zostawić znacznik w tekście (17.09.2026),
+ * 7. tłumaczenie nazwy i pełnego opisu (`/api/admin/ai-translate`),
+ * 8. przy cenie i stanie > 0 pytanie, czy włączyć produkt; zapis
  *    (`POST /api/admin/products`, zajęty slug → sufiks) i `en_product_{id}`.
+ *
+ * **Każde pytanie da się pominąć** przyciskiem – wtedy pole zostaje puste
+ * (cena 0 = produkt nieaktywny, wymiar bez wartości nie trafia do opisu).
  *
  * Na końcu podsumowanie z kosztem przebiegu w PLN i USD (suma `costUsd`
  * z odpowiedzi tras × kurs z Ustawień → AI). Agent nie pisze, na czym się
@@ -265,7 +276,12 @@ export default function ProductAgent({
       type CardResponse = {
         name: string; slug: string; category: string; categoryLabel: string; categoryMatched: boolean;
         description: string; draft: { name: string; description: string }; costUsd: number;
-        dimensions?: { placeholder: boolean; format: string };
+        extras?: {
+          firingNote: string;
+          dimensions: { label: string; example: string }[];
+          capacity: { present: boolean; example: string };
+          suggestedPrice: number;
+        };
       };
       const first = await postJson<CardResponse>("/api/admin/ai-product-card", { url: originalUrl });
       cost += first.costUsd ?? 0;
@@ -294,11 +310,18 @@ export default function ProductAgent({
         draft: first.draft,
       });
       cost += card.costUsd ?? 0;
-      const hasPlaceholder = card.description.includes(AI_DIMENSIONS_PLACEHOLDER);
+      const extras = card.extras ?? {
+        firingNote: "",
+        dimensions: [],
+        capacity: { present: false, example: "" },
+        suggestedPrice: 0,
+      };
       say(
         `**Kategoria:** ${category.label}\n\n` +
           `**Nazwa:** ${card.name}\n\n` +
-          `**Opis:**\n${card.description.replace(AI_DIMENSIONS_PLACEHOLDER, "[wymiary – zapytam o nie na końcu]")}`
+          `**Opis:**\n${card.description}` +
+          (extras.firingNote ? `\n\n**Zdanie o wypale (ze wzorów):**\n${extras.firingNote}` : "") +
+          "\n\nO wymiary, pojemność i cenę zapytam po zdjęciach."
       );
 
       // Zdjęcia AI+ i AI ze zdjęcia głównego – presety przypisane do przycisków
@@ -322,7 +345,7 @@ export default function ProductAgent({
       const aiPlus = await generate("ai_plus", originalUrl, "(scena)");
       const aiPlain = await generate("ai", originalUrl, "(jednolite tło)");
 
-      // 4. Zestaw zdjęć i kolejne zdjęcia produktu (każde dostaje wersję AI)
+      // 4. Zestaw zdjęć i kolejne zdjęcia produktu – jedno naraz, najpierw tryb
       const extrasOriginal: string[] = [];
       const extrasAi: string[] = [];
       const currentSet = () =>
@@ -333,57 +356,79 @@ export default function ProductAgent({
           currentSet()
         );
         const a = await ask({
-          text: "Czy chcesz dodać kolejne zdjęcia tego produktu? Każde dodane przerobię na wersję AI.",
+          text: "Czy chcesz dodać **kolejne zdjęcie** tego produktu?",
           choices: [
-            { value: "more", label: "Tak, dodaję kolejne zdjęcia" },
+            { value: "more", label: "Tak, dodaję zdjęcie" },
             { value: "next", label: "Nie, zdjęcia są kompletne" },
           ],
           input: "none",
         });
         if (a.text !== "more") break;
-        const files = await ask({ text: "Wybierz kolejne zdjęcia (można kilka naraz).", files: true, input: "none" });
-        const chosen = files.files ?? [];
-        if (chosen.length === 0) continue;
-        for (const [i, f] of chosen.entries()) {
-          setBusyLabel(`Wgrywam ${f.name}…`);
-          let url: string;
-          try {
-            url = await uploadFile(f);
-          } catch (e) {
-            say(`Nie udało się wgrać **${f.name}** (${errorText(e)}).`);
-            continue;
-          }
-          extrasOriginal.push(url);
-          const ai = await generate("ai", url, `dodatkowego zdjęcia ${i + 1}/${chosen.length}`);
-          if (ai) extrasAi.push(ai);
+        const mode = await ask({
+          text: "W jakim trybie przerobić to zdjęcie?",
+          choices: [
+            { value: "ai_plus", label: "AI+ (scena z rekwizytami)" },
+            { value: "ai", label: "AI (jednolite tło)" },
+            { value: "skip", label: "Pomiń – wróć do zestawu" },
+          ],
+          input: "none",
+        });
+        if (mode.text === "skip") continue;
+        const variant: AiVariant = mode.text === "ai_plus" ? "ai_plus" : "ai";
+        const files = await ask({ text: "Wybierz zdjęcie (jedno).", files: true, input: "none" });
+        const f = files.files?.[0];
+        if (!f) continue;
+        setBusyLabel(`Wgrywam ${f.name}…`);
+        let url: string;
+        try {
+          url = await uploadFile(f);
+        } catch (e) {
+          say(`Nie udało się wgrać **${f.name}** (${errorText(e)}).`);
+          continue;
         }
+        extrasOriginal.push(url);
+        const ai = await generate(variant, url, `dodatkowego zdjęcia ${extrasOriginal.length}`);
+        if (ai) extrasAi.push(ai);
       }
       const images = currentSet();
 
-      // 5. Cena, liczba sztuk, kolekcja
-      let price: number | null = null;
-      while (price === null) {
+      // 5. Cena (z sugestią ze wzorów), liczba sztuk, kolekcja – każde do pominięcia
+      let price = 0;
+      for (;;) {
+        const suggested = extras.suggestedPrice > 0 ? extras.suggestedPrice : 0;
         const a = await ask({
-          text: "Jaka ma być **cena** (zł)? Wpisz kwotę w polu na dole, np. 85 albo 120,50.",
+          text:
+            "Jaka ma być **cena** (zł)? Wpisz kwotę w polu na dole" +
+            (suggested ? ` albo przyjmij sugestię – podobne produkty w tej kategorii kosztują ok. **${suggested} zł**.` : "."),
           input: "number",
-          placeholder: "np. 85",
-          choices: [{ value: "0", label: "Ustalę później (0 zł – produkt zostanie nieaktywny)" }],
+          placeholder: suggested ? String(suggested) : "np. 85",
+          choices: [
+            ...(suggested ? [{ value: String(suggested), label: `Użyj sugerowanej: ${suggested} zł` }] : []),
+            { value: "0", label: "Pomiń – ustalę później (produkt zostanie nieaktywny)" },
+          ],
         });
-        price = parseMoney(a.text);
-        if (price === null) say("Nie rozumiem tej kwoty – wpisz samą liczbę, np. 85.");
+        const parsed = parseMoney(a.text);
+        if (parsed === null) { say("Nie rozumiem tej kwoty – wpisz samą liczbę, np. 85."); continue; }
+        price = parsed;
+        break;
       }
       say(price > 0 ? `**Cena:** ${price.toFixed(2).replace(".", ",")} zł` : "**Cena:** do ustalenia (0 zł)");
 
-      let stock: number | null = null;
-      while (stock === null) {
+      let stock = 0;
+      for (;;) {
         const a = await ask({
           text: "Ile **sztuk** jest dostępnych?",
           input: "number",
           placeholder: "np. 3",
-          choices: [1, 2, 3, 5].map((n) => ({ value: String(n), label: `${n} szt.` })),
+          choices: [
+            ...[1, 2, 3, 5].map((n) => ({ value: String(n), label: `${n} szt.` })),
+            { value: "0", label: "Pomiń (0 szt.)" },
+          ],
         });
-        stock = parseCount(a.text);
-        if (stock === null) say("Podaj liczbę sztuk, np. 2.");
+        const parsed = parseCount(a.text);
+        if (parsed === null) { say("Podaj liczbę sztuk, np. 2."); continue; }
+        stock = parsed;
+        break;
       }
       say(`**Stan magazynowy:** ${stock} szt.`);
 
@@ -391,43 +436,65 @@ export default function ProductAgent({
       if (collections.length > 0) {
         const a = await ask({
           text: "Do której **kolekcji** (serii) należy ten produkt?",
-          choices: [{ value: "", label: "Bez kolekcji" }, ...collections.map((c) => ({ value: c.slug, label: c.label }))],
+          choices: [
+            ...collections.map((c) => ({ value: c.slug, label: c.label })),
+            { value: "", label: "Pomiń – bez kolekcji" },
+          ],
           input: "none",
         });
         collection = a.text || null;
         say(collection ? `**Kolekcja:** ${collections.find((c) => c.slug === collection)?.label ?? collection}` : "**Kolekcja:** brak");
       }
 
-      // 5a. Wymiary – model ich nie zna ze zdjęcia. Gdy produkty z kategorii je
-      // podają, w opisie czeka znacznik i wymiary są obowiązkowe (w tym samym
-      // zapisie); inaczej pytamy na końcu i dopisujemy osobnym zdaniem
-      let description = card.description;
-      const format = card.dimensions?.format?.trim();
-      for (;;) {
+      // 6. Wymiary i pojemność – etykiety i podpowiedzi ze wzorów; opis składa
+      // `buildProductDescription` w stałym układzie
+      const labels = extras.dimensions.length > 0
+        ? extras.dimensions
+        : DEFAULT_DIMENSION_LABELS.map((label) => ({ label, example: "" }));
+      const dimensions: DimensionValue[] = [];
+      for (const dim of labels) {
+        const example = dim.example ? normalizeMeasure(dim.example, "cm") : "";
         const a = await ask({
-          text: hasPlaceholder
-            ? `Podaj **wymiary** produktu${format ? ` w zapisie jak w innych produktach tej kategorii, np. „${format}”` : ", np. „Wysokość: 9 cm, średnica: 8 cm”"} – wstawię je w opis.`
-            : "Podaj **wymiary** produktu (np. „Wysokość: 9 cm, średnica: 8 cm”) – dopiszę je do opisu. Możesz też pominąć.",
-          input: "text",
-          placeholder: format || "np. Wysokość: 9 cm, średnica: 8 cm",
-          choices: hasPlaceholder ? undefined : [{ value: "", label: "Pomiń wymiary" }],
+          text:
+            `Podaj **${dim.label}** (cm)` +
+            (example ? ` – podobne produkty mają ${example}.` : "."),
+          input: "number",
+          placeholder: example || "np. 8",
+          choices: [
+            ...(example ? [{ value: example, label: `Użyj: ${example}` }] : []),
+            { value: "", label: "Pomiń ten wymiar" },
+          ],
         });
-        const dims = a.text.trim().replace(/[\u2014\u2015]/g, "–");
-        if (hasPlaceholder) {
-          if (!dims) { say("Ta kategoria podaje wymiary w opisach – wpisz je proszę."); continue; }
-          description = description.replace(AI_DIMENSIONS_PLACEHOLDER, dims);
-          say(`**Wymiary:** ${dims}\n\n**Opis z wymiarami:**\n${description}`);
-        } else if (dims) {
-          const end = (t: string) => (/[.!?]$/.test(t) ? "" : ".");
-          description = `${description.trim()}${end(description.trim())} ${dims}${end(dims)}`;
-          say(`**Wymiary:** ${dims}\n\n**Opis z wymiarami:**\n${description}`);
-        } else {
-          say("**Wymiary:** pominięte.");
-        }
-        break;
+        const value = a.text ? normalizeMeasure(a.text, "cm") : "";
+        dimensions.push({ label: dim.label, value });
+        say(value ? `**${dim.label}:** ${value}` : `**${dim.label}:** pominięte`);
       }
 
-      // 6. Angielska wersja
+      let capacity = "";
+      if (extras.capacity.present) {
+        const example = extras.capacity.example ? normalizeMeasure(extras.capacity.example, "ml") : "";
+        const a = await ask({
+          text: "Podaj **pojemność** (ml)" + (example ? ` – podobne produkty mają ${example}.` : "."),
+          input: "number",
+          placeholder: example || "np. 300",
+          choices: [
+            ...(example ? [{ value: example, label: `Użyj: ${example}` }] : []),
+            { value: "", label: "Pomiń pojemność" },
+          ],
+        });
+        capacity = a.text ? normalizeMeasure(a.text, "ml") : "";
+        say(capacity ? `**Pojemność:** ${capacity}` : "**Pojemność:** pominięta");
+      }
+
+      const description = buildProductDescription({
+        description: card.description,
+        firingNote: extras.firingNote,
+        dimensions,
+        capacity,
+      });
+      say(`**Pełny opis produktu:**\n${description}`);
+
+      // 7. Angielska wersja
       setBusyLabel("Tłumaczę nazwę i opis na angielski…");
       let english: { name: string; description: string } | null = null;
       try {
@@ -441,7 +508,7 @@ export default function ProductAgent({
         say(`Tłumaczenia nie udało się zrobić (${errorText(e)}) – uzupełnisz je w zakładce EN produktu.`);
       }
 
-      // 7. Widoczność i zapis
+      // 8. Widoczność i zapis
       let active = false;
       if (price > 0 && stock > 0) {
         const a = await ask({
