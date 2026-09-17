@@ -20,8 +20,9 @@ const FLAG: Record<Locale, typeof FlagPL> = { pl: FlagPL, en: FlagGB };
  * strona bez odpowiednika – np. koszyk z wersji angielskiej – odsyła na
  * stronę główną danego języka.
  *
- * `variant="menu"` to wersja do menu mobilnego – obie flagi obok siebie,
- * bieżąca przygaszona (na telefonie nie ma najechania).
+ * `variant="menu"` to wersja do menu mobilnego – **tylko flaga języka, na
+ * który można się przełączyć**, z jego nazwą w tym języku („English” na
+ * polskiej stronie, „Polski” na angielskiej); na telefonie nie ma najechania.
  */
 export default function LanguageSwitch({
   iconClass = "",
@@ -40,27 +41,17 @@ export default function LanguageSwitch({
   const other = LOCALES.find((code) => code !== locale) ?? locale;
 
   if (variant === "menu") {
+    const OtherFlag = FLAG[other];
     return (
-      <div className="flex items-center gap-5 py-3">
-        {LOCALES.map((code) => {
-          const Flag = FLAG[code];
-          const active = code === locale;
-          return (
-            <Link
-              key={code}
-              href={switchLocalePath(pathname, code)}
-              hrefLang={code}
-              onClick={onNavigate}
-              aria-current={active ? "true" : undefined}
-              aria-label={names[code]}
-              title={names[code]}
-              className={`inline-flex transition-opacity ${active ? "opacity-50" : "hover:opacity-80"}`}
-            >
-              <Flag />
-            </Link>
-          );
-        })}
-      </div>
+      <Link
+        href={switchLocalePath(pathname, other)}
+        hrefLang={other}
+        onClick={onNavigate}
+        className="inline-flex items-center gap-3 py-3 text-base tracking-widest uppercase text-cream/75 hover:text-cream transition-colors"
+      >
+        <OtherFlag />
+        {names[other]}
+      </Link>
     );
   }
 
