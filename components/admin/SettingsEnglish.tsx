@@ -42,11 +42,19 @@ interface Props {
  */
 export default function SettingsEnglish({ section, initial, source, save }: Props) {
   const keys = ENGLISH_SETTING_KEYS[section] ?? [];
+  // Pole bez angielskiej wersji startuje od **polskiej treści** – edytory
+  // ofert, FAQ i kart pokazują wtedy te same elementy co w zakładce PL, gotowe
+  // do przetłumaczenia (pusty edytor wyglądał, jakby elementów nie było)
   const [values, setValues] = useState<Record<string, string>>(() =>
-    Object.fromEntries(keys.map((k) => [k, initial[k] ?? ""]))
+    Object.fromEntries(keys.map((k) => [k, initial[k]?.trim() ? initial[k] : (source[k] ?? "")]))
   );
+  // Edytory (Jodit, oferty, FAQ, karty) trzymają własny stan od pierwszego
+  // renderu – po tłumaczeniu przez AI trzeba je zamontować od nowa (`key`),
+  // inaczej nowa treść pojawiała się dopiero po zapisie i odświeżeniu strony
+  const [version, setVersion] = useState(0);
   const set = (key: string) => (value: string) => setValues((prev) => ({ ...prev, [key]: value }));
-  const hasContent = keys.some((k) => values[k]?.trim());
+  // Czy w bazie jest już angielska wersja – wtedy tłumaczenie pyta przed nadpisaniem
+  const hasContent = keys.some((k) => initial[k]?.trim());
 
   async function translateAll() {
     // Zwykłe teksty jednym żądaniem, JSON-y osobno – każdy zachowuje strukturę
@@ -60,6 +68,7 @@ export default function SettingsEnglish({ section, initial, source, save }: Prop
       next[k] = await translateJson(source[k]);
     }
     setValues((prev) => ({ ...prev, ...next }));
+    setVersion((v) => v + 1);
   }
 
   const saveAll = () => save(keys.map((k) => ({ key: enSettingKey(k), value: values[k] ?? "" })));
@@ -110,11 +119,11 @@ export default function SettingsEnglish({ section, initial, source, save }: Prop
         <>
           <div>
             <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-3">Treść – historia (EN)</label>
-            <RichEditor value={values.about_story} onChange={set("about_story")} />
+            <RichEditor key={version} value={values.about_story} onChange={set("about_story")} />
           </div>
           <Group title="Sekcja „Jak pracuję” (EN)">
             <Field label="Nagłówek sekcji" value={values.about_values_title} setter={set("about_values_title")} placeholder={ABOUT_VALUES_TITLE_DEFAULT_EN} />
-            <AboutValuesEditor json={values.about_values} onChange={set("about_values")} />
+            <AboutValuesEditor key={version} json={values.about_values} onChange={set("about_values")} />
           </Group>
           <SaveButton onClick={saveAll} label="Zapisz wersję angielską" />
         </>
@@ -124,10 +133,11 @@ export default function SettingsEnglish({ section, initial, source, save }: Prop
         <>
           <div>
             <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-3">Tekst wprowadzający (EN)</label>
-            <RichEditor value={values.workshops_intro} onChange={set("workshops_intro")} contentClass="rich-content-lg" />
+            <RichEditor key={version} value={values.workshops_intro} onChange={set("workshops_intro")} contentClass="rich-content-lg" />
           </div>
           <div className="border-t border-sand pt-6">
             <WorkshopsOffersEditor
+              key={version}
               offersJson={values.workshops_offers}
               includesJson={values.workshops_includes}
               faqJson={values.workshops_faq}
