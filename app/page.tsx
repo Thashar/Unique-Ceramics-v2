@@ -7,16 +7,20 @@ export const revalidate = 3600;
 // pozycjonować stronę. `absolute` omija szablon `%s | Unique Ceramics`
 // z layoutu – inaczej marka stałaby w tytule dwa razy.
 const HOME_TITLE = "Unique Ceramics – Alicja Ulbrich";
+// Opis wyniku w Google (treść od właściciela, 17.09.2026). Ten sam tekst idzie
+// do Open Graph i do schematu `WebPage`, żeby sygnały się nie rozjeżdżały.
+// Google i tak sam wybiera fragment do wyniku – gdy uzna treść strony za
+// trafniejszą, pokaże ją zamiast tego opisu.
+const HOME_DESCRIPTION =
+  "Unikalna ceramika użytkowa z pracowni w okolicach Gliwic – każdy egzemplarz jest niepowtarzalny. Tworzę z pasją i dbałością o każdy detal.";
 
 export const metadata: Metadata = {
   title: { absolute: HOME_TITLE },
-  description:
-    "Alicja Ulbrich – ceramiczka z Kleszczowa k. Gliwic. Unique Ceramics to ręcznie robiona ceramika użytkowa i dekoracyjna: kubki, miski, naczynia, ozdoby. Każdy egzemplarz jest niepowtarzalny.",
+  description: HOME_DESCRIPTION,
   alternates: { canonical: "https://uniqueceramics.pl" },
   openGraph: {
     title: HOME_TITLE,
-    description:
-      "Pracownia ceramiczna Alicji Ulbrich z okolic Gliwic. Ręcznie robiona ceramika użytkowa i dekoracyjna – każdy egzemplarz jest niepowtarzalny.",
+    description: HOME_DESCRIPTION,
     url: "https://uniqueceramics.pl",
     // Zdjęcie hero (z panelu) jako JPEG 1200×630 z kadrem z panelu – nie logo
     // i nie WebP, którego WhatsApp nie renderuje
@@ -25,6 +29,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: HOME_TITLE,
+    description: HOME_DESCRIPTION,
     images: [OG_PAGE_IMAGE.home],
   },
 };
@@ -61,6 +66,7 @@ export default async function Home() {
         "@id": `${SITE_URL}/#webpage`,
         url: SITE_URL,
         name: HOME_TITLE,
+        description: HOME_DESCRIPTION,
         isPartOf: { "@id": `${SITE_URL}/#website` },
         about: { "@id": `${SITE_URL}/#business` },
         inLanguage: "pl-PL",

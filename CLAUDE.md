@@ -631,6 +631,14 @@ W treściach interfejsu, komentarzach i dokumentacji używaj **półpauzy `–`*
   („© rok Unique Ceramics – Alicja Ulbrich”) na każdej stronie. Zmieniając nazwisko albo
   nazwę, popraw wszystkie te miejsca naraz – rozjazd między nimi osłabia powiązanie
   nazwiska z marką.
+- **Opis strony głównej** (`HOME_DESCRIPTION` w `app/page.tsx`) to tekst od właściciela
+  (17.09.2026): „Unikalna ceramika użytkowa z pracowni w okolicach Gliwic – każdy egzemplarz
+  jest niepowtarzalny. Tworzę z pasją i dbałością o każdy detal.” Idzie naraz do meta
+  description, OG, Twittera i `WebPage.description`. **Google i tak sam wybiera fragment**
+  – do 17.09.2026 pokazywał tekst sekcji „O mnie” (`home_about_text` z panelu), bo uznał go
+  za trafniejszy od meta; jeśli nadal to robi, zbliż treść tej sekcji w panelu do opisu.
+  Myślnik w tytule i opisie jest **półpauzą** (sprawdzone na żywym HTML-u) – w wyniku Google
+  wygląda na długi tylko przez krój wyszukiwarki, nie zamieniaj go na dywiz.
 - `googleBot` w layoucie ma **`max-image-preview: large`** (plus `max-snippet`/`max-video-preview`
   bez limitu). To jedyne ustawienie, którym wpływamy na to, czy Google **może** pokazać duże
   zdjęcie przy wyniku; **którego** zdjęcia użyje, i tak decyduje sam.
