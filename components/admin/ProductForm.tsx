@@ -503,8 +503,19 @@ export default function ProductForm({
                   </span>
                 )}
               </div>
-              {/* Obrót w lewo / w prawo – trwały, przez serwer (jak w galeriach ustawień) */}
-              <div className="flex items-center justify-center gap-1 mt-1.5">
+              {/* Jeden rząd: przesuń w lewo, obróć w lewo, obróć w prawo, przesuń w prawo, usuń
+                  (obrót jest trwały, przez serwer – jak w galeriach ustawień) */}
+              <div className="flex items-center justify-between mt-1.5">
+                <button
+                  type="button"
+                  onClick={() => moveImage(i, -1)}
+                  disabled={i === 0}
+                  title="Przesuń w lewo"
+                  aria-label={`Przesuń zdjęcie ${i + 1} w lewo`}
+                  className="p-1 text-charcoal hover:text-espresso disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <MoveLeft size={14} />
+                </button>
                 <button
                   type="button"
                   onClick={() => rotateImage(i, 270)}
@@ -524,18 +535,6 @@ export default function ProductForm({
                   className="p-1 text-charcoal hover:text-espresso disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <RotateCw size={14} className={rotating === i ? "animate-spin" : ""} />
-                </button>
-              </div>
-              <div className="flex items-center justify-between mt-0.5">
-                <button
-                  type="button"
-                  onClick={() => moveImage(i, -1)}
-                  disabled={i === 0}
-                  title="Przesuń w lewo"
-                  aria-label={`Przesuń zdjęcie ${i + 1} w lewo`}
-                  className="p-1 text-charcoal hover:text-espresso disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  <MoveLeft size={14} />
                 </button>
                 <button
                   type="button"
