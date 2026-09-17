@@ -637,12 +637,12 @@ W treściach interfejsu, komentarzach i dokumentacji używaj **półpauzy `–`*
   description, OG, Twittera i `WebPage.description`. **Google i tak sam wybiera fragment**
   – do 17.09.2026 pokazywał tekst sekcji „O mnie” (`home_about_text` z panelu), bo uznał go
   za trafniejszy od meta; jeśli nadal to robi, zbliż treść tej sekcji w panelu do opisu.
-- ⚠️ **W nazwie „Unique Ceramics - Alicja Ulbrich” stoi zwykły dywiz , nie półpauza** –
+- ⚠️ **W nazwie „Unique Ceramics - Alicja Ulbrich” stoi zwykły dywiz `-`, nie półpauza** –
   wyjątek od zasady typografii, decyzja właściciela 17.09.2026: półpauza w kroju wyników Google
   wyglądała jak długi myślnik, a w wyszukiwarce ma go nie być. Dotyczy tytułu strony
-  (layout, , OG/Twitter),  w JSON-LD, praw autorskich w stopce
-  i domyślnego napisu hero (; **na produkcji obowiązuje wartość z bazy** –
-  w panelu też trzeba wpisać dywiz). **Nie zamieniaj go z powrotem na .** W opisach
+  (layout, `HOME_TITLE`, OG/Twitter), `alternateName` w JSON-LD, praw autorskich w stopce
+  i domyślnego napisu hero (`lib/home-sections.ts`; **na produkcji obowiązuje wartość z bazy** –
+  w panelu też trzeba wpisać dywiz). **Nie zamieniaj go z powrotem na `–`.** W opisach
   (meta description) półpauza zostaje.
 - `googleBot` w layoucie ma **`max-image-preview: large`** (plus `max-snippet`/`max-video-preview`
   bez limitu). To jedyne ustawienie, którym wpływamy na to, czy Google **może** pokazać duże
