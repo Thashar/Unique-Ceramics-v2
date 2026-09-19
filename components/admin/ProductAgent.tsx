@@ -17,8 +17,8 @@ import {
 } from "@/lib/product-description";
 
 /**
- * „Agent dodawania produktów” – rozmowa w oknie panelu: jedno zdjęcie na
- * wejściu, kompletny produkt na wyjściu. Agent **na każdym kroku pisze, co
+ * „Agent dodawania produktów” – rozmowa w oknie panelu: jedno albo kilka
+ * zdjęć tego samego przedmiotu na wejściu, kompletny produkt na wyjściu. Agent **na każdym kroku pisze, co
  * zrobił i co wybrał** (istotne rzeczy pogrubione, sekcje od nowej linii),
  * a tam, gdzie nie może zgadnąć, **pyta** – przyciski z gotowymi wyborami
  * stoją **pod wypowiedzią agenta w oknie rozmowy**, a pole na dole służy
@@ -27,14 +27,19 @@ import {
  * Przebieg (`run()`, zwykła funkcja `async`; pytania przez `ask()` – obietnica
  * rozwiązywana przez UI; każdy krok to osobne żądanie, bo generowanie
  * zdjęcia trwa do 60 s i nie zmieściłoby się w jednej funkcji):
- * 1. upload zdjęcia (`/api/admin/upload`) → podgląd w rozmowie,
+ * 1. upload zdjęć (`/api/admin/upload`) – **jedno albo kilka naraz**
+ *    (maks. `MAX_START_FILES`) → podgląd w rozmowie,
  * 2. rozpoznanie i **propozycja kategorii** (`/api/admin/ai-product-card`
- *    bez `category`) → przyciski „Zostaw” / inne kategorie,
+ *    bez `category`) → przyciski „Zostaw” / inne kategorie. Rozpoznanie,
+ *    kategoria, nazwa i opis idą **zawsze z pierwszego zdjęcia** – pozostałe
+ *    to ten sam przedmiot z innej strony, więc modelu o nie nie pytamy,
  * 3. po potwierdzeniu **automatycznie**: karta w stylu i formatowaniu
  *    produktów z tej kategorii (`ai-product-card` z `category` + `draft`)
- *    i **jedno** zdjęcie **AI+** (`/api/admin/ai-image`, preset przypisany
- *    do przycisku w Ustawieniach → AI) – wersja AI ze zdjęcia głównego nie
- *    powstaje sama (decyzja właściciela 17.09.2026: mniej płatnych wywołań),
+ *    i **przerobienie wszystkich wgranych zdjęć**: pierwsze na **AI+**
+ *    (scena), **każde kolejne na AI** (jednolite tło) – `/api/admin/ai-image`
+ *    z presetem przypisanym do przycisku w Ustawieniach → AI. Przy jednym
+ *    zdjęciu wychodzi samo AI+, jak dotąd (decyzja właściciela 17.09.2026:
+ *    wersja AI ze zdjęcia głównego nie powstaje sama),
  * 4. podgląd wszystkich zdjęć i pytanie o **kolejne zdjęcie** – przyciski
  *    „Kolejne AI+” / „Kolejne AI” (z plusem) i pod nimi „Wystarczy, idziemy
  *    dalej”; po wyborze trybu plik, generowanie i znowu podgląd. Kolejność
@@ -98,9 +103,21 @@ type Question = {
 };
 type Answer = { text: string; files?: File[]; label?: string };
 
-const CONFIRM =
-  "Agent wykona kilka płatnych wywołań AI (rozpoznanie i opis, zdjęcie AI+, wersje AI kolejnych zdjęć, tłumaczenie) " +
-  "i po drodze zada Ci parę pytań. Kontynuować?";
+/**
+ * Potwierdzenie przed startem – mówi wprost, ile zdjęć pójdzie do modelu,
+ * bo każde z nich to osobne płatne wywołanie.
+ */
+const confirmText = (count: number) =>
+  "Agent wykona kilka płatnych wywołań AI (rozpoznanie i opis, " +
+  (count > 1 ? `zdjęcia: 1 × AI+ i ${count - 1} × AI` : "zdjęcie AI+") +
+  ", kolejne zdjęcia, tłumaczenie) i po drodze zada Ci parę pytań. Kontynuować?";
+
+/**
+ * Ile zdjęć bierzemy z pierwszego wyboru. Każde to osobne, płatne wywołanie
+ * modelu, a produkt i tak ma limit zdjęć (`PRODUCT_MAX_IMAGES` = 30, licząc
+ * z wersjami AI) – resztę można dołożyć w pytaniu o kolejne zdjęcia.
+ */
+const MAX_START_FILES = 10;
 
 /** Ile razy próbujemy wolnego sluga kolekcji, gdy nazwa się powtarza. */
 const COLLECTION_SLUG_ATTEMPTS = 6;
@@ -326,26 +343,58 @@ export default function ProductAgent({
     abortRef.current = false;
     setOpen(true);
     sayRaw(
-      "Cześć! Wgraj **jedno zdjęcie produktu**.\n\n" +
-        "Rozpoznam, co to jest, i zaproponuję kategorię. Po jej potwierdzeniu napiszę nazwę i opis " +
-        "w stylu Twojego sklepu, wygeneruję zdjęcie AI+, a potem zapytam o kolejne zdjęcia, cenę, " +
-        "liczbę sztuk, kolekcję i wymiary. Na koniec przetłumaczę kartę na angielski i zapiszę produkt."
+      "Cześć! Na początek **wgraj zdjęcia produktu** – jedno albo kilka ujęć tego samego przedmiotu " +
+        `(maks. ${MAX_START_FILES}).\n\n` +
+        "**Zrobię sam:**\n" +
+        "• rozpoznam przedmiot i zaproponuję **kategorię** (z pierwszego zdjęcia)\n" +
+        "• napiszę **nazwę i opis** w stylu Twojego sklepu\n" +
+        "• przerobię zdjęcia: **pierwsze na AI+** (scena), **każde kolejne na AI** (jednolite tło)\n" +
+        "• przetłumaczę kartę na **angielski** i **zapiszę produkt**\n\n" +
+        "**Zapytam Cię o:**\n" +
+        "• potwierdzenie **kategorii** i ewentualne **kolejne zdjęcia**\n" +
+        "• **cenę**, **liczbę sztuk** i **kolekcję**\n" +
+        "• **wymiary** i **pojemność**\n\n" +
+        "Każde pytanie możesz **pominąć** przyciskiem, a okno zamknąć w dowolnej chwili."
     );
     setQuestion({ text: "", files: true, input: "none" });
   }
 
   // ── Przebieg agenta ───────────────────────────────────────────────────────
-  async function run(firstFile: File) {
+  async function run(startFiles: File[]) {
     setRunning(true);
     const cost: Cost = { images: 0, content: 0, translation: 0, agent: 0 };
     const presetName = (id: string) => presets.find((p) => p.id === id)?.name ?? id;
     try {
-      if (!confirm(CONFIRM)) throw new Aborted("anulowane");
+      const files = startFiles.slice(0, MAX_START_FILES);
+      if (!confirm(confirmText(files.length))) throw new Aborted("anulowane");
+      if (startFiles.length > files.length) {
+        sayRaw(`Biorę pierwsze **${MAX_START_FILES}** zdjęć – resztę dołożysz w pytaniu o kolejne zdjęcia.`);
+      }
 
-      // 1. Upload
-      setBusyLabel("Wgrywam zdjęcie…");
-      const originalUrl = await uploadFile(firstFile);
-      say("**Zdjęcie wgrane.**", [originalUrl]);
+      // 1. Upload – wszystkie wgrane zdjęcia naraz. Pierwsze jest **zdjęciem
+      // prowadzącym**: z niego idzie rozpoznanie, kategoria, nazwa i opis,
+      // a także wersja AI+; pozostałe to ten sam przedmiot z innej strony
+      setBusyLabel(files.length > 1 ? `Wgrywam zdjęcie 1 z ${files.length}…` : "Wgrywam zdjęcie…");
+      const originalUrl = await uploadFile(files[0]);
+      const restUrls: string[] = [];
+      for (const [i, file] of files.slice(1).entries()) {
+        setBusyLabel(`Wgrywam zdjęcie ${i + 2} z ${files.length}…`);
+        try {
+          restUrls.push(await uploadFile(file));
+        } catch (e) {
+          // Jedno zdjęcie mniej nie psuje przebiegu – pierwsze i tak już jest
+          say(`Nie udało się wgrać **${file.name}** (${errorText(e)}) – **pomijam je**.`);
+        }
+      }
+      const uploaded = [originalUrl, ...restUrls];
+      say(
+        uploaded.length > 1
+          ? `**Wgrane zdjęcia:** ${uploaded.length}\n\n` +
+              "Nazwę, opis i kategorię ustalę z **pierwszego** zdjęcia. Z niego zrobię wersję **AI+** (scena), " +
+              "a z pozostałych wersje **AI** (jednolite tło) – **od razu, bez pytania**."
+          : "**Zdjęcie wgrane.**",
+        uploaded
+      );
 
       // 2. Rozpoznanie i propozycja kategorii
       setBusyLabel("Rozpoznaję, co jest na zdjęciu, i dobieram kategorię…");
@@ -420,10 +469,16 @@ export default function ProductAgent({
         }
       };
       const aiPlus = await generate("ai_plus", originalUrl, "(scena)");
+      // Pozostałe wgrane zdjęcia idą od razu na **AI** – to ten sam przedmiot
+      // z innej strony, więc scena (AI+) należy się tylko zdjęciu prowadzącemu
+      const extrasOriginal: string[] = [...restUrls];
+      const extrasAi: string[] = [];
+      for (const [i, url] of restUrls.entries()) {
+        const ai = await generate("ai", url, `kolejnego zdjęcia ${i + 1}`);
+        if (ai) extrasAi.push(ai);
+      }
 
       // 4. Zestaw zdjęć i kolejne zdjęcia produktu – jedno naraz: tryb, plik, generowanie
-      const extrasOriginal: string[] = [];
-      const extrasAi: string[] = [];
       const generated = () => [aiPlus, ...extrasAi].filter((u): u is string => Boolean(u));
       const originals = () => [originalUrl, ...extrasOriginal];
       const currentSet = () => [...generated(), ...originals()];
@@ -721,13 +776,14 @@ export default function ProductAgent({
     }
   }
 
-  // Wybór plików: pierwsze zdjęcie uruchamia przebieg, kolejne odpowiadają na pytanie
+  // Wybór plików: pierwszy wybór uruchamia przebieg (z całą listą – pierwsze
+  // zdjęcie prowadzi, reszta dołącza do karty), kolejne odpowiadają na pytanie
   function onFiles(files: File[]) {
     if (files.length === 0) return;
     if (!running) {
-      said(`Zdjęcie: ${files[0].name}`);
+      said(files.length > 1 ? `${files.length} zdj.: ${files.map((f) => f.name).join(", ")}` : `Zdjęcie: ${files[0].name}`);
       setQuestion(null);
-      void run(files[0]);
+      void run(files);
       return;
     }
     answer({ text: `${files.length} zdj.: ${files.map((f) => f.name).join(", ")}`, files });
@@ -866,11 +922,11 @@ export default function ProductAgent({
               {question?.files ? (
                 <label className="flex items-center justify-center gap-2 border-2 border-dashed border-sand hover:border-clay cursor-pointer py-4 text-xs tracking-widest uppercase text-charcoal/80 transition-colors">
                   <Upload size={16} strokeWidth={1.5} />
-                  {running ? "Wybierz zdjęcia" : "Wybierz zdjęcie produktu"}
+                  {running ? "Wybierz zdjęcia" : "Wybierz zdjęcia produktu"}
                   <input
                     type="file"
                     accept="image/*"
-                    multiple={running}
+                    multiple
                     className="hidden"
                     onChange={(e) => { onFiles(Array.from(e.target.files ?? [])); e.target.value = ""; }}
                   />
