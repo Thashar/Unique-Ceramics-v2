@@ -7,6 +7,7 @@ import Image from "next/image";
 import { Bot, Loader2, Plus, Redo2, Sparkles, Upload, X } from "lucide-react";
 import { uploadErrorMessage } from "@/lib/upload-error";
 import { slugifyTitle } from "@/lib/portfolio-slug";
+import { PRODUCT_MAX_IMAGES } from "@/lib/product-validation";
 import { enProductKey } from "@/lib/i18n-content";
 import type { AiVariant } from "@/lib/ai";
 import {
@@ -104,6 +105,31 @@ type Question = {
 type Answer = { text: string; files?: File[]; label?: string };
 
 /**
+ * Oferta, którą agent rozpoznał jako **ten sam wzór** – zwraca ją
+ * `/api/admin/product-duplicates` razem z polami potrzebnymi do zapisania
+ * zmiany, żeby nie trzeba było dociągać produktu drugim żądaniem.
+ */
+type ReturningMatch = {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  images: string[];
+  stock: number;
+  active: boolean;
+  price: number;
+  collection: string | null;
+  featured: boolean;
+  discountPercent: number;
+  discountStartsAt: string | null;
+  discountEndsAt: string | null;
+  category: string;
+  confidence: number;
+  matched: string;
+  differences: string;
+};
+
+/**
  * Potwierdzenie przed startem – mówi wprost, ile zdjęć pójdzie do modelu,
  * bo każde z nich to osobne płatne wywołanie.
  */
@@ -165,9 +191,13 @@ function errorText(e: unknown): string {
 }
 
 /**
- * Wiadomość agenta: `**pogrubienie**`, nowe linie i puste linie jako odstępy.
- * Długie myślniki zamieniane na półpauzy – agent ich nie używa, a model bywa
- * głuchy na tę prośbę.
+ * Wiadomość agenta: `**pogrubienie**`, `[napis](/admin/…)` jako odnośnik, nowe
+ * linie i puste linie jako odstępy. Długie myślniki zamieniane na półpauzy –
+ * agent ich nie używa, a model bywa głuchy na tę prośbę.
+ *
+ * Odnośnik prowadzi **wyłącznie w obrębie panelu** (adres musi zaczynać się od
+ * `/admin/`) – treść wiadomości bywa układana przez model, więc dowolny adres
+ * byłby otwartym przekierowaniem podanym z zewnątrz.
  */
 function MessageText({ text }: { text: string }) {
   const lines = text.replace(/[—―]/g, "–").split("\n");
@@ -176,9 +206,16 @@ function MessageText({ text }: { text: string }) {
       {lines.map((line, i) => {
         if (!line.trim()) return <span key={i} className="block h-2" aria-hidden="true" />;
         const parts: ReactNode[] = [];
-        line.split(/(\*\*[^*]+\*\*)/g).forEach((chunk, j) => {
+        line.split(/(\*\*[^*]+\*\*|\[[^\]]+\]\(\/admin\/[^)\s]*\))/g).forEach((chunk, j) => {
+          const link = /^\[([^\]]+)\]\((\/admin\/[^)\s]*)\)$/.exec(chunk);
           if (chunk.startsWith("**") && chunk.endsWith("**")) {
             parts.push(<strong key={j} className="font-semibold text-espresso">{chunk.slice(2, -2)}</strong>);
+          } else if (link) {
+            parts.push(
+              <a key={j} href={link[2]} target="_blank" rel="noreferrer" className="text-clay underline hover:text-espresso">
+                {link[1]}
+              </a>
+            );
           } else if (chunk) {
             parts.push(chunk);
           }
@@ -269,7 +306,16 @@ export default function ProductAgent({
   const [done, setDone] = useState<{ id: string; cost: Cost } | null>(null);
   // Kolekcje założone w rozmowie dokładamy do listy od razu
   const [collectionList, setCollectionList] = useState<Collection[]>(collections);
+  // Wiadomość pisana w trakcie pytania idzie do modelu – wtedy pole jest zajęte
+  const [chatBusy, setChatBusy] = useState(false);
   const resolverRef = useRef<((a: Answer) => void) | null>(null);
+  // Pytanie, na które czeka agent – po odpowiedzi spóźniona wiadomość z modelu
+  // nie może odpowiedzieć za właściciela na **kolejne** pytanie
+  const questionRef = useRef<Question | null>(null);
+  // Koszt bieżącego przebiegu: rozmowa dolicza się do niego spoza `run()`
+  const costRef = useRef<Cost | null>(null);
+  // Co już wiadomo o produkcie – kontekst dla swobodnych wiadomości
+  const factsRef = useRef<string[]>([]);
   const rejectRef = useRef<((e: Error) => void) | null>(null);
   const logRef = useRef<HTMLDivElement>(null);
   const nextId = useRef(1);
@@ -302,6 +348,7 @@ export default function ProductAgent({
     if (abortRef.current) return Promise.reject(new Aborted("przerwane"));
     setBusyLabel("");
     sayRaw(q.text, undefined, q.choices, q.skipLast);
+    questionRef.current = q;
     setQuestion(q);
     setDraft("");
     return new Promise<Answer>((resolve, reject) => {
@@ -313,6 +360,7 @@ export default function ProductAgent({
     const resolve = resolverRef.current;
     resolverRef.current = null;
     rejectRef.current = null;
+    questionRef.current = null;
     setQuestion(null);
     setDraft("");
     // Przyciski przy odpowiedzianym pytaniu znikają – zostaje sama treść
@@ -322,7 +370,16 @@ export default function ProductAgent({
     resolve?.(a);
   }
 
+  /** Dopisuje fakt do kontekstu rozmowy („Kategoria: Kubki”). */
+  function fact(label: string, value: string) {
+    factsRef.current = [...factsRef.current.filter((f) => !f.startsWith(`${label}:`)), `${label}: ${value}`];
+  }
+
   function reset() {
+    questionRef.current = null;
+    factsRef.current = [];
+    costRef.current = null;
+    setChatBusy(false);
     setMessages([]);
     setQuestion(null);
     setDraft("");
@@ -347,6 +404,7 @@ export default function ProductAgent({
         `(maks. ${MAX_START_FILES}).\n\n` +
         "**Zrobię sam:**\n" +
         "• rozpoznam przedmiot i zaproponuję **kategorię** (z pierwszego zdjęcia)\n" +
+        "• sprawdzę, czy ten wzór nie był już w sklepie i się nie wyprzedał\n" +
         "• napiszę **nazwę i opis** w stylu Twojego sklepu\n" +
         "• przerobię zdjęcia: **pierwsze na AI+** (scena), **każde kolejne na AI** (jednolite tło)\n" +
         "• przetłumaczę kartę na **angielski** i **zapiszę produkt**\n\n" +
@@ -354,16 +412,188 @@ export default function ProductAgent({
         "• potwierdzenie **kategorii** i ewentualne **kolejne zdjęcia**\n" +
         "• **cenę**, **liczbę sztuk** i **kolekcję**\n" +
         "• **wymiary** i **pojemność**\n\n" +
-        "Każde pytanie możesz **pominąć** przyciskiem, a okno zamknąć w dowolnej chwili."
+        "Każde pytanie możesz **pominąć** przyciskiem, a okno zamknąć w dowolnej chwili.\n" +
+        "Na każdym kroku możesz też **napisać do mnie** w polu na dole – zwykłym zdaniem."
     );
     setQuestion({ text: "", files: true, input: "none" });
+  }
+
+  const presetName = (id: string) => presets.find((p) => p.id === id)?.name ?? id;
+
+  /** Jedno zdjęcie z modelu. Niepowodzenie nie przerywa przebiegu. */
+  async function generateAiImage(
+    variant: AiVariant,
+    sourceUrl: string,
+    what: string,
+    cost: Cost
+  ): Promise<string | null> {
+    const label = variant === "ai_plus" ? "AI+" : "AI";
+    setBusyLabel(`Generuję zdjęcie ${label} ${what}…`);
+    try {
+      const gen = await postJson<{ url: string; costUsd?: number; preset?: string }>("/api/admin/ai-image", {
+        url: sourceUrl,
+        variant,
+        presetId: defaultPreset[variant],
+        agent: true,
+      });
+      cost.images += gen.costUsd ?? 0;
+      say(`**Zdjęcie ${label}** ${what} gotowe (styl: ${gen.preset ?? presetName(defaultPreset[variant])}).`, [gen.url]);
+      return gen.url;
+    } catch (e) {
+      say(`Zdjęcia ${label} ${what} nie udało się wygenerować (${errorText(e)}) – **idę dalej bez niego**.`);
+      return null;
+    }
+  }
+
+  /**
+   * **Czy ten wzór już kiedyś był w sklepie?** Pyta tylko wtedy, gdy trasa
+   * wskaże ofertę – a wskazuje wyłącznie taką, **której dziś nie ma w sklepie**
+   * (wyprzedana albo wyłączona). Produkt dostępny w sklepie nie jest nawet
+   * wspominany, więc przebieg leci dalej bez słowa. Błąd sprawdzania, brak
+   * kandydatów i brak klucza AI kończą się tak samo: `null` i nowa oferta.
+   */
+  async function findReturningProduct(
+    url: string,
+    category: Category,
+    draft: { name: string; description: string },
+    cost: Cost
+  ): Promise<ReturningMatch | null> {
+    setBusyLabel("Sprawdzam, czy takiej oferty już nie było…");
+    let match: ReturningMatch | null = null;
+    try {
+      const res = await postJson<{ match: ReturningMatch | null; costUsd?: number }>(
+        "/api/admin/product-duplicates",
+        { url, category: category.slug, draft }
+      );
+      cost.agent += res.costUsd ?? 0;
+      match = res.match;
+    } catch {
+      // Sprawdzanie jest dodatkiem – nie ma prawa zatrzymać dodawania produktu
+      return null;
+    }
+    if (!match) return null;
+
+    const state = match.stock <= 0 ? "Wyprzedana." : "Wyłączona w sklepie.";
+    const answered = await ask({
+      text:
+        `**Znalazłem podobną ofertę:** ${match.name}` +
+        (match.differences ? ` – ${match.differences}` : "") +
+        `\n${state}\n\n[Otwórz ofertę](/admin/produkty/${match.id})\n\n` +
+        "Odświeżyć tamtą ofertę zamiast zakładać nową?",
+      choices: [
+        { value: "refresh", label: "Tak – odśwież tamtą" },
+        { value: "new", label: "Nie – nowa oferta" },
+      ],
+      input: "none",
+    });
+    return answered.text === "refresh" ? match : null;
+  }
+
+  /**
+   * Odświeżenie istniejącej oferty zamiast zakładania nowej: nowe zdjęcia idą
+   * na początek karty (AI+ jako główne), **stare zostają**, a właściciel podaje
+   * tylko liczbę sztuk. Ceny, opisu, kategorii i kolekcji nie ruszamy – to ta
+   * sama oferta, więc karta i tłumaczenie w ogóle nie powstają (i nie kosztują).
+   */
+  async function refreshExisting(
+    match: ReturningMatch,
+    originalUrl: string,
+    restUrls: string[],
+    cost: Cost
+  ) {
+    fact("Tryb", `odświeżanie oferty „${match.name}”`);
+    say(
+      `**Odświeżam ofertę:** ${match.name}.\n\n` +
+        "Nowej oferty nie zakładam – cena, opis, kategoria i kolekcja zostają jak były. " +
+        "Przerobię zdjęcia i zapytam tylko o liczbę sztuk."
+    );
+
+    const aiPlus = await generateAiImage("ai_plus", originalUrl, "(scena)", cost);
+    const freshAi: string[] = [];
+    for (const [i, url] of restUrls.entries()) {
+      const ai = await generateAiImage("ai", url, `kolejnego zdjęcia ${i + 1}`, cost);
+      if (ai) freshAi.push(ai);
+    }
+    const generated = [aiPlus, ...freshAi].filter((u): u is string => Boolean(u));
+    const uploaded = [originalUrl, ...restUrls];
+    let incoming = [...generated, ...uploaded];
+    if (generated.length > 0) {
+      const a = await ask({
+        text:
+          `Nowe zdjęcia: **${generated.length}** z AI i **${uploaded.length}** wrzucone. ` +
+          "Dołożyć do oferty same zdjęcia z AI?",
+        choices: [
+          { value: "yes", label: "Tak, tylko wygenerowane" },
+          { value: "no", label: "Nie, dołóż wszystkie" },
+        ],
+        input: "none",
+      });
+      if (a.text === "yes") incoming = generated;
+    }
+
+    let stock = 1;
+    for (;;) {
+      const a = await ask({
+        text: `**Ile sztuk** wraca do sklepu? (teraz w ofercie jest ${match.stock})`,
+        input: "number",
+        placeholder: "np. 1",
+        choices: [
+          ...[1, 2, 3, 4].map((n) => ({ value: String(n), label: `${n} szt.` })),
+          { value: String(match.stock), label: "Pomiń – zostaw jak jest", kind: "skip" as const },
+        ],
+        skipLast: true,
+      });
+      const parsed = parseCount(a.text);
+      if (parsed === null) {
+        say("Podaj liczbę sztuk, np. 1.");
+        continue;
+      }
+      stock = parsed;
+      break;
+    }
+
+    // Nowe zdjęcia na początek (pierwsze jest główne), stare zostają za nimi
+    const images = [...incoming, ...match.images].slice(0, PRODUCT_MAX_IMAGES);
+    setBusyLabel("Zapisuję zmiany w ofercie…");
+    const res = await fetch(`/api/admin/products/${match.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: match.name,
+        slug: match.slug,
+        description: match.description,
+        price: match.price,
+        category: match.category,
+        collection: match.collection,
+        stock,
+        featured: match.featured,
+        // Wyprzedana oferta z ceną i sztukami wraca do sklepu sama
+        active: match.price > 0 && stock > 0 ? true : match.active,
+        discountPercent: match.discountPercent,
+        discountStartsAt: match.discountStartsAt,
+        discountEndsAt: match.discountEndsAt,
+        images,
+      }),
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok) throw new Error(data?.error ?? `Błąd ${res.status}`);
+
+    say(
+      `**Gotowe.** Odświeżyłem ofertę **${match.name}**.\n\n` +
+        `**Zdjęcia:** ${images.length} (nowe na początku)\n` +
+        `**Sztuk:** ${stock}\n` +
+        `**Status:** ${match.price > 0 && stock > 0 ? "aktywna, widoczna w sklepie" : "nieaktywna"}`
+    );
+    setBusyLabel("");
+    setDone({ id: match.id, cost });
+    router.refresh();
   }
 
   // ── Przebieg agenta ───────────────────────────────────────────────────────
   async function run(startFiles: File[]) {
     setRunning(true);
     const cost: Cost = { images: 0, content: 0, translation: 0, agent: 0 };
-    const presetName = (id: string) => presets.find((p) => p.id === id)?.name ?? id;
+    costRef.current = cost;
     try {
       const files = startFiles.slice(0, MAX_START_FILES);
       if (!confirm(confirmText(files.length))) throw new Aborted("anulowane");
@@ -426,8 +656,20 @@ export default function ProductAgent({
         input: "none",
       });
       const category = categories.find((c) => c.slug === cat.text) ?? categories.find((c) => c.slug === first.category)!;
+      fact("Kategoria", category.label);
 
-      // 3. Karta w stylu kategorii (automatycznie po potwierdzeniu)
+      // 3. Wracający wzór: czy tę rzecz już kiedyś wystawialiśmy?
+      // Porównujemy **tylko z ofertami spoza sklepu** (wyprzedane i wyłączone) –
+      // produkt dostępny w sklepie nie jest nawet wspominany (decyzja
+      // właściciela 19.09.2026). Sprawdzanie nigdy nie zatrzymuje przebiegu:
+      // błąd, brak kandydatów i brak klucza AI po prostu lecą dalej
+      const refresh = await findReturningProduct(originalUrl, category, first.draft, cost);
+      if (refresh) {
+        await refreshExisting(refresh, originalUrl, restUrls, cost);
+        return;
+      }
+
+      // 4. Karta w stylu kategorii (automatycznie po potwierdzeniu)
       setBusyLabel(`Piszę nazwę i opis w stylu kategorii „${category.label}”…`);
       const card = await postJson<CardResponse>("/api/admin/ai-product-card", {
         url: originalUrl,
@@ -441,6 +683,7 @@ export default function ProductAgent({
         capacity: { present: false, example: "" },
         suggestedPrice: 0,
       };
+      fact("Nazwa", card.name);
       say(
         `**Kategoria:** ${category.label}\n\n` +
           `**Nazwa:** ${card.name}\n\n` +
@@ -450,24 +693,8 @@ export default function ProductAgent({
       );
 
       // Zdjęcie AI+ ze zdjęcia głównego – preset przypisany do przycisku
-      const generate = async (variant: AiVariant, sourceUrl: string, what: string): Promise<string | null> => {
-        const label = variant === "ai_plus" ? "AI+" : "AI";
-        setBusyLabel(`Generuję zdjęcie ${label} ${what}…`);
-        try {
-          const gen = await postJson<{ url: string; costUsd?: number; preset?: string }>("/api/admin/ai-image", {
-            url: sourceUrl,
-            variant,
-            presetId: defaultPreset[variant],
-            agent: true,
-          });
-          cost.images += gen.costUsd ?? 0;
-          say(`**Zdjęcie ${label}** ${what} gotowe (styl: ${gen.preset ?? presetName(defaultPreset[variant])}).`, [gen.url]);
-          return gen.url;
-        } catch (e) {
-          say(`Zdjęcia ${label} ${what} nie udało się wygenerować (${errorText(e)}) – **idę dalej bez niego**.`);
-          return null;
-        }
-      };
+      const generate = (variant: AiVariant, sourceUrl: string, what: string) =>
+        generateAiImage(variant, sourceUrl, what, cost);
       const aiPlus = await generate("ai_plus", originalUrl, "(scena)");
       // Pozostałe wgrane zdjęcia idą od razu na **AI** – to ten sam przedmiot
       // z innej strony, więc scena (AI+) należy się tylko zdjęciu prowadzącemu
@@ -478,7 +705,7 @@ export default function ProductAgent({
         if (ai) extrasAi.push(ai);
       }
 
-      // 4. Zestaw zdjęć i kolejne zdjęcia produktu – jedno naraz: tryb, plik, generowanie
+      // 5. Zestaw zdjęć i kolejne zdjęcia produktu – jedno naraz: tryb, plik, generowanie
       const generated = () => [aiPlus, ...extrasAi].filter((u): u is string => Boolean(u));
       const originals = () => [originalUrl, ...extrasOriginal];
       const currentSet = () => [...generated(), ...originals()];
@@ -520,7 +747,7 @@ export default function ProductAgent({
       }
       let images = currentSet();
 
-      // 5. Cena (z sugestią ze wzorów), liczba sztuk, kolekcja – każde do pominięcia
+      // 6. Cena (z sugestią ze wzorów), liczba sztuk, kolekcja – każde do pominięcia
       let price = 0;
       for (;;) {
         const suggested = extras.suggestedPrice > 0 ? extras.suggestedPrice : 0;
@@ -540,6 +767,7 @@ export default function ProductAgent({
         price = parsed;
         break;
       }
+      fact("Cena", price > 0 ? `${price} zł` : "jeszcze nieustalona");
       say(price > 0 ? `**Cena:** ${price.toFixed(2).replace(".", ",")} zł` : "**Cena:** do ustalenia (0 zł)");
 
       let stock = 0;
@@ -559,6 +787,7 @@ export default function ProductAgent({
         stock = parsed;
         break;
       }
+      fact("Sztuk", String(stock));
       say(`**Stan magazynowy:** ${stock} szt.`);
 
       let collection: string | null = null;
@@ -612,7 +841,7 @@ export default function ProductAgent({
       }
       say(collection ? `**Kolekcja:** ${known.find((c) => c.slug === collection)?.label ?? collection}` : "**Kolekcja:** brak");
 
-      // 6. Wymiary i pojemność – etykiety i podpowiedzi ze wzorów; opis składa
+      // 7. Wymiary i pojemność – etykiety i podpowiedzi ze wzorów; opis składa
       // `buildProductDescription` w stałym układzie
       const labels = extras.dimensions.length > 0
         ? extras.dimensions
@@ -660,7 +889,7 @@ export default function ProductAgent({
       });
       say(`**Pełny opis produktu:**\n${description}`);
 
-      // 7. Angielska wersja
+      // 8. Angielska wersja
       setBusyLabel("Tłumaczę nazwę i opis na angielski…");
       let english: { name: string; description: string } | null = null;
       try {
@@ -675,7 +904,7 @@ export default function ProductAgent({
         say(`Tłumaczenia nie udało się zrobić (${errorText(e)}) – uzupełnisz je w zakładce EN produktu.`);
       }
 
-      // 8. Wrzucone oryginały: zostawić w karcie, czy zostawić same zdjęcia z AI?
+      // 9. Wrzucone oryginały: zostawić w karcie, czy zostawić same zdjęcia z AI?
       // Pytamy tylko wtedy, gdy jest czym je zastąpić – bez zdjęcia z AI karta
       // zostałaby pusta. Pliki w Storage zostają (sprząta je Ustawienia → Zdjęcia)
       if (generated().length > 0) {
@@ -695,7 +924,7 @@ export default function ProductAgent({
         }
       }
 
-      // 9. Widoczność i zapis
+      // 10. Widoczność i zapis
       let active = false;
       if (price > 0 && stock > 0) {
         const a = await ask({
@@ -789,17 +1018,75 @@ export default function ProductAgent({
     answer({ text: `${files.length} zdj.: ${files.map((f) => f.name).join(", ")}`, files });
   }
 
-  function submitText() {
-    if (!question || question.files) return;
+  /**
+   * Wysłanie treści z pola na dole. Sama liczba przy pytaniu o liczbę idzie
+   * wprost jako odpowiedź (bez wywołania modelu); **wszystko inne jest
+   * swobodną wiadomością do agenta** – model ją interpretuje i albo wybiera
+   * jeden z pokazanych przycisków, albo podaje wartość do pola, albo po prostu
+   * odpowiada. Decyzję, czy wybór jest dopuszczalny, podejmuje ten kod, a nie
+   * model – dzięki temu nietrafiona odpowiedź kończy się zdaniem w rozmowie,
+   * a nie ruchem w przebiegu.
+   */
+  async function submitText() {
+    if (!question || chatBusy) return;
     const text = draft.trim();
     if (!text) return;
-    answer({ text });
+    if (question.input === "number" && /^[\d\s.,]+$/.test(text)) {
+      answer({ text });
+      return;
+    }
+
+    const asked = question;
+    said(text);
+    setDraft("");
+    setChatBusy(true);
+    setBusyLabel("Czytam Twoją wiadomość…");
+    try {
+      const res = await postJson<{ reply?: string; choice?: string; value?: string; costUsd?: number }>(
+        "/api/admin/ai-agent-chat",
+        {
+          message: text,
+          question: asked.text,
+          options: (asked.choices ?? []).map((c) => ({ value: c.value, label: c.label })),
+          input: asked.input ?? "none",
+          state: factsRef.current.join("\n"),
+        }
+      );
+      if (costRef.current) costRef.current.agent += res.costUsd ?? 0;
+      setBusyLabel("");
+      // Właściciel mógł w międzyczasie kliknąć przycisk – wtedy zostaje sama odpowiedź
+      if (questionRef.current !== asked) {
+        if (res.reply) sayRaw(res.reply);
+        return;
+      }
+      const picked = res.choice ? asked.choices?.find((c) => c.value === res.choice) : undefined;
+      if (picked) {
+        if (res.reply) sayRaw(res.reply);
+        // Odpowiedź właściciela jest już w rozmowie – nie powtarzamy jej etykietą
+        answer({ text: picked.value, label: "" });
+        return;
+      }
+      if (res.value && asked.input && asked.input !== "none") {
+        if (res.reply) sayRaw(res.reply);
+        answer({ text: res.value, label: "" });
+        return;
+      }
+      sayRaw(res.reply || "Nie jestem pewien, co z tym zrobić – możesz doprecyzować?");
+    } catch (e) {
+      setBusyLabel("");
+      sayRaw(`Nie udało się odpowiedzieć (${errorText(e)}). Możesz wybrać przyciskiem albo napisać jeszcze raz.`);
+    } finally {
+      setChatBusy(false);
+    }
   }
 
-  const textInputActive = Boolean(question && !question.files && question.input !== "none");
+  // Pisać można **przy każdym pytaniu**: także przy tych z samymi przyciskami
+  // i przy wyborze zdjęcia – treść spoza oczekiwanej odpowiedzi trafia do
+  // agenta jako swobodna wiadomość
+  const textInputActive = Boolean(question && !chatBusy);
   // Przyciski w rozmowie działają tylko przy bieżącym (jeszcze nieodpowiedzianym)
   // pytaniu; przy pytaniu o plik „Pomiń” w rozmowie odpowiada bez plików
-  const choicesActive = Boolean(question?.choices);
+  const choicesActive = Boolean(question?.choices) && !chatBusy;
 
   return (
     <>
@@ -917,9 +1204,11 @@ export default function ProductAgent({
               )}
             </div>
 
-            {/* Pole odpowiedzi – tekst albo pliki; przyciski wyboru są w rozmowie */}
-            <div className="border-t border-sand px-5 py-4 shrink-0">
-              {question?.files ? (
+            {/* Pole odpowiedzi: wybór zdjęć (gdy agent o nie prosi) i **zawsze**
+                pole tekstowe – na każdym pytaniu można napisać własnymi słowami.
+                Przyciski wyboru stoją w rozmowie */}
+            <div className="border-t border-sand px-5 py-4 shrink-0 space-y-2">
+              {question?.files && (
                 <label className="flex items-center justify-center gap-2 border-2 border-dashed border-sand hover:border-clay cursor-pointer py-4 text-xs tracking-widest uppercase text-charcoal/80 transition-colors">
                   <Upload size={16} strokeWidth={1.5} />
                   {running ? "Wybierz zdjęcia" : "Wybierz zdjęcia produktu"}
@@ -931,34 +1220,33 @@ export default function ProductAgent({
                     onChange={(e) => { onFiles(Array.from(e.target.files ?? [])); e.target.value = ""; }}
                   />
                 </label>
-              ) : (
-                <form onSubmit={(e) => { e.preventDefault(); submitText(); }} className="flex gap-2">
-                  <input
-                    type="text"
-                    inputMode={question?.input === "number" ? "decimal" : undefined}
-                    value={draft}
-                    onChange={(e) => setDraft(e.target.value)}
-                    disabled={!textInputActive}
-                    placeholder={
-                      textInputActive
-                        ? (question?.placeholder ?? "Odpowiedz…")
-                        : question
-                        ? "Wybierz odpowiedź przyciskiem w rozmowie"
-                        : running
-                        ? "Agent pracuje…"
-                        : ""
-                    }
-                    className="flex-1 min-w-0 bg-cream border border-sand focus:border-clay outline-none px-4 py-2.5 text-espresso text-sm disabled:opacity-60"
-                  />
-                  <button
-                    type="submit"
-                    disabled={!textInputActive || !draft.trim()}
-                    className="bg-clay hover:bg-espresso text-cream text-xs tracking-widest uppercase px-4 py-2.5 transition-colors disabled:bg-sand disabled:text-charcoal/40"
-                  >
-                    Wyślij
-                  </button>
-                </form>
               )}
+              <form onSubmit={(e) => { e.preventDefault(); submitText(); }} className="flex gap-2">
+                <input
+                  type="text"
+                  inputMode={question?.input === "number" ? "decimal" : undefined}
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  disabled={!textInputActive}
+                  placeholder={
+                    chatBusy
+                      ? "Czytam…"
+                      : textInputActive
+                      ? (question?.placeholder ?? "Odpowiedz albo napisz, co zrobić…")
+                      : running
+                      ? "Agent pracuje…"
+                      : ""
+                  }
+                  className="flex-1 min-w-0 bg-cream border border-sand focus:border-clay outline-none px-4 py-2.5 text-espresso text-sm disabled:opacity-60"
+                />
+                <button
+                  type="submit"
+                  disabled={!textInputActive || !draft.trim()}
+                  className="bg-clay hover:bg-espresso text-cream text-xs tracking-widest uppercase px-4 py-2.5 transition-colors disabled:bg-sand disabled:text-charcoal/40"
+                >
+                  Wyślij
+                </button>
+              </form>
             </div>
           </div>
         </div>,

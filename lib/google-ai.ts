@@ -237,14 +237,18 @@ function readGenerateContentText(body: unknown): string {
  * `models/{model}:generateContent`, więc przy odmowie 400/404 powtarzamy
  * żądanie tamtą drogą, zamiast zwracać adminowi błąd.
  */
-async function callGemini(model: string, prompt: string, image?: GeneratedImage) {
+async function callGemini(model: string, prompt: string, images: GeneratedImage[] = []) {
   const apiKey = process.env.GOOGLE_AI_API_KEY?.trim();
   if (!apiKey) throw new Error("Brak klucza GOOGLE_AI_API_KEY.");
 
-  // Zdjęcie jest opcjonalne – układanie promptu ze słownego opisu idzie bez niego
-  const imagePart = image
-    ? { type: "image", mime_type: image.mimeType, data: image.data.toString("base64") }
-    : null;
+  // Zdjęć może nie być (układanie promptu ze słownego opisu) albo może być
+  // kilka (porównanie produktu z ofertami ze sklepu) – idą w kolejności,
+  // w której prompt się do nich odwołuje
+  const imageParts = images.map((image) => ({
+    type: "image",
+    mime_type: image.mimeType,
+    data: image.data.toString("base64"),
+  }));
 
   const first = await postJson(
     "/interactions",
@@ -252,7 +256,7 @@ async function callGemini(model: string, prompt: string, image?: GeneratedImage)
       model,
       input: [
         { type: "text", text: prompt },
-        ...(imagePart ? [imagePart] : []),
+        ...imageParts,
       ],
     },
     apiKey
@@ -272,9 +276,9 @@ async function callGemini(model: string, prompt: string, image?: GeneratedImage)
           role: "user",
           parts: [
             { text: prompt },
-            ...(image
-              ? [{ inline_data: { mime_type: image.mimeType, data: image.data.toString("base64") } }]
-              : []),
+            ...images.map((image) => ({
+              inline_data: { mime_type: image.mimeType, data: image.data.toString("base64") },
+            })),
           ],
         },
       ],
@@ -301,7 +305,7 @@ export async function generateProductImage(opts: {
   /** Ile tokenów przyjąć za obraz, gdy API nie zwróci liczników. */
   fallbackOutputTokens: number;
 }): Promise<GenerationResult> {
-  const { body, viaInteractions } = await callGemini(opts.model, opts.prompt, opts.image);
+  const { body, viaInteractions } = await callGemini(opts.model, opts.prompt, [opts.image]);
   const image = viaInteractions ? readInteractionsImage(body) : readGenerateContentImage(body);
   if (!image) throw new Error("Model nie zwrócił obrazu.");
   return { image, usage: readUsage(body, opts.fallbackOutputTokens) };
@@ -314,9 +318,12 @@ export async function generateProductImage(opts: {
 export async function generateProductText(opts: {
   model: string;
   prompt: string;
+  /** Jedno zdjęcie (opis produktu) albo kilka (porównanie z ofertami ze sklepu). */
   image?: GeneratedImage;
+  images?: GeneratedImage[];
 }): Promise<{ text: string; usage: AiUsage }> {
-  const { body, viaInteractions } = await callGemini(opts.model, opts.prompt, opts.image);
+  const images = opts.images ?? (opts.image ? [opts.image] : []);
+  const { body, viaInteractions } = await callGemini(opts.model, opts.prompt, images);
   const text = viaInteractions ? readInteractionsText(body) : readGenerateContentText(body);
   if (!text) throw new Error("Model nie zwrócił tekstu.");
   // Przy tekście nie ma sensownego szacunku tokenów – 0 oznacza „koszt nieznany”
