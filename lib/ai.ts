@@ -550,3 +550,73 @@ export function aiCostPerImageUsd(model: string): number {
   if (!price) return 0;
   return aiCostUsd(model, 0, price.tokensPerImage);
 }
+
+// ── Agent dodawania produktów: rozmowa i wracające wzory ──────────────────────
+
+/** Wariant rejestru: sprawdzenie, czy ten wzór już kiedyś był w sklepie. */
+export const AI_DUPLICATE_VARIANT = "duplicate_check";
+
+/** Wariant rejestru: swobodna wiadomość napisana do agenta w rozmowie. */
+export const AI_CHAT_VARIANT = "chat";
+
+/** Limity swobodnej wiadomości do agenta (reszta i tak jest walidowana serwerowo). */
+export const AI_CHAT_LIMITS = { message: 1000, reply: 600, value: 200 };
+
+export type AgentChatContext = {
+  /** Pytanie, przy którym stoi właściciel (puste = agent nic nie pyta). */
+  question: string;
+  /** Gotowe przyciski pod pytaniem – model może wybrać dokładnie jeden. */
+  options: { value: string; label: string }[];
+  /** Czego oczekuje pole na dole: liczby, tekstu albo niczego. */
+  input: "text" | "number" | "none";
+  /** Krótkie podsumowanie tego, co już wiadomo o produkcie. */
+  state: string;
+};
+
+/**
+ * Swobodna wiadomość do agenta w trakcie przebiegu. Model **nie steruje
+ * przebiegiem** – może tylko odpowiedzieć zdaniem, wskazać jeden z istniejących
+ * przycisków albo podać wartość do bieżącego pola. Resztę (czy wartość pasuje,
+ * czy przycisk istnieje) rozstrzyga kod, więc nietrafiona odpowiedź modelu
+ * kończy się co najwyżej zdaniem w rozmowie, a nie ruchem w przebiegu.
+ */
+export function buildAgentChatPrompt(ctx: AgentChatContext, message: string): string {
+  const options = ctx.options.length
+    ? ctx.options.map((o) => `- "${o.value}" → ${o.label}`).join("\n")
+    : "- (brak przycisków)";
+  return `Jesteś asystentem, który prowadzi właściciela sklepu z ręcznie robioną ceramiką
+(Unique Ceramics) przez dodawanie nowego produktu. Właściciel napisał do Ciebie w trakcie pracy.
+
+Cel całego zadania: zebrać dane nowego produktu (nazwa, opis, kategoria, zdjęcia, cena,
+liczba sztuk, kolekcja, wymiary, pojemność) i zapisać go w sklepie. Prowadzisz rozmowę po polsku,
+krótko i rzeczowo, bez marketingowego tonu. Jako myślnika używaj wyłącznie półpauzy "–".
+
+Co już wiadomo:
+${ctx.state || "(nic jeszcze)"}
+
+Pytanie, przy którym stoimy:
+${ctx.question || "(w tej chwili o nic nie pytam)"}
+
+Przyciski dostępne pod tym pytaniem (wartość → opis):
+${options}
+
+Pole na dole przyjmuje: ${ctx.input === "number" ? "liczbę" : ctx.input === "text" ? "tekst" : "nic (same przyciski)"}.
+
+Wiadomość od właściciela:
+"""
+${message.slice(0, AI_CHAT_LIMITS.message)}
+"""
+
+Zdecyduj, co to znaczy:
+1. Jeśli to odpowiedź na bieżące pytanie i pasuje do któregoś przycisku – zwróć jego wartość w "choice".
+2. Jeśli to odpowiedź na bieżące pytanie, ale wartość trzeba wpisać (cena, liczba sztuk, wymiar,
+   nazwa) – zwróć ją w "value" w postaci gotowej do wpisania w pole (sama liczba albo sam tekst,
+   bez jednostek i komentarza).
+3. Jeśli to pytanie, wątpliwość, prośba o wyjaśnienie albo uwaga – zostaw "choice" i "value" puste
+   i odpowiedz w "reply".
+W razie wątpliwości **nie wybieraj nic** i dopytaj w "reply" – zły ruch kosztuje więcej niż pytanie.
+"reply" to jedno–dwa zdania; napisz w nim krótko, co robisz z tą wiadomością.
+
+Odpowiedz wyłącznie obiektem JSON, bez komentarzy i bez bloków kodu:
+{"reply":"...","choice":"","value":""}`;
+}
