@@ -36,6 +36,7 @@ export const DIMENSION_FIELDS = [
   { id: "szerokosc", label: "szerokość", labelEn: "width", unit: "cm", example: "12" },
   { id: "dlugosc", label: "długość", labelEn: "length", unit: "cm", example: "18" },
   { id: "srednica-gorna", label: "średnica górna", labelEn: "top diameter", unit: "cm", example: "8" },
+  { id: "srednica-podstawki", label: "średnica podstawki", labelEn: "base diameter", unit: "cm", example: "6" },
   { id: "pojemnosc", label: "pojemność", labelEn: "capacity", unit: "ml", example: "300" },
 ] as const;
 
@@ -205,6 +206,8 @@ export function dimensionIdByLabel(label: string): DimensionId | null {
   for (const field of DIMENSION_FIELDS) {
     if (plain === plainLabel(field.label) || plain === plainLabel(field.labelEn)) return field.id;
   }
+  // „średnica podstawki” / „base diameter” musi wygrać z samym „średnica”
+  if (plain.includes("podstaw") || plain.includes("base") || plain.includes("stopk")) return "srednica-podstawki";
   if (plain.startsWith("srednic") || plain.includes("diameter")) return "srednica-gorna";
   if (plain.startsWith("wysok") || plain.includes("height")) return "wysokosc";
   if (plain.startsWith("szerok") || plain.includes("width")) return "szerokosc";

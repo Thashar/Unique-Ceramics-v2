@@ -26,6 +26,7 @@ describe("pola wymiarów", () => {
       "szerokosc",
       "dlugosc",
       "srednica-gorna",
+      "srednica-podstawki",
       "pojemnosc",
     ]);
     expect(dimUnit("pojemnosc")).toBe("ml");
@@ -155,6 +156,9 @@ describe("dimensionIdByLabel", () => {
     expect(dimensionIdByLabel("Wysokość")).toBe("wysokosc");
     expect(dimensionIdByLabel("średnica")).toBe("srednica-gorna");
     expect(dimensionIdByLabel("średnica górna")).toBe("srednica-gorna");
+    // „podstawka” musi wygrać z samym „średnica” – inaczej obie trafiłyby w górną
+    expect(dimensionIdByLabel("średnica podstawki")).toBe("srednica-podstawki");
+    expect(dimensionIdByLabel("base diameter")).toBe("srednica-podstawki");
     expect(dimensionIdByLabel("height")).toBe("wysokosc");
     expect(dimensionIdByLabel("pojemność")).toBe("pojemnosc");
   });
