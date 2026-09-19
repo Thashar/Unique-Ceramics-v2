@@ -27,7 +27,7 @@ const MAX_OPTIONS = 30;
  * napisać własnymi słowami przy każdym pytaniu – zamiast klikać przycisk albo
  * wpisywać samą liczbę.
  *
- * `{ message, question, options, input, state }` → `{ reply, choice, value, correction, costUsd }`.
+ * `{ message, question, options, input, state, steps }` → `{ reply, choice, value, correction, goto, costUsd }`.
  *
  * **Model nie steruje przebiegiem.** Może wskazać jeden z przycisków, które
  * agent właśnie pokazuje (`choice`), podać wartość do bieżącego pola (`value`)
@@ -64,6 +64,15 @@ export async function POST(req: Request) {
     })
     .filter((o: { label: string }) => o.label);
   const input = body?.input === "number" || body?.input === "text" ? body.input : "none";
+  // Kroki, do których agent umie wrócić – lista przychodzi z przebiegu,
+  // więc model nie może wskazać czegoś, czego `ProductAgent` nie obsługuje
+  const rawSteps = Array.isArray(body?.steps) ? body.steps.slice(0, MAX_OPTIONS) : [];
+  const steps = rawSteps
+    .map((s: unknown) => {
+      const row = s && typeof s === "object" ? (s as Record<string, unknown>) : {};
+      return { id: cleanText(row.id, 40), label: cleanText(row.label, 80) };
+    })
+    .filter((s: { id: string }) => s.id);
 
   const settings = await getSettings([AI_AGENT_MODEL_SETTING_KEY, AI_TEXT_MODEL_SETTING_KEY]);
   const model = resolveAiAgentModel(settings[AI_AGENT_MODEL_SETTING_KEY], settings[AI_TEXT_MODEL_SETTING_KEY]);
@@ -75,6 +84,7 @@ export async function POST(req: Request) {
         options,
         input,
         state: cleanText(body?.state, 1000),
+        steps,
       },
       message
     );
@@ -88,15 +98,21 @@ export async function POST(req: Request) {
     // Poprawka faktu („to czarka, nie miska”) – agent trzyma ją do końca
     // przebiegu i podaje kolejnym krokom jako wiążącą
     const correction = cleanText(parsed?.correction, AI_CHAT_LIMITS.value);
+    // Powrót do wcześniejszego kroku – tylko taki, który przebieg wystawił
+    const wanted = cleanText(parsed?.goto, 40);
+    const goto = steps.some((s: { id: string }) => s.id === wanted) ? wanted : "";
     return NextResponse.json({
       // Model bywa oszczędny w JSON-ie – bez „reply” zostaje sam surowy tekst
       reply: reply || cleanText(result.text, AI_CHAT_LIMITS.reply),
       // Wybór przyjmujemy tylko wtedy, gdy taki przycisk naprawdę istnieje
       // Poprawka faktu unieważnia wybór przycisku: o kolejnym kroku decyduje
       // właściciel, a model ma tylko zapisać, co powiedział (19.09.2026)
-      choice: correction || !options.some((o: { value: string }) => o.value === choice) ? "" : choice,
-      value: cleanText(parsed?.value, AI_CHAT_LIMITS.value),
+      // Poprawka faktu i prośba o powrót unieważniają wybór przycisku:
+      // o kolejnym kroku decyduje właściciel, model tylko zapisuje, co powiedział
+      choice: correction || goto || !options.some((o: { value: string }) => o.value === choice) ? "" : choice,
+      value: goto ? "" : cleanText(parsed?.value, AI_CHAT_LIMITS.value),
       correction,
+      goto,
       model,
       costUsd,
     });

@@ -10,6 +10,16 @@ import { uploadErrorMessage } from "@/lib/upload-error";
 import { slugifyTitle } from "@/lib/portfolio-slug";
 import { PRODUCT_MAX_IMAGES } from "@/lib/product-validation";
 import { enProductKey } from "@/lib/i18n-content";
+import {
+  PRODUCT_STEPS,
+  checkProduct,
+  errorsOf,
+  isStepId,
+  repairProduct,
+  stepLabel,
+  type ProductCheckInput,
+  type StepId,
+} from "@/lib/product-checks";
 import type { AiVariant } from "@/lib/ai";
 import {
   DEFAULT_DIMENSION_LABELS,
@@ -309,6 +319,18 @@ function MessageText({ text }: { text: string }) {
 class Aborted extends Error {}
 
 /**
+ * **Powrót do wcześniejszego kroku.** Właściciel pisze „zmień cenę” albo
+ * „wróć do kategorii”, agent przerywa bieżące pytanie i wraca tam, gdzie
+ * trzeba. Sygnał leci tą samą drogą co przerwanie przebiegu – przez odrzucenie
+ * obietnicy z `ask()` – więc nie trzeba przeplatać przebiegu warunkami.
+ */
+class Jump extends Error {
+  constructor(readonly step: StepId) {
+    super(`goto:${step}`);
+  }
+}
+
+/**
  * „Agent pisze…” – trzy kropki zamiast etykiety. Pokazujemy je wtedy, gdy nie
  * da się nazwać konkretnej czynności: przy powitaniu i przy czytaniu wiadomości
  * od właściciela. Konkretna praca (upload, zdjęcie AI, zapis) ma własny opis
@@ -430,6 +452,12 @@ export default function ProductAgent({
    * kategorię i pisał kartę pod starą nazwą (zgłoszone 19.09.2026).
    */
   const correctionRef = useRef("");
+  /**
+   * Czy w tej chwili wolno **wrócić do wcześniejszego kroku**. Tylko w fazie
+   * pytań: w trakcie generowania zdjęć albo zapisu skok zostawiłby przebieg
+   * w połowie, więc listy kroków wtedy nawet nie wysyłamy do modelu.
+   */
+  const jumpableRef = useRef(false);
   // Powitanie wchodzi z opóźnieniem – zamknięcie okna musi je odwołać
   const welcomeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const logRef = useRef<HTMLDivElement>(null);
@@ -485,6 +513,18 @@ export default function ProductAgent({
     resolve?.(a);
   }
 
+  /** Przerywa bieżące pytanie i wraca do wskazanego kroku przebiegu. */
+  function jump(step: StepId) {
+    const reject = rejectRef.current;
+    resolverRef.current = null;
+    rejectRef.current = null;
+    questionRef.current = null;
+    setQuestion(null);
+    setDraft("");
+    setMessages((prev) => prev.map((m) => (m.choices ? { ...m, choices: undefined } : m)));
+    reject?.(new Jump(step));
+  }
+
   /** Dopisuje fakt do kontekstu rozmowy („Kategoria: Kubki”). */
   function fact(label: string, value: string) {
     factsRef.current = [...factsRef.current.filter((f) => !f.startsWith(`${label}:`)), `${label}: ${value}`];
@@ -496,6 +536,7 @@ export default function ProductAgent({
     questionRef.current = null;
     factsRef.current = [];
     correctionRef.current = "";
+    jumpableRef.current = false;
     costRef.current = null;
     setChatBusy(false);
     setTyping(false);
@@ -777,6 +818,8 @@ export default function ProductAgent({
       type CardResponse = {
         name: string; slug: string; category: string; categoryLabel: string; categoryMatched: boolean;
         description: string; draft: { name: string; description: string }; costUsd: number;
+        /** Nazwy produktów wzorcowych – kontrola pilnuje, żeby nazwa nie była ich kopią. */
+        examples?: string[];
         extras?: {
           firingNote: string;
           dimensions: { label: string; example: string }[];
@@ -801,7 +844,7 @@ export default function ProductAgent({
         ],
         input: "none",
       });
-      const category = categories.find((c) => c.slug === cat.text) ?? categories.find((c) => c.slug === first.category)!;
+      let category = categories.find((c) => c.slug === cat.text) ?? categories.find((c) => c.slug === first.category)!;
       fact("Kategoria", category.label);
 
       // 3. Nazwa: kategoria się zmieniła albo właściciel poprawił rozpoznanie
@@ -883,7 +926,7 @@ export default function ProductAgent({
           ? `Piszę opis w stylu kategorii „${category.label}”…`
           : `Piszę nazwę i opis w stylu kategorii „${category.label}”…`
       );
-      const card = await postJson<CardResponse>("/api/admin/ai-product-card", {
+      let card = await postJson<CardResponse>("/api/admin/ai-product-card", {
         url: originalUrl,
         category: category.slug,
         draft: draftForRun,
@@ -893,7 +936,7 @@ export default function ProductAgent({
         lockName: Boolean(lockedName),
       });
       cost.content += card.costUsd ?? 0;
-      const extras = card.extras ?? {
+      let extras = card.extras ?? {
         firingNote: "",
         dimensions: [],
         capacity: { present: false, example: "" },
@@ -963,126 +1006,143 @@ export default function ProductAgent({
       }
       let images = currentSet();
 
-      // 6. Cena (z sugestią ze wzorów), liczba sztuk, kolekcja – każde do pominięcia
-      let price = 0;
-      for (;;) {
-        const suggested = extras.suggestedPrice > 0 ? extras.suggestedPrice : 0;
-        const a = await ask({
-          text:
-            "Jaka ma być **cena** (zł)? Wpisz kwotę w polu na dole" +
-            (suggested ? ` albo przyjmij sugestię – podobne produkty w tej kategorii kosztują ok. **${suggested} zł**.` : "."),
-          input: "number",
-          placeholder: suggested ? String(suggested) : "np. 85",
-          choices: [
-            { value: "0", label: "Pomiń – ustalę później (produkt zostanie nieaktywny)", kind: "skip" },
-            ...(suggested ? [{ value: String(suggested), label: `Użyj sugerowanej: ${suggested} zł` }] : []),
-          ],
-        });
-        const parsed = parseMoney(a.text);
-        if (parsed === null) { say("Nie rozumiem tej kwoty – wpisz samą liczbę, np. 85."); continue; }
-        price = parsed;
-        break;
-      }
-      fact("Cena", price > 0 ? `${price} zł` : "jeszcze nieustalona");
-      say(price > 0 ? `**Cena:** ${price.toFixed(2).replace(".", ",")} zł` : "**Cena:** do ustalenia (0 zł)");
-
-      let stock = 0;
-      for (;;) {
-        const a = await ask({
-          text: "Ile **sztuk** jest dostępnych?",
-          input: "number",
-          placeholder: "np. 3",
-          choices: [
-            ...[1, 2, 3, 4].map((n) => ({ value: String(n), label: `${n} szt.` })),
-            { value: "0", label: "Pomiń (0 szt.)", kind: "skip" },
-          ],
-          skipLast: true,
-        });
-        const parsed = parseCount(a.text);
-        if (parsed === null) { say("Podaj liczbę sztuk, np. 2."); continue; }
-        stock = parsed;
-        break;
-      }
-      fact("Sztuk", String(stock));
-      say(`**Stan magazynowy:** ${stock} szt.`);
-
-      let collection: string | null = null;
+      // 6. Dane od właściciela – każde pytanie jest **krokiem, do którego da
+      // się wrócić**. Właściciel pisze „zmień cenę” albo „wróć do kategorii”,
+      // trasa rozmowy oddaje `goto`, a `jump()` przerywa bieżące pytanie
+      // sygnałem `Jump`. Przerwany krok wraca na wierzch stosu, więc po
+      // poprawce agent pyta o niego jeszcze raz (decyzja właściciela 19.09.2026)
+      const data = {
+        price: 0,
+        stock: 0,
+        collection: null as string | null,
+        dimensions: [] as DimensionValue[],
+        capacity: "",
+      };
       let known = collectionList;
-      for (;;) {
-        const a = await ask({
-          text: "Do której **kolekcji** (serii) należy ten produkt?",
-          choices: [
-            { value: "", label: "Pomiń – bez kolekcji", kind: "skip" },
-            { value: "__new__", label: "Utwórz nową kolekcję", kind: "create" },
-            ...known.map((c) => ({ value: c.slug, label: c.label })),
-          ],
-          input: "none",
-        });
-        if (a.text !== "__new__") { collection = a.text || null; break; }
-        // Nowa kolekcja: nazwa z pola, slug z nazwy; zajęty slug dostaje sufiks
-        const named = await ask({
-          text: "Jak ma się nazywać **nowa kolekcja**? Wpisz nazwę w polu na dole.",
-          input: "text",
-          placeholder: "np. Seria leśna",
-          choices: [{ value: "", label: "Pomiń – wróć do wyboru kolekcji", kind: "skip" }],
-        });
-        const label = named.text.trim().slice(0, 60);
-        if (!label) continue;
-        const base = slugifyTitle(label) || "kolekcja";
-        setBusyLabel(`Zakładam kolekcję „${label}”…`);
-        let created: Collection | null = null;
-        let lastError = "";
-        for (let attempt = 0; attempt < COLLECTION_SLUG_ATTEMPTS && !created; attempt++) {
-          const slug = (attempt === 0 ? base : `${base}-${attempt + 1}`).slice(0, 60);
-          const res = await fetch("/api/admin/collections", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ slug, label, order: known.length }),
+
+      const askPrice = async () => {
+        for (;;) {
+          const suggested = extras.suggestedPrice > 0 ? extras.suggestedPrice : 0;
+          const a = await ask({
+            text:
+              "Jaka ma być **cena** (zł)? Wpisz kwotę w polu na dole" +
+              (suggested ? ` albo przyjmij sugestię – podobne produkty w tej kategorii kosztują ok. **${suggested} zł**.` : "."),
+            input: "number",
+            placeholder: suggested ? String(suggested) : "np. 85",
+            choices: [
+              { value: "0", label: "Pomiń – ustalę później (produkt zostanie nieaktywny)", kind: "skip" },
+              ...(suggested ? [{ value: String(suggested), label: `Użyj sugerowanej: ${suggested} zł` }] : []),
+            ],
           });
-          const data = await res.json().catch(() => null);
-          if (res.ok && data?.slug) { created = { slug: data.slug, label: data.label ?? label }; break; }
-          lastError = data?.error ?? `Błąd ${res.status}`;
-          if (res.status !== 409) break;
+          const parsed = parseMoney(a.text);
+          if (parsed === null) { say("Nie rozumiem tej kwoty – wpisz samą liczbę, np. 85."); continue; }
+          data.price = parsed;
+          break;
         }
-        setBusyLabel("");
-        if (!created) {
-          say(`Nie udało się założyć kolekcji (${lastError}) – wybierz istniejącą albo pomiń.`);
-          continue;
+        fact("Cena", data.price > 0 ? `${data.price} zł` : "jeszcze nieustalona");
+        say(data.price > 0 ? `**Cena:** ${data.price.toFixed(2).replace(".", ",")} zł` : "**Cena:** do ustalenia (0 zł)");
+      };
+
+      const askStock = async () => {
+        for (;;) {
+          const a = await ask({
+            text: "Ile **sztuk** jest dostępnych?",
+            input: "number",
+            placeholder: "np. 3",
+            choices: [
+              ...[1, 2, 3, 4].map((n) => ({ value: String(n), label: `${n} szt.` })),
+              { value: "0", label: "Pomiń (0 szt.)", kind: "skip" },
+            ],
+            skipLast: true,
+          });
+          const parsed = parseCount(a.text);
+          if (parsed === null) { say("Podaj liczbę sztuk, np. 2."); continue; }
+          data.stock = parsed;
+          break;
         }
-        known = [...known, created];
-        setCollectionList(known);
-        collection = created.slug;
-        say(`**Założyłem kolekcję:** ${created.label}`);
-        break;
-      }
-      say(collection ? `**Kolekcja:** ${known.find((c) => c.slug === collection)?.label ?? collection}` : "**Kolekcja:** brak");
+        fact("Sztuk", String(data.stock));
+        say(`**Stan magazynowy:** ${data.stock} szt.`);
+      };
 
-      // 7. Wymiary i pojemność – etykiety i podpowiedzi ze wzorów; opis składa
-      // `buildProductDescription` w stałym układzie
-      const labels = extras.dimensions.length > 0
-        ? extras.dimensions
-        : DEFAULT_DIMENSION_LABELS.map((label) => ({ label, example: "" }));
-      const dimensions: DimensionValue[] = [];
-      for (const dim of labels) {
-        const example = dim.example ? normalizeMeasure(dim.example, "cm") : "";
-        const a = await ask({
-          text:
-            `Podaj **${dim.label}** (cm)` +
-            (example ? ` – podobne produkty mają ${example}.` : "."),
-          input: "number",
-          placeholder: example || "np. 8",
-          choices: [
-            { value: "", label: "Pomiń ten wymiar", kind: "skip" },
-            ...(example ? [{ value: example, label: `Użyj: ${example}` }] : []),
-          ],
-        });
-        const value = a.text ? normalizeMeasure(a.text, "cm") : "";
-        dimensions.push({ label: dim.label, value });
-        say(value ? `**${dim.label}:** ${value}` : `**${dim.label}:** pominięte`);
-      }
+      const askCollection = async () => {
+        for (;;) {
+          const a = await ask({
+            text: "Do której **kolekcji** (serii) należy ten produkt?",
+            choices: [
+              { value: "", label: "Pomiń – bez kolekcji", kind: "skip" },
+              { value: "__new__", label: "Utwórz nową kolekcję", kind: "create" },
+              ...known.map((c) => ({ value: c.slug, label: c.label })),
+            ],
+            input: "none",
+          });
+          if (a.text !== "__new__") { data.collection = a.text || null; break; }
+          // Nowa kolekcja: nazwa z pola, slug z nazwy; zajęty slug dostaje sufiks
+          const named = await ask({
+            text: "Jak ma się nazywać **nowa kolekcja**? Wpisz nazwę w polu na dole.",
+            input: "text",
+            placeholder: "np. Seria leśna",
+            choices: [{ value: "", label: "Pomiń – wróć do wyboru kolekcji", kind: "skip" }],
+          });
+          const label = named.text.trim().slice(0, 60);
+          if (!label) continue;
+          const base = slugifyTitle(label) || "kolekcja";
+          setBusyLabel(`Zakładam kolekcję „${label}”…`);
+          let created: Collection | null = null;
+          let lastError = "";
+          for (let attempt = 0; attempt < COLLECTION_SLUG_ATTEMPTS && !created; attempt++) {
+            const slug = (attempt === 0 ? base : `${base}-${attempt + 1}`).slice(0, 60);
+            const res = await fetch("/api/admin/collections", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ slug, label, order: known.length }),
+            });
+            const body = await res.json().catch(() => null);
+            if (res.ok && body?.slug) { created = { slug: body.slug, label: body.label ?? label }; break; }
+            lastError = body?.error ?? `Błąd ${res.status}`;
+            if (res.status !== 409) break;
+          }
+          setBusyLabel("");
+          if (!created) {
+            say(`Nie udało się założyć kolekcji (${lastError}) – wybierz istniejącą albo pomiń.`);
+            continue;
+          }
+          known = [...known, created];
+          setCollectionList(known);
+          data.collection = created.slug;
+          say(`**Założyłem kolekcję:** ${created.label}`);
+          break;
+        }
+        say(data.collection ? `**Kolekcja:** ${known.find((c) => c.slug === data.collection)?.label ?? data.collection}` : "**Kolekcja:** brak");
+      };
 
-      let capacity = "";
-      if (extras.capacity.present) {
+      // Etykiety wymiarów czytamy przy każdym wejściu w krok – po zmianie
+      // kategorii wzory podpowiadają inne
+      const askDimensions = async () => {
+        const labels = extras.dimensions.length > 0
+          ? extras.dimensions
+          : DEFAULT_DIMENSION_LABELS.map((label) => ({ label, example: "" }));
+        const collected: DimensionValue[] = [];
+        for (const dim of labels) {
+          const example = dim.example ? normalizeMeasure(dim.example, "cm") : "";
+          const a = await ask({
+            text:
+              `Podaj **${dim.label}** (cm)` +
+              (example ? ` – podobne produkty mają ${example}.` : "."),
+            input: "number",
+            placeholder: example || "np. 8",
+            choices: [
+              { value: "", label: "Pomiń ten wymiar", kind: "skip" },
+              ...(example ? [{ value: example, label: `Użyj: ${example}` }] : []),
+            ],
+          });
+          const value = a.text ? normalizeMeasure(a.text, "cm") : "";
+          collected.push({ label: dim.label, value });
+          say(value ? `**${dim.label}:** ${value}` : `**${dim.label}:** pominięte`);
+        }
+        data.dimensions = collected;
+      };
+
+      const askCapacity = async () => {
         const example = extras.capacity.example ? normalizeMeasure(extras.capacity.example, "ml") : "";
         const a = await ask({
           text: "Podaj **pojemność** (ml)" + (example ? ` – podobne produkty mają ${example}.` : "."),
@@ -1093,38 +1153,120 @@ export default function ProductAgent({
             ...(example ? [{ value: example, label: `Użyj: ${example}` }] : []),
           ],
         });
-        capacity = a.text ? normalizeMeasure(a.text, "ml") : "";
-        say(capacity ? `**Pojemność:** ${capacity}` : "**Pojemność:** pominięta");
-      }
+        data.capacity = a.text ? normalizeMeasure(a.text, "ml") : "";
+        say(data.capacity ? `**Pojemność:** ${data.capacity}` : "**Pojemność:** pominięta");
+      };
 
-      const description = buildProductDescription({
-        description: card.description,
-        firingNote: extras.firingNote,
-        dimensions,
-        capacity,
-      });
-      say(`**Pełny opis produktu:**\n${description}`);
-
-      // 8. Angielska wersja
-      setBusyLabel("Tłumaczę nazwę i opis na angielski…");
-      let english: { name: string; description: string } | null = null;
-      try {
-        const tr = await postJson<{ texts: string[]; costUsd?: number }>("/api/admin/ai-translate", {
-          texts: [card.name, description],
-          agent: true,
+      /** Nowa nazwa w konwencji kategorii – właściciel mówi, czym rzecz jest. */
+      const redoName = async () => {
+        const a = await ask({
+          text: "Napisz, **co to za przedmiot** – resztę (motyw, kolor, szkliwo) mam ze zdjęcia.",
+          input: "text",
+          placeholder: "np. czarka do herbaty",
+          choices: [{ value: "", label: `Pomiń – zostaw: ${card.name}`, kind: "skip" }],
         });
-        english = { name: tr.texts[0] ?? "", description: tr.texts[1] ?? "" };
-        cost.translation += tr.costUsd ?? 0;
-        say(`**Wersja angielska**\n\n**Name:** ${english.name}\n\n**Description:**\n${english.description}`);
-      } catch (e) {
-        say(`Tłumaczenia nie udało się zrobić (${errorText(e)}) – uzupełnisz je w zakładce EN produktu.`);
-      }
+        const typed = a.text.trim();
+        if (!typed) return;
+        subject = typed;
+        correctionRef.current = typed;
+        lockedName = await nameInCategory(category, typed, card.description, cost);
+        card = { ...card, name: lockedName, slug: slugifyTitle(lockedName) || card.slug };
+        fact("Nazwa", card.name);
+        say(`**Nazwa:** ${card.name}`);
+      };
 
-      // 9. Wrzucone oryginały: zostawić w karcie, czy zostawić same zdjęcia z AI?
+      /**
+       * Powrót do kategorii **przepisuje kartę** – styl opisu i zdanie o wypale
+       * biorą się ze wzorów tej kategorii, więc sam podmieniony slug byłby
+       * kłamstwem. Zdjęć to nie rusza (są już opłacone), a zebranych wymiarów
+       * nie kasujemy: średnica przedmiotu nie zmienia się od zmiany kategorii.
+       */
+      const redoCategory = async () => {
+        const a = await ask({
+          text: "Do której **kategorii** ma trafić ten produkt?",
+          choices: [
+            { value: "", label: `Pomiń – zostaw: ${category.label}`, kind: "skip" },
+            ...categories.filter((c) => c.slug !== category.slug).map((c) => ({ value: c.slug, label: c.label })),
+          ],
+          input: "none",
+        });
+        const picked = categories.find((c) => c.slug === a.text);
+        if (!picked || picked.slug === category.slug) return;
+        category = picked;
+        fact("Kategoria", category.label);
+        lockedName = await nameInCategory(category, subject || card.name, card.description, cost);
+        setBusyLabel(`Przepisuję kartę w stylu kategorii „${category.label}”…`);
+        const again = await postJson<CardResponse>("/api/admin/ai-product-card", {
+          url: originalUrl,
+          category: category.slug,
+          draft: { name: lockedName, description: card.description },
+          correction: subject,
+          lockName: true,
+        });
+        cost.content += again.costUsd ?? 0;
+        card = again;
+        extras = again.extras ?? extras;
+        setBusyLabel("");
+        fact("Nazwa", card.name);
+        say(`**Kategoria:** ${category.label}\n\n**Nazwa:** ${card.name}\n\n**Opis:**\n${card.description}`);
+      };
+
+      const runStep = async (id: StepId) => {
+        if (id === "kategoria") return redoCategory();
+        if (id === "nazwa") return redoName();
+        if (id === "cena") return askPrice();
+        if (id === "sztuki") return askStock();
+        if (id === "kolekcja") return askCollection();
+        if (id === "wymiary") return askDimensions();
+        return askCapacity();
+      };
+
+      /**
+       * Krok razem z obsługą skoków. Stos, nie licznik: przerwany krok zostaje
+       * pod spodem, więc po załatwieniu poprawki agent wraca do pytania, które
+       * właściciel przerwał. Bezpiecznik na wypadek zapętlenia próśb.
+       */
+      const runWithJumps = async (first: StepId) => {
+        const stack: StepId[] = [first];
+        for (let guard = 0; stack.length > 0 && guard < 12; guard++) {
+          const id = stack[stack.length - 1];
+          try {
+            await runStep(id);
+            stack.pop();
+          } catch (e) {
+            if (!(e instanceof Jump)) throw e;
+            if (e.step !== id) stack.push(e.step);
+          }
+        }
+      };
+
+      /**
+       * Pytanie **poza** listą kroków (oryginały, kontrola, widoczność), które
+       * też wolno przerwać powrotem. Bez tego skok przy takim pytaniu wyleciałby
+       * z całego przebiegu jako nieobsłużony błąd.
+       */
+      const askSafe = async (q: Question): Promise<Answer> => {
+        for (let guard = 0; guard < 12; guard++) {
+          try {
+            return await ask(q);
+          } catch (e) {
+            if (!(e instanceof Jump)) throw e;
+            await runWithJumps(e.step);
+          }
+        }
+        throw new Error("Za dużo powrotów pod rząd – zamknij okno i zacznij od nowa.");
+      };
+
+      jumpableRef.current = true;
+      const order: StepId[] = ["cena", "sztuki", "kolekcja", "wymiary"];
+      if (extras.capacity.present) order.push("pojemnosc");
+      for (const id of order) await runWithJumps(id);
+
+      // 7. Wrzucone oryginały: zostawić w karcie, czy zostawić same zdjęcia z AI?
       // Pytamy tylko wtedy, gdy jest czym je zastąpić – bez zdjęcia z AI karta
       // zostałaby pusta. Pliki w Storage zostają (sprząta je Ustawienia → Zdjęcia)
       if (generated().length > 0) {
-        const a = await ask({
+        const a = await askSafe({
           text:
             `W karcie są **${originals().length}** wrzucone zdjęcia (oryginały) i **${generated().length}** z AI. ` +
             "Usunąć oryginały z karty i zostawić same zdjęcia z AI?",
@@ -1140,10 +1282,93 @@ export default function ProductAgent({
         }
       }
 
-      // 10. Widoczność i zapis
+      // 8. Opis, tłumaczenie i **kontrola karty przed zapisem** – w pętli,
+      // bo poprawka wraca do kroku i wszystko trzeba policzyć od nowa.
+      // Sprawdzanie jest deterministyczne (`lib/product-checks.ts`): nie pyta
+      // modelu, więc nic nie kosztuje i za każdym razem mówi to samo
+      let description = "";
+      let english: { name: string; description: string } | null = null;
+      let translatedFor = "";
+      let warned = "";
+      for (let round = 0; round < 8; round++) {
+        description = buildProductDescription({
+          description: card.description,
+          firingNote: extras.firingNote,
+          dimensions: data.dimensions,
+          capacity: data.capacity,
+        });
+        say(`**Pełny opis produktu:**\n${description}`);
+
+        // Tłumaczymy dopiero, gdy treść naprawdę się zmieniła – poprawka ceny
+        // nie ma powodu kosztować drugiego wywołania modelu
+        const toTranslate = `${card.name}\n${description}`;
+        if (toTranslate !== translatedFor) {
+          setBusyLabel("Tłumaczę nazwę i opis na angielski…");
+          try {
+            const tr = await postJson<{ texts: string[]; costUsd?: number }>("/api/admin/ai-translate", {
+              texts: [card.name, description],
+              agent: true,
+            });
+            english = { name: tr.texts[0] ?? "", description: tr.texts[1] ?? "" };
+            cost.translation += tr.costUsd ?? 0;
+            translatedFor = toTranslate;
+            say(`**Wersja angielska**\n\n**Name:** ${english.name}\n\n**Description:**\n${english.description}`);
+          } catch (e) {
+            say(`Tłumaczenia nie udało się zrobić (${errorText(e)}) – uzupełnisz je w zakładce EN produktu.`);
+          }
+          setBusyLabel("");
+        }
+
+        // Drobiazgi agent poprawia sam – nie ma o co pytać
+        const repaired = repairProduct({
+          name: card.name,
+          slug: card.slug,
+          description,
+          price: data.price,
+          stock: data.stock,
+          images,
+          active: data.price > 0 && data.stock > 0,
+          examples: card.examples ?? [],
+          dimensions: data.dimensions,
+          english,
+        });
+        if (repaired.fixes.length > 0) say(`Poprawiłem sam: ${repaired.fixes.join(", ")}.`);
+        const checked: ProductCheckInput = repaired.input;
+        card = { ...card, name: checked.name, slug: checked.slug };
+        description = checked.description;
+        images = checked.images;
+
+        const issues = checkProduct(checked);
+        const errors = errorsOf(issues);
+        const warnings = issues.filter((i) => i.level === "warning");
+        const warningText = warnings.map((w) => `• ${w.message}`).join("\n");
+        if (warningText && warningText !== warned) {
+          warned = warningText;
+          say(`**Do wiadomości:**\n${warningText}`);
+        }
+        if (errors.length === 0) break;
+
+        // Kroki, do których da się wrócić, żeby poprawić zgłoszone rzeczy
+        const fixable: StepId[] = [];
+        for (const e of errors) if (e.step && !fixable.includes(e.step)) fixable.push(e.step);
+        const a = await askSafe({
+          text:
+            `**Sprawdziłem kartę przed zapisem** i coś się nie zgadza:\n\n` +
+            errors.map((e) => `• ${e.message}`).join("\n") +
+            "\n\nCo robimy?",
+          choices: [
+            ...fixable.map((step) => ({ value: step as string, label: `Popraw: ${stepLabel(step)}`, kind: "create" as const })),
+            { value: "save", label: "Zapisz mimo to" },
+          ],
+          input: "none",
+        });
+        if (a.text === "save") break;
+        if (isStepId(a.text)) await runWithJumps(a.text);
+      }
+      // 9. Widoczność i zapis
       let active = false;
-      if (price > 0 && stock > 0) {
-        const a = await ask({
+      if (data.price > 0 && data.stock > 0) {
+        const a = await askSafe({
           text: "Włączyć produkt w sklepie od razu po zapisie?",
           choices: [
             { value: "yes", label: "Tak, włącz od razu" },
@@ -1156,14 +1381,16 @@ export default function ProductAgent({
         say("Bez ceny albo bez sztuk produkt zostaje **nieaktywny** – włączysz go po uzupełnieniu.");
       }
 
+      // Od zapisu nie ma już powrotu – lista kroków znika z kontekstu rozmowy
+      jumpableRef.current = false;
       setBusyLabel("Zapisuję produkt…");
       const base = {
         name: card.name,
         description,
-        price,
+        price: data.price,
         category: category.slug,
-        collection,
-        stock,
+        collection: data.collection,
+        stock: data.stock,
         featured: false,
         active,
         variesFromPhoto: false,
@@ -1201,8 +1428,8 @@ export default function ProductAgent({
         `**Gotowe.** Zapisałem produkt **${card.name}**.\n\n` +
           `**Status:** ${active ? "aktywny, widoczny w sklepie" : "nieaktywny"}\n` +
           `**Zdjęcia:** ${images.length}\n` +
-          `**Cena:** ${price.toFixed(2).replace(".", ",")} zł\n` +
-          `**Sztuk:** ${stock}`
+          `**Cena:** ${data.price.toFixed(2).replace(".", ",")} zł\n` +
+          `**Sztuk:** ${data.stock}`
       );
       setBusyLabel("");
       setDone({ id: saved.id, cost });
@@ -1259,7 +1486,7 @@ export default function ProductAgent({
     setTyping(true);
     try {
       const res = await postJson<{
-        reply?: string; choice?: string; value?: string; correction?: string; costUsd?: number;
+        reply?: string; choice?: string; value?: string; correction?: string; goto?: string; costUsd?: number;
       }>(
         "/api/admin/ai-agent-chat",
         {
@@ -1268,6 +1495,9 @@ export default function ProductAgent({
           options: (asked.choices ?? []).map((c) => ({ value: c.value, label: c.label })),
           input: asked.input ?? "none",
           state: factsRef.current.join("\n"),
+          // Kroki do cofnięcia podajemy tylko wtedy, gdy przebieg jest w fazie
+          // pytań – inaczej model obiecałby powrót, którego nie da się zrobić
+          steps: jumpableRef.current ? PRODUCT_STEPS.map((s) => ({ id: s.id, label: s.label })) : [],
         }
       );
       if (costRef.current) costRef.current.agent += res.costUsd ?? 0;
@@ -1280,6 +1510,12 @@ export default function ProductAgent({
       // Właściciel mógł w międzyczasie kliknąć przycisk – wtedy zostaje sama odpowiedź
       if (questionRef.current !== asked) {
         if (res.reply) sayRaw(res.reply);
+        return;
+      }
+      // Powrót do wcześniejszego kroku ma pierwszeństwo przed wszystkim innym
+      if (res.goto && isStepId(res.goto) && jumpableRef.current) {
+        if (res.reply) sayRaw(res.reply);
+        jump(res.goto);
         return;
       }
       const picked = res.choice ? asked.choices?.find((c) => c.value === res.choice) : undefined;

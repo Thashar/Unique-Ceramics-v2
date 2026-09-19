@@ -680,6 +680,8 @@ export type AgentChatContext = {
   input: "text" | "number" | "none";
   /** Krótkie podsumowanie tego, co już wiadomo o produkcie. */
   state: string;
+  /** Kroki, do których agent umie **wrócić** („zmień cenę”, „wróć do kategorii”). */
+  steps: { id: string; label: string }[];
 };
 
 /**
@@ -711,6 +713,9 @@ ${options}
 
 Pole na dole przyjmuje: ${ctx.input === "number" ? "liczbę" : ctx.input === "text" ? "tekst" : "nic (same przyciski)"}.
 
+Kroki, do których mogę **wrócić** na życzenie właściciela (wartość → co ustalamy):
+${ctx.steps.length ? ctx.steps.map((s) => `- "${s.id}" → ${s.label}`).join("\n") : "- (w tej chwili nie da się cofnąć)"}
+
 Wiadomość od właściciela:
 """
 ${message.slice(0, AI_CHAT_LIMITS.message)}
@@ -734,6 +739,12 @@ naprawdę jest**, albo że nazwa, rozpoznanie czy kategoria są błędne (np. "t
   a Ty masz tylko zapisać poprawkę i potwierdzić ją w "reply". Sam nie przechodzisz do kolejnego kroku.
 Gdy wiadomość niczego nie poprawia, "correction" zostaw puste.
 
+⚠️ **Powrót do wcześniejszego kroku.** Gdy właściciel chce zmienić coś, co już ustaliliśmy
+("zmień cenę", "wróć do kategorii", "poprawmy nazwę", "źle podałem sztuki"), wpisz identyfikator
+tego kroku w "goto" z listy wyżej i napisz w "reply" jednym zdaniem, dokąd wracamy. Wtedy
+**nie wybieraj przycisku** i nie podawaj "value" – bieżące pytanie zadam jeszcze raz po powrocie.
+Gdy wiadomość nie prosi o powrót, "goto" zostaw puste.
+
 Odpowiedz wyłącznie obiektem JSON, bez komentarzy i bez bloków kodu:
-{"reply":"...","choice":"","value":"","correction":""}`;
+{"reply":"...","choice":"","value":"","correction":"","goto":""}`;
 }
