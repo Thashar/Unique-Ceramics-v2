@@ -20,6 +20,14 @@ import LangSwitch from "@/components/admin/LangSwitch";
 import TranslateButton from "@/components/admin/TranslateButton";
 import { translateTexts } from "@/lib/admin-translate";
 import { enProductKey, type ProductTranslation } from "@/lib/i18n-content";
+import {
+  DEFAULT_CATEGORY_DIMENSIONS,
+  dimensionField,
+  productDimensionsKey,
+  serializeProductDimensions,
+  type DimensionId,
+  type DimensionValues,
+} from "@/lib/product-dimensions";
 import type { Locale } from "@/lib/i18n";
 
 const HOUR_MS = 3_600_000;
@@ -73,6 +81,8 @@ export default function ProductForm({
   categories,
   collections = [],
   english,
+  dimensions,
+  categoryDimensions = {},
 }: {
   product?: Product;
   initial?: ProductDraft;
@@ -80,6 +90,10 @@ export default function ProductForm({
   collections?: Collection[];
   /** Angielska nazwa i opis z `Setting` (`en_product_{id}`) – zakładka EN formularza. */
   english?: ProductTranslation;
+  /** Wartości wymiarów produktu z `Setting` (`product_dims_{id}`). */
+  dimensions?: DimensionValues;
+  /** Które wymiary opisują produkty danej kategorii (slug → lista pól). */
+  categoryDimensions?: Record<string, DimensionId[]>;
 }) {
   const router = useRouter();
   // PL / EN – przełącznik u góry po prawej; angielska wersja to osobne pola
@@ -108,6 +122,13 @@ export default function ProductForm({
     active: base?.active ?? true,
     variesFromPhoto: base?.variesFromPhoto ?? false,
   });
+  // Wymiary produktu – osobne pola, a nie tekst w opisie. Które z nich się
+  // pokazują, mówi **kategoria** (Kategorie → Wymiary kategorii), więc zmiana
+  // kategorii w tym formularzu od razu zmienia zestaw pól
+  const [dims, setDims] = useState<DimensionValues>(dimensions ?? {});
+  // Liczone przy renderze, nie w efekcie – zmiana kategorii ma od razu
+  // przestawić pola, a `react-hooks/set-state-in-effect` i tak tego zabrania
+  const usedDimensions = categoryDimensions[form.category] ?? DEFAULT_CATEGORY_DIMENSIONS;
   const [images, setImages] = useState<string[]>(base?.images ?? []);
   // Wybrany czas obowiązywania – sam nie jest zapisywany, tylko wypełnia datę końca
   const [durationPreset, setDurationPreset] = useState(base?.discountEndsAt ? "custom" : "");
@@ -412,15 +433,26 @@ export default function ProductForm({
     const saved = await res.json().catch(() => null);
     const productId: string | undefined = product?.id ?? saved?.id;
     const hadEnglish = Boolean(english?.name || english?.description);
+    const extra: { key: string; value: string }[] = [];
     if (productId && (enName.trim() || enDescription.trim() || hadEnglish)) {
-      const value = JSON.stringify({ name: enName.trim(), description: enDescription.trim() });
-      const enRes = await fetch("/api/admin/settings", {
+      extra.push({
+        key: enProductKey(productId),
+        value: JSON.stringify({ name: enName.trim(), description: enDescription.trim() }),
+      });
+    }
+    // Wymiary zapisujemy zawsze, gdy produkt ma id – także puste, bo wyczyszczone
+    // pole ma zniknąć z opisu przy następnym składaniu
+    if (productId) {
+      extra.push({ key: productDimensionsKey(productId), value: serializeProductDimensions(dims) });
+    }
+    if (extra.length > 0) {
+      const extraRes = await fetch("/api/admin/settings", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify([{ key: enProductKey(productId), value }]),
+        body: JSON.stringify(extra),
       });
-      if (!enRes.ok) {
-        setError("Produkt zapisany, ale nie udało się zapisać wersji angielskiej – spróbuj ponownie.");
+      if (!extraRes.ok) {
+        setError("Produkt zapisany, ale nie udało się zapisać wymiarów lub wersji angielskiej – spróbuj ponownie.");
         setSaving(false);
         return;
       }
@@ -643,6 +675,44 @@ export default function ProductForm({
               ? "Kolekcje dodajesz w zakładce Kategorie."
               : "Produkty z tej samej kolekcji polecają się nawzajem przed resztą kategorii."}
           </p>
+        </div>
+        {/* Wymiary – zestaw pól wyznacza kategoria; wartości idą do opisu
+            w sklepie i do podpowiedzi dla kolejnych produktów tej kategorii */}
+        <div className="col-span-2">
+          <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">Wymiary</label>
+          {usedDimensions.length === 0 ? (
+            <p className="text-[11px] text-charcoal/80">
+              Kategoria „{categories.find((c) => c.slug === form.category)?.label ?? form.category}” nie ma
+              przypisanych wymiarów. Ustawisz je w zakładce <strong className="font-medium">Kategorie</strong> →
+              „Wymiary kategorii”.
+            </p>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                {usedDimensions.map((id) => {
+                  const field = dimensionField(id);
+                  return (
+                    <div key={id}>
+                      <label className="block text-[11px] text-charcoal/80 mb-1">
+                        {field.label} <span className="text-charcoal/80">({field.unit})</span>
+                      </label>
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        value={dims[id] ?? ""}
+                        onChange={(e) => setDims((prev) => ({ ...prev, [id]: e.target.value }))}
+                        placeholder={field.example}
+                        className="w-full min-w-0 bg-cream border border-sand focus:border-clay outline-none px-3 py-2 text-espresso text-sm"
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+              <p className="text-[11px] text-charcoal/80 mt-1">
+                Wpisz samą liczbę – „ok.” i jednostkę dokłada sklep. Puste pole nie pojawia się w opisie.
+              </p>
+            </>
+          )}
         </div>
         <div>
           <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">Cena (zł) *</label>
