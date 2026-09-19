@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { Bot, Loader2, Plus, Redo2, Sparkles, Upload, X } from "lucide-react";
 import { uploadErrorMessage } from "@/lib/upload-error";
@@ -137,6 +138,27 @@ const confirmText = (count: number) =>
   "Agent wykona kilka płatnych wywołań AI (rozpoznanie i opis, " +
   (count > 1 ? `zdjęcia: 1 × AI+ i ${count - 1} × AI` : "zdjęcie AI+") +
   ", kolejne zdjęcia, tłumaczenie) i po drodze zada Ci parę pytań. Kontynuować?";
+
+/**
+ * Miłe zdanie na powitanie – agent losuje jedno przy otwarciu okna. Wszystkie
+ * są **bezrodzajowe**: panel obsługuje właścicielka, ale komponent nie zna płci
+ * zalogowanej osoby, więc formy typu „cieszę się, że wpadłaś” odpadają.
+ * Zaczynają się małą literą, bo doklejają się po „Cześć {imię},”.
+ */
+const GREETINGS = [
+  "dobrze Cię widzieć.",
+  "miło znów popracować przy Twojej ceramice.",
+  "jestem gotowy do pracy – Twoje prace same się nie wystawią.",
+  "mam nadzieję, że dzień dobrze się zaczyna.",
+  "nowa rzecz z pieca to zawsze dobra wiadomość.",
+  "kawa w dłoń i lecimy z nową ofertą.",
+];
+
+/** Samo imię z nazwy konta („Alicja Ulbrich” → „Alicja”), bez śmieci. */
+function firstNameOf(name: string | null | undefined): string {
+  const first = (name ?? "").trim().split(/\s+/)[0] ?? "";
+  return /^[\p{L}][\p{L}'-]{0,30}$/u.test(first) ? first : "";
+}
 
 /**
  * Ile zdjęć bierzemy z pierwszego wyboru. Każde to osobne, płatne wywołanie
@@ -297,6 +319,10 @@ export default function ProductAgent({
   defaultPreset: Record<AiVariant, string>;
 }) {
   const router = useRouter();
+  // Imię do powitania. Z sesji klienckiej, nie z propsa: `SessionProvider`
+  // i tak jest zamontowany (`Providers`), więc to zero dodatkowych zapytań,
+  // a okno otwiera się dopiero na kliknięcie – nie ma czym migać
+  const { data: session } = useSession();
   const [open, setOpen] = useState(false);
   const [running, setRunning] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([]);
@@ -399,23 +425,20 @@ export default function ProductAgent({
     reset();
     abortRef.current = false;
     setOpen(true);
+    // Losowanie w obsłudze zdarzenia, nie w renderze – `react-hooks/purity`
+    const nice = GREETINGS[Math.floor(Math.random() * GREETINGS.length)];
+    const name = firstNameOf(session?.user?.name);
     sayRaw(
-      "Cześć! Na początek **wgraj zdjęcia produktu** – jedno albo kilka ujęć tego samego przedmiotu " +
-        `(maks. ${MAX_START_FILES}).\n\n` +
-        "**Zrobię sam:**\n" +
-        "• rozpoznam przedmiot i zaproponuję **kategorię** (z pierwszego zdjęcia)\n" +
-        "• sprawdzę, czy ten wzór nie był już w sklepie i się nie wyprzedał\n" +
-        "• napiszę **nazwę i opis** w stylu Twojego sklepu\n" +
-        "• przerobię zdjęcia: **pierwsze na AI+** (scena), **każde kolejne na AI** (jednolite tło)\n" +
-        "• przetłumaczę kartę na **angielski** i **zapiszę produkt**\n\n" +
-        "**Zapytam Cię o:**\n" +
-        "• potwierdzenie **kategorii** i ewentualne **kolejne zdjęcia**\n" +
-        "• **cenę**, **liczbę sztuk** i **kolekcję** – nową mogę założyć od ręki\n" +
-        "• **wymiary** i **pojemność**\n\n" +
-        "Każde pytanie możesz **pominąć** przyciskiem, a okno zamknąć w dowolnej chwili.\n" +
-        "Na każdym kroku możesz też **napisać do mnie** w polu na dole – zwykłym zdaniem."
+      (name ? `Cześć ${name}, ${nice}` : `Cześć! ${nice.charAt(0).toUpperCase()}${nice.slice(1)}`) +
+        "\n\nNapisz co robimy lub od razu wyślij zdjęcie, a rozpocznę procedurę dodawania nowego produktu na sklep 👍🏻"
     );
-    setQuestion({ text: "", files: true, input: "none" });
+    // `text` nie trafia na ekran (rysuje je `ask()`, nie `setQuestion`) – służy
+    // wyłącznie jako kontekst dla swobodnej wiadomości do agenta
+    setQuestion({
+      text: "Czekam na zdjęcia nowego produktu – właściciel jeszcze nic nie wgrał.",
+      files: true,
+      input: "none",
+    });
   }
 
   const presetName = (id: string) => presets.find((p) => p.id === id)?.name ?? id;
