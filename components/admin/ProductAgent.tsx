@@ -11,6 +11,17 @@ import { slugifyTitle } from "@/lib/portfolio-slug";
 import { PRODUCT_MAX_IMAGES } from "@/lib/product-validation";
 import { enProductKey } from "@/lib/i18n-content";
 import {
+  CAPACITY_ID,
+  DEFAULT_CATEGORY_DIMENSIONS,
+  describeDimensions,
+  dimensionField,
+  productDimensionsKey,
+  serializeProductDimensions,
+  type DimensionId,
+  type DimensionValues,
+} from "@/lib/product-dimensions";
+import type { ProductHints } from "@/lib/product-hints";
+import {
   PRODUCT_STEPS,
   checkProduct,
   dictatedName,
@@ -22,12 +33,7 @@ import {
   type StepId,
 } from "@/lib/product-checks";
 import type { AiVariant } from "@/lib/ai";
-import {
-  DEFAULT_DIMENSION_LABELS,
-  buildProductDescription,
-  normalizeMeasure,
-  type DimensionValue,
-} from "@/lib/product-description";
+import { buildProductDescription, normalizeMeasure } from "@/lib/product-description";
 
 /**
  * „Agent dodawania produktów” – rozmowa w oknie panelu: jedno albo kilka
@@ -265,6 +271,11 @@ function usd(value: number): string {
   return value < 0.01 && value > 0 ? `$${value.toFixed(4)}` : `$${value.toFixed(2)}`;
 }
 /** Niskie kwoty (poniżej 5 gr) z czterema miejscami, żeby nie pokazywać „0,00 zł” za realne wywołanie. */
+/** Cena produktu w rozmowie: „76 zł”, „76,50 zł” – bez zer na pusto. */
+function zl(value: number): string {
+  return Number.isInteger(value) ? String(value) : value.toFixed(2).replace(".", ",");
+}
+
 function pln(value: number): string {
   return `${value.toFixed(value > 0 && value < 0.05 ? 4 : 2).replace(".", ",")} zł`;
 }
@@ -409,10 +420,13 @@ export default function ProductAgent({
   collections,
   presets,
   defaultPreset,
+  categoryDimensions,
 }: {
   usdPlnRate: number;
   categories: Category[];
   collections: Collection[];
+  /** Które wymiary opisują produkty danej kategorii (slug → pola). */
+  categoryDimensions: Record<string, DimensionId[]>;
   /** Presety promptów (wbudowane + własne) – nazwy do komunikatów. */
   presets: Preset[];
   /** Preset przypisany do przycisku AI / AI+ w ustawieniach – tym stylem generuje agent. */
@@ -852,12 +866,8 @@ export default function ProductAgent({
         description: string; draft: { name: string; description: string }; costUsd: number;
         /** Nazwy produktów wzorcowych – kontrola pilnuje, żeby nazwa nie była ich kopią. */
         examples?: string[];
-        extras?: {
-          firingNote: string;
-          dimensions: { label: string; example: string }[];
-          capacity: { present: boolean; example: string };
-          suggestedPrice: number;
-        };
+        /** Ze wzorów zostaje już tylko zwrot o wypale – reszta to nie model. */
+        extras?: { firingNote: string };
       };
       const first = await postJson<CardResponse>("/api/admin/ai-product-card", { url: originalUrl });
       cost.agent += first.costUsd ?? 0;
@@ -971,19 +981,14 @@ export default function ProductAgent({
         lockName: Boolean(lockedName),
       });
       cost.content += card.costUsd ?? 0;
-      let extras = card.extras ?? {
-        firingNote: "",
-        dimensions: [],
-        capacity: { present: false, example: "" },
-        suggestedPrice: 0,
-      };
+      let extras = card.extras ?? { firingNote: "" };
       fact("Nazwa", card.name);
       say(
         `**Kategoria:** ${category.label}\n\n` +
           `**Nazwa:** ${card.name}\n\n` +
           `**Opis:**\n${card.description}` +
           (extras.firingNote ? `\n\n**Zdanie o wypale (ze wzorów):**\n${extras.firingNote}` : "") +
-          "\n\nO wymiary, pojemność i cenę zapytam po zdjęciach."
+          "\n\nO wymiary i cenę zapytam po zdjęciach – wezmę je z podobnych produktów w sklepie."
       );
 
       // Zdjęcie AI+ ze zdjęcia głównego – preset przypisany do przycisku
@@ -1050,23 +1055,60 @@ export default function ProductAgent({
         price: 0,
         stock: 0,
         collection: null as string | null,
-        dimensions: [] as DimensionValue[],
-        capacity: "",
+        /** Wartości wymiarów – pola wyznacza kategoria, nie model. */
+        dims: {} as DimensionValues,
       };
       let known = collectionList;
 
+      /** Wymiary tej kategorii – po powrocie do kroku „kategoria” inne. */
+      const usedDims = () => categoryDimensions[category.slug] ?? DEFAULT_CATEGORY_DIMENSIONS;
+      /** Wymiary w opisie i w kontroli karty – zawsze liczone z bieżących pól. */
+      const described = () => describeDimensions(data.dims, usedDims());
+
+      // **Podpowiedzi z prawdziwych produktów sklepu** – ceny i wymiary
+      // podobnych rzeczy z tej kategorii. ⚠️ Nie ma tu modelu: to odczyt bazy
+      // i porównanie nazw, więc nic nie kosztuje. Do 19.09.2026 cenę
+      // podpowiadała mediana dwóch losowych produktów i agent zaproponował
+      // 88 zł, których nie miał żaden produkt w sklepie
+      let hints: ProductHints = { prices: [], dimensions: [], matched: 0, scanned: 0 };
+      const loadHints = async () => {
+        try {
+          hints = await postJson<ProductHints>("/api/admin/product-hints", {
+            category: category.slug,
+            name: card.name,
+          });
+        } catch (e) {
+          // Brak podpowiedzi nie zatrzymuje dodawania – agent po prostu zapyta
+          console.error("[agent] podpowiedzi:", e);
+          hints = { prices: [], dimensions: [], matched: 0, scanned: 0 };
+        }
+      };
+
       const askPrice = async () => {
         for (;;) {
-          const suggested = extras.suggestedPrice > 0 ? extras.suggestedPrice : 0;
+          // ⚠️ **Żadnych średnich ani median.** Pokazujemy wyłącznie kwoty,
+          // za które naprawdę stoi produkt w sklepie, razem z jego nazwą –
+          // żeby było widać, skąd się wzięły. Gdy nic nie pasuje po nazwie,
+          // nie podpowiadamy nic i mówimy to wprost
+          const options = hints.prices;
+          const where =
+            options.length === 0
+              ? hints.scanned === 0
+                ? " W tej kategorii nie ma jeszcze innych produktów, więc nie mam się czym podeprzeć."
+                : ` Nie znalazłem w sklepie produktu o podobnej nazwie (przejrzałem ${hints.scanned}), więc ceny nie podpowiadam.`
+              : options.length === 1
+              ? ` Podobne produkty w sklepie kosztują **${zl(options[0].price)} zł** (${options[0].names.join(", ")}).`
+              : ` Podobne produkty w sklepie mają różne ceny – wybierz jedną albo wpisz własną.`;
           const a = await ask({
-            text:
-              "Jaka ma być **cena** (zł)? Wpisz kwotę w polu na dole" +
-              (suggested ? ` albo przyjmij sugestię – podobne produkty w tej kategorii kosztują ok. **${suggested} zł**.` : "."),
+            text: `Jaka ma być **cena** (zł)? Wpisz kwotę w polu na dole.${where}`,
             input: "number",
-            placeholder: suggested ? String(suggested) : "np. 85",
+            placeholder: options.length > 0 ? String(options[0].price) : "np. 85",
             choices: [
               { value: "0", label: "Pomiń – ustalę później (produkt zostanie nieaktywny)", kind: "skip" },
-              ...(suggested ? [{ value: String(suggested), label: `Użyj sugerowanej: ${suggested} zł` }] : []),
+              ...options.map((o) => ({
+                value: String(o.price),
+                label: `${zl(o.price)} zł – ${o.count > 1 ? `${o.count} produkty, np. ` : ""}${o.names[0]}`,
+              })),
             ],
           });
           const parsed = parseMoney(a.text);
@@ -1150,46 +1192,47 @@ export default function ProductAgent({
         say(data.collection ? `**Kolekcja:** ${known.find((c) => c.slug === data.collection)?.label ?? data.collection}` : "**Kolekcja:** brak");
       };
 
-      // Etykiety wymiarów czytamy przy każdym wejściu w krok – po zmianie
-      // kategorii wzory podpowiadają inne
+      /**
+       * Pyta o jeden wymiar. **O co pytamy, mówi kategoria** (Kategorie →
+       * Wymiary kategorii), a nie model czytający dwa losowe produkty – do
+       * 19.09.2026 przy każdym produkcie wychodziły inne etykiety. Podpowiedź
+       * to wartość, którą ma najwięcej podobnych produktów w sklepie.
+       */
+      const askDimension = async (id: DimensionId) => {
+        const field = dimensionField(id);
+        const hint = hints.dimensions.find((h) => h.id === id);
+        const shown = hint ? normalizeMeasure(hint.value, field.unit) : "";
+        const a = await ask({
+          text:
+            `Podaj **${field.label}** (${field.unit})` +
+            (hint
+              ? ` – ${hint.count > 1 ? `${hint.count} podobnych produktów ma` : "podobny produkt ma"} ${shown}.`
+              : "."),
+          input: "number",
+          placeholder: hint?.value ?? field.example,
+          choices: [
+            { value: "", label: `Pomiń – ${field.label}`, kind: "skip" },
+            ...(hint ? [{ value: hint.value, label: `Użyj: ${shown}` }] : []),
+          ],
+        });
+        const raw = a.text.trim();
+        if (raw) data.dims[id] = raw;
+        else delete data.dims[id];
+        say(raw ? `**${field.label}:** ${normalizeMeasure(raw, field.unit)}` : `**${field.label}:** pominięte`);
+      };
+
       const askDimensions = async () => {
-        const labels = extras.dimensions.length > 0
-          ? extras.dimensions
-          : DEFAULT_DIMENSION_LABELS.map((label) => ({ label, example: "" }));
-        const collected: DimensionValue[] = [];
-        for (const dim of labels) {
-          const example = dim.example ? normalizeMeasure(dim.example, "cm") : "";
-          const a = await ask({
-            text:
-              `Podaj **${dim.label}** (cm)` +
-              (example ? ` – podobne produkty mają ${example}.` : "."),
-            input: "number",
-            placeholder: example || "np. 8",
-            choices: [
-              { value: "", label: "Pomiń ten wymiar", kind: "skip" },
-              ...(example ? [{ value: example, label: `Użyj: ${example}` }] : []),
-            ],
-          });
-          const value = a.text ? normalizeMeasure(a.text, "cm") : "";
-          collected.push({ label: dim.label, value });
-          say(value ? `**${dim.label}:** ${value}` : `**${dim.label}:** pominięte`);
+        const fields = usedDims().filter((id) => id !== CAPACITY_ID);
+        if (fields.length === 0) {
+          say(`Kategoria **${category.label}** nie ma przypisanych wymiarów – pomijam ten krok.`);
+          return;
         }
-        data.dimensions = collected;
+        for (const id of fields) await askDimension(id);
       };
 
       const askCapacity = async () => {
-        const example = extras.capacity.example ? normalizeMeasure(extras.capacity.example, "ml") : "";
-        const a = await ask({
-          text: "Podaj **pojemność** (ml)" + (example ? ` – podobne produkty mają ${example}.` : "."),
-          input: "number",
-          placeholder: example || "np. 300",
-          choices: [
-            { value: "", label: "Pomiń pojemność", kind: "skip" },
-            ...(example ? [{ value: example, label: `Użyj: ${example}` }] : []),
-          ],
-        });
-        data.capacity = a.text ? normalizeMeasure(a.text, "ml") : "";
-        say(data.capacity ? `**Pojemność:** ${data.capacity}` : "**Pojemność:** pominięta");
+        if (!usedDims().includes(CAPACITY_ID)) return;
+        await askDimension(CAPACITY_ID);
       };
 
       /** Nowa nazwa w konwencji kategorii – właściciel mówi, czym rzecz jest. */
@@ -1200,6 +1243,7 @@ export default function ProductAgent({
           card = { ...card, name: lockedName, slug: slugifyTitle(lockedName) || card.slug };
           fact("Nazwa", card.name);
           say(`**Nazwa:** ${card.name}`);
+          await loadHints();
           return;
         }
         const a = await ask({
@@ -1219,6 +1263,8 @@ export default function ProductAgent({
         card = { ...card, name: lockedName, slug: slugifyTitle(lockedName) || card.slug };
         fact("Nazwa", card.name);
         say(`**Nazwa:** ${card.name}`);
+        // Nowa nazwa = inne produkty podobne, więc i inne ceny do podpowiedzi
+        await loadHints();
       };
 
       /**
@@ -1255,6 +1301,8 @@ export default function ProductAgent({
         setBusyLabel("");
         fact("Nazwa", card.name);
         say(`**Kategoria:** ${category.label}\n\n**Nazwa:** ${card.name}\n\n**Opis:**\n${card.description}`);
+        // Inna kategoria = inne wymiary do wypełnienia i inna pula cen
+        await loadHints();
       };
 
       const runStep = async (id: StepId) => {
@@ -1303,9 +1351,20 @@ export default function ProductAgent({
         throw new Error("Za dużo powrotów pod rząd – zamknij okno i zacznij od nowa.");
       };
 
+      // Podpowiedzi czytamy **po ustaleniu nazwy** – „Czarka czarna” ma
+      // kosztować tyle, co inne czarki, a nie tyle, co średnia kubków
+      setBusyLabel("Sprawdzam ceny i wymiary podobnych produktów…");
+      await loadHints();
+      setBusyLabel("");
+      if (hints.matched > 0) {
+        say(
+          `Znalazłem w sklepie **${hints.matched}** podobnych produktów – z nich biorę podpowiedzi ceny i wymiarów.`
+        );
+      }
+
       jumpableRef.current = true;
       const order: StepId[] = ["cena", "sztuki", "kolekcja", "wymiary"];
-      if (extras.capacity.present) order.push("pojemnosc");
+      if (usedDims().includes(CAPACITY_ID)) order.push("pojemnosc");
       for (const id of order) await runWithJumps(id);
 
       // 7. Wrzucone oryginały: zostawić w karcie, czy zostawić same zdjęcia z AI?
@@ -1337,11 +1396,12 @@ export default function ProductAgent({
       let translatedFor = "";
       let warned = "";
       for (let round = 0; round < 8; round++) {
+        const shownDims = described();
         description = buildProductDescription({
           description: card.description,
           firingNote: extras.firingNote,
-          dimensions: data.dimensions,
-          capacity: data.capacity,
+          dimensions: shownDims.dimensions,
+          capacity: shownDims.capacity,
         });
         say(`**Pełny opis produktu:**\n${description}`);
 
@@ -1375,7 +1435,7 @@ export default function ProductAgent({
           images,
           active: data.price > 0 && data.stock > 0,
           examples: card.examples ?? [],
-          dimensions: data.dimensions,
+          dimensions: shownDims.dimensions,
           english,
         });
         if (repaired.fixes.length > 0) say(`Poprawiłem sam: ${repaired.fixes.join(", ")}.`);
@@ -1461,13 +1521,22 @@ export default function ProductAgent({
       }
       if (!saved) throw new Error(lastError || "Nie udało się zapisać produktu.");
 
-      if (english && (english.name || english.description)) {
-        const enRes = await fetch("/api/admin/settings", {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify([{ key: enProductKey(saved.id), value: JSON.stringify(english) }]),
-        });
-        if (!enRes.ok) say("Tłumaczenie gotowe, ale nie zapisało się – uzupełnij je w zakładce EN produktu.");
+      // Wymiary i wersja angielska idą do `Setting` jednym żądaniem. Wymiary
+      // zapisujemy **zawsze** – nieudane tłumaczenie nie może ich zabrać,
+      // bo to z nich składa się opis i podpowiedzi kolejnych produktów
+      const extraSettings = [
+        { key: productDimensionsKey(saved.id), value: serializeProductDimensions(data.dims) },
+        ...(english && (english.name || english.description)
+          ? [{ key: enProductKey(saved.id), value: JSON.stringify(english) }]
+          : []),
+      ];
+      const extraRes = await fetch("/api/admin/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(extraSettings),
+      });
+      if (!extraRes.ok) {
+        say("Produkt zapisany, ale wymiary lub tłumaczenie się nie zapisały – uzupełnij je w karcie produktu.");
       }
 
       say(

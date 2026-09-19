@@ -67,41 +67,23 @@ async function readVocabulary(categories: { slug: string; label: string }[]) {
 type Draft = { name: string; slug: string; category: string; description: string };
 
 /**
- * Klocki karty poza opisem właściwym – model odczytuje je ze wzorów, agent
- * pyta o wartości, a układ składa `buildProductDescription` (`lib/product-description.ts`).
+ * Klocki karty poza opisem właściwym. Został **sam** przepisany ze wzorów
+ * zwrot o wypale – to kwestia stylu, a nie fakt o przedmiocie.
+ *
+ * ⚠️ **Wymiary, pojemność i cena wyszły stąd 19.09.2026.** Etykiety wymiarów
+ * model czytał z dwóch losowych produktów, więc przy każdym produkcie pytał
+ * o co innego; cena była **medianą ich cen** i przy 76 zł i 100 zł wychodziło
+ * 88 zł – kwota, której nie miał żaden produkt w sklepie. Dziś o wymiary pyta
+ * kategoria (`category_dims_{id}`), a ceny podaje `/api/admin/product-hints`
+ * z prawdziwych, podobnie nazwanych produktów. **Nie wracaj tu do zgadywania.**
  */
 type CardExtras = {
   /** Zdanie o temperaturze wypału z wzorów (puste = wzory go nie mają). */
   firingNote: string;
-  /** Etykiety wymiarów z wzorów z przykładową wartością (podpowiedź, nie fakt). */
-  dimensions: { label: string; example: string }[];
-  capacity: { present: boolean; example: string };
-  /** Sugerowana cena – mediana cen produktów wzorcowych; 0 = brak. */
-  suggestedPrice: number;
 };
 
-function readExtras(parsed: Record<string, unknown>): Omit<CardExtras, "suggestedPrice"> {
-  const dims = Array.isArray(parsed.dimensions) ? parsed.dimensions : [];
-  const cap = parsed.capacity && typeof parsed.capacity === "object" ? (parsed.capacity as Record<string, unknown>) : {};
-  return {
-    firingNote: cleanText(parsed.firingNote, 300),
-    dimensions: dims
-      .map((d) => {
-        const o = d && typeof d === "object" ? (d as Record<string, unknown>) : {};
-        return { label: cleanText(o.label, 40), example: cleanText(o.example, 40) };
-      })
-      .filter((d) => d.label)
-      .slice(0, 6),
-    capacity: { present: cap.present === true, example: cleanText(cap.example, 40) },
-  };
-}
-
-function median(values: number[]): number {
-  const sorted = values.filter((v) => Number.isFinite(v) && v > 0).sort((a, b) => a - b);
-  if (sorted.length === 0) return 0;
-  const mid = Math.floor(sorted.length / 2);
-  const value = sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
-  return Math.round(value);
+function readExtras(parsed: Record<string, unknown>): CardExtras {
+  return { firingNote: cleanText(parsed.firingNote, 300) };
 }
 
 /**
@@ -121,9 +103,9 @@ function median(values: number[]): number {
  *
  * Model: `ai_agent_model` z Ustawień → AI (puste = model tekstowy). Zwraca
  * `{ name, slug, category, categoryLabel, categoryMatched, description, draft, examples, extras, model, costUsd }` –
- * `description` to najwyżej dwa zdania o przedmiocie, a `extras` (`firingNote`,
- * `dimensions`, `capacity`, `suggestedPrice`) to klocki odczytane ze wzorów,
- * z których agent po pytaniach składa pełny opis (`buildProductDescription`).
+ * `description` to najwyżej dwa zdania o przedmiocie, a `extras.firingNote`
+ * to zwrot o wypale przepisany ze wzorów; pełny opis składa agent
+ * (`buildProductDescription`) z wymiarów, o które pyta wg ustawień kategorii.
  * Zdjęć i zapisu ta trasa nie dotyka – robi to `ProductAgent` po kolei
  * istniejącymi trasami.
  */
@@ -249,12 +231,7 @@ export async function POST(req: Request) {
   }
 
   let final: Draft = { ...draft, category: category.slug };
-  let extras: CardExtras = {
-    firingNote: "",
-    dimensions: [],
-    capacity: { present: false, example: "" },
-    suggestedPrice: median(examples.map((e) => e.price)),
-  };
+  let extras: CardExtras = { firingNote: "" };
   if (examples.length > 0) {
     try {
       const result = await generateProductText({

@@ -524,15 +524,13 @@ Zasady:
 - "firingNote": jeśli któryś przykład zawiera zdanie o temperaturze wypału i trwałości (np. "Miska wypalana jest
   w temperaturze 1230°C, dzięki czemu cechuje się wysoką trwałością i odpornością na codzienne użytkowanie."),
   przepisz je z dopasowaniem nazwy przedmiotu do nowego produktu; w przeciwnym razie pusty ciąg.
-- "dimensions": lista wymiarów, które podają przykłady, w ich kolejności i z ich etykietami dosłownie
-  (np. "średnica górna", "średnica dolna", "wysokość", "średnica", "długość"), każda z przykładową wartością
-  z przykładów (np. "ok. 8 cm") – to tylko podpowiedź dla właściciela, prawdziwe wartości poda on sam.
-  Jeśli przykłady wymiarów nie podają, pusta lista.
-- "capacity": jeśli przykłady podają pojemność, obiekt {"present": true, "example": "ok. 300 ml"}; w przeciwnym
-  razie {"present": false, "example": ""}.
+
+⚠️ **O wymiary, pojemność i cenę nie pytamy Cię w ogóle.** Które wymiary opisują tę kategorię, ustawia
+właściciel w panelu, wartości podaje sam, a cenę agent bierze z prawdziwych, podobnie nazwanych produktów
+sklepu. Nie zgaduj ich i nie wstawiaj do opisu.
 
 Odpowiedz wyłącznie obiektem JSON, bez komentarzy i bez bloków kodu:
-{"name":"...","slug":"...","description":"...","firingNote":"...","dimensions":[{"label":"...","example":"..."}],"capacity":{"present":false,"example":""}}`;
+{"name":"...","slug":"...","description":"...","firingNote":"..."}`;
 }
 
 /** Krok nazywania przedmiotu po zmianie kategorii albo po poprawce właściciela. */

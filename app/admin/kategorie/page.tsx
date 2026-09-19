@@ -6,6 +6,12 @@ import CategoriesSection from "@/components/admin/CategoriesSection";
 import { getSettings } from "@/lib/settings";
 import { enCategoryKey } from "@/lib/i18n-content";
 import CollectionsManager from "@/components/admin/CollectionsManager";
+import CategoryDimensions from "@/components/admin/CategoryDimensions";
+import {
+  categoryDimensionsKey,
+  parseCategoryDimensions,
+  type DimensionId,
+} from "@/lib/product-dimensions";
 import type { Collection } from "@/lib/collection-defaults";
 
 export default async function CategoriesPage() {
@@ -34,8 +40,15 @@ export default async function CategoriesPage() {
   }
 
   // Angielskie etykiety kategorii (klucze `en_category_{id}`) – zakładka EN
-  const enRows = await getSettings(categories.map((c) => enCategoryKey(c.id)));
+  // oraz wymiary używane przez kategorię (`category_dims_{id}`)
+  const enRows = await getSettings([
+    ...categories.map((c) => enCategoryKey(c.id)),
+    ...categories.map((c) => categoryDimensionsKey(c.id)),
+  ]);
   const english = Object.fromEntries(categories.map((c) => [c.id, enRows[enCategoryKey(c.id)] ?? ""]));
+  const dimensions: Record<string, DimensionId[]> = Object.fromEntries(
+    categories.map((c) => [c.id, parseCategoryDimensions(enRows[categoryDimensionsKey(c.id)])])
+  );
 
   return (
     <div>
@@ -67,6 +80,7 @@ CREATE UNIQUE INDEX "Category_slug_key" ON "Category"("slug");`}</pre>
       ) : (
         <>
           <CategoriesSection initialCategories={categories} english={english} />
+          <CategoryDimensions categories={categories} initial={dimensions} />
           <CollectionsManager initial={collections} />
         </>
       )}

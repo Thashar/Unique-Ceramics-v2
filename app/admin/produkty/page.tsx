@@ -11,7 +11,7 @@ import ProductAgent from "@/components/admin/ProductAgent";
 import { getSettings } from "@/lib/settings";
 import { getCollections } from "@/lib/collections";
 import { AI_PRESET_SETTING_KEY, AI_PRESETS_SETTING_KEY, allAiPresets, parseAiPresets, resolveAiPreset } from "@/lib/ai";
-import { getCategories } from "@/lib/categories";
+import { getCategories, getCategoryDimensions } from "@/lib/categories";
 import { productOrderBy, resolveProductSort, sortByName } from "@/lib/product-sort";
 import { discountState, type DiscountState } from "@/lib/product-price";
 import { formatWarsaw } from "@/lib/warsaw-time";
@@ -109,6 +109,8 @@ export default async function AdminProductsPage({
     ai_plus: resolveAiPreset("ai_plus", agentSettings[AI_PRESET_SETTING_KEY.ai_plus], customPresets).id,
   };
   const collections = (await getCollections()).map((c) => ({ slug: c.slug, label: c.label }));
+  // Wymiary kategorii – agent pyta o te pola i z nich bierze podpowiedzi
+  const categoryDimensions = await getCategoryDimensions(categories);
 
   // Angielskie wersje (`en_product_{id}` w `Setting`) – do znaczka przy nazwie.
   // Odczyt w try/catch: brak tłumaczeń nie może wywrócić listy produktów
@@ -138,6 +140,7 @@ export default async function AdminProductsPage({
             collections={collections}
             presets={presets}
             defaultPreset={defaultPreset}
+            categoryDimensions={categoryDimensions}
           />
           <Link
             href="/admin/produkty/nowy"
