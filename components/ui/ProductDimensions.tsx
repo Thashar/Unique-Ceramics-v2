@@ -1,4 +1,4 @@
-import { Diameter, Droplet, MoveHorizontal, MoveVertical, Ruler, type LucideIcon } from "lucide-react";
+import { CircleDot, Diameter, Droplet, MoveHorizontal, MoveVertical, Ruler, type LucideIcon } from "lucide-react";
 import type { DimensionId, DimensionRow } from "@/lib/product-dimensions";
 
 /**
@@ -17,6 +17,9 @@ const ICONS: Record<DimensionId, LucideIcon> = {
   szerokosc: MoveHorizontal,
   dlugosc: Ruler,
   "srednica-gorna": Diameter,
+  // Podstawka to pierścień stopki widziany od spodu – `CircleDot` odróżnia ją
+  // od średnicy górnej (`Diameter`) na pierwszy rzut oka
+  "srednica-podstawki": CircleDot,
   pojemnosc: Droplet,
 };
 
@@ -37,9 +40,10 @@ export default function ProductDimensions({ rows }: { rows: DimensionRow[] }) {
         return (
           <li key={`${row.id ?? row.label}-${i}`} className="flex items-center gap-2.5 text-sm text-charcoal/80">
             <Icon size={18} strokeWidth={1.5} className="shrink-0 text-clay" aria-hidden="true" />
-            <span>
-              <span className="text-espresso">{heading(row.label)}:</span> {row.value}
-            </span>
+            {/* Cały wiersz w jednym kolorze – etykieta w `text-espresso` była
+                ciemniejsza od reszty drobnych informacji na karcie i wybijała
+                się z układu (decyzja właściciela 19.09.2026) */}
+            <span>{heading(row.label)}: {row.value}</span>
           </li>
         );
       })}
