@@ -27,7 +27,7 @@ const MAX_OPTIONS = 30;
  * napisać własnymi słowami przy każdym pytaniu – zamiast klikać przycisk albo
  * wpisywać samą liczbę.
  *
- * `{ message, question, options, input, state }` → `{ reply, choice, value, costUsd }`.
+ * `{ message, question, options, input, state }` → `{ reply, choice, value, correction, costUsd }`.
  *
  * **Model nie steruje przebiegiem.** Może wskazać jeden z przycisków, które
  * agent właśnie pokazuje (`choice`), podać wartość do bieżącego pola (`value`)
@@ -85,12 +85,18 @@ export async function POST(req: Request) {
     const parsed = parseJsonObject(result.text);
     const reply = cleanText(parsed?.reply, AI_CHAT_LIMITS.reply);
     const choice = cleanText(parsed?.choice, 80);
+    // Poprawka faktu („to czarka, nie miska”) – agent trzyma ją do końca
+    // przebiegu i podaje kolejnym krokom jako wiążącą
+    const correction = cleanText(parsed?.correction, AI_CHAT_LIMITS.value);
     return NextResponse.json({
       // Model bywa oszczędny w JSON-ie – bez „reply” zostaje sam surowy tekst
       reply: reply || cleanText(result.text, AI_CHAT_LIMITS.reply),
       // Wybór przyjmujemy tylko wtedy, gdy taki przycisk naprawdę istnieje
-      choice: options.some((o: { value: string }) => o.value === choice) ? choice : "",
+      // Poprawka faktu unieważnia wybór przycisku: o kolejnym kroku decyduje
+      // właściciel, a model ma tylko zapisać, co powiedział (19.09.2026)
+      choice: correction || !options.some((o: { value: string }) => o.value === choice) ? "" : choice,
       value: cleanText(parsed?.value, AI_CHAT_LIMITS.value),
+      correction,
       model,
       costUsd,
     });

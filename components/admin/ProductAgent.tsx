@@ -150,7 +150,7 @@ const confirmText = (count: number) =>
  * 2. **Ten sam sens** – zaproszenia różnią się słowami, nie treścią: napisz,
  *    co robimy, albo od razu wyślij zdjęcie, a agent zaczyna dodawanie produktu.
  */
-const OPENERS = ["Cześć", "Hej", "Hejka", "Witaj", "Dzień dobry", "O, cześć"];
+const OPENERS = ["Cześć", "Hej", "Witaj", "Dzień dobry", "O, cześć"];
 
 /** Zaczynają się małą literą, bo doklejają się po „Cześć {imię},”. */
 const NICE_LINES = [
@@ -162,7 +162,6 @@ const NICE_LINES = [
   "kawa w dłoń i lecimy z nową ofertą.",
   "lubię ten moment, kiedy nowa praca trafia do sklepu.",
   "Twoja ceramika zasługuje na porządną kartę w sklepie.",
-  "zrobimy to szybciej, niż zaparzy się herbata.",
   "dobrze, że jesteś – zaraz coś dopiszemy do sklepu.",
   "cieszę się, że zaglądasz – mam wolne ręce.",
   "nowy przedmiot w sklepie to zawsze dobry początek dnia.",
@@ -217,6 +216,13 @@ function welcomeText(name: string): string {
  * z wersjami AI) – resztę można dołożyć w pytaniu o kolejne zdjęcia.
  */
 const MAX_START_FILES = 10;
+
+/**
+ * Ile agent „pisze” powitanie po otwarciu okna. Wiadomość gotowa od razu
+ * wygląda jak formularz, a nie jak rozmowa – sekunda z kropkami daje rytm
+ * czatu (decyzja właściciela 19.09.2026).
+ */
+const WELCOME_DELAY_MS = 1000;
 
 /** Ile razy próbujemy wolnego sluga kolekcji, gdy nazwa się powtarza. */
 const COLLECTION_SLUG_ATTEMPTS = 6;
@@ -302,6 +308,26 @@ function MessageText({ text }: { text: string }) {
 /** Sygnał przerwania przebiegu – rzucany, gdy okno zostanie zamknięte w trakcie. */
 class Aborted extends Error {}
 
+/**
+ * „Agent pisze…” – trzy kropki zamiast etykiety. Pokazujemy je wtedy, gdy nie
+ * da się nazwać konkretnej czynności: przy powitaniu i przy czytaniu wiadomości
+ * od właściciela. Konkretna praca (upload, zdjęcie AI, zapis) ma własny opis
+ * przy kręcącym się kółku – tam kropki byłyby krokiem wstecz.
+ */
+function TypingDots() {
+  return (
+    <div className="flex items-center gap-1.5 bg-cream border border-sand/60 px-3 py-2.5 w-fit" aria-label="Agent pisze">
+      {[0, 1, 2].map((i) => (
+        <span
+          key={i}
+          className="uc-typing-dot w-1.5 h-1.5 bg-clay rounded-full"
+          style={{ animationDelay: `${i * 0.16}s` }}
+        />
+      ))}
+    </div>
+  );
+}
+
 const CHOICE_CLASS =
   "inline-flex items-center gap-1.5 border border-clay text-clay hover:bg-clay hover:text-cream text-xs px-3 py-1.5 transition-colors disabled:opacity-50";
 
@@ -385,6 +411,8 @@ export default function ProductAgent({
   const [collectionList, setCollectionList] = useState<Collection[]>(collections);
   // Wiadomość pisana w trakcie pytania idzie do modelu – wtedy pole jest zajęte
   const [chatBusy, setChatBusy] = useState(false);
+  // „Agent pisze…” – powitanie i czytanie wiadomości; konkretna praca ma `busyLabel`
+  const [typing, setTyping] = useState(false);
   const resolverRef = useRef<((a: Answer) => void) | null>(null);
   // Pytanie, na które czeka agent – po odpowiedzi spóźniona wiadomość z modelu
   // nie może odpowiedzieć za właściciela na **kolejne** pytanie
@@ -394,6 +422,16 @@ export default function ProductAgent({
   // Co już wiadomo o produkcie – kontekst dla swobodnych wiadomości
   const factsRef = useRef<string[]>([]);
   const rejectRef = useRef<((e: Error) => void) | null>(null);
+  /**
+   * **Poprawka właściciela** – to, co powiedział o samym przedmiocie („to nie
+   * miska, tylko czarka”). Trzymamy ją przez cały przebieg i podajemy kolejnym
+   * krokom jako **wiążącą**: to ona, a nie rozpoznanie ze zdjęcia, decyduje,
+   * czym przedmiot jest. Bez tego poprawka ginęła, agent klikał za właściciela
+   * kategorię i pisał kartę pod starą nazwą (zgłoszone 19.09.2026).
+   */
+  const correctionRef = useRef("");
+  // Powitanie wchodzi z opóźnieniem – zamknięcie okna musi je odwołać
+  const welcomeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const logRef = useRef<HTMLDivElement>(null);
   const nextId = useRef(1);
   // Zamknięcie okna w trakcie pracy: kolejny komunikat agenta przerywa przebieg,
@@ -403,7 +441,7 @@ export default function ProductAgent({
   // Dziennik przewija się do ostatniej wiadomości
   useEffect(() => {
     logRef.current?.scrollTo({ top: logRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages, question, busyLabel]);
+  }, [messages, question, busyLabel, typing]);
 
   function sayRaw(text: string, images?: string[], choices?: Choice[], skipLast?: boolean) {
     setMessages((prev) => [...prev, { id: nextId.current++, who: "agent", text, images, choices, skipLast }]);
@@ -453,10 +491,14 @@ export default function ProductAgent({
   }
 
   function reset() {
+    if (welcomeTimer.current) clearTimeout(welcomeTimer.current);
+    welcomeTimer.current = null;
     questionRef.current = null;
     factsRef.current = [];
+    correctionRef.current = "";
     costRef.current = null;
     setChatBusy(false);
+    setTyping(false);
     setMessages([]);
     setQuestion(null);
     setDraft("");
@@ -477,17 +519,52 @@ export default function ProductAgent({
     abortRef.current = false;
     setOpen(true);
     // Losowanie w obsłudze zdarzenia, nie w renderze – `react-hooks/purity`
-    sayRaw(welcomeText(firstNameOf(session?.user?.name)));
-    // `text` nie trafia na ekran (rysuje je `ask()`, nie `setQuestion`) – służy
-    // wyłącznie jako kontekst dla swobodnej wiadomości do agenta
-    setQuestion({
-      text: "Czekam na zdjęcia nowego produktu – właściciel jeszcze nic nie wgrał.",
-      files: true,
-      input: "none",
-    });
+    const welcome = welcomeText(firstNameOf(session?.user?.name));
+    setTyping(true);
+    welcomeTimer.current = setTimeout(() => {
+      welcomeTimer.current = null;
+      setTyping(false);
+      sayRaw(welcome);
+      // `text` nie trafia na ekran (rysuje je `ask()`, nie `setQuestion`) – służy
+      // wyłącznie jako kontekst dla swobodnej wiadomości do agenta
+      setQuestion({
+        text: "Czekam na zdjęcia nowego produktu – właściciel jeszcze nic nie wgrał.",
+        files: true,
+        input: "none",
+      });
+    }, WELCOME_DELAY_MS);
   }
 
   const presetName = (id: string) => presets.find((p) => p.id === id)?.name ?? id;
+
+  /**
+   * Nazwa przedmiotu w konwencji kategorii (`/api/admin/ai-product-name`).
+   * Wywołanie **tekstowe, bez zdjęcia** – rodzaj przedmiotu już znamy, płacimy
+   * tylko za ubranie go w nazewnictwo sklepu, więc krok można powtórzyć.
+   */
+  async function nameInCategory(
+    category: Category,
+    subject: string,
+    description: string,
+    cost: Cost
+  ): Promise<string> {
+    setBusyLabel(`Dobieram nazwę w stylu kategorii „${category.label}”…`);
+    try {
+      const res = await postJson<{ name: string; costUsd?: number }>("/api/admin/ai-product-name", {
+        category: category.slug,
+        subject,
+        description,
+      });
+      cost.agent += res.costUsd ?? 0;
+      return res.name || subject;
+    } catch (e) {
+      // Nazwa od właściciela wystarczy – nie przerywamy dodawania produktu
+      say(`Nie udało się dobrać nazwy (${errorText(e)}) – zostawiam **${subject}**.`);
+      return subject;
+    } finally {
+      setBusyLabel("");
+    }
+  }
 
   /** Jedno zdjęcie z modelu. Niepowodzenie nie przerywa przebiegu. */
   async function generateAiImage(
@@ -727,23 +804,93 @@ export default function ProductAgent({
       const category = categories.find((c) => c.slug === cat.text) ?? categories.find((c) => c.slug === first.category)!;
       fact("Kategoria", category.label);
 
-      // 3. Wracający wzór: czy tę rzecz już kiedyś wystawialiśmy?
+      // 3. Nazwa: kategoria się zmieniła albo właściciel poprawił rozpoznanie
+      //
+      // ⚠️ **Rodzaj przedmiotu zna właściciel, nie model.** Gdy powie, czym
+      // rzecz jest („to nie miska, tylko czarka”), jego słowo jest wiążące do
+      // końca przebiegu: idzie do nazwy, do karty (`correction`) i blokuje
+      // nazwę (`lockName`). Do 19.09.2026 poprawka ginęła i agent pisał kartę
+      // pod starą nazwą, mimo że kategorię zdążył już zmienić
+      let subject = correctionRef.current;
+      let lockedName = "";
+      if (subject || category.slug !== first.category) {
+        const proposed = await nameInCategory(
+          category,
+          subject || first.draft.name,
+          first.draft.description,
+          cost
+        );
+        if (subject) {
+          // Właściciel powiedział, czym to jest – nie ma o co pytać
+          lockedName = proposed;
+          say(`Przyjmuję poprawkę: **${subject}**\n\n**Nazwa:** ${proposed}`);
+        } else {
+          // Sama zmiana kategorii nie mówi, czy zmienił się rodzaj przedmiotu –
+          // proponujemy nazwę w nowej konwencji i pytamy zamiast zgadywać
+          const a = await ask({
+            text:
+              `Kategoria zmieniona na **${category.label}** – w tej kategorii nazwałbym ten przedmiot:\n\n` +
+              `**${proposed}**\n\nZostawiamy, czy napiszesz, co to jest?`,
+            choices: [
+              { value: "keep", label: `Zostaw: ${proposed}` },
+              { value: "own", label: "Napiszę, co to jest", kind: "create" },
+            ],
+            input: "text",
+            placeholder: "np. czarka do herbaty",
+          });
+          // Wpisać można od razu w polu na dole – wtedy „Napiszę…” jest zbędne
+          const typed =
+            a.text === "keep"
+              ? ""
+              : a.text === "own"
+              ? (
+                  await ask({
+                    text: "Napisz, **co to za przedmiot** – resztę (motyw, kolor, szkliwo) mam ze zdjęcia.",
+                    input: "text",
+                    placeholder: "np. czarka do herbaty",
+                  })
+                ).text.trim()
+              : a.text.trim();
+          if (typed) {
+            subject = typed;
+            correctionRef.current = typed;
+            lockedName = await nameInCategory(category, typed, first.draft.description, cost);
+            say(`**Nazwa:** ${lockedName}`);
+          } else {
+            lockedName = proposed;
+          }
+        }
+        if (subject) fact("Poprawka właściciela", subject);
+        fact("Nazwa", lockedName);
+      }
+      // Dalsze kroki pracują na nazwie uzgodnionej z właścicielem
+      const draftForRun = lockedName ? { ...first.draft, name: lockedName } : first.draft;
+
+      // 4. Wracający wzór: czy tę rzecz już kiedyś wystawialiśmy?
       // Porównujemy **tylko z ofertami spoza sklepu** (wyprzedane i wyłączone) –
       // produkt dostępny w sklepie nie jest nawet wspominany (decyzja
       // właściciela 19.09.2026). Sprawdzanie nigdy nie zatrzymuje przebiegu:
       // błąd, brak kandydatów i brak klucza AI po prostu lecą dalej
-      const refresh = await findReturningProduct(originalUrl, category, first.draft, cost);
+      const refresh = await findReturningProduct(originalUrl, category, draftForRun, cost);
       if (refresh) {
         await refreshExisting(refresh, originalUrl, restUrls, cost);
         return;
       }
 
-      // 4. Karta w stylu kategorii (automatycznie po potwierdzeniu)
-      setBusyLabel(`Piszę nazwę i opis w stylu kategorii „${category.label}”…`);
+      // 5. Karta w stylu kategorii (automatycznie po potwierdzeniu)
+      setBusyLabel(
+        lockedName
+          ? `Piszę opis w stylu kategorii „${category.label}”…`
+          : `Piszę nazwę i opis w stylu kategorii „${category.label}”…`
+      );
       const card = await postJson<CardResponse>("/api/admin/ai-product-card", {
         url: originalUrl,
         category: category.slug,
-        draft: first.draft,
+        draft: draftForRun,
+        // Poprawka właściciela jest nadrzędna nad zdjęciem i nad wzorami,
+        // a uzgodnionej nazwy model nie tyka
+        correction: subject,
+        lockName: Boolean(lockedName),
       });
       cost.content += card.costUsd ?? 0;
       const extras = card.extras ?? {
@@ -1109,9 +1256,11 @@ export default function ProductAgent({
     said(text);
     setDraft("");
     setChatBusy(true);
-    setBusyLabel("Czytam Twoją wiadomość…");
+    setTyping(true);
     try {
-      const res = await postJson<{ reply?: string; choice?: string; value?: string; costUsd?: number }>(
+      const res = await postJson<{
+        reply?: string; choice?: string; value?: string; correction?: string; costUsd?: number;
+      }>(
         "/api/admin/ai-agent-chat",
         {
           message: text,
@@ -1122,7 +1271,12 @@ export default function ProductAgent({
         }
       );
       if (costRef.current) costRef.current.agent += res.costUsd ?? 0;
-      setBusyLabel("");
+      // Poprawka faktu obowiązuje do końca przebiegu – także wtedy, gdy
+      // właściciel zdążył już kliknąć przycisk i odpowiedź trafia w próżnię
+      if (res.correction) {
+        correctionRef.current = res.correction;
+        fact("Poprawka właściciela", res.correction);
+      }
       // Właściciel mógł w międzyczasie kliknąć przycisk – wtedy zostaje sama odpowiedź
       if (questionRef.current !== asked) {
         if (res.reply) sayRaw(res.reply);
@@ -1140,12 +1294,20 @@ export default function ProductAgent({
         answer({ text: res.value, label: "" });
         return;
       }
+      // Przy pytaniu tekstowym poprawka jest odpowiedzią na nie; przy pytaniu
+      // z samymi przyciskami zostaje zapisana, a wyboru dokonuje właściciel –
+      // agent nie przechodzi dalej sam (decyzja właściciela 19.09.2026)
+      if (res.correction && asked.input === "text") {
+        if (res.reply) sayRaw(res.reply);
+        answer({ text: res.correction, label: "" });
+        return;
+      }
       sayRaw(res.reply || "Nie jestem pewien, co z tym zrobić – możesz doprecyzować?");
     } catch (e) {
-      setBusyLabel("");
       sayRaw(`Nie udało się odpowiedzieć (${errorText(e)}). Możesz wybrać przyciskiem albo napisać jeszcze raz.`);
     } finally {
       setChatBusy(false);
+      setTyping(false);
     }
   }
 
@@ -1227,6 +1389,7 @@ export default function ProductAgent({
                   </div>
                 );
               })}
+              {typing && <TypingDots />}
               {busyLabel && (
                 <div className="flex items-center gap-2 text-sm text-charcoal/80">
                   <Loader2 size={14} className="animate-spin text-clay" />

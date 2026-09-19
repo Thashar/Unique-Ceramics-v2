@@ -167,6 +167,18 @@ h1, h2, h3, h4 {
   animation: uc-float 1.8s ease-in-out infinite;
 }
 
+/* „Agent pisze…” w oknie agenta dodawania produktów (panel): trzy kropki
+   podnoszące się po kolei. Opóźnienie każdej kropki podaje komponent
+   (`animationDelay`), więc tu jest sama choreografia. */
+@keyframes uc-typing {
+  0%, 80%, 100% { opacity: 0.3; transform: translateY(0); }
+  40%           { opacity: 1;   transform: translateY(-3px); }
+}
+
+.uc-typing-dot {
+  animation: uc-typing 1.3s ease-in-out infinite;
+}
+
 /* Przełącznik języka w nagłówku (desktop): dwie flagi jedna na drugiej.
    Flaga drugiego języka jest przycięta do zera w prawym górnym rogu, a po
    najechaniu rozwija się po skosie do połowy – flaga dzieli się na pół
@@ -187,6 +199,12 @@ h1, h2, h3, h4 {
   .uc-float {
     animation: none;
     opacity: 1;
+    transform: none;
+  }
+  /* Kropki zostają widoczne – to wskaźnik stanu, nie ozdobnik */
+  .uc-typing-dot {
+    animation: none;
+    opacity: 0.6;
     transform: none;
   }
   .uc-flag-split .uc-flag-other {
