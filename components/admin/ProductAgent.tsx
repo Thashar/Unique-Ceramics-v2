@@ -140,24 +140,75 @@ const confirmText = (count: number) =>
   ", kolejne zdjęcia, tłumaczenie) i po drodze zada Ci parę pytań. Kontynuować?";
 
 /**
- * Miłe zdanie na powitanie – agent losuje jedno przy otwarciu okna. Wszystkie
- * są **bezrodzajowe**: panel obsługuje właścicielka, ale komponent nie zna płci
- * zalogowanej osoby, więc formy typu „cieszę się, że wpadłaś” odpadają.
- * Zaczynają się małą literą, bo doklejają się po „Cześć {imię},”.
+ * Powitanie agenta składa się z trzech losowanych części: **zwrotu**
+ * („Cześć {imię},”), **miłego zdania** i **zaproszenia** do pracy. Każda ma
+ * własną listę, więc kombinacji jest kilkaset i okno nie wita dwa razy tak samo.
+ *
+ * Dwie zasady obowiązujące wszystkie trzy listy:
+ * 1. **Bezrodzajowość** – panel obsługuje właścicielka, ale komponent nie zna
+ *    płci zalogowanej osoby, więc formy typu „cieszę się, że wpadłaś” odpadają.
+ * 2. **Ten sam sens** – zaproszenia różnią się słowami, nie treścią: napisz,
+ *    co robimy, albo od razu wyślij zdjęcie, a agent zaczyna dodawanie produktu.
  */
-const GREETINGS = [
+const OPENERS = ["Cześć", "Hej", "Hejka", "Witaj", "Dzień dobry", "O, cześć"];
+
+/** Zaczynają się małą literą, bo doklejają się po „Cześć {imię},”. */
+const NICE_LINES = [
   "dobrze Cię widzieć.",
   "miło znów popracować przy Twojej ceramice.",
   "jestem gotowy do pracy – Twoje prace same się nie wystawią.",
   "mam nadzieję, że dzień dobrze się zaczyna.",
   "nowa rzecz z pieca to zawsze dobra wiadomość.",
   "kawa w dłoń i lecimy z nową ofertą.",
+  "lubię ten moment, kiedy nowa praca trafia do sklepu.",
+  "Twoja ceramika zasługuje na porządną kartę w sklepie.",
+  "zrobimy to szybciej, niż zaparzy się herbata.",
+  "dobrze, że jesteś – zaraz coś dopiszemy do sklepu.",
+  "cieszę się, że zaglądasz – mam wolne ręce.",
+  "nowy przedmiot w sklepie to zawsze dobry początek dnia.",
 ];
+
+const INVITES = [
+  "Napisz, co robimy lub od razu wyślij zdjęcie, a rozpocznę procedurę dodawania nowego produktu na sklep 👍🏻",
+  "Napisz, co robimy, albo po prostu wrzuć zdjęcie – wtedy od razu zaczynam dodawanie nowego produktu 👍🏻",
+  "Powiedz, czym się zajmujemy, albo wyślij zdjęcie, a od razu biorę się za nową ofertę 👍🏻",
+  "Daj znać, co robimy, albo wgraj zdjęcie – ruszam wtedy z dodawaniem produktu do sklepu 👍🏻",
+  "Napisz, w czym pomóc, albo od razu podrzuć zdjęcie, a zaczynam zakładać nowy produkt 👍🏻",
+  "Możesz napisać, co planujemy, albo wysłać zdjęcie – wtedy od razu startuję z nowym produktem 👍🏻",
+  "Mów, co robimy, albo wrzuć zdjęcie, a resztą zajmę się sam i dodam produkt do sklepu 👍🏻",
+  "Napisz, od czego zaczynamy, albo wyślij zdjęcie – od razu biorę się za dodanie go do sklepu 👍🏻",
+];
+
+const pick = <T,>(list: readonly T[]): T => list[Math.floor(Math.random() * list.length)];
 
 /** Samo imię z nazwy konta („Alicja Ulbrich” → „Alicja”), bez śmieci. */
 function firstNameOf(name: string | null | undefined): string {
   const first = (name ?? "").trim().split(/\s+/)[0] ?? "";
   return /^[\p{L}][\p{L}'-]{0,30}$/u.test(first) ? first : "";
+}
+
+/**
+ * Wołacz imienia – „Cześć Alicja” brzmi po polsku źle, ma być „Cześć Alicjo”.
+ * Pełnej odmiany **nie robimy**: imiona męskie („Piotrze”, „Marku”) i zdrobnienia
+ * na `-ia` („Kasiu”, ale „Mario”) mają nieregularne formy, a źle odmienione imię
+ * jest gorsze od mianownika. Zamieniamy więc tylko przypadek pewny: imię na `-a`,
+ * dłuższe niż 3 znaki i nie na `-ia` (Alicja → Alicjo, Anna → Anno, Marta → Marto).
+ * Reszta – Ola, Kasia, Maria, Piotr – zostaje w mianowniku, co brzmi potocznie,
+ * ale poprawnie.
+ */
+function vocative(name: string): string {
+  if (name.length <= 3 || !name.endsWith("a") || name.endsWith("ia")) return name;
+  return `${name.slice(0, -1)}o`;
+}
+
+/** Cała pierwsza wiadomość agenta: zwrot + miłe zdanie + zaproszenie. */
+function welcomeText(name: string): string {
+  const opener = pick(OPENERS);
+  const nice = pick(NICE_LINES);
+  const head = name
+    ? `${opener} ${vocative(name)}, ${nice}`
+    : `${opener}! ${nice.charAt(0).toUpperCase()}${nice.slice(1)}`;
+  return `${head}\n\n${pick(INVITES)}`;
 }
 
 /**
@@ -426,12 +477,7 @@ export default function ProductAgent({
     abortRef.current = false;
     setOpen(true);
     // Losowanie w obsłudze zdarzenia, nie w renderze – `react-hooks/purity`
-    const nice = GREETINGS[Math.floor(Math.random() * GREETINGS.length)];
-    const name = firstNameOf(session?.user?.name);
-    sayRaw(
-      (name ? `Cześć ${name}, ${nice}` : `Cześć! ${nice.charAt(0).toUpperCase()}${nice.slice(1)}`) +
-        "\n\nNapisz co robimy lub od razu wyślij zdjęcie, a rozpocznę procedurę dodawania nowego produktu na sklep 👍🏻"
-    );
+    sayRaw(welcomeText(firstNameOf(session?.user?.name)));
     // `text` nie trafia na ekran (rysuje je `ask()`, nie `setQuestion`) – służy
     // wyłącznie jako kontekst dla swobodnej wiadomości do agenta
     setQuestion({
