@@ -390,7 +390,10 @@ Na podstawie zdjęcia produktu przygotuj dane do karty produktu w sklepie.
 Najpierw przyjrzyj się uważnie samej ceramice i rozpoznaj, co się na niej znajduje:
 - motyw lub wizerunek (np. zwierzę, roślina, twarz, postać, pejzaż, ornament, wzór geometryczny),
 - napis, litery, cyfry, symbol lub znak,
-- charakterystyczny kształt i detale formy (np. wytłoczenia, żłobienia, uchwyt, nóżki, falowana krawędź, nieregularny brzeg).
+- charakterystyczny kształt i detale formy (np. **ażur, otwory, perforacja, prześwity**, wytłoczenia, żłobienia,
+  uchwyt, nóżki, falowana krawędź, nieregularny brzeg, dziobek, pokrywka).
+Detal, który odróżnia ten przedmiot od zwykłego naczynia tego typu – zwłaszcza **otwory i ażur** – jest
+równie ważny jak motyw: ma trafić do nazwy i do pierwszego zdania opisu.
 To, co widzisz na przedmiocie, jest najważniejszą cechą produktu – musi trafić i do nazwy, i do opisu.
 Nazywaj to wprost i konkretnie ("kubek z sową", "miska z liściem monstery", "talerz z napisem Dzień dobry"),
 a nie ogólnikami w rodzaju "z motywem" czy "ze wzorem". Jeśli nie masz pewności, co przedstawia motyw,
@@ -456,13 +459,24 @@ Nowa karta ma wyglądać tak, jakby napisała ją ta sama osoba. Nie kopiuj ich 
 których w przykładach nie ma (wymiary, pojemność, materiał, sposób użycia), i nie przypisuj nowemu produktowi
 cech, których nie widać na zdjęciu.
 
+⚠️ Przykłady są wzorem **stylu, nie treści**. To, **czym ten przedmiot jest** i **co go wyróżnia**, odczytujesz
+wyłącznie ze zdjęcia:
+- Nie przenoś z przykładów **nazwy rodzaju ani przeznaczenia** przedmiotu. Jeśli przykłady nazywają się
+  „Misa ramenowa”, „Miska na sałatki” czy „Kubek do latte”, a na zdjęciu jest inne naczynie – **nie nazywaj go
+  tak samo**. Nazwij to, co widzisz (np. misa z ażurem to misa ażurowa albo misa na owoce, nie ramenowa).
+- Cechy widoczne na zdjęciu, a nieobecne w przykładach (otwory, ażur, ucho, dziobek, nóżki, inny motyw),
+  **muszą** znaleźć się w nazwie i opisie – to one odróżniają ten produkt od tamtych.
+- Wstępne rozpoznanie wyżej powstało z samego zdjęcia. Popraw je tylko wtedy, gdy **na zdjęciu** widzisz coś
+  innego – nigdy dlatego, że przykłady nazywają swoje przedmioty inaczej.
+
 ${list}
 
 Zasady:
 - Pisz po polsku, w tonie spokojnym i rzeczowym, bez marketingowego przesadzania.
 - Jako myślnika używaj wyłącznie półpauzy "–" (krótki myślnik). Nigdy nie używaj pauzy "—" ani encji &mdash;.
 - To, co jest na ceramice (motyw, wizerunek, napis, znak, detal formy), ma trafić do nazwy i opisu – nazwane wprost, nie ogólnikiem.
-- "name": nazwa produktu w konwencji przykładów (zwykle 2-5 słów), bez cudzysłowów i bez ceny.
+- "name": nazwa produktu w konwencji przykładów (zwykle 2-5 słów), bez cudzysłowów i bez ceny –
+  konwencja z przykładów, ale **nazywa to, co widać na zdjęciu**, nie to, czym są przykłady.
 - "slug": nazwa małymi literami, bez polskich znaków, wyrazy połączone myślnikami (tylko a-z, 0-9 i myślnik).
 - "description": **najwyżej dwa zdania** o samym przedmiocie (co to jest, co go zdobi, kształt, kolor, szkliwo),
   w tonie i słownictwie przykładów. **Bez wymiarów, pojemności, ceny i bez zdania o wypale** – te części karta
