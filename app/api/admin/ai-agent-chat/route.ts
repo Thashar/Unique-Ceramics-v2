@@ -8,6 +8,7 @@ import {
   AI_AGENT_MODEL_SETTING_KEY,
   AI_CHAT_LIMITS,
   AI_CHAT_VARIANT,
+  AI_TEXT_LIMITS,
   AI_TEXT_MODEL_SETTING_KEY,
   agentVariant,
   aiCostUsd,
@@ -27,7 +28,7 @@ const MAX_OPTIONS = 30;
  * napisać własnymi słowami przy każdym pytaniu – zamiast klikać przycisk albo
  * wpisywać samą liczbę.
  *
- * `{ message, question, options, input, state, steps }` → `{ reply, choice, value, correction, goto, costUsd }`.
+ * `{ message, question, options, input, state, steps }` → `{ reply, choice, value, correction, name, goto, costUsd }`.
  *
  * **Model nie steruje przebiegiem.** Może wskazać jeden z przycisków, które
  * agent właśnie pokazuje (`choice`), podać wartość do bieżącego pola (`value`)
@@ -98,6 +99,12 @@ export async function POST(req: Request) {
     // Poprawka faktu („to czarka, nie miska”) – agent trzyma ją do końca
     // przebiegu i podaje kolejnym krokom jako wiążącą
     const correction = cleanText(parsed?.correction, AI_CHAT_LIMITS.value);
+    // **Gotowa nazwa podyktowana przez właściciela** – wchodzi do karty taka,
+    // jaka jest. Większość takich wiadomości rozpoznaje `dictatedName` jeszcze
+    // w przeglądarce (bez modelu, więc bez ryzyka przekręcenia); tu wpada to,
+    // czego wzorzec nie złapał. Nazwa unieważnia `correction`: rodzaj przedmiotu
+    // nie jest już potrzebny, skoro nazwa jest ustalona (19.09.2026)
+    const name = cleanText(parsed?.name, AI_TEXT_LIMITS.name);
     // Powrót do wcześniejszego kroku – tylko taki, który przebieg wystawił
     const wanted = cleanText(parsed?.goto, 40);
     const goto = steps.some((s: { id: string }) => s.id === wanted) ? wanted : "";
@@ -109,10 +116,12 @@ export async function POST(req: Request) {
       // właściciel, a model ma tylko zapisać, co powiedział (19.09.2026)
       // Poprawka faktu i prośba o powrót unieważniają wybór przycisku:
       // o kolejnym kroku decyduje właściciel, model tylko zapisuje, co powiedział
-      choice: correction || goto || !options.some((o: { value: string }) => o.value === choice) ? "" : choice,
-      value: goto ? "" : cleanText(parsed?.value, AI_CHAT_LIMITS.value),
-      correction,
-      goto,
+      choice: name || correction || goto || !options.some((o: { value: string }) => o.value === choice) ? "" : choice,
+      value: name || goto ? "" : cleanText(parsed?.value, AI_CHAT_LIMITS.value),
+      correction: name ? "" : correction,
+      name,
+      // Nazwę stosujemy od ręki, więc powrót do kroku „nazwa” byłby pusty
+      goto: name ? "" : goto,
       model,
       costUsd,
     });

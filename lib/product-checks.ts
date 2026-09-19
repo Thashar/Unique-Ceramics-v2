@@ -44,6 +44,77 @@ export function stepLabel(id: StepId): string {
   return PRODUCT_STEPS.find((s) => s.id === id)?.label ?? id;
 }
 
+/** Limit nazwy produktu – ten sam, którego pilnuje walidacja serwerowa. */
+const NAME_MAX = 200;
+
+/**
+ * **Nazwa podyktowana przez właściciela** – „zmień nazwę na Czarka czarna”.
+ *
+ * ⚠️ To **nie to samo co poprawka rodzaju przedmiotu** („to nie miska, tylko
+ * czarka”). Rodzaj mówi modelowi, czym rzecz jest, a ten układa nazwę
+ * w konwencji kategorii. Gotowa nazwa ma zostać **dokładnie taka, jak ją
+ * napisano** – bez dokładania przymiotników ze zdjęcia i bez odmiany.
+ * Zgłoszone 19.09.2026: na „zmień nazwę na Czarka czarna” agent zapisał
+ * „Czarka czarka ciemna z jasnym dnem” – model najpierw przekręcił słowo,
+ * a potem dopisał swoje.
+ *
+ * Dlatego czytamy to **tutaj, przed wysłaniem wiadomości do modelu**: wzorzec
+ * przepisuje nazwę znak po znaku, więc nie ma jej jak przekręcić, i nic nie
+ * kosztuje. Czego wzorzec nie złapie, trafia normalną drogą do rozmowy –
+ * tam trasa ma osobne pole `name`.
+ */
+const DICTATED_NAME_PATTERNS = [
+  /^(?:zmień|zmien|popraw|ustaw|daj|wpisz)\s+(?:mi\s+)?(?:nazwę|nazwe|tytuł|tytul)(?:\s+produktu)?\s+na\s*:?\s*(.+)$/i,
+  /^(?:nazwij|nazwać|nazwac)\s+(?:to|go|ją|ja|produkt)\s+(.+)$/i,
+  /^(?:nazwa|tytuł|tytul)(?:\s+produktu)?\s*(?::|to)\s*(.+)$/i,
+  /^(?:ma\s+się\s+nazywać|ma\s+sie\s+nazywac|niech\s+się\s+nazywa|niech\s+sie\s+nazywa)\s+(.+)$/i,
+];
+
+/**
+ * Pierwsze słowa, od których zaczyna się **polecenie**, a nie gotowa nazwa
+ * („zmień nazwę na coś krótszego”). Taka wiadomość ma iść do modelu, a nie
+ * wylądować w karcie jako nazwa produktu.
+ */
+const NOT_A_NAME_START = new Set([
+  "cos", "jakas", "jakies", "jakis", "inna", "inny", "inne", "innego", "inaczej",
+  "krotsza", "krotsze", "krotszy", "dluzsza", "dluzsze", "lepsza", "lepsze", "lepszy",
+  "bardziej", "mniej", "cokolwiek", "to", "ta", "ten", "tak", "nie",
+]);
+
+/** Cudzysłowy, w które właściciel bierze nazwę – zdejmujemy je z obu stron. */
+const QUOTES = "\"'„”“»«‚’‘";
+
+/**
+ * Zwraca nazwę podyktowaną w wiadomości albo pusty string, gdy wiadomość
+ * nazwy nie dyktuje. Nazwa wraca **dosłownie** – zdejmujemy tylko cudzysłowy
+ * i kropkę na końcu zdania.
+ */
+export function dictatedName(message: string): string {
+  const text = (message ?? "").replace(/\s+/g, " ").trim();
+  if (!text || text.endsWith("?")) return "";
+  for (const pattern of DICTATED_NAME_PATTERNS) {
+    const hit = pattern.exec(text);
+    if (!hit) continue;
+    // Cudzysłowy i kropka kończąca zdanie nie są częścią nazwy. Zdejmujemy je
+    // naprzemiennie, bo kropka bywa **za** cudzysłowem ('… na "Czarka czarna".')
+    let name = hit[1].trim();
+    for (let i = 0; i < 4; i++) {
+      const before = name;
+      name = name.replace(/[.!]+$/, "").trim();
+      if (name.length > 1 && QUOTES.includes(name[0]) && QUOTES.includes(name[name.length - 1])) {
+        name = name.slice(1, -1).trim();
+      }
+      if (name === before) break;
+    }
+    if (!name || name.length > NAME_MAX || !/\p{L}/u.test(name)) return "";
+    const first = normalizeText(name).split(" ")[0] ?? "";
+    if (NOT_A_NAME_START.has(first)) return "";
+    return name;
+  }
+  return "";
+}
+
+
 export type ProductCheckInput = {
   name: string;
   slug: string;
