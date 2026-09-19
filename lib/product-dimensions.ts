@@ -32,11 +32,11 @@ import { normalizeMeasure, type DimensionValue } from "@/lib/product-description
  * sekcję „Pojemność:”** – tak wyglądał opis, zanim wymiary stały się polami.
  */
 export const DIMENSION_FIELDS = [
-  { id: "wysokosc", label: "wysokość", unit: "cm", example: "9" },
-  { id: "szerokosc", label: "szerokość", unit: "cm", example: "12" },
-  { id: "dlugosc", label: "długość", unit: "cm", example: "18" },
-  { id: "srednica-gorna", label: "średnica górna", unit: "cm", example: "8" },
-  { id: "pojemnosc", label: "pojemność", unit: "ml", example: "300" },
+  { id: "wysokosc", label: "wysokość", labelEn: "height", unit: "cm", example: "9" },
+  { id: "szerokosc", label: "szerokość", labelEn: "width", unit: "cm", example: "12" },
+  { id: "dlugosc", label: "długość", labelEn: "length", unit: "cm", example: "18" },
+  { id: "srednica-gorna", label: "średnica górna", labelEn: "top diameter", unit: "cm", example: "8" },
+  { id: "pojemnosc", label: "pojemność", labelEn: "capacity", unit: "ml", example: "300" },
 ] as const;
 
 export type DimensionId = (typeof DIMENSION_FIELDS)[number]["id"];
@@ -148,4 +148,106 @@ export function describeDimensions(
     else dimensions.push({ label: field.label, value });
   }
   return { dimensions, capacity };
+}
+
+/**
+ * Wiersz wymiaru gotowy do pokazania na karcie produktu: rozpoznany wymiar
+ * (`id` → ikona) albo sam tekst, gdy pochodzi ze starego opisu.
+ */
+export type DimensionRow = { id: DimensionId | null; label: string; value: string };
+
+/** Etykieta wymiaru w języku strony. */
+export function dimensionLabel(field: DimensionField, locale: "pl" | "en" = "pl"): string {
+  return locale === "en" ? field.labelEn : field.label;
+}
+
+/**
+ * Wartości pól → wiersze karty produktu. **Pusta wartość nie daje wiersza** –
+ * produkt z samą pojemnością pokazuje samą pojemność, bez pustej wysokości.
+ * Kolejność zawsze z `DIMENSION_FIELDS`.
+ */
+export function dimensionRows(values: DimensionValues, locale: "pl" | "en" = "pl"): DimensionRow[] {
+  const prefix = locale === "en" ? "approx." : "ok.";
+  const rows: DimensionRow[] = [];
+  for (const field of DIMENSION_FIELDS) {
+    const raw = values[field.id]?.trim();
+    if (!raw) continue;
+    rows.push({
+      id: field.id,
+      label: dimensionLabel(field, locale),
+      value: normalizeMeasure(raw, field.unit, prefix),
+    });
+  }
+  return rows;
+}
+
+/** Etykieta bez ogonków i wielkich liter – do porównywania nazw ze starych opisów. */
+function plainLabel(label: string): string {
+  return label
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/ł/gi, "l")
+    .toLowerCase()
+    .replace(/[^a-z ]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
+ * Etykieta z opisu → wymiar, czyli ikona przy wierszu. Opisy sprzed pól
+ * wymiarów mają tam zwykły tekst („średnica: ok. 8 cm”), więc dopuszczamy
+ * skrócone nazwy. Nierozpoznana etykieta dostaje `null` i wiersz z ikoną
+ * ogólną – to nadal lepsze niż pominięcie wymiaru.
+ */
+export function dimensionIdByLabel(label: string): DimensionId | null {
+  const plain = plainLabel(label);
+  if (!plain) return null;
+  for (const field of DIMENSION_FIELDS) {
+    if (plain === plainLabel(field.label) || plain === plainLabel(field.labelEn)) return field.id;
+  }
+  if (plain.startsWith("srednic") || plain.includes("diameter")) return "srednica-gorna";
+  if (plain.startsWith("wysok") || plain.includes("height")) return "wysokosc";
+  if (plain.startsWith("szerok") || plain.includes("width")) return "szerokosc";
+  if (plain.startsWith("dlug") || plain.includes("length") || plain.includes("depth")) return "dlugosc";
+  if (plain.startsWith("pojemn") || plain.includes("capacity") || plain.includes("volume")) return CAPACITY_ID;
+  return null;
+}
+
+/**
+ * Wiersze odczytane z **opisu** – dla produktów dodanych przed 19.09.2026,
+ * które nie mają jeszcze wypełnionych pól wymiarów.
+ */
+export function rowsFromDescription(
+  dimensions: readonly DimensionValue[],
+  capacity: string,
+  locale: "pl" | "en" = "pl"
+): DimensionRow[] {
+  const rows: DimensionRow[] = dimensions
+    .filter((d) => d.label.trim() && d.value.trim())
+    .map((d) => ({
+      id: dimensionIdByLabel(d.label),
+      label: d.label.trim().replace(/:\s*$/, ""),
+      value: d.value.trim(),
+    }));
+  const capacityValue = capacity.trim();
+  if (capacityValue) {
+    rows.push({
+      id: CAPACITY_ID,
+      label: dimensionLabel(dimensionField(CAPACITY_ID), locale),
+      value: capacityValue,
+    });
+  }
+  return rows;
+}
+
+/**
+ * „ok. 8 cm” → „8”. Pola trzymają samą liczbę, więc wartość przeniesiona
+ * ze starego opisu musi zgubić przedrostek i jednostkę.
+ */
+export function rawMeasure(value: string): string {
+  return value
+    .trim()
+    .replace(/^(około|ok\.?|approx\.?|~)\s*/i, "")
+    .replace(/\s*(cm|ml)\s*\.?$/i, "")
+    .trim();
 }

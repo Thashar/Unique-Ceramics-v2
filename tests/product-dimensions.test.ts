@@ -5,11 +5,15 @@ import {
   DIMENSION_FIELDS,
   categoryDimensionsKey,
   describeDimensions,
+  dimensionIdByLabel,
+  dimensionRows,
   hasDimensions,
   isDimensionId,
   parseCategoryDimensions,
   parseProductDimensions,
   productDimensionsKey,
+  rawMeasure,
+  rowsFromDescription,
   serializeCategoryDimensions,
   serializeProductDimensions,
 } from "@/lib/product-dimensions";
@@ -118,5 +122,72 @@ describe("wymiary w opisie", () => {
 
   it("puste wartości nie robią pustych wierszy", () => {
     expect(describeDimensions({})).toEqual({ dimensions: [], capacity: "" });
+  });
+});
+
+// Karta produktu rysuje wiersz na **wypełnione** pole – produkt z samą
+// pojemnością pokazuje samą pojemność, bez pustej wysokości (19.09.2026).
+describe("dimensionRows", () => {
+  it("pomija pola bez wartości", () => {
+    expect(dimensionRows({ pojemnosc: "300" })).toEqual([
+      { id: "pojemnosc", label: "pojemność", value: "ok. 300 ml" },
+    ]);
+  });
+
+  it("trzyma kolejność z DIMENSION_FIELDS, nie kolejność wpisania", () => {
+    const rows = dimensionRows({ pojemnosc: "300", wysokosc: "9" });
+    expect(rows.map((r) => r.id)).toEqual(["wysokosc", "pojemnosc"]);
+  });
+
+  it("po angielsku podaje etykietę i przedrostek po angielsku", () => {
+    expect(dimensionRows({ wysokosc: "9" }, "en")).toEqual([
+      { id: "wysokosc", label: "height", value: "approx. 9 cm" },
+    ]);
+  });
+
+  it("brak wymiarów to brak wierszy", () => {
+    expect(dimensionRows({})).toEqual([]);
+  });
+});
+
+describe("dimensionIdByLabel", () => {
+  it("rozpoznaje etykiety ze starych opisów", () => {
+    expect(dimensionIdByLabel("Wysokość")).toBe("wysokosc");
+    expect(dimensionIdByLabel("średnica")).toBe("srednica-gorna");
+    expect(dimensionIdByLabel("średnica górna")).toBe("srednica-gorna");
+    expect(dimensionIdByLabel("height")).toBe("wysokosc");
+    expect(dimensionIdByLabel("pojemność")).toBe("pojemnosc");
+  });
+
+  it("nieznana etykieta nie udaje wymiaru", () => {
+    expect(dimensionIdByLabel("waga")).toBeNull();
+  });
+});
+
+describe("rowsFromDescription", () => {
+  it("wiersz bez rozpoznanego wymiaru zostaje z własną etykietą", () => {
+    const rows = rowsFromDescription([{ label: "waga", value: "ok. 300 g" }], "");
+    expect(rows).toEqual([{ id: null, label: "waga", value: "ok. 300 g" }]);
+  });
+
+  it("pojemność dokłada się na końcu", () => {
+    const rows = rowsFromDescription([{ label: "wysokość", value: "ok. 9 cm" }], "ok. 300 ml");
+    expect(rows.map((r) => r.id)).toEqual(["wysokosc", "pojemnosc"]);
+  });
+
+  it("puste wiersze wypadają", () => {
+    expect(rowsFromDescription([{ label: "wysokość", value: "" }], "")).toEqual([]);
+  });
+});
+
+describe("rawMeasure", () => {
+  it("zdejmuje przedrostek i jednostkę", () => {
+    expect(rawMeasure("ok. 8 cm")).toBe("8");
+    expect(rawMeasure("approx. 300 ml")).toBe("300");
+    expect(rawMeasure("około 8,5 cm")).toBe("8,5");
+  });
+
+  it("wartość bez jednostki zostaje jak jest", () => {
+    expect(rawMeasure("8 x 12")).toBe("8 x 12");
   });
 });

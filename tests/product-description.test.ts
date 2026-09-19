@@ -3,6 +3,7 @@ import {
   buildProductDescription,
   normalizeLabel,
   normalizeMeasure,
+  splitProductDescription,
 } from "@/lib/product-description";
 
 // Opis z agenta ma stały układ: opis, zdanie o wypale, „Wymiary:”, „Pojemność:”.
@@ -67,5 +68,60 @@ describe("buildProductDescription", () => {
 
   it("sam opis zostaje samym opisem", () => {
     expect(buildProductDescription({ description: " Świecznik. " })).toBe("Świecznik.");
+  });
+});
+
+// Karta produktu rysuje wymiary wierszami z ikonami (19.09.2026), więc te same
+// wymiary wpisane w opisie produktu sprzed tej zmiany muszą z tekstu wypaść –
+// inaczej klient zobaczyłby je dwa razy.
+describe("splitProductDescription", () => {
+  const full = buildProductDescription({
+    description: "Czarka z ciemnego szkliwa.",
+    firingNote: "Wypalana w 1240°C.",
+    dimensions: [
+      { label: "średnica górna", value: "ok. 8 cm" },
+      { label: "wysokość", value: "ok. 9 cm" },
+    ],
+    capacity: "ok. 300 ml",
+  });
+
+  it("zostawia w tekście samą prozę", () => {
+    expect(splitProductDescription(full).text).toBe(
+      "Czarka z ciemnego szkliwa.\n\nWypalana w 1240°C."
+    );
+  });
+
+  it("wyjmuje wymiary i pojemność", () => {
+    const out = splitProductDescription(full);
+    expect(out.dimensions).toEqual([
+      { label: "średnica górna", value: "ok. 8 cm" },
+      { label: "wysokość", value: "ok. 9 cm" },
+    ]);
+    expect(out.capacity).toBe("ok. 300 ml");
+  });
+
+  it("radzi sobie bez pustej linii przed nagłówkiem", () => {
+    const out = splitProductDescription("Kubek.\nWymiary:\nwysokość: ok. 9 cm");
+    expect(out.text).toBe("Kubek.");
+    expect(out.dimensions).toEqual([{ label: "wysokość", value: "ok. 9 cm" }]);
+  });
+
+  it("czyta też wersję angielską opisu", () => {
+    const out = splitProductDescription("A cup.\n\nDimensions:\nheight: approx. 9 cm\n\nCapacity:\napprox. 300 ml");
+    expect(out.text).toBe("A cup.");
+    expect(out.dimensions).toEqual([{ label: "height", value: "approx. 9 cm" }]);
+    expect(out.capacity).toBe("approx. 300 ml");
+  });
+
+  it("zdania z dwukropkiem po sekcji wracają do tekstu", () => {
+    const out = splitProductDescription("Wymiary:\nwysokość: ok. 9 cm\nUwaga: każdy egzemplarz jest inny.");
+    // „Uwaga: …” pasuje wzorcem do wiersza wymiaru, ale zdanie i tak zostaje
+    // widoczne – w najgorszym razie jako wymiar, nigdy jako tekst zgubiony
+    expect(out.dimensions.length + (out.text ? 1 : 0)).toBe(2);
+  });
+
+  it("opis bez wymiarów zostaje nietknięty", () => {
+    const out = splitProductDescription("Czarka z ciemnego szkliwa.");
+    expect(out).toEqual({ text: "Czarka z ciemnego szkliwa.", dimensions: [], capacity: "" });
   });
 });

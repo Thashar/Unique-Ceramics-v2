@@ -22,12 +22,16 @@ import { translateTexts } from "@/lib/admin-translate";
 import { enProductKey, type ProductTranslation } from "@/lib/i18n-content";
 import {
   DEFAULT_CATEGORY_DIMENSIONS,
+  DIMENSION_FIELDS,
   dimensionField,
   productDimensionsKey,
+  rawMeasure,
+  rowsFromDescription,
   serializeProductDimensions,
   type DimensionId,
   type DimensionValues,
 } from "@/lib/product-dimensions";
+import { splitProductDescription } from "@/lib/product-description";
 import type { Locale } from "@/lib/i18n";
 
 const HOUR_MS = 3_600_000;
@@ -129,6 +133,31 @@ export default function ProductForm({
   // Liczone przy renderze, nie w efekcie – zmiana kategorii ma od razu
   // przestawić pola, a `react-hooks/set-state-in-effect` i tak tego zabrania
   const usedDimensions = categoryDimensions[form.category] ?? DEFAULT_CATEGORY_DIMENSIONS;
+  // Wymiar wypełniony, ale spoza zestawu kategorii, też musi być widoczny –
+  // karta produktu pokazuje każdą wypełnioną wartość, więc ukryte pole
+  // znaczyłoby „widać w sklepie, nie da się zmienić w panelu”
+  const shownDimensions = DIMENSION_FIELDS.filter(
+    (f) => usedDimensions.includes(f.id) || Boolean(dims[f.id]?.trim())
+  ).map((f) => f.id);
+  // Opisy produktów sprzed 19.09.2026 mają wymiary wpisane jako tekst.
+  // Karta ich nie drukuje (rysuje wiersze z pól), więc mówimy o tym wprost
+  // i dajemy jedno kliknięcie na przeniesienie
+  const descriptionParts = splitProductDescription(form.description);
+  const descriptionHasDimensions =
+    descriptionParts.dimensions.length > 0 || descriptionParts.capacity !== "";
+
+  /** Wymiary z tekstu opisu → pola; rozpoznane wiersze znikają z opisu. */
+  function adoptDimensionsFromDescription() {
+    const parts = splitProductDescription(form.description);
+    const next: DimensionValues = { ...dims };
+    for (const row of rowsFromDescription(parts.dimensions, parts.capacity)) {
+      if (!row.id || next[row.id]?.trim()) continue;
+      const value = rawMeasure(row.value);
+      if (value) next[row.id] = value;
+    }
+    setDims(next);
+    set("description", parts.text);
+  }
   const [images, setImages] = useState<string[]>(base?.images ?? []);
   // Wybrany czas obowiązywania – sam nie jest zapisywany, tylko wypełnia datę końca
   const [durationPreset, setDurationPreset] = useState(base?.discountEndsAt ? "custom" : "");
@@ -680,7 +709,7 @@ export default function ProductForm({
             w sklepie i do podpowiedzi dla kolejnych produktów tej kategorii */}
         <div className="col-span-2">
           <label className="block text-xs tracking-widest uppercase text-charcoal/80 mb-2">Wymiary</label>
-          {usedDimensions.length === 0 ? (
+          {shownDimensions.length === 0 ? (
             <p className="text-[11px] text-charcoal/80">
               Kategoria „{categories.find((c) => c.slug === form.category)?.label ?? form.category}” nie ma
               przypisanych wymiarów. Ustawisz je w zakładce <strong className="font-medium">Kategorie</strong> →
@@ -689,12 +718,14 @@ export default function ProductForm({
           ) : (
             <>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                {usedDimensions.map((id) => {
+                {shownDimensions.map((id) => {
                   const field = dimensionField(id);
+                  const offCategory = !usedDimensions.includes(id);
                   return (
                     <div key={id}>
                       <label className="block text-[11px] text-charcoal/80 mb-1">
                         {field.label} <span className="text-charcoal/80">({field.unit})</span>
+                        {offCategory && <span className="text-charcoal/80"> – spoza kategorii</span>}
                       </label>
                       <input
                         type="text"
@@ -709,9 +740,24 @@ export default function ProductForm({
                 })}
               </div>
               <p className="text-[11px] text-charcoal/80 mt-1">
-                Wpisz samą liczbę – „ok.” i jednostkę dokłada sklep. Puste pole nie pojawia się w opisie.
+                Wpisz samą liczbę – „ok.” i jednostkę dokłada sklep. Puste pole nie pojawia się na karcie produktu.
               </p>
             </>
+          )}
+          {descriptionHasDimensions && (
+            <div className="mt-3 border border-amber-200/70 bg-amber-50 px-3 py-2.5">
+              <p className="text-[11px] text-amber-800 leading-relaxed">
+                Opis zawiera jeszcze wymiary wpisane jako tekst. Karta produktu pokazuje je teraz
+                z pól powyżej, więc ten fragment opisu nie jest już drukowany.
+              </p>
+              <button
+                type="button"
+                onClick={adoptDimensionsFromDescription}
+                className="mt-2 text-[11px] tracking-widest uppercase border border-amber-700/40 text-amber-800 px-3 py-1.5 hover:bg-amber-100 transition-colors"
+              >
+                Przenieś wymiary z opisu do pól
+              </button>
+            </div>
           )}
         </div>
         <div>
