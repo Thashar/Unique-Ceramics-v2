@@ -410,7 +410,7 @@ export default function ProductAgent({
         "• przetłumaczę kartę na **angielski** i **zapiszę produkt**\n\n" +
         "**Zapytam Cię o:**\n" +
         "• potwierdzenie **kategorii** i ewentualne **kolejne zdjęcia**\n" +
-        "• **cenę**, **liczbę sztuk** i **kolekcję**\n" +
+        "• **cenę**, **liczbę sztuk** i **kolekcję** – nową mogę założyć od ręki\n" +
         "• **wymiary** i **pojemność**\n\n" +
         "Każde pytanie możesz **pominąć** przyciskiem, a okno zamknąć w dowolnej chwili.\n" +
         "Na każdym kroku możesz też **napisać do mnie** w polu na dole – zwykłym zdaniem."
