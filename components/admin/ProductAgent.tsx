@@ -466,6 +466,17 @@ export default function ProductAgent({
   // żeby nie generował zdjęć i nie zapisał produktu „w tle” po zamknięciu
   const abortRef = useRef(false);
 
+  // Otwarte okno zajmuje cały ekran telefonu – strona pod spodem nie może się
+  // przewijać, bo gest przy krańcu dziennika przewijał panel produktów
+  useEffect(() => {
+    if (!open) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [open]);
+
   // Dziennik przewija się do ostatniej wiadomości
   useEffect(() => {
     logRef.current?.scrollTo({ top: logRef.current.scrollHeight, behavior: "smooth" });
@@ -1568,26 +1579,30 @@ export default function ProductAgent({
       </button>
 
       {open && typeof document !== "undefined" && createPortal(
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-espresso/60" onClick={close}>
+        // `dvh`, nie `vh`: na telefonie `vh` liczy się od widoku **bez** pasków
+        // przeglądarki, więc okno wystawało pod adres u góry i pod pasek na dole
+        // (zgłoszone 19.09.2026). Do `sm:` okno zajmuje cały ekran, wyżej wraca
+        // wyśrodkowany kafelek z marginesem
+        <div className="fixed inset-0 z-[100] flex items-stretch sm:items-center justify-center sm:p-4 bg-espresso/60" onClick={close}>
           <div
             role="dialog"
             aria-modal="true"
             aria-label="Agent dodawania produktów"
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-2xl h-[85vh] flex flex-col bg-warm-white border border-sand shadow-xl"
+            className="w-full sm:max-w-2xl h-[100dvh] sm:h-[85dvh] flex flex-col bg-warm-white sm:border sm:border-sand sm:shadow-xl"
           >
-            <div className="flex items-center justify-between px-5 py-4 border-b border-sand shrink-0">
-              <h2 className="font-serif text-xl text-espresso flex items-center gap-2">
-                <Bot size={20} strokeWidth={1.5} className="text-clay" />
-                Agent dodawania produktów
+            <div className="flex items-center justify-between gap-2 px-4 sm:px-5 py-3 sm:py-4 border-b border-sand shrink-0">
+              <h2 className="font-serif text-base sm:text-xl text-espresso flex items-center gap-2 min-w-0">
+                <Bot size={20} strokeWidth={1.5} className="text-clay shrink-0" />
+                <span className="truncate">Agent dodawania produktów</span>
               </h2>
-              <button type="button" onClick={close} aria-label="Zamknij" className="p-1 text-charcoal/80 hover:text-espresso">
-                <X size={18} />
+              <button type="button" onClick={close} aria-label="Zamknij" className="-mr-2 p-2 text-charcoal/80 hover:text-espresso shrink-0">
+                <X size={20} />
               </button>
             </div>
 
             {/* Dziennik rozmowy */}
-            <div ref={logRef} className="flex-1 overflow-y-auto px-5 py-4 space-y-3 bg-cream/40">
+            <div ref={logRef} className="flex-1 overflow-y-auto overscroll-contain px-4 sm:px-5 py-4 space-y-3 bg-cream/40">
               {messages.map((m) => {
                 const wide = Boolean(m.images?.length || m.choices?.length);
                 return (
@@ -1597,8 +1612,8 @@ export default function ProductAgent({
                         m.who === "user"
                           // Odpowiedzi właściciela: drobne, na jasnym piaskowym tle –
                           // ciemny dymek przytłaczał rozmowę (17.09.2026)
-                          ? "max-w-[75%] px-3 py-1.5 text-xs leading-relaxed bg-sand/60 text-espresso"
-                          : `${wide ? "w-full" : "max-w-[85%]"} px-4 py-3 text-sm leading-relaxed bg-warm-white border border-sand text-charcoal`
+                          ? "max-w-[85%] sm:max-w-[75%] px-3 py-1.5 text-xs leading-relaxed bg-sand/60 text-espresso"
+                          : `${wide ? "w-full" : "max-w-[92%] sm:max-w-[85%]"} px-3 sm:px-4 py-2.5 sm:py-3 text-sm leading-relaxed bg-warm-white border border-sand text-charcoal`
                       }
                     >
                       {m.who === "agent" ? <MessageText text={m.text} /> : m.text}
@@ -1675,9 +1690,9 @@ export default function ProductAgent({
             {/* Pole odpowiedzi: wybór zdjęć (gdy agent o nie prosi) i **zawsze**
                 pole tekstowe – na każdym pytaniu można napisać własnymi słowami.
                 Przyciski wyboru stoją w rozmowie */}
-            <div className="border-t border-sand px-5 py-4 shrink-0 space-y-2">
+            <div className="border-t border-sand px-4 sm:px-5 pt-3 sm:pt-4 pb-[calc(0.75rem_+_env(safe-area-inset-bottom))] sm:pb-4 shrink-0 space-y-2">
               {question?.files && (
-                <label className="flex items-center justify-center gap-2 border-2 border-dashed border-sand hover:border-clay cursor-pointer py-4 text-xs tracking-widest uppercase text-charcoal/80 transition-colors">
+                <label className="flex items-center justify-center gap-2 border-2 border-dashed border-sand hover:border-clay cursor-pointer py-3 sm:py-4 text-xs tracking-widest uppercase text-charcoal/80 transition-colors">
                   <Upload size={16} strokeWidth={1.5} />
                   {running ? "Wybierz zdjęcia" : "Wybierz zdjęcia produktu"}
                   <input
