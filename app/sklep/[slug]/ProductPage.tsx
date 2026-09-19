@@ -6,11 +6,19 @@ import { Truck, Clock, AlertTriangle } from "lucide-react";
 import Header from "@/components/layout/HeaderWrapper";
 import Footer from "@/components/layout/Footer";
 import DishwasherIcon from "@/components/ui/DishwasherIcon";
+import ProductDimensions from "@/components/ui/ProductDimensions";
 import ProductGallery from "@/components/ui/ProductGallery";
 import SimilarProducts from "@/components/ui/SimilarProducts";
 import AddToCartSection from "./AddToCartSection";
 import { db, withDbRetry } from "@/lib/db";
 import { getSettings, settingNumber } from "@/lib/settings";
+import { splitProductDescription } from "@/lib/product-description";
+import {
+  dimensionRows,
+  parseProductDimensions,
+  productDimensionsKey,
+  rowsFromDescription,
+} from "@/lib/product-dimensions";
 import { getCategories, categoryLabel } from "@/lib/categories";
 import ProductPriceTag from "@/components/ui/ProductPriceTag";
 import QuantityPromoNotes from "@/components/ui/QuantityPromoNotes";
@@ -165,6 +173,19 @@ export default async function ProductPage({ slug, locale = "pl" }: { slug: strin
 
   if (!product) notFound();
   const categories = localizeCategories(locale, rawCategories, en);
+
+  // Wymiary produktu (`product_dims_{id}` w `Setting` – patrz `lib/product-dimensions.ts`).
+  // Osobne zapytanie, bo klucz zna się dopiero po odczytaniu produktu; strona
+  // jest ISR-owa, więc idzie ono raz na okno cache
+  const dimensionSetting = await getSettings([productDimensionsKey(product.id)]);
+  // Opis rozdzielamy na prozę i wymiary **zawsze** – produkty dodane przed
+  // 19.09.2026 mają je w tekście, a pokazane obok wierszy z ikonami
+  // dublowałyby się. Pola produktu są ważniejsze od tekstu w opisie
+  const parts = splitProductDescription(product.description ?? "");
+  const fieldRows = dimensionRows(parseProductDimensions(dimensionSetting[productDimensionsKey(product.id)]), locale);
+  const dimensions = fieldRows.length > 0
+    ? fieldRows
+    : rowsFromDescription(parts.dimensions, parts.capacity, locale);
 
   // Kategoria produktu jako pozycja z listy – potrzebny jest jej adres, nie
   // sama etykieta. `null` = kategoria usunięta po przypisaniu produktu;
@@ -364,13 +385,18 @@ export default async function ProductPage({ slug, locale = "pl" }: { slug: strin
               </p>
             )}
 
-            {product.description && (
+            {parts.text && (
               // whitespace-pre-line: opis wpisywany jest w zwykłym textarea w panelu,
               // więc entery z kreatora muszą zostać enterami także tutaj
               <p className="text-charcoal/80 leading-relaxed text-sm mb-3 whitespace-pre-line">
-                {product.description}
+                {parts.text}
               </p>
             )}
+
+            {/* Wymiary – wiersz na wypełnione pole, z ikoną po lewej.
+                Pusta wartość nie daje wiersza: produkt z samą pojemnością
+                pokazuje samą pojemność */}
+            <ProductDimensions rows={dimensions} />
 
             {/* Mycie w zmywarce – tuż pod opisem i nieco większe niż informacje
                 o wysyłce niżej (tam ikona 14 i text-xs), bo to cecha produktu,
