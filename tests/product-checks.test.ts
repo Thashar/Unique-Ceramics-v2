@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   PRODUCT_STEPS,
   checkProduct,
+  dictatedName,
   errorsOf,
   isStepId,
   repairProduct,
@@ -116,5 +117,46 @@ describe("checkProduct – ostrzeżenia", () => {
   it("wszystkie wymiary pominięte", () => {
     const issues = checkProduct(input({ dimensions: [{ label: "średnica", value: "" }] }));
     expect(messages(issues)).toContain("Żaden wymiar");
+  });
+});
+
+describe("dictatedName", () => {
+  it("bierze nazwę z polecenia właściciela dosłownie", () => {
+    // Zgłoszenie 19.09.2026: agent zapisał „Czarka czarka ciemna z jasnym dnem”
+    expect(dictatedName("Zmień nazwę na Czarka czarna")).toBe("Czarka czarna");
+    expect(dictatedName("zmien nazwe na Czarka czarna")).toBe("Czarka czarna");
+    expect(dictatedName("Zmień tytuł produktu na Kubek z kotem")).toBe("Kubek z kotem");
+    expect(dictatedName("Nazwa: Czarka czarna")).toBe("Czarka czarna");
+    expect(dictatedName("Nazwa produktu to Czarka czarna")).toBe("Czarka czarna");
+    expect(dictatedName("Nazwij to Czarka czarna")).toBe("Czarka czarna");
+    expect(dictatedName("Ma się nazywać Czarka czarna")).toBe("Czarka czarna");
+  });
+
+  it("zdejmuje cudzysłowy i kropkę kończącą zdanie", () => {
+    expect(dictatedName('Zmień nazwę na "Czarka czarna".')).toBe("Czarka czarna");
+    expect(dictatedName("Zmień nazwę na „Czarka czarna”")).toBe("Czarka czarna");
+  });
+
+  it("zostawia wielkość liter i znaki wewnątrz nazwy", () => {
+    expect(dictatedName("Zmień nazwę na Czarka czarna – seria nocna")).toBe("Czarka czarna – seria nocna");
+    expect(dictatedName("ustaw nazwę na miska ażurowa")).toBe("miska ażurowa");
+  });
+
+  it("nie bierze polecenia za nazwę", () => {
+    expect(dictatedName("Zmień nazwę na coś krótszego")).toBe("");
+    expect(dictatedName("Zmień nazwę na jakąś inną")).toBe("");
+    expect(dictatedName("Zmień nazwę na inną")).toBe("");
+  });
+
+  it("nie reaguje na pytania i zwykłe wiadomości", () => {
+    expect(dictatedName("Czy nazwa na pewno jest dobra?")).toBe("");
+    expect(dictatedName("To nie miska, tylko czarka")).toBe("");
+    expect(dictatedName("Zmień kategorię na Miski")).toBe("");
+    expect(dictatedName("")).toBe("");
+  });
+
+  it("odrzuca nazwę dłuższą niż limit walidacji", () => {
+    expect(dictatedName(`Zmień nazwę na ${"a".repeat(201)}`)).toBe("");
+    expect(dictatedName(`Zmień nazwę na ${"a".repeat(200)}`)).toHaveLength(200);
   });
 });

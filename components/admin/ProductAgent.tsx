@@ -13,6 +13,7 @@ import { enProductKey } from "@/lib/i18n-content";
 import {
   PRODUCT_STEPS,
   checkProduct,
+  dictatedName,
   errorsOf,
   isStepId,
   repairProduct,
@@ -452,6 +453,10 @@ export default function ProductAgent({
    * kategorię i pisał kartę pod starą nazwą (zgłoszone 19.09.2026).
    */
   const correctionRef = useRef("");
+  // **Nazwa podyktowana przez właściciela** („zmień nazwę na Czarka czarna”).
+  // Wiążąca do końca przebiegu i **żaden krok jej nie przelicza** – inaczej niż
+  // `correctionRef`, które mówi tylko, czym rzecz jest, a nazwę składa model
+  const nameRef = useRef("");
   /**
    * Czy w tej chwili wolno **wrócić do wcześniejszego kroku**. Tylko w fazie
    * pytań: w trakcie generowania zdjęć albo zapisu skok zostawiłby przebieg
@@ -541,12 +546,28 @@ export default function ProductAgent({
     factsRef.current = [...factsRef.current.filter((f) => !f.startsWith(`${label}:`)), `${label}: ${value}`];
   }
 
+  /**
+   * Przyjmuje **nazwę podyktowaną przez właściciela** – wchodzi dosłownie,
+   * bez dokładania słów i bez pytania modelu o konwencję kategorii.
+   *
+   * Gdy przebieg jest już w fazie pytań, karta istnieje, więc skaczemy do kroku
+   * „nazwa” – ten wstawia nazwę do karty i wraca do przerwanego pytania.
+   * Wcześniej wystarczy sam `nameRef`: krok nazwy i tak go czyta.
+   */
+  function takeName(name: string) {
+    nameRef.current = name;
+    fact("Nazwa", name);
+    sayRaw(`Ustawiam nazwę: **${name}**`);
+    if (jumpableRef.current) jump("nazwa");
+  }
+
   function reset() {
     if (welcomeTimer.current) clearTimeout(welcomeTimer.current);
     welcomeTimer.current = null;
     questionRef.current = null;
     factsRef.current = [];
     correctionRef.current = "";
+    nameRef.current = "";
     jumpableRef.current = false;
     costRef.current = null;
     setChatBusy(false);
@@ -866,8 +887,11 @@ export default function ProductAgent({
       // nazwę (`lockName`). Do 19.09.2026 poprawka ginęła i agent pisał kartę
       // pod starą nazwą, mimo że kategorię zdążył już zmienić
       let subject = correctionRef.current;
-      let lockedName = "";
-      if (subject || category.slug !== first.category) {
+      // Nazwa podyktowana wprost jest gotowa – nie ma czego liczyć ani o co pytać
+      let lockedName = nameRef.current;
+      if (lockedName) {
+        fact("Nazwa", lockedName);
+      } else if (subject || category.slug !== first.category) {
         const proposed = await nameInCategory(
           category,
           subject || first.draft.name,
@@ -1170,6 +1194,14 @@ export default function ProductAgent({
 
       /** Nowa nazwa w konwencji kategorii – właściciel mówi, czym rzecz jest. */
       const redoName = async () => {
+        // Właściciel podyktował nazwę – wstawiamy ją i wracamy, bez pytania
+        if (nameRef.current && nameRef.current !== card.name) {
+          lockedName = nameRef.current;
+          card = { ...card, name: lockedName, slug: slugifyTitle(lockedName) || card.slug };
+          fact("Nazwa", card.name);
+          say(`**Nazwa:** ${card.name}`);
+          return;
+        }
         const a = await ask({
           text: "Napisz, **co to za przedmiot** – resztę (motyw, kolor, szkliwo) mam ze zdjęcia.",
           input: "text",
@@ -1180,6 +1212,9 @@ export default function ProductAgent({
         if (!typed) return;
         subject = typed;
         correctionRef.current = typed;
+        // Właściciel mówi tu, **czym rzecz jest** – wcześniej podyktowana nazwa
+        // przestaje obowiązywać, bo model ma ułożyć nową w konwencji kategorii
+        nameRef.current = "";
         lockedName = await nameInCategory(category, typed, card.description, cost);
         card = { ...card, name: lockedName, slug: slugifyTitle(lockedName) || card.slug };
         fact("Nazwa", card.name);
@@ -1205,7 +1240,7 @@ export default function ProductAgent({
         if (!picked || picked.slug === category.slug) return;
         category = picked;
         fact("Kategoria", category.label);
-        lockedName = await nameInCategory(category, subject || card.name, card.description, cost);
+        lockedName = nameRef.current || await nameInCategory(category, subject || card.name, card.description, cost);
         setBusyLabel(`Przepisuję kartę w stylu kategorii „${category.label}”…`);
         const again = await postJson<CardResponse>("/api/admin/ai-product-card", {
           url: originalUrl,
@@ -1489,6 +1524,17 @@ export default function ProductAgent({
       answer({ text });
       return;
     }
+    // ⚠️ **Nazwę podyktowaną wprost czytamy sami, bez modelu.** Na „zmień nazwę
+    // na Czarka czarna” model odesłał poprawkę „Nazwa produktu to Czarka czarka”,
+    // a krok nazwy dopisał do niej swoje („…ciemna z jasnym dnem”) – zgłoszone
+    // 19.09.2026. Wzorzec przepisuje nazwę znak po znaku i nic nie kosztuje
+    const dictated = dictatedName(text);
+    if (dictated) {
+      said(text);
+      setDraft("");
+      takeName(dictated);
+      return;
+    }
 
     const asked = question;
     said(text);
@@ -1497,7 +1543,7 @@ export default function ProductAgent({
     setTyping(true);
     try {
       const res = await postJson<{
-        reply?: string; choice?: string; value?: string; correction?: string; goto?: string; costUsd?: number;
+        reply?: string; choice?: string; value?: string; correction?: string; name?: string; goto?: string; costUsd?: number;
       }>(
         "/api/admin/ai-agent-chat",
         {
@@ -1517,6 +1563,13 @@ export default function ProductAgent({
       if (res.correction) {
         correctionRef.current = res.correction;
         fact("Poprawka właściciela", res.correction);
+      }
+      // Gotowa nazwa wyprzedza wszystko inne – trasa zeruje przy niej wybór,
+      // wartość i powrót, więc nie ma czego jeszcze rozpatrywać
+      if (res.name) {
+        if (res.reply) sayRaw(res.reply);
+        takeName(res.name);
+        return;
       }
       // Właściciel mógł w międzyczasie kliknąć przycisk – wtedy zostaje sama odpowiedź
       if (questionRef.current !== asked) {

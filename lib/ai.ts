@@ -731,6 +731,16 @@ Zdecyduj, co to znaczy:
 W razie wątpliwości **nie wybieraj nic** i dopytaj w "reply" – zły ruch kosztuje więcej niż pytanie.
 "reply" to jedno–dwa zdania; napisz w nim krótko, co robisz z tą wiadomością.
 
+⚠️ **Gotowa nazwa a rodzaj przedmiotu to dwie różne rzeczy.**
+- Właściciel **podyktował nazwę** ("zmień nazwę na Czarka czarna", "nazwa: Kubek z kotem",
+  "ma się nazywać …") → przepisz ją do "name" **dosłownie, znak po znaku**: nie odmieniaj,
+  nie poprawiaj pisowni, nie dokładaj ani jednego słowa od siebie i nie opisuj nią zdjęcia.
+  Wtedy "correction" zostaw puste – nazwa jest już ustalona.
+- Właściciel powiedział **czym rzecz jest** ("to nie miska, tylko czarka") → to nie jest nazwa,
+  tylko rodzaj przedmiotu: wpisz go do "correction", a "name" zostaw puste.
+Gdy prosi o nazwę, ale jej nie podaje ("zmień nazwę na coś krótszego"), zostaw oba pola puste
+i dopytaj w "reply", jak ma brzmieć.
+
 ⚠️ **Poprawka faktu jest ważniejsza od ruchu w przebiegu.** Gdy właściciel mówi, **czym przedmiot
 naprawdę jest**, albo że nazwa, rozpoznanie czy kategoria są błędne (np. "to nie miska, tylko czarka",
 "źle rozpoznałeś", "zmień tytuł"):
@@ -746,5 +756,5 @@ tego kroku w "goto" z listy wyżej i napisz w "reply" jednym zdaniem, dokąd wra
 Gdy wiadomość nie prosi o powrót, "goto" zostaw puste.
 
 Odpowiedz wyłącznie obiektem JSON, bez komentarzy i bez bloków kodu:
-{"reply":"...","choice":"","value":"","correction":"","goto":""}`;
+{"reply":"...","choice":"","value":"","correction":"","name":"","goto":""}`;
 }
