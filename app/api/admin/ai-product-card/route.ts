@@ -32,6 +32,38 @@ export const maxDuration = 60;
 /** Ile produktów z kategorii pokazujemy modelowi jako wzór stylu. */
 const EXAMPLES = 2;
 
+/** Ile nazw produktów trafia do słownika sklepu i ile z nich na kategorię. */
+const VOCABULARY_POOL = 120;
+const VOCABULARY_PER_CATEGORY = 6;
+
+/**
+ * **Słownik sklepu** dla kroku 1: nazwy już wystawionych produktów w rozbiciu
+ * na kategorie. Bez niego model nazywał przedmioty słowami ze swojego treningu
+ * („miska”) tam, gdzie sklep ma własne, węższe nazwy („czarka”). Odczyt jest
+ * w `try/catch` – brak słownika tylko pogarsza rozpoznanie, nie psuje przebiegu.
+ */
+async function readVocabulary(categories: { slug: string; label: string }[]) {
+  try {
+    const rows = await withDbRetry(() =>
+      db.product.findMany({
+        where: { active: true },
+        select: { name: true, category: true },
+        take: VOCABULARY_POOL,
+        orderBy: { createdAt: "desc" },
+      })
+    );
+    return categories
+      .map((c) => ({
+        label: c.label,
+        names: rows.filter((r) => r.category === c.slug).slice(0, VOCABULARY_PER_CATEGORY).map((r) => r.name),
+      }))
+      .filter((v) => v.names.length > 0);
+  } catch (e) {
+    console.error("[admin/ai-product-card] słownik sklepu:", e);
+    return [];
+  }
+}
+
 type Draft = { name: string; slug: string; category: string; description: string };
 
 /**
@@ -116,6 +148,11 @@ export async function POST(req: Request) {
   if (!url) return NextResponse.json({ error: "Brak zdjęcia produktu." }, { status: 400 });
   // Krok 2: kategoria potwierdzona przez właściciela + wstępne rozpoznanie z kroku 1
   const requestedCategory = typeof body?.category === "string" ? body.category.trim().toLowerCase() : "";
+  // Poprawka właściciela z rozmowy („to nie miska, tylko czarka”) – nadrzędna
+  // nad rozpoznaniem ze zdjęcia i nad wzorami z kategorii
+  const correction = cleanText(body?.correction, AI_TEXT_LIMITS.description);
+  // Nazwa ustalona już z właścicielem: model jej nie zmienia, agent ją narzuca
+  const lockName = body?.lockName === true;
   const givenDraft =
     body?.draft && typeof body.draft === "object"
       ? {
@@ -150,7 +187,11 @@ export async function POST(req: Request) {
     draft = { ...givenDraft, slug: normalizeSlug(givenDraft.name), category: requestedCategory };
   } else {
     try {
-      const result = await generateProductText({ model, prompt: buildProductFillPrompt(categories), image });
+      const result = await generateProductText({
+        model,
+        prompt: buildProductFillPrompt(categories, await readVocabulary(categories)),
+        image,
+      });
       await recordAiUsage({ kind: "text", variant: agentVariant(AI_TEXT_VARIANT), model, ...result.usage });
       costUsd += aiCostUsd(model, result.usage.promptTokens, result.usage.outputTokens);
       const parsed = parseJsonObject(result.text);
@@ -218,14 +259,18 @@ export async function POST(req: Request) {
     try {
       const result = await generateProductText({
         model,
-        prompt: buildProductCardPrompt(category, draft, examples),
+        prompt: buildProductCardPrompt(category, draft, examples, correction, lockName ? draft.name : ""),
         image,
       });
       await recordAiUsage({ kind: "text", variant: agentVariant(AI_CARD_VARIANT), model, ...result.usage });
       costUsd += aiCostUsd(model, result.usage.promptTokens, result.usage.outputTokens);
       const parsed = parseJsonObject(result.text);
       if (parsed) {
-        const name = cleanText(parsed.name, AI_TEXT_LIMITS.name) || draft.name;
+        // Nazwa uzgodniona z właścicielem jest nietykalna – model dostaje ją
+        // w prompcie, ale gdyby mimo to napisał swoją, i tak nie wejdzie
+        const name = lockName
+          ? draft.name
+          : cleanText(parsed.name, AI_TEXT_LIMITS.name) || draft.name;
         final = {
           name,
           slug: normalizeSlug(cleanText(parsed.slug, AI_TEXT_LIMITS.slug)) || normalizeSlug(name),

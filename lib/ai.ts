@@ -378,12 +378,29 @@ export function resolveAiAgentModel(fromSettings: string, textModelSetting: stri
 /** Maksymalne długości pól zwracanych przez model (i tak walidowane serwerowo). */
 export const AI_TEXT_LIMITS = { name: 200, slug: 200, description: 600 };
 
+/** Nazwy produktów już wystawionych – słownik rodzajów przedmiotów sklepu. */
+export type ShopVocabulary = { label: string; names: string[] }[];
+
 /**
  * Prompt do uzupełnienia danych produktu ze zdjęcia. Kategorie podajemy modelowi,
  * bo ma wybrać istniejącą – wymyślona i tak zostałaby odrzucona przy walidacji.
+ *
+ * `vocabulary` to **słownik sklepu**: nazwy produktów, które już są wystawione,
+ * w rozbiciu na kategorie. Bez niego model nazywa przedmioty słowami ze swojego
+ * treningu („miska”) tam, gdzie sklep ma własne, węższe nazwy („czarka”) –
+ * zgłoszone 19.09.2026: czarka została rozpoznana jako miska, mimo że w sklepie
+ * stały czarki. To najtańsza forma bazy wiedzy: kilkaset tokenów na wywołanie,
+ * zero dodatkowych wywołań modelu.
  */
-export function buildProductFillPrompt(categories: { slug: string; label: string }[]): string {
+export function buildProductFillPrompt(
+  categories: { slug: string; label: string }[],
+  vocabulary: ShopVocabulary = [],
+): string {
   const list = categories.map((c) => `- ${c.slug} (${c.label})`).join("\n");
+  const known = vocabulary
+    .filter((v) => v.names.length > 0)
+    .map((v) => `- ${v.label}: ${v.names.join(", ")}`)
+    .join("\n");
   return `Jesteś asystentem sklepu z ręcznie robioną ceramiką artystyczną (Unique Ceramics).
 Na podstawie zdjęcia produktu przygotuj dane do karty produktu w sklepie.
 
@@ -409,7 +426,15 @@ Zasady:
 
 Dostępne kategorie:
 ${list || "- (brak zdefiniowanych kategorii)"}
+${known ? `
+Tak nazywają się przedmioty, które **już są w tym sklepie** (słownik sklepu):
+${known}
 
+Jeśli przedmiot ze zdjęcia jest tego samego rodzaju co któryś z nich, **użyj tej samej nazwy rodzaju**
+(np. "czarka", "patera", "świecznik"), a nie własnego, szerszego słowa ("miska", "naczynie", "pojemnik").
+Sklep ma swoje nazewnictwo i ma ono pierwszeństwo przed ogólną nazwą. Gdy nic z listy nie pasuje,
+nazwij przedmiot po swojemu – to lista podpowiedzi, nie zamknięty zbiór.
+` : ""}
 Odpowiedz wyłącznie obiektem JSON, bez komentarzy i bez bloków kodu:
 {"name":"...","slug":"...","category":"...","description":"..."}`;
 }
@@ -441,6 +466,10 @@ export function buildProductCardPrompt(
   category: { slug: string; label: string },
   draft: { name: string; description: string },
   examples: { name: string; description: string }[],
+  /** Co właściciel powiedział o przedmiocie – **nadrzędne** nad zdjęciem i wzorami. */
+  correction = "",
+  /** Nazwa ustalona już z właścicielem – model ma ją przepisać, nie wymyślać. */
+  lockedName = "",
 ): string {
   const list = examples
     .map((e, i) => `Przykład ${i + 1}:\nNazwa: ${e.name}\nOpis: ${e.description || "(bez opisu)"}`)
@@ -451,7 +480,18 @@ Na podstawie zdjęcia produktu przygotuj ostateczną nazwę i opis do karty prod
 Wstępne rozpoznanie zdjęcia (możesz je poprawić, jeśli widzisz coś innego):
 Nazwa: ${draft.name || "(brak)"}
 Opis: ${draft.description || "(brak)"}
-
+${correction ? `
+⚠️ **Właściciel poprawił rozpoznanie** i to jest wiążące – ważniejsze od zdjęcia, od wstępnego
+rozpoznania i od przykładów:
+"""
+${correction}
+"""
+Napisz kartę tak, jakby przedmiot był dokładnie tym, czym mówi właściciel. Nie wracaj do poprzedniego
+rodzaju przedmiotu, nawet jeśli zdjęcie wygląda podobnie do czegoś innego.
+` : ""}${lockedName ? `
+Nazwa produktu jest **już ustalona z właścicielem**: "${lockedName}". Przepisz ją w polu "name"
+dosłownie, bez zmian, i dopasuj do niej opis.
+` : ""}
 Poniżej są produkty, które już są w tej kategorii sklepu. **Wzoruj się na ich stylu i formatowaniu**:
 długości nazwy i opisu, tonie, kolejności informacji, sposobie nazywania motywu, kształtu, koloru i szkliwa,
 a także wielkości liter w nazwie, interpunkcji, liczbie zdań i tym, czy opis ma jeden akapit czy kilka.
@@ -493,6 +533,61 @@ Zasady:
 
 Odpowiedz wyłącznie obiektem JSON, bez komentarzy i bez bloków kodu:
 {"name":"...","slug":"...","description":"...","firingNote":"...","dimensions":[{"label":"...","example":"..."}],"capacity":{"present":false,"example":""}}`;
+}
+
+/** Krok nazywania przedmiotu po zmianie kategorii albo po poprawce właściciela. */
+export const AI_NAME_VARIANT = "product_name";
+
+/** Ile produktów z kategorii idzie jako wzór nazewnictwa (decyzja właściciela 19.09.2026). */
+export const AI_NAME_EXAMPLES = 3;
+
+/**
+ * **Nazwa w konwencji kategorii** – krok po zmianie kategorii przez właściciela
+ * albo po jego poprawce („to nie miska, to czarka”).
+ *
+ * Wywołanie jest **tekstowe, bez zdjęcia**: co to za przedmiot, wiemy już od
+ * właściciela, a od modelu chcemy wyłącznie ubrania tego w nazewnictwo sklepu.
+ * Dzięki temu krok kosztuje ułamek tego, co karta ze zdjęciem, i można go
+ * powtórzyć, gdy właściciel poprawi się jeszcze raz.
+ */
+export function buildProductNamePrompt(opts: {
+  category: { slug: string; label: string };
+  /** Czym przedmiot jest – słowami właściciela albo z rozpoznania. */
+  subject: string;
+  /** Opis z rozpoznania – źródło cech (motyw, kolor, detal formy). */
+  description: string;
+  /** Nazwy produktów z tej kategorii – wzór konwencji. */
+  examples: string[];
+}): string {
+  const list = opts.examples.length
+    ? opts.examples.map((n, i) => `${i + 1}. ${n}`).join("\n")
+    : "(w tej kategorii nie ma jeszcze produktów)";
+  return `Jesteś asystentem sklepu z ręcznie robioną ceramiką artystyczną (Unique Ceramics).
+Masz ułożyć **samą nazwę** nowego produktu w kategorii "${opts.category.label}".
+
+Czym jest przedmiot (to mówi właściciel sklepu i **to jest wiążące**):
+"""
+${opts.subject}
+"""
+
+Cechy z rozpoznania zdjęcia – używaj ich tylko jako źródła szczegółów (motyw, kolor, szkliwo, detal formy):
+${opts.description || "(brak)"}
+
+Nazwy produktów, które już są w tej kategorii – **wzór konwencji nazewniczej**:
+${list}
+
+Zasady:
+- Rodzaj przedmiotu bierzesz **wyłącznie od właściciela**. Nie zmieniaj go na inny, nawet jeśli
+  przykłady dotyczą innych przedmiotów, a rozpoznanie mówiło coś innego.
+- Z przykładów bierzesz **konwencję**: długość nazwy, szyk wyrazów, wielkość liter, interpunkcję
+  i to, czy nazwa wymienia motyw, kolor albo szkliwo.
+- Cechę, która ten przedmiot wyróżnia (motyw, wizerunek, napis, ażur, otwory, dziobek, ucho),
+  wpisz do nazwy, jeśli przykłady też tak robią.
+- Nazwa ma 2-5 słów, bez cudzysłowów, bez ceny i bez wymiarów.
+- Pisz po polsku. Jako myślnika używaj wyłącznie półpauzy "–", nigdy pauzy "—".
+
+Odpowiedz wyłącznie obiektem JSON, bez komentarzy i bez bloków kodu:
+{"name":"...","slug":"..."}`;
 }
 
 // ── Koszty ────────────────────────────────────────────────────────────────────
@@ -585,6 +680,8 @@ export type AgentChatContext = {
   input: "text" | "number" | "none";
   /** Krótkie podsumowanie tego, co już wiadomo o produkcie. */
   state: string;
+  /** Kroki, do których agent umie **wrócić** („zmień cenę”, „wróć do kategorii”). */
+  steps: { id: string; label: string }[];
 };
 
 /**
@@ -616,6 +713,9 @@ ${options}
 
 Pole na dole przyjmuje: ${ctx.input === "number" ? "liczbę" : ctx.input === "text" ? "tekst" : "nic (same przyciski)"}.
 
+Kroki, do których mogę **wrócić** na życzenie właściciela (wartość → co ustalamy):
+${ctx.steps.length ? ctx.steps.map((s) => `- "${s.id}" → ${s.label}`).join("\n") : "- (w tej chwili nie da się cofnąć)"}
+
 Wiadomość od właściciela:
 """
 ${message.slice(0, AI_CHAT_LIMITS.message)}
@@ -631,6 +731,20 @@ Zdecyduj, co to znaczy:
 W razie wątpliwości **nie wybieraj nic** i dopytaj w "reply" – zły ruch kosztuje więcej niż pytanie.
 "reply" to jedno–dwa zdania; napisz w nim krótko, co robisz z tą wiadomością.
 
+⚠️ **Poprawka faktu jest ważniejsza od ruchu w przebiegu.** Gdy właściciel mówi, **czym przedmiot
+naprawdę jest**, albo że nazwa, rozpoznanie czy kategoria są błędne (np. "to nie miska, tylko czarka",
+"źle rozpoznałeś", "zmień tytuł"):
+- wpisz tę poprawkę do "correction" jako **jedno zdanie faktu** o przedmiocie (np. "To czarka, nie miska."),
+- **zostaw "choice" puste**, nawet jeśli któryś przycisk wydaje się pasować – wyboru dokonuje właściciel,
+  a Ty masz tylko zapisać poprawkę i potwierdzić ją w "reply". Sam nie przechodzisz do kolejnego kroku.
+Gdy wiadomość niczego nie poprawia, "correction" zostaw puste.
+
+⚠️ **Powrót do wcześniejszego kroku.** Gdy właściciel chce zmienić coś, co już ustaliliśmy
+("zmień cenę", "wróć do kategorii", "poprawmy nazwę", "źle podałem sztuki"), wpisz identyfikator
+tego kroku w "goto" z listy wyżej i napisz w "reply" jednym zdaniem, dokąd wracamy. Wtedy
+**nie wybieraj przycisku** i nie podawaj "value" – bieżące pytanie zadam jeszcze raz po powrocie.
+Gdy wiadomość nie prosi o powrót, "goto" zostaw puste.
+
 Odpowiedz wyłącznie obiektem JSON, bez komentarzy i bez bloków kodu:
-{"reply":"...","choice":"","value":""}`;
+{"reply":"...","choice":"","value":"","correction":"","goto":""}`;
 }
